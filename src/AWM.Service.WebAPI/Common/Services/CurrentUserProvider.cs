@@ -1,7 +1,7 @@
 using System.Security.Claims;
 using AWM.Service.Domain.Common;
 
-namespace AWM.Service.WebAPI.Services;
+namespace AWM.Service.WebAPI.Common.Services;
 
 /// <summary>
 /// Provides current user information from HttpContext for audit and multi-tenancy.
