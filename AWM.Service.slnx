@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/AWM.Service.Application/AWM.Service.Application.csproj" />
+    <Project Path="src/AWM.Service.Domain/AWM.Service.Domain.csproj" />
+    <Project Path="src/AWM.Service.Infrastructure/AWM.Service.Infrastructure.csproj" />
+    <Project Path="src/AWM.Service.WebAPI/AWM.Service.WebAPI.csproj" />
+  </Folder>
+</Solution>

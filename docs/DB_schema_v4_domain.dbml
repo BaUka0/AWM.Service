@@ -1,0 +1,660 @@
+Project ETMS_v4_Domain_Sync {
+  database_type: 'SQL Server'
+  Note: 'Enterprise Thesis Management System v4.0 - Domain Layer Sync (Audit & Soft Delete enabled)'
+}
+
+// =============================================
+// [Org] ОРГАНИЗАЦИОННАЯ СТРУКТУРА
+// =============================================
+
+Table Org.Universities {
+  Id int [pk, increment]
+  Name nvarchar(255) [not null]
+  Code nvarchar(50) [not null, unique]
+  
+  // Audit
+  CreatedAt datetime2 [not null]
+  CreatedBy int [not null]
+  LastModifiedAt datetime2
+  LastModifiedBy int
+  // Soft Delete
+  IsDeleted bit [not null, default: 0]
+  DeletedAt datetime2
+  DeletedBy int
+}
+
+Table Org.Institutes {
+  Id int [pk, increment]
+  UniversityId int [not null, ref: > Org.Universities.Id]
+  Name nvarchar(255) [not null]
+  
+  // Audit & Soft Delete
+  CreatedAt datetime2 [not null]
+  CreatedBy int [not null]
+  LastModifiedAt datetime2
+  LastModifiedBy int
+  IsDeleted bit [not null, default: 0]
+  DeletedAt datetime2
+  DeletedBy int
+}
+
+Table Org.Departments {
+  Id int [pk, increment]
+  InstituteId int [not null, ref: > Org.Institutes.Id]
+  Name nvarchar(255) [not null]
+  Code nvarchar(50)
+  
+  // Audit & Soft Delete
+  CreatedAt datetime2 [not null]
+  CreatedBy int [not null]
+  LastModifiedAt datetime2
+  LastModifiedBy int
+  IsDeleted bit [not null, default: 0]
+  DeletedAt datetime2
+  DeletedBy int
+}
+
+// =============================================
+// [Common] ОБЩИЕ СПРАВОЧНИКИ
+// =============================================
+
+Table Common.AcademicYears {
+  Id int [pk, increment]
+  UniversityId int [not null, ref: > Org.Universities.Id]
+  Name nvarchar(50) [not null]
+  StartDate date [not null]
+  EndDate date [not null]
+  IsCurrent bit [default: 0]
+  IsArchived bit [default: 0]
+  
+  // Audit & Soft Delete
+  CreatedAt datetime2 [not null]
+  CreatedBy int [not null]
+  LastModifiedAt datetime2
+  LastModifiedBy int
+  IsDeleted bit [not null, default: 0]
+  DeletedAt datetime2
+  DeletedBy int
+}
+
+Table Common.Periods {
+  Id int [pk, increment]
+  DepartmentId int [not null, ref: > Org.Departments.Id]
+  AcademicYearId int [not null, ref: > Common.AcademicYears.Id]
+  WorkflowStage nvarchar(100) [not null] // Enum in code
+  StartDate datetime2 [not null]
+  EndDate datetime2 [not null]
+  IsActive bit [default: 1]
+  
+  // Audit & Soft Delete
+  CreatedAt datetime2 [not null]
+  CreatedBy int [not null]
+  LastModifiedAt datetime2
+  LastModifiedBy int
+  IsDeleted bit [not null, default: 0]
+  DeletedAt datetime2
+  DeletedBy int
+}
+
+Table Common.NotificationTemplates {
+  Id int [pk, increment]
+  EventType nvarchar(100) [not null, unique]
+  TitleRu nvarchar(255)
+  TitleKz nvarchar(255)
+  TitleEn nvarchar(255)
+  BodyTemplateRu nvarchar(max)
+  BodyTemplateKz nvarchar(max)
+  BodyTemplateEn nvarchar(max)
+  
+  // Audit & Soft Delete
+  CreatedAt datetime2 [not null]
+  CreatedBy int [not null]
+  LastModifiedAt datetime2
+  LastModifiedBy int
+  IsDeleted bit [not null, default: 0]
+  DeletedAt datetime2
+  DeletedBy int
+}
+
+Table Common.Notifications {
+  Id bigint [pk, increment]
+  UserId int [not null, ref: > Auth.Users.Id]
+  TemplateId int [ref: > Common.NotificationTemplates.Id]
+  Title nvarchar(255) [not null]
+  Body nvarchar(max)
+  RelatedEntityType nvarchar(50)
+  RelatedEntityId bigint
+  IsRead bit [default: 0]
+  
+  // Audit
+  CreatedAt datetime2 [not null]
+  CreatedBy int [not null]
+  LastModifiedAt datetime2
+  LastModifiedBy int
+}
+
+// =============================================
+// [Auth] БЕЗОПАСНОСТЬ (RBAC)
+// =============================================
+
+Table Auth.Users {
+  Id int [pk, increment]
+  UniversityId int [not null, ref: > Org.Universities.Id]
+  Login nvarchar(100) [not null]
+  Email nvarchar(255) [not null]
+  PasswordHash nvarchar(max)
+  ExternalId nvarchar(255)
+  IsActive bit [default: 1]
+  
+  // Audit & Soft Delete
+  CreatedAt datetime2 [not null]
+  CreatedBy int [not null]
+  LastModifiedAt datetime2
+  LastModifiedBy int
+  IsDeleted bit [not null, default: 0]
+  DeletedAt datetime2
+  DeletedBy int
+}
+
+Table Auth.Roles {
+  Id int [pk, increment]
+  SystemName nvarchar(50) [not null, unique]
+  DisplayName nvarchar(100)
+  ScopeLevel nvarchar(20) [not null] // Enum in code
+  
+  // Audit
+  CreatedAt datetime2 [not null]
+  CreatedBy int [not null]
+  LastModifiedAt datetime2
+  LastModifiedBy int
+}
+
+Table Auth.UserRoleAssignments {
+  Id bigint [pk, increment]
+  UserId int [not null, ref: > Auth.Users.Id]
+  RoleId int [not null, ref: > Auth.Roles.Id]
+  DepartmentId int [ref: > Org.Departments.Id]
+  InstituteId int [ref: > Org.Institutes.Id]
+  AcademicYearId int [ref: > Common.AcademicYears.Id]
+  ValidFrom datetime2 [not null]
+  ValidTo datetime2
+  
+  // Audit
+  CreatedAt datetime2 [not null]
+  CreatedBy int [not null]
+  LastModifiedAt datetime2
+  LastModifiedBy int
+}
+
+// =============================================
+// [Edu] ОБРАЗОВАТЕЛЬНЫЕ ПРОФИЛИ
+// =============================================
+
+Table Edu.DegreeLevels {
+  Id int [pk, increment]
+  Name nvarchar(100) [not null]
+  DurationYears int [not null]
+  
+  // Audit
+  CreatedAt datetime2 [not null]
+  CreatedBy int [not null]
+  LastModifiedAt datetime2
+  LastModifiedBy int
+}
+
+Table Edu.AcademicPrograms {
+  Id int [pk, increment]
+  DepartmentId int [not null, ref: > Org.Departments.Id]
+  DegreeLevelId int [not null, ref: > Edu.DegreeLevels.Id]
+  Code nvarchar(50)
+  Name nvarchar(255)
+  
+  // Audit & Soft Delete
+  CreatedAt datetime2 [not null]
+  CreatedBy int [not null]
+  LastModifiedAt datetime2
+  LastModifiedBy int
+  IsDeleted bit [not null, default: 0]
+  DeletedAt datetime2
+  DeletedBy int
+}
+
+Table Edu.Students {
+  Id int [pk, increment]
+  UserId int [not null, ref: > Auth.Users.Id]
+  ProgramId int [not null, ref: > Edu.AcademicPrograms.Id]
+  AdmissionYear int [not null]
+  CurrentCourse int [not null]
+  GroupCode nvarchar(50)
+  Status nvarchar(50) [not null] // Enum in code
+  
+  // Audit & Soft Delete
+  CreatedAt datetime2 [not null]
+  CreatedBy int [not null]
+  LastModifiedAt datetime2
+  LastModifiedBy int
+  IsDeleted bit [not null, default: 0]
+  DeletedAt datetime2
+  DeletedBy int
+}
+
+Table Edu.Staff {
+  Id int [pk, increment]
+  UserId int [not null, ref: > Auth.Users.Id]
+  DepartmentId int [not null, ref: > Org.Departments.Id]
+  Position nvarchar(100)
+  AcademicDegree nvarchar(100)
+  MaxStudentsLoad int [default: 5]
+  
+  // Audit & Soft Delete
+  CreatedAt datetime2 [not null]
+  CreatedBy int [not null]
+  LastModifiedAt datetime2
+  LastModifiedBy int
+  IsDeleted bit [not null, default: 0]
+  DeletedAt datetime2
+  DeletedBy int
+}
+
+// =============================================
+// [Wf] WORKFLOW ENGINE
+// =============================================
+
+Table Wf.WorkTypes {
+  Id int [pk, increment]
+  Name nvarchar(100) [not null]
+  DegreeLevelId int [ref: > Edu.DegreeLevels.Id]
+  
+  // Audit & Soft Delete
+  CreatedAt datetime2 [not null]
+  CreatedBy int [not null]
+  LastModifiedAt datetime2
+  LastModifiedBy int
+  IsDeleted bit [not null, default: 0]
+  DeletedAt datetime2
+  DeletedBy int
+}
+
+Table Wf.States {
+  Id int [pk, increment]
+  WorkTypeId int [not null, ref: > Wf.WorkTypes.Id]
+  SystemName nvarchar(100) [not null]
+  DisplayName nvarchar(100)
+  IsFinal bit [default: 0]
+  
+  // Audit & Soft Delete
+  CreatedAt datetime2 [not null]
+  CreatedBy int [not null]
+  LastModifiedAt datetime2
+  LastModifiedBy int
+  IsDeleted bit [not null, default: 0]
+  DeletedAt datetime2
+  DeletedBy int
+}
+
+Table Wf.Transitions {
+  Id int [pk, increment]
+  FromStateId int [not null, ref: > Wf.States.Id]
+  ToStateId int [not null, ref: > Wf.States.Id]
+  AllowedRoleId int [ref: > Auth.Roles.Id]
+  IsAutomatic bit [default: 0]
+  
+  // Audit & Soft Delete
+  CreatedAt datetime2 [not null]
+  CreatedBy int [not null]
+  LastModifiedAt datetime2
+  LastModifiedBy int
+  IsDeleted bit [not null, default: 0]
+  DeletedAt datetime2
+  DeletedBy int
+}
+
+// =============================================
+// [Thesis] РАБОТЫ
+// =============================================
+
+Table Thesis.Directions {
+  Id bigint [pk, increment]
+  DepartmentId int [not null, ref: > Org.Departments.Id]
+  SupervisorId int [not null, ref: > Edu.Staff.Id]
+  AcademicYearId int [not null, ref: > Common.AcademicYears.Id]
+  WorkTypeId int [not null, ref: > Wf.WorkTypes.Id]
+  TitleRu nvarchar(500) [not null]
+  TitleEn nvarchar(500)
+  TitleKz nvarchar(500)
+  Description nvarchar(max)
+  CurrentStateId int [not null, ref: > Wf.States.Id]
+  SubmittedAt datetime2
+  ReviewedAt datetime2
+  ReviewedBy int
+  ReviewComment nvarchar(max)
+  
+  // Audit & Soft Delete
+  CreatedAt datetime2 [not null]
+  CreatedBy int [not null]
+  LastModifiedAt datetime2
+  LastModifiedBy int
+  IsDeleted bit [not null, default: 0]
+  DeletedAt datetime2
+  DeletedBy int
+}
+
+Table Thesis.Topics {
+  Id bigint [pk, increment]
+  DirectionId bigint [ref: > Thesis.Directions.Id]
+  AcademicYearId int [not null, ref: > Common.AcademicYears.Id]
+  DepartmentId int [not null, ref: > Org.Departments.Id]
+  SupervisorId int [not null, ref: > Edu.Staff.Id]
+  WorkTypeId int [not null, ref: > Wf.WorkTypes.Id]
+  TitleRu nvarchar(500) [not null]
+  TitleEn nvarchar(500)
+  TitleKz nvarchar(500)
+  Description nvarchar(max)
+  MaxParticipants int [default: 1]
+  IsApproved bit [default: 0]
+  IsClosed bit [default: 0]
+  
+  // Audit & Soft Delete
+  CreatedAt datetime2 [not null]
+  CreatedBy int [not null]
+  LastModifiedAt datetime2
+  LastModifiedBy int
+  IsDeleted bit [not null, default: 0]
+  DeletedAt datetime2
+  DeletedBy int
+}
+
+Table Thesis.TopicApplications {
+  Id bigint [pk, increment]
+  TopicId bigint [not null, ref: > Thesis.Topics.Id]
+  StudentId int [not null, ref: > Edu.Students.Id]
+  MotivationLetter nvarchar(max)
+  AppliedAt datetime2
+  Status nvarchar(50) [not null] // Enum in code
+  ReviewedAt datetime2
+  ReviewedBy int
+  ReviewComment nvarchar(max)
+  
+  // Audit & Soft Delete
+  CreatedAt datetime2 [not null]
+  CreatedBy int [not null]
+  LastModifiedAt datetime2
+  LastModifiedBy int
+  IsDeleted bit [not null, default: 0]
+  DeletedAt datetime2
+  DeletedBy int
+}
+
+Table Thesis.StudentWorks {
+  Id bigint [pk, increment]
+  TopicId bigint [ref: > Thesis.Topics.Id]
+  AcademicYearId int [not null, ref: > Common.AcademicYears.Id]
+  DepartmentId int [not null, ref: > Org.Departments.Id]
+  CurrentStateId int [not null, ref: > Wf.States.Id]
+  FinalGrade nvarchar(10)
+  IsDefended bit [default: 0]
+  
+  // Audit & Soft Delete
+  CreatedAt datetime2 [not null]
+  CreatedBy int [not null]
+  LastModifiedAt datetime2
+  LastModifiedBy int
+  IsDeleted bit [not null, default: 0]
+  DeletedAt datetime2
+  DeletedBy int
+}
+
+Table Thesis.WorkParticipants {
+  Id bigint [pk, increment]
+  WorkId bigint [not null, ref: > Thesis.StudentWorks.Id]
+  StudentId int [not null, ref: > Edu.Students.Id]
+  Role nvarchar(50) [default: 'Member'] // Enum in code
+  
+  // Audit (JoinedAt = CreatedAt)
+  CreatedAt datetime2 [not null]
+  CreatedBy int [not null]
+  LastModifiedAt datetime2
+  LastModifiedBy int
+}
+
+Table Thesis.WorkflowHistory {
+  Id bigint [pk, increment]
+  WorkId bigint [not null, ref: > Thesis.StudentWorks.Id]
+  FromStateId int [ref: > Wf.States.Id]
+  ToStateId int [not null, ref: > Wf.States.Id]
+  UserId int [not null]
+  Comment nvarchar(max)
+  
+  // Audit (TransitionDate = CreatedAt)
+  CreatedAt datetime2 [not null]
+  CreatedBy int [not null]
+  LastModifiedAt datetime2
+  LastModifiedBy int
+}
+
+Table Thesis.Attachments {
+  Id bigint [pk, increment]
+  WorkId bigint [not null, ref: > Thesis.StudentWorks.Id]
+  StateId int [ref: > Wf.States.Id]
+  AttachmentType nvarchar(50) [not null] // Enum in code
+  FileName nvarchar(255) [not null]
+  FileStoragePath nvarchar(1000) [not null]
+  FileHash char(64) [not null]
+  
+  // Audit (UploadedAt/By = CreatedAt/By)
+  CreatedAt datetime2 [not null]
+  CreatedBy int [not null]
+  LastModifiedAt datetime2
+  LastModifiedBy int
+}
+
+Table Thesis.Experts {
+  Id int [pk, increment]
+  UserId int [not null, ref: > Auth.Users.Id]
+  DepartmentId int [not null, ref: > Org.Departments.Id]
+  ExpertiseType nvarchar(50) [not null] // Enum in code
+  IsActive bit [default: 1]
+  
+  // Audit & Soft Delete
+  CreatedAt datetime2 [not null]
+  CreatedBy int [not null]
+  LastModifiedAt datetime2
+  LastModifiedBy int
+  IsDeleted bit [not null, default: 0]
+  DeletedAt datetime2
+  DeletedBy int
+}
+
+Table Thesis.QualityChecks {
+  Id bigint [pk, increment]
+  WorkId bigint [not null, ref: > Thesis.StudentWorks.Id]
+  CheckType nvarchar(50) [not null] // Enum in code
+  AssignedExpertId int [ref: > Thesis.Experts.Id]
+  AttemptNumber int [default: 1]
+  IsPassed bit [not null]
+  ResultValue decimal(5,2)
+  Comment nvarchar(max)
+  DocumentPath nvarchar(1000)
+  
+  // Audit (CheckedAt = CreatedAt)
+  CreatedAt datetime2 [not null]
+  CreatedBy int [not null]
+  LastModifiedAt datetime2
+  LastModifiedBy int
+}
+
+Table Thesis.Reviewers {
+  Id int [pk, increment]
+  FullName nvarchar(255) [not null]
+  Position nvarchar(255)
+  AcademicDegree nvarchar(100)
+  Organization nvarchar(255)
+  Email nvarchar(255)
+  Phone nvarchar(50)
+  IsActive bit [default: 1]
+  
+  // Audit & Soft Delete
+  CreatedAt datetime2 [not null]
+  CreatedBy int [not null]
+  LastModifiedAt datetime2
+  LastModifiedBy int
+  IsDeleted bit [not null, default: 0]
+  DeletedAt datetime2
+  DeletedBy int
+}
+
+Table Thesis.Reviews {
+  Id bigint [pk, increment]
+  WorkId bigint [not null, ref: > Thesis.StudentWorks.Id]
+  ReviewerId int [not null, ref: > Thesis.Reviewers.Id]
+  ReviewText nvarchar(max)
+  FileStoragePath nvarchar(1000)
+  
+  // Audit (UploadedAt/By = LastModifiedAt / CreatedBy)
+  CreatedAt datetime2 [not null]
+  CreatedBy int [not null]
+  LastModifiedAt datetime2
+  LastModifiedBy int
+  IsDeleted bit [not null, default: 0]
+  DeletedAt datetime2
+  DeletedBy int
+}
+
+Table Thesis.SupervisorReviews {
+  Id bigint [pk, increment]
+  WorkId bigint [not null, ref: > Thesis.StudentWorks.Id]
+  SupervisorId int [not null, ref: > Edu.Staff.Id]
+  ReviewText nvarchar(max) [not null]
+  FileStoragePath nvarchar(1000)
+  
+  // Audit & Soft Delete
+  CreatedAt datetime2 [not null]
+  CreatedBy int [not null]
+  LastModifiedAt datetime2
+  LastModifiedBy int
+  IsDeleted bit [not null, default: 0]
+  DeletedAt datetime2
+  DeletedBy int
+}
+
+// =============================================
+// [Defense] ЗАЩИТА
+// =============================================
+
+Table Defense.Commissions {
+  Id int [pk, increment]
+  DepartmentId int [not null, ref: > Org.Departments.Id]
+  AcademicYearId int [not null, ref: > Common.AcademicYears.Id]
+  Name nvarchar(255)
+  CommissionType nvarchar(50) // Enum in code
+  PreDefenseNumber int
+  
+  // Audit & Soft Delete
+  CreatedAt datetime2 [not null]
+  CreatedBy int [not null]
+  LastModifiedAt datetime2
+  LastModifiedBy int
+  IsDeleted bit [not null, default: 0]
+  DeletedAt datetime2
+  DeletedBy int
+}
+
+Table Defense.CommissionMembers {
+  Id int [pk, increment]
+  CommissionId int [not null, ref: > Defense.Commissions.Id]
+  UserId int [not null, ref: > Auth.Users.Id]
+  RoleInCommission nvarchar(100) // Enum in code
+  
+  // Audit
+  CreatedAt datetime2 [not null]
+  CreatedBy int [not null]
+  LastModifiedAt datetime2
+  LastModifiedBy int
+}
+
+Table Defense.Schedules {
+  Id bigint [pk, increment]
+  CommissionId int [not null, ref: > Defense.Commissions.Id]
+  WorkId bigint [not null, ref: > Thesis.StudentWorks.Id]
+  DefenseDate datetime2 [not null]
+  Location nvarchar(255)
+  
+  // Audit & Soft Delete
+  CreatedAt datetime2 [not null]
+  CreatedBy int [not null]
+  LastModifiedAt datetime2
+  LastModifiedBy int
+  IsDeleted bit [not null, default: 0]
+  DeletedAt datetime2
+  DeletedBy int
+}
+
+Table Defense.PreDefenseAttempts {
+  Id bigint [pk, increment]
+  WorkId bigint [not null, ref: > Thesis.StudentWorks.Id]
+  PreDefenseNumber int [not null]
+  ScheduleId bigint [ref: > Defense.Schedules.Id]
+  AttendanceStatus nvarchar(50) [default: 'Attended'] // Enum in code
+  AverageScore decimal(5,2)
+  IsPassed bit [default: 0]
+  AttemptDate datetime2
+  
+  // Audit
+  CreatedAt datetime2 [not null]
+  CreatedBy int [not null]
+  LastModifiedAt datetime2
+  LastModifiedBy int
+}
+
+Table Defense.EvaluationCriteria {
+  Id int [pk, increment]
+  WorkTypeId int [not null, ref: > Wf.WorkTypes.Id]
+  DepartmentId int [ref: > Org.Departments.Id]
+  CriteriaName nvarchar(255) [not null]
+  MaxScore int [not null]
+  Weight decimal(3,2) [default: 1.0]
+  
+  // Audit & Soft Delete
+  CreatedAt datetime2 [not null]
+  CreatedBy int [not null]
+  LastModifiedAt datetime2
+  LastModifiedBy int
+  IsDeleted bit [not null, default: 0]
+  DeletedAt datetime2
+  DeletedBy int
+}
+
+Table Defense.Grades {
+  Id bigint [pk, increment]
+  ScheduleId bigint [not null, ref: > Defense.Schedules.Id]
+  MemberId int [not null, ref: > Defense.CommissionMembers.Id]
+  CriteriaId int [not null, ref: > Defense.EvaluationCriteria.Id]
+  Score int [not null]
+  Comment nvarchar(max)
+  
+  // Audit (GradedAt = CreatedAt)
+  CreatedAt datetime2 [not null]
+  CreatedBy int [not null]
+  LastModifiedAt datetime2
+  LastModifiedBy int
+}
+
+Table Defense.Protocols {
+  Id bigint [pk, increment]
+  ScheduleId bigint [not null, ref: > Defense.Schedules.Id]
+  CommissionId int [not null, ref: > Defense.Commissions.Id]
+  SessionDate datetime2
+  DocumentPath nvarchar(1000)
+  IsFinalized bit [default: 0]
+  FinalizedBy int
+  FinalizedAt datetime2
+  
+  // Audit & Soft Delete
+  CreatedAt datetime2 [not null]
+  CreatedBy int [not null]
+  LastModifiedAt datetime2
+  LastModifiedBy int
+  IsDeleted bit [not null, default: 0]
+  DeletedAt datetime2
+  DeletedBy int
+}

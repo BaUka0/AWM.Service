@@ -1,0 +1,6 @@
+@AWM.Service.WebAPI_HostAddress = http://localhost:5102
+
+GET {{AWM.Service.WebAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
