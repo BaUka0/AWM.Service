@@ -51,7 +51,7 @@ public class UserRoleAssignmentConfiguration : AuditableEntityConfiguration<User
             .HasConstraintName("FK_URA_User")
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasOne<Role>()
+        builder.HasOne(e => e.Role)
             .WithMany()
             .HasForeignKey(e => e.RoleId)
             .HasConstraintName("FK_URA_Role")

@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using AWM.Service.WebAPI.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -98,6 +99,10 @@ builder.Services.AddScoped<AWM.Service.Domain.Common.ICurrentUserProvider, AWM.S
 // Add Authentication Services
 builder.Services.AddScoped<AWM.Service.Domain.Auth.Interfaces.IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<AWM.Service.Domain.Auth.Interfaces.IJwtTokenService, JwtTokenService>();
+
+// Add Context-Aware RBAC Authorization
+builder.Services.AddContextAwareAuthorization();
+builder.Services.AddPermissionPolicies();
 
 var app = builder.Build();
 
