@@ -53,3 +53,4 @@ public interface IStaffRepository
     Task AddAsync(Staff staff, CancellationToken cancellationToken = default);
     Task UpdateAsync(Staff staff, CancellationToken cancellationToken = default);
 }
+
