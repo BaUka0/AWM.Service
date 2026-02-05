@@ -29,6 +29,7 @@ public class UserRoleAssignment : Entity<long>, IAuditable
     public int? AssignedBy => CreatedBy;
 
     // Navigation property for authorization
+    
     /// <summary>
     /// Navigation property to the Role entity.
     /// Used for eager loading in authorization queries.

@@ -27,6 +27,9 @@ public class InstituteConfiguration : SoftDeletableEntityConfiguration<Institute
             .IsRequired()
             .HasMaxLength(255);
 
+        builder.Property(e => e.Code)
+            .HasMaxLength(50);
+
         // Foreign key to University
         builder.HasOne<University>()
             .WithMany(u => u.Institutes)
