@@ -10,5 +10,4 @@ public sealed record CreateInstituteCommand : IRequest<Result<int>>
 {
     public int UniversityId { get; init; }
     public string Name { get; init; } = null!;
-    public int CreatedBy { get; init; }
 }

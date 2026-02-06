@@ -1,5 +1,6 @@
 namespace AWM.Service.Application.Features.Org.Commands.Institutes.UpdateInstitute;
 
+using AWM.Service.Domain.Common;
 using AWM.Service.Domain.Repositories;
 using KDS.Primitives.FluentResult;
 using MediatR;
@@ -10,10 +11,14 @@ using MediatR;
 public sealed class UpdateInstituteCommandHandler : IRequestHandler<UpdateInstituteCommand, Result>
 {
     private readonly IUniversityRepository _universityRepository;
+    private readonly ICurrentUserProvider _currentUserProvider;
 
-    public UpdateInstituteCommandHandler(IUniversityRepository universityRepository)
+    public UpdateInstituteCommandHandler(
+        IUniversityRepository universityRepository,
+        ICurrentUserProvider currentUserProvider)
     {
         _universityRepository = universityRepository ?? throw new ArgumentNullException(nameof(universityRepository));
+        _currentUserProvider = currentUserProvider ?? throw new ArgumentNullException(nameof(currentUserProvider));
     }
 
     public async Task<Result> Handle(UpdateInstituteCommand request, CancellationToken cancellationToken)
@@ -26,8 +31,8 @@ public sealed class UpdateInstituteCommandHandler : IRequestHandler<UpdateInstit
             }
 
             var universities = await _universityRepository.GetAllAsync(cancellationToken);
-            
-            var university = universities.FirstOrDefault(u => 
+
+            var university = universities.FirstOrDefault(u =>
                 u.Institutes.Any(i => i.Id == request.InstituteId && !i.IsDeleted));
 
             if (university is null)
@@ -36,13 +41,14 @@ public sealed class UpdateInstituteCommandHandler : IRequestHandler<UpdateInstit
             }
 
             var institute = university.Institutes.FirstOrDefault(i => i.Id == request.InstituteId);
-            
+
             if (institute is null || institute.IsDeleted)
             {
                 return Result.Failure(new Error("NotFound.Institute", $"Institute with ID {request.InstituteId} not found or has been deleted."));
             }
 
-            institute.UpdateName(request.Name, request.ModifiedBy);
+            var userId = _currentUserProvider.UserId ?? throw new InvalidOperationException("User ID is not available.");
+            institute.UpdateName(request.Name, userId);
 
             await _universityRepository.UpdateAsync(university, cancellationToken);
 

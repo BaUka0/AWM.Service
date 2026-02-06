@@ -19,9 +19,16 @@ public class PermissionRequirement : IAuthorizationRequirement
     /// </summary>
     public bool RequireDepartmentContext { get; }
 
-    public PermissionRequirement(Permission permission, bool requireDepartmentContext = false)
+    /// <summary>
+    /// If true, the permission must be valid for the institute context from the request.
+    /// If false, only global permissions are checked.
+    /// </summary>
+    public bool RequireInstituteContext { get; }
+
+    public PermissionRequirement(Permission permission, bool requireDepartmentContext = false, bool requireInstituteContext = false)
     {
         Permission = permission;
         RequireDepartmentContext = requireDepartmentContext;
+        RequireInstituteContext = requireInstituteContext;
     }
 }

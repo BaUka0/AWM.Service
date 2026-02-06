@@ -22,6 +22,12 @@ public static class AuthorizationConstants
     public const string DepartmentPermissionClaimType = "dept_permission";
 
     /// <summary>
+    /// Claim type for institute-scoped permissions.
+    /// Format: "permission_name:institute_id"
+    /// </summary>
+    public const string InstitutePermissionClaimType = "inst_permission";
+
+    /// <summary>
     /// Claim type for role names.
     /// </summary>
     public const string RoleClaimType = "role";

@@ -37,3 +37,21 @@ public class RequireDepartmentPermissionAttribute : AuthorizeAttribute
     {
     }
 }
+
+/// <summary>
+/// Attribute for institute-context permission authorization.
+/// The institute ID must be present in the route as 'instituteId'.
+/// Usage: [RequireInstitutePermission(Permission.Institute_Manage)]
+/// </summary>
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = true, Inherited = true)]
+public class RequireInstitutePermissionAttribute : AuthorizeAttribute
+{
+    /// <summary>
+    /// Creates a new authorization attribute requiring the permission in institute context.
+    /// </summary>
+    /// <param name="permission">The permission required within the institute.</param>
+    public RequireInstitutePermissionAttribute(Permission permission)
+        : base(policy: $"{AuthorizationConstants.PermissionPolicyPrefix}{permission}:Institute")
+    {
+    }
+}

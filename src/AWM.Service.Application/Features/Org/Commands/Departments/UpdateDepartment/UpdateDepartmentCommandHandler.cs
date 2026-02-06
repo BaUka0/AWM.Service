@@ -1,5 +1,6 @@
 namespace AWM.Service.Application.Features.Org.Commands.Departments.UpdateDepartment;
 
+using AWM.Service.Domain.Common;
 using AWM.Service.Domain.Repositories;
 using KDS.Primitives.FluentResult;
 using MediatR;
@@ -10,10 +11,14 @@ using MediatR;
 public sealed class UpdateDepartmentCommandHandler : IRequestHandler<UpdateDepartmentCommand, Result>
 {
     private readonly IUniversityRepository _universityRepository;
+    private readonly ICurrentUserProvider _currentUserProvider;
 
-    public UpdateDepartmentCommandHandler(IUniversityRepository universityRepository)
+    public UpdateDepartmentCommandHandler(
+        IUniversityRepository universityRepository,
+        ICurrentUserProvider currentUserProvider)
     {
         _universityRepository = universityRepository ?? throw new ArgumentNullException(nameof(universityRepository));
+        _currentUserProvider = currentUserProvider ?? throw new ArgumentNullException(nameof(currentUserProvider));
     }
 
     public async Task<Result> Handle(UpdateDepartmentCommand request, CancellationToken cancellationToken)
@@ -26,8 +31,8 @@ public sealed class UpdateDepartmentCommandHandler : IRequestHandler<UpdateDepar
             }
 
             var universities = await _universityRepository.GetAllAsync(cancellationToken);
-            
-            var university = universities.FirstOrDefault(u => 
+
+            var university = universities.FirstOrDefault(u =>
                 u.Institutes.Any(i => i.Departments.Any(d => d.Id == request.DepartmentId && !d.IsDeleted)));
 
             if (university is null)
@@ -35,7 +40,7 @@ public sealed class UpdateDepartmentCommandHandler : IRequestHandler<UpdateDepar
                 return Result.Failure(new Error("NotFound.Department", $"Department with ID {request.DepartmentId} not found."));
             }
 
-            var institute = university.Institutes.FirstOrDefault(i => 
+            var institute = university.Institutes.FirstOrDefault(i =>
                 i.Departments.Any(d => d.Id == request.DepartmentId));
 
             if (institute is null)
@@ -44,17 +49,18 @@ public sealed class UpdateDepartmentCommandHandler : IRequestHandler<UpdateDepar
             }
 
             var department = institute.Departments.FirstOrDefault(d => d.Id == request.DepartmentId);
-            
+
             if (department is null || department.IsDeleted)
             {
                 return Result.Failure(new Error("NotFound.Department", $"Department with ID {request.DepartmentId} not found or has been deleted."));
             }
 
-            department.UpdateName(request.Name, request.ModifiedBy);
-            
+            var userId = _currentUserProvider.UserId ?? throw new InvalidOperationException("User ID is not available.");
+            department.UpdateName(request.Name, userId);
+
             if (request.Code != null)
             {
-                department.UpdateCode(request.Code, request.ModifiedBy);
+                department.UpdateCode(request.Code, userId);
             }
 
             await _universityRepository.UpdateAsync(university, cancellationToken);

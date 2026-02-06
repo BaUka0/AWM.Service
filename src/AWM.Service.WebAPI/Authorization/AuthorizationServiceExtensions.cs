@@ -18,16 +18,16 @@ public static class AuthorizationServiceExtensions
     {
         // Register permission service
         services.AddScoped<IPermissionService, PermissionService>();
-        
+
         // Register authorization context
         services.AddScoped<IAuthorizationContext, HttpAuthorizationContext>();
-        
+
         // Register claims transformation
         services.AddScoped<IClaimsTransformation, ContextClaimsTransformation>();
-        
+
         // Register authorization handler
         services.AddScoped<IAuthorizationHandler, PermissionHandler>();
-        
+
         return services;
     }
 
@@ -54,6 +54,14 @@ public static class AuthorizationServiceExtensions
                 {
                     policy.RequireAuthenticatedUser();
                     policy.Requirements.Add(new PermissionRequirement(permission, requireDepartmentContext: true));
+                });
+
+                // Create institute-context policy
+                var instPolicyName = $"{AuthorizationConstants.PermissionPolicyPrefix}{permission}:Institute";
+                options.AddPolicy(instPolicyName, policy =>
+                {
+                    policy.RequireAuthenticatedUser();
+                    policy.Requirements.Add(new PermissionRequirement(permission, requireInstituteContext: true));
                 });
             }
 

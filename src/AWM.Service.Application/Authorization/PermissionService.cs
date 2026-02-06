@@ -2,6 +2,7 @@ namespace AWM.Service.Application.Authorization;
 
 using AWM.Service.Domain.Auth.Enums;
 using AWM.Service.Domain.Auth.Interfaces;
+using AWM.Service.Domain.Repositories;
 
 /// <summary>
 /// Service that maps roles to their granted permissions.
@@ -9,6 +10,12 @@ using AWM.Service.Domain.Auth.Interfaces;
 /// </summary>
 public class PermissionService : IPermissionService
 {
+    private readonly IUserRepository _userRepository;
+
+    public PermissionService(IUserRepository userRepository)
+    {
+        _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
+    }
     /// <summary>
     /// Static mapping of roles to their permissions.
     /// This is the central definition of what each role can do.
@@ -297,26 +304,56 @@ public class PermissionService : IPermissionService
     }
 
     /// <inheritdoc />
-    public Task<IReadOnlySet<Permission>> GetUserPermissionsAsync(
+    public async Task<IReadOnlySet<Permission>> GetUserPermissionsAsync(
         int userId,
         CancellationToken cancellationToken = default)
     {
-        // Note: This method requires user repository access.
-        // In real implementation, inject IUserRepository and load user's role assignments.
-        // For now, return empty set as placeholder.
-        throw new NotImplementedException(
-            "This method should be called through the infrastructure layer with repository access.");
+        var user = await _userRepository.GetWithRoleAssignmentsAsync(userId, cancellationToken);
+
+        if (user == null)
+        {
+            return new HashSet<Permission>();
+        }
+
+        var permissions = new HashSet<Permission>();
+
+        foreach (var assignment in user.RoleAssignments.Where(ra => ra.IsCurrentlyValid()))
+        {
+            if (assignment.Role != null)
+            {
+                var rolePermissions = GetPermissionsForRole(assignment.Role.SystemName);
+                permissions.UnionWith(rolePermissions);
+            }
+        }
+
+        return permissions;
     }
 
     /// <inheritdoc />
-    public Task<IReadOnlySet<Permission>> GetUserPermissionsInContextAsync(
+    public async Task<IReadOnlySet<Permission>> GetUserPermissionsInContextAsync(
         int userId,
         int? departmentId,
         int? academicYearId,
         CancellationToken cancellationToken = default)
     {
-        // Note: This method requires user repository access.
-        throw new NotImplementedException(
-            "This method should be called through the infrastructure layer with repository access.");
+        var user = await _userRepository.GetWithRoleAssignmentsAsync(userId, cancellationToken);
+
+        if (user == null)
+        {
+            return new HashSet<Permission>();
+        }
+
+        var permissions = new HashSet<Permission>();
+
+        foreach (var assignment in user.RoleAssignments.Where(ra => ra.AppliesToContext(departmentId, academicYearId)))
+        {
+            if (assignment.Role != null)
+            {
+                var rolePermissions = GetPermissionsForRole(assignment.Role.SystemName);
+                permissions.UnionWith(rolePermissions);
+            }
+        }
+
+        return permissions;
     }
 }

@@ -31,7 +31,7 @@ public class PermissionHandler : AuthorizationHandler<PermissionRequirement>
             {
                 // Get department ID from route or query
                 var departmentId = GetDepartmentIdFromRequest();
-                
+
                 if (departmentId.HasValue)
                 {
                     // Check if user has permission in this specific department
@@ -41,6 +41,26 @@ public class PermissionHandler : AuthorizationHandler<PermissionRequirement>
                         context.Succeed(requirement);
                     }
                     // Also check global permission (applies to all departments)
+                    else if (context.User.HasClaim(AuthorizationConstants.GlobalPermissionClaimType, permissionClaimValue))
+                    {
+                        context.Succeed(requirement);
+                    }
+                }
+            }
+            else if (requirement.RequireInstituteContext)
+            {
+                // Get institute ID from route or query
+                var instituteId = GetInstituteIdFromRequest();
+
+                if (instituteId.HasValue)
+                {
+                    // Check if user has permission in this specific institute
+                    var institutePermissionClaim = $"{permissionClaimValue}:{instituteId}";
+                    if (context.User.HasClaim(AuthorizationConstants.InstitutePermissionClaimType, institutePermissionClaim))
+                    {
+                        context.Succeed(requirement);
+                    }
+                    // Also check global permission (applies to all institutes)
                     else if (context.User.HasClaim(AuthorizationConstants.GlobalPermissionClaimType, permissionClaimValue))
                     {
                         context.Succeed(requirement);
@@ -75,6 +95,29 @@ public class PermissionHandler : AuthorizationHandler<PermissionRequirement>
             int.TryParse(queryValue.FirstOrDefault(), out var queryDeptId))
         {
             return queryDeptId;
+        }
+
+        return null;
+    }
+
+    private int? GetInstituteIdFromRequest()
+    {
+        var httpContext = _httpContextAccessor.HttpContext;
+        if (httpContext == null)
+            return null;
+
+        // Try to get from route
+        if (httpContext.Request.RouteValues.TryGetValue("instituteId", out var routeValue) &&
+            int.TryParse(routeValue?.ToString(), out var instId))
+        {
+            return instId;
+        }
+
+        // Try to get from query string
+        if (httpContext.Request.Query.TryGetValue("instituteId", out var queryValue) &&
+            int.TryParse(queryValue.FirstOrDefault(), out var queryInstId))
+        {
+            return queryInstId;
         }
 
         return null;
