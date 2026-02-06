@@ -74,4 +74,14 @@ public sealed class UserRepository : IUserRepository
         _context.Users.Update(user);
         return Task.CompletedTask;
     }
+
+    /// <inheritdoc />
+    public async Task<User?> GetWithRoleAssignmentsAsync(int id, CancellationToken cancellationToken = default)
+    {
+        return await _context.Users
+            .Include(u => u.RoleAssignments)
+                .ThenInclude(ra => ra.Role)
+            .Where(u => !u.IsDeleted && u.IsActive)
+            .FirstOrDefaultAsync(u => u.Id == id, cancellationToken);
+    }
 }
