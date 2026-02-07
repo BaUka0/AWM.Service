@@ -1,4 +1,5 @@
 using AWM.Service.Application.Features.Org.Commands.Departments.CreateDepartment;
+using AWM.Service.Application.Features.Org.Commands.Departments.DeleteDepartment;
 using AWM.Service.Application.Features.Org.Commands.Departments.UpdateDepartment;
 using AWM.Service.Application.Features.Org.Queries.Departments.GetDepartmentsByInstitute;
 using AWM.Service.Domain.Auth.Enums;
@@ -128,10 +129,21 @@ public class DepartmentsController : BaseController
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public IActionResult Delete(int departmentId)
+    public async Task<IActionResult> Delete(int departmentId)
     {
-        // TODO: Implement DeleteDepartmentCommand when available
-        return StatusCode(StatusCodes.Status501NotImplemented, new { Message = "Delete department not yet implemented" });
+        var command = new DeleteDepartmentCommand
+        {
+            DepartmentId = departmentId
+        };
+
+        var result = await _sender.Send(command);
+
+        if (result.IsFailed)
+        {
+            return HandleResultError(result.Error);
+        }
+
+        return NoContent();
     }
 }
 

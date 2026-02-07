@@ -2,13 +2,14 @@ namespace AWM.Service.Application.Features.Org.Queries.Institutes.GetAllInstitut
 
 using AWM.Service.Application.Features.Org.DTOs;
 using AWM.Service.Domain.Repositories;
+using AWM.Service.Domain.Errors;
 using KDS.Primitives.FluentResult;
 using MediatR;
 
 /// <summary>
 /// Handler for retrieving all institutes for a specific university.
 /// </summary>
-public sealed class GetAllInstitutesQueryHandler 
+public sealed class GetAllInstitutesQueryHandler
     : IRequestHandler<GetAllInstitutesQuery, Result<IReadOnlyList<InstituteDto>>>
 {
     private readonly IUniversityRepository _universityRepository;
@@ -19,7 +20,7 @@ public sealed class GetAllInstitutesQueryHandler
     }
 
     public async Task<Result<IReadOnlyList<InstituteDto>>> Handle(
-        GetAllInstitutesQuery request, 
+        GetAllInstitutesQuery request,
         CancellationToken cancellationToken)
     {
         try
@@ -29,7 +30,7 @@ public sealed class GetAllInstitutesQueryHandler
             if (university is null)
             {
                 return Result.Failure<IReadOnlyList<InstituteDto>>(
-                    new Error("NotFound.University", $"University with ID {request.UniversityId} not found."));
+                    new Error(DomainErrors.Org.University.NotFound, $"University with ID {request.UniversityId} not found."));
             }
 
             var instituteDtos = university.Institutes
@@ -42,7 +43,7 @@ public sealed class GetAllInstitutesQueryHandler
         catch (Exception ex)
         {
             return Result.Failure<IReadOnlyList<InstituteDto>>(
-                new Error("InternalError", $"An error occurred while retrieving institutes: {ex.Message}"));
+                new Error(DomainErrors.General.InternalError, $"An error occurred while retrieving institutes: {ex.Message}"));
         }
     }
 
@@ -57,7 +58,7 @@ public sealed class GetAllInstitutesQueryHandler
             CreatedBy = institute.CreatedBy,
             LastModifiedAt = institute.LastModifiedAt,
             LastModifiedBy = institute.LastModifiedBy,
-            Departments = includeDepartments 
+            Departments = includeDepartments
                 ? institute.Departments
                     .Where(d => !d.IsDeleted)
                     .Select(d => new DepartmentDto

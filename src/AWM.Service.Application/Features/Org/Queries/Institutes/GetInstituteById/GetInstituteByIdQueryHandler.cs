@@ -2,13 +2,14 @@ namespace AWM.Service.Application.Features.Org.Queries.Institutes.GetInstituteBy
 
 using AWM.Service.Application.Features.Org.DTOs;
 using AWM.Service.Domain.Repositories;
+using AWM.Service.Domain.Errors;
 using KDS.Primitives.FluentResult;
 using MediatR;
 
 /// <summary>
 /// Handler for retrieving a specific institute by ID.
 /// </summary>
-public sealed class GetInstituteByIdQueryHandler 
+public sealed class GetInstituteByIdQueryHandler
     : IRequestHandler<GetInstituteByIdQuery, Result<InstituteDto>>
 {
     private readonly IUniversityRepository _universityRepository;
@@ -19,20 +20,20 @@ public sealed class GetInstituteByIdQueryHandler
     }
 
     public async Task<Result<InstituteDto>> Handle(
-        GetInstituteByIdQuery request, 
+        GetInstituteByIdQuery request,
         CancellationToken cancellationToken)
     {
         try
         {
             var universities = await _universityRepository.GetAllAsync(cancellationToken);
-            
-            var university = universities.FirstOrDefault(u => 
+
+            var university = universities.FirstOrDefault(u =>
                 u.Institutes.Any(i => i.Id == request.InstituteId && !i.IsDeleted));
 
             if (university is null)
             {
                 return Result.Failure<InstituteDto>(
-                    new Error("NotFound.Institute", $"Institute with ID {request.InstituteId} not found."));
+                    new Error(DomainErrors.Org.Institute.NotFound, $"Institute with ID {request.InstituteId} not found."));
             }
 
             var institute = university.Institutes.FirstOrDefault(i => i.Id == request.InstituteId);
@@ -40,7 +41,7 @@ public sealed class GetInstituteByIdQueryHandler
             if (institute is null || institute.IsDeleted)
             {
                 return Result.Failure<InstituteDto>(
-                    new Error("NotFound.Institute", $"Institute with ID {request.InstituteId} not found or has been deleted."));
+                    new Error(DomainErrors.Org.Institute.NotFound, $"Institute with ID {request.InstituteId} not found or has been deleted."));
             }
 
             var instituteDto = MapToDto(institute, request.IncludeDepartments);
@@ -50,7 +51,7 @@ public sealed class GetInstituteByIdQueryHandler
         catch (Exception ex)
         {
             return Result.Failure<InstituteDto>(
-                new Error("InternalError", $"An error occurred while retrieving the institute: {ex.Message}"));
+                new Error(DomainErrors.General.InternalError, $"An error occurred while retrieving the institute: {ex.Message}"));
         }
     }
 
@@ -65,7 +66,7 @@ public sealed class GetInstituteByIdQueryHandler
             CreatedBy = institute.CreatedBy,
             LastModifiedAt = institute.LastModifiedAt,
             LastModifiedBy = institute.LastModifiedBy,
-            Departments = includeDepartments 
+            Departments = includeDepartments
                 ? institute.Departments
                     .Where(d => !d.IsDeleted)
                     .Select(d => new DepartmentDto

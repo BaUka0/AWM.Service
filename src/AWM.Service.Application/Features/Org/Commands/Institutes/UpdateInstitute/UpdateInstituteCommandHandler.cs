@@ -2,6 +2,7 @@ namespace AWM.Service.Application.Features.Org.Commands.Institutes.UpdateInstitu
 
 using AWM.Service.Domain.Common;
 using AWM.Service.Domain.Repositories;
+using AWM.Service.Domain.Errors;
 using KDS.Primitives.FluentResult;
 using MediatR;
 
@@ -27,7 +28,7 @@ public sealed class UpdateInstituteCommandHandler : IRequestHandler<UpdateInstit
         {
             if (string.IsNullOrWhiteSpace(request.Name))
             {
-                return Result.Failure(new Error("Validation.Institute.NameRequired", "Institute name is required."));
+                return Result.Failure(new Error(DomainErrors.Org.Institute.NameRequired, "Institute name is required."));
             }
 
             var universities = await _universityRepository.GetAllAsync(cancellationToken);
@@ -37,14 +38,14 @@ public sealed class UpdateInstituteCommandHandler : IRequestHandler<UpdateInstit
 
             if (university is null)
             {
-                return Result.Failure(new Error("NotFound.Institute", $"Institute with ID {request.InstituteId} not found."));
+                return Result.Failure(new Error(DomainErrors.Org.Institute.NotFound, $"Institute with ID {request.InstituteId} not found."));
             }
 
             var institute = university.Institutes.FirstOrDefault(i => i.Id == request.InstituteId);
 
             if (institute is null || institute.IsDeleted)
             {
-                return Result.Failure(new Error("NotFound.Institute", $"Institute with ID {request.InstituteId} not found or has been deleted."));
+                return Result.Failure(new Error(DomainErrors.Org.Institute.NotFound, $"Institute with ID {request.InstituteId} not found or has been deleted."));
             }
 
             var userId = _currentUserProvider.UserId ?? throw new InvalidOperationException("User ID is not available.");
@@ -56,11 +57,11 @@ public sealed class UpdateInstituteCommandHandler : IRequestHandler<UpdateInstit
         }
         catch (ArgumentException argEx)
         {
-            return Result.Failure(new Error("Validation.Institute", argEx.Message));
+            return Result.Failure(new Error(DomainErrors.Org.Institute.GenericError, argEx.Message));
         }
         catch (Exception ex)
         {
-            return Result.Failure(new Error("InternalError", $"An error occurred while updating the Institute: {ex.Message}"));
+            return Result.Failure(new Error(DomainErrors.General.InternalError, $"An error occurred while updating the Institute: {ex.Message}"));
         }
     }
 }

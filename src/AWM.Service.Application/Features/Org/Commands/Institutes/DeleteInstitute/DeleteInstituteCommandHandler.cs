@@ -2,6 +2,7 @@ namespace AWM.Service.Application.Features.Org.Commands.Institutes.DeleteInstitu
 
 using AWM.Service.Domain.Common;
 using AWM.Service.Domain.Repositories;
+using AWM.Service.Domain.Errors;
 using KDS.Primitives.FluentResult;
 using MediatR;
 
@@ -32,20 +33,20 @@ public sealed class DeleteInstituteCommandHandler : IRequestHandler<DeleteInstit
 
             if (university is null)
             {
-                return Result.Failure(new Error("NotFound.Institute", $"Institute with ID {request.InstituteId} not found."));
+                return Result.Failure(new Error(DomainErrors.Org.Institute.NotFound, $"Institute with ID {request.InstituteId} not found."));
             }
 
             var institute = university.Institutes.FirstOrDefault(i => i.Id == request.InstituteId);
 
             if (institute is null || institute.IsDeleted)
             {
-                return Result.Failure(new Error("NotFound.Institute", $"Institute with ID {request.InstituteId} not found or already deleted."));
+                return Result.Failure(new Error(DomainErrors.Org.Institute.NotFound, $"Institute with ID {request.InstituteId} not found or already deleted."));
             }
 
             if (institute.Departments.Any(d => !d.IsDeleted))
             {
                 return Result.Failure(new Error(
-                    "BusinessRule.Institute.HasActiveDepartments",
+                    DomainErrors.Org.Institute.HasActiveDepartments,
                     "Cannot delete Institute with active Departments. Please delete all Departments first."));
             }
 
@@ -58,7 +59,7 @@ public sealed class DeleteInstituteCommandHandler : IRequestHandler<DeleteInstit
         }
         catch (Exception ex)
         {
-            return Result.Failure(new Error("InternalError", $"An error occurred while deleting the Institute: {ex.Message}"));
+            return Result.Failure(new Error(DomainErrors.General.InternalError, $"An error occurred while deleting the Institute: {ex.Message}"));
         }
     }
 }

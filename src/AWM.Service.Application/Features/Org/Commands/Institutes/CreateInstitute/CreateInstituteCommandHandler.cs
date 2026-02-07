@@ -2,6 +2,7 @@ namespace AWM.Service.Application.Features.Org.Commands.Institutes.CreateInstitu
 
 using AWM.Service.Domain.Common;
 using AWM.Service.Domain.Repositories;
+using AWM.Service.Domain.Errors;
 using KDS.Primitives.FluentResult;
 using MediatR;
 
@@ -27,14 +28,14 @@ public sealed class CreateInstituteCommandHandler : IRequestHandler<CreateInstit
         {
             if (string.IsNullOrWhiteSpace(request.Name))
             {
-                return Result.Failure<int>(new Error("Validation.Institute.NameRequired", "Institute name is required."));
+                return Result.Failure<int>(new Error(DomainErrors.Org.Institute.NameRequired, "Institute name is required."));
             }
 
             var university = await _universityRepository.GetByIdAsync(request.UniversityId, cancellationToken);
 
             if (university is null)
             {
-                return Result.Failure<int>(new Error("NotFound.University", $"University with ID {request.UniversityId} not found."));
+                return Result.Failure<int>(new Error(DomainErrors.Org.University.NotFound, $"University with ID {request.UniversityId} not found."));
             }
 
             var userId = _currentUserProvider.UserId ?? throw new InvalidOperationException("User ID is not available.");
@@ -46,11 +47,11 @@ public sealed class CreateInstituteCommandHandler : IRequestHandler<CreateInstit
         }
         catch (ArgumentException argEx)
         {
-            return Result.Failure<int>(new Error("Validation.Institute", argEx.Message));
+            return Result.Failure<int>(new Error(DomainErrors.Org.Institute.GenericError, argEx.Message));
         }
         catch (Exception ex)
         {
-            return Result.Failure<int>(new Error("InternalError", $"An error occurred while creating the Institute: {ex.Message}"));
+            return Result.Failure<int>(new Error(DomainErrors.General.InternalError, $"An error occurred while creating the Institute: {ex.Message}"));
         }
     }
 }
