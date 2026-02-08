@@ -43,6 +43,47 @@ public static class DomainErrors
         }
     }
 
+    public static class Edu
+    {
+        public static class Student
+        {
+            public const string NotFound = $"{ErrorCodes.NotFound}.Student";
+            public const string AlreadyExists = $"{ErrorCodes.Conflict}.Student.AlreadyExists";
+            public const string GenericError = $"{ErrorCodes.Validation}.Student";
+        }
+
+        public static class Staff
+        {
+            public const string NotFound = $"{ErrorCodes.NotFound}.Staff";
+            public const string AlreadyExists = $"{ErrorCodes.Conflict}.Staff.AlreadyExists";
+            public const string GenericError = $"{ErrorCodes.Validation}.Staff";
+        }
+    }
+
+    public static class Common
+    {
+        public static class Period
+        {
+            public const string NotFound = $"{ErrorCodes.NotFound}.Period";
+            public const string OverlappingPeriod = $"{ErrorCodes.BusinessRule}.Period.Overlapping";
+            public const string InvalidDates = $"{ErrorCodes.Validation}.Period.InvalidDates";
+            public const string GenericError = $"{ErrorCodes.Validation}.Period";
+        }
+
+        public static class AcademicYear
+        {
+            public const string NotFound = $"{ErrorCodes.NotFound}.AcademicYear";
+        }
+    }
+
+    public static class Workflow
+    {
+        public const string InvalidTransition = $"{ErrorCodes.BusinessRule}.Workflow.InvalidTransition";
+        public const string StateNotFound = $"{ErrorCodes.NotFound}.Workflow.State";
+        public const string EntityNotFound = $"{ErrorCodes.NotFound}.Workflow.Entity";
+        public const string GenericError = $"{ErrorCodes.Validation}.Workflow";
+    }
+
     public static class General
     {
         public const string InternalError = ErrorCodes.InternalError;
