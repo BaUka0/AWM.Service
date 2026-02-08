@@ -38,8 +38,12 @@ public sealed class CreateInstituteCommandHandler : IRequestHandler<CreateInstit
                 return Result.Failure<int>(new Error(DomainErrors.Org.University.NotFound, $"University with ID {request.UniversityId} not found."));
             }
 
-            var userId = _currentUserProvider.UserId ?? throw new InvalidOperationException("User ID is not available.");
-            var institute = university.AddInstitute(request.Name, userId);
+            var userId = _currentUserProvider.UserId;
+            if (!userId.HasValue)
+            {
+                return Result.Failure<int>(new Error(DomainErrors.Auth.InvalidCredentials, "User ID is not available."));
+            }
+            var institute = university.AddInstitute(request.Name, userId.Value);
 
             await _universityRepository.UpdateAsync(university, cancellationToken);
 

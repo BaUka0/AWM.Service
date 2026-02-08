@@ -48,8 +48,12 @@ public sealed class CreateDepartmentCommandHandler : IRequestHandler<CreateDepar
                 return Result.Failure<int>(new Error(DomainErrors.Org.Institute.NotFound, $"Institute with ID {request.InstituteId} not found or has been deleted."));
             }
 
-            var userId = _currentUserProvider.UserId ?? throw new InvalidOperationException("User ID is not available.");
-            var department = institute.AddDepartment(request.Name, userId, request.Code);
+            var userId = _currentUserProvider.UserId;
+            if (!userId.HasValue)
+            {
+                return Result.Failure<int>(new Error(DomainErrors.Auth.InvalidCredentials, "User ID is not available."));
+            }
+            var department = institute.AddDepartment(request.Name, userId.Value, request.Code);
 
             await _universityRepository.UpdateAsync(university, cancellationToken);
 

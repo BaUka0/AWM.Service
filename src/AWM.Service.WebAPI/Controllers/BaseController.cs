@@ -11,7 +11,7 @@ namespace AWM.Service.WebAPI.Controllers
             return error.Code switch
             {
                 var code when code.StartsWith("NotFound") => NotFound(new { error.Code, error.Message }),
-                var code when code.StartsWith("Validation") => BadRequest(new { error.Code, error.Message }),
+                var code when code.StartsWith("ValidationError") => BadRequest(new { error.Code, error.Message }),
                 var code when code.StartsWith("BusinessRule") || code.StartsWith("Conflict") => Conflict(new { error.Code, error.Message }),
                 var code when code.StartsWith("Unauthorized") => Unauthorized(new { error.Code, error.Message }),
                 var code when code.StartsWith("Forbidden") => Forbid(),

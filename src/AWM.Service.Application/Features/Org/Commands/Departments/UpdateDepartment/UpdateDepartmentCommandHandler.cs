@@ -56,12 +56,16 @@ public sealed class UpdateDepartmentCommandHandler : IRequestHandler<UpdateDepar
                 return Result.Failure(new Error(DomainErrors.Org.Department.NotFound, $"Department with ID {request.DepartmentId} not found or has been deleted."));
             }
 
-            var userId = _currentUserProvider.UserId ?? throw new InvalidOperationException("User ID is not available.");
-            department.UpdateName(request.Name, userId);
+            var userId = _currentUserProvider.UserId;
+            if (!userId.HasValue)
+            {
+                return Result.Failure(new Error(DomainErrors.Auth.InvalidCredentials, "User ID is not available."));
+            }
+            department.UpdateName(request.Name, userId.Value);
 
             if (request.Code != null)
             {
-                department.UpdateCode(request.Code, userId);
+                department.UpdateCode(request.Code, userId.Value);
             }
 
             await _universityRepository.UpdateAsync(university, cancellationToken);

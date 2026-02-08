@@ -48,8 +48,12 @@ public sealed class UpdateInstituteCommandHandler : IRequestHandler<UpdateInstit
                 return Result.Failure(new Error(DomainErrors.Org.Institute.NotFound, $"Institute with ID {request.InstituteId} not found or has been deleted."));
             }
 
-            var userId = _currentUserProvider.UserId ?? throw new InvalidOperationException("User ID is not available.");
-            institute.UpdateName(request.Name, userId);
+            var userId = _currentUserProvider.UserId;
+            if (!userId.HasValue)
+            {
+                return Result.Failure(new Error(DomainErrors.Auth.InvalidCredentials, "User ID is not available."));
+            }
+            institute.UpdateName(request.Name, userId.Value);
 
             await _universityRepository.UpdateAsync(university, cancellationToken);
 

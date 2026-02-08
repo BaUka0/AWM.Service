@@ -50,8 +50,12 @@ public sealed class DeleteInstituteCommandHandler : IRequestHandler<DeleteInstit
                     "Cannot delete Institute with active Departments. Please delete all Departments first."));
             }
 
-            var userId = _currentUserProvider.UserId ?? throw new InvalidOperationException("User ID is not available.");
-            institute.Delete(userId);
+            var userId = _currentUserProvider.UserId;
+            if (!userId.HasValue)
+            {
+                return Result.Failure(new Error(DomainErrors.Auth.InvalidCredentials, "User ID is not available."));
+            }
+            institute.Delete(userId.Value);
 
             await _universityRepository.UpdateAsync(university, cancellationToken);
 

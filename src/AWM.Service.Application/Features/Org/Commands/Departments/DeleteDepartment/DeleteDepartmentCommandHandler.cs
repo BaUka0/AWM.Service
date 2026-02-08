@@ -94,8 +94,12 @@ public sealed class DeleteDepartmentCommandHandler : IRequestHandler<DeleteDepar
                 }
             }
 
-            var userId = _currentUserProvider.UserId ?? throw new InvalidOperationException("User ID is not available.");
-            department.Delete(userId);
+            var userId = _currentUserProvider.UserId;
+            if (!userId.HasValue)
+            {
+                return Result.Failure(new Error(DomainErrors.Auth.InvalidCredentials, "User ID is not available."));
+            }
+            department.Delete(userId.Value);
 
             await _universityRepository.UpdateAsync(university, cancellationToken);
 
