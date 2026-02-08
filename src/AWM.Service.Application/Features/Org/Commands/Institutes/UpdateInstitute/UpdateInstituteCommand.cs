@@ -10,5 +10,4 @@ public sealed record UpdateInstituteCommand : IRequest<Result>
 {
     public int InstituteId { get; init; }
     public string Name { get; init; } = null!;
-    public int ModifiedBy { get; init; }
 }

@@ -3,18 +3,22 @@ using AWM.Service.Application.Features.Org.Commands.Institutes.DeleteInstitute;
 using AWM.Service.Application.Features.Org.Commands.Institutes.UpdateInstitute;
 using AWM.Service.Application.Features.Org.Queries.Institutes.GetAllInstitutes;
 using AWM.Service.Application.Features.Org.Queries.Institutes.GetInstituteById;
+using AWM.Service.Domain.Auth.Enums;
+using AWM.Service.WebAPI.Authorization;
+using AWM.Service.WebAPI.Common.Contracts.Requests.Institutes;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
-namespace AWM.Service.WebAPI.Controllers.v1.institutes;
+namespace AWM.Service.WebAPI.Controllers.v1;
 
 /// <summary>
 /// Controller for managing Institutes.
 /// </summary>
+[ApiVersion("1.0")]
+[Route("api/v{version:apiVersion}/[controller]")]
 [ApiController]
-[Route("api/v1/[controller]")]
 [Produces("application/json")]
-public class InstitutesController : ControllerBase
+public class InstitutesController : BaseController
 {
     private readonly ISender _sender;
 
@@ -45,7 +49,7 @@ public class InstitutesController : ControllerBase
 
         if (result.IsFailed)
         {
-            return HandleError(result.Error);
+            return HandleResultError(result.Error);
         }
 
         return Ok(result.Value);
@@ -54,18 +58,19 @@ public class InstitutesController : ControllerBase
     /// <summary>
     /// Get a specific institute by ID.
     /// </summary>
-    /// <param name="id">Institute ID</param>
+    /// <param name="instituteId">Institute ID</param>
     /// <param name="includeDepartments">Include departments in response</param>
     /// <returns>Institute details</returns>
-    [HttpGet("{id}")]
+    [HttpGet("{instituteId}")]
+    [RequireInstitutePermission(Permission.Institute_Manage)]
     [ProducesResponseType(typeof(Application.Features.Org.DTOs.InstituteDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> GetById(int id, [FromQuery] bool includeDepartments = false)
+    public async Task<IActionResult> GetById(int instituteId, [FromQuery] bool includeDepartments = false)
     {
         var query = new GetInstituteByIdQuery
         {
-            InstituteId = id,
+            InstituteId = instituteId,
             IncludeDepartments = includeDepartments
         };
 
@@ -73,7 +78,7 @@ public class InstitutesController : ControllerBase
 
         if (result.IsFailed)
         {
-            return HandleError(result.Error);
+            return HandleResultError(result.Error);
         }
 
         return Ok(result.Value);
@@ -85,6 +90,7 @@ public class InstitutesController : ControllerBase
     /// <param name="request">Create institute request</param>
     /// <returns>Created institute ID</returns>
     [HttpPost]
+    [RequirePermission(Permission.Institute_Manage)]
     [ProducesResponseType(typeof(int), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -94,45 +100,44 @@ public class InstitutesController : ControllerBase
         var command = new CreateInstituteCommand
         {
             UniversityId = request.UniversityId,
-            Name = request.Name,
-            CreatedBy = GetCurrentUserId() // TODO: Implement user context
+            Name = request.Name
         };
 
         var result = await _sender.Send(command);
 
         if (result.IsFailed)
         {
-            return HandleError(result.Error);
+            return HandleResultError(result.Error);
         }
 
-        return CreatedAtAction(nameof(GetById), new { id = result.Value }, result.Value);
+        return CreatedAtAction(nameof(GetById), new { id = result.Value, version = "1.0" }, result.Value);
     }
 
     /// <summary>
     /// Update an existing institute.
     /// </summary>
-    /// <param name="id">Institute ID</param>
+    /// <param name="instituteId">Institute ID</param>
     /// <param name="request">Update institute request</param>
     /// <returns>No content on success</returns>
-    [HttpPut("{id}")]
+    [HttpPut("{instituteId}")]
+    [RequireInstitutePermission(Permission.Institute_Manage)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> Update(int id, [FromBody] UpdateInstituteRequest request)
+    public async Task<IActionResult> Update(int instituteId, [FromBody] UpdateInstituteRequest request)
     {
         var command = new UpdateInstituteCommand
         {
-            InstituteId = id,
-            Name = request.Name,
-            ModifiedBy = GetCurrentUserId() // TODO: Implement user context
+            InstituteId = instituteId,
+            Name = request.Name
         };
 
         var result = await _sender.Send(command);
 
         if (result.IsFailed)
         {
-            return HandleError(result.Error);
+            return HandleResultError(result.Error);
         }
 
         return NoContent();
@@ -141,77 +146,29 @@ public class InstitutesController : ControllerBase
     /// <summary>
     /// Soft delete an institute.
     /// </summary>
-    /// <param name="id">Institute ID</param>
+    /// <param name="instituteId">Institute ID</param>
     /// <returns>No content on success</returns>
-    [HttpDelete("{id}")]
+    [HttpDelete("{instituteId}")]
+    [RequireInstitutePermission(Permission.Institute_Manage)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> Delete(int id)
+    public async Task<IActionResult> Delete(int instituteId)
     {
         var command = new DeleteInstituteCommand
         {
-            InstituteId = id,
-            DeletedBy = GetCurrentUserId() // TODO: Implement user context
+            InstituteId = instituteId
         };
 
         var result = await _sender.Send(command);
 
         if (result.IsFailed)
         {
-            return HandleError(result.Error);
+            return HandleResultError(result.Error);
         }
 
         return NoContent();
     }
-
-    #region Helper Methods
-
-    /// <summary>
-    /// Handles errors from FluentResult and returns appropriate HTTP status codes.
-    /// </summary>
-    private IActionResult HandleError(KDS.Primitives.FluentResult.Error error)
-    {
-        return error.Code switch
-        {
-            var code when code.StartsWith("NotFound") => NotFound(new { error.Code, error.Message }),
-            var code when code.StartsWith("Validation") => BadRequest(new { error.Code, error.Message }),
-            var code when code.StartsWith("BusinessRule") => Conflict(new { error.Code, error.Message }),
-            _ => StatusCode(StatusCodes.Status500InternalServerError, new { error.Code, error.Message })
-        };
-    }
-
-    /// <summary>
-    /// Gets current user ID from authentication context.
-    /// TODO: Implement actual user context retrieval (e.g., from JWT claims).
-    /// </summary>
-    private int GetCurrentUserId()
-    {
-        // TODO: Extract from HttpContext.User.Claims or similar
-        return 1; // Placeholder
-    }
-
-    #endregion
 }
 
-#region Request Models
-
-/// <summary>
-/// Request model for creating an institute.
-/// </summary>
-public record CreateInstituteRequest
-{
-    public int UniversityId { get; init; }
-    public string Name { get; init; } = null!;
-}
-
-/// <summary>
-/// Request model for updating an institute.
-/// </summary>
-public record UpdateInstituteRequest
-{
-    public string Name { get; init; } = null!;
-}
-
-#endregion

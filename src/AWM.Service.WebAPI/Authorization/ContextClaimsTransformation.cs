@@ -54,7 +54,7 @@ public class ContextClaimsTransformation : IClaimsTransformation
                 continue;
 
             var roleName = assignment.Role?.SystemName ?? assignment.RoleId.ToString();
-            
+
             // Add role claim
             claims.Add(new Claim(AuthorizationConstants.RoleClaimType, roleName));
 
@@ -78,7 +78,7 @@ public class ContextClaimsTransformation : IClaimsTransformation
                 {
                     // Add general permission claim
                     claims.Add(new Claim(AuthorizationConstants.PermissionClaimType, permission.ToString()));
-                    
+
                     // Add department-scoped permission if applicable
                     if (assignment.DepartmentId.HasValue)
                     {
@@ -90,17 +90,17 @@ public class ContextClaimsTransformation : IClaimsTransformation
                 // Add context claims
                 if (assignment.DepartmentId.HasValue)
                 {
-                    claims.Add(new Claim(AuthorizationConstants.DepartmentIdClaimType, 
+                    claims.Add(new Claim(AuthorizationConstants.DepartmentIdClaimType,
                         assignment.DepartmentId.Value.ToString()));
                 }
                 if (assignment.InstituteId.HasValue)
                 {
-                    claims.Add(new Claim(AuthorizationConstants.InstituteIdClaimType, 
+                    claims.Add(new Claim(AuthorizationConstants.InstituteIdClaimType,
                         assignment.InstituteId.Value.ToString()));
                 }
                 if (assignment.AcademicYearId.HasValue)
                 {
-                    claims.Add(new Claim(AuthorizationConstants.AcademicYearIdClaimType, 
+                    claims.Add(new Claim(AuthorizationConstants.AcademicYearIdClaimType,
                         assignment.AcademicYearId.Value.ToString()));
                 }
             }

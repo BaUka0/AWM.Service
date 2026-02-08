@@ -8,7 +8,16 @@ namespace AWM.Service.WebAPI.Controllers
     {
         protected IActionResult HandleResultError(Error error)
         {
-            return StatusCode(int.Parse(error.Code), error.Message);
+            return error.Code switch
+            {
+                var code when code.StartsWith("NotFound") => NotFound(new { error.Code, error.Message }),
+                var code when code.StartsWith("ValidationError") => BadRequest(new { error.Code, error.Message }),
+                var code when code.StartsWith("BusinessRule") || code.StartsWith("Conflict") => Conflict(new { error.Code, error.Message }),
+                var code when code.StartsWith("Unauthorized") => Unauthorized(new { error.Code, error.Message }),
+                var code when code.StartsWith("Forbidden") => Forbid(),
+                _ => StatusCode(StatusCodes.Status500InternalServerError, new { error.Code, error.Message })
+            };
         }
     }
 }
+

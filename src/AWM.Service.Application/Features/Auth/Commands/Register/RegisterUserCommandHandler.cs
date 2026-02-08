@@ -1,6 +1,7 @@
 using AWM.Service.Domain.Auth.Entities;
 using AWM.Service.Domain.Auth.Interfaces;
 using AWM.Service.Domain.Repositories;
+using AWM.Service.Domain.Errors;
 using KDS.Primitives.FluentResult;
 using MediatR;
 
@@ -32,19 +33,19 @@ public class RegisterUserCommandHandler : IRequestHandler<RegisterUserCommand, R
         var existingUser = await _userRepository.GetByLoginAsync(request.Login, cancellationToken);
         if (existingUser is not null)
         {
-            return Result.Failure<int>(new Error("400", "Пользователь с таким логином уже существует."));
+            return Result.Failure<int>(new Error(DomainErrors.Auth.Registration.UserAlreadyExists, "Пользователь с таким логином уже существует."));
         }
 
         // Validate password (basic validation)
         if (string.IsNullOrWhiteSpace(request.Password) || request.Password.Length < 6)
         {
-            return Result.Failure<int>(new Error("400", "Пароль должен содержать минимум 6 символов."));
+            return Result.Failure<int>(new Error(DomainErrors.Auth.Registration.InvalidPassword, "Пароль должен содержать минимум 6 символов."));
         }
 
         // Validate email format
         if (string.IsNullOrWhiteSpace(request.Email) || !request.Email.Contains('@'))
         {
-            return Result.Failure<int>(new Error("400", "Некорректный формат email."));
+            return Result.Failure<int>(new Error(DomainErrors.Auth.Registration.InvalidEmail, "Некорректный формат email."));
         }
 
         // Hash password

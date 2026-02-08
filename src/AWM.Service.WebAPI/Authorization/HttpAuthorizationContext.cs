@@ -36,7 +36,7 @@ public class HttpAuthorizationContext : IAuthorizationContext
     {
         get
         {
-            var claim = User?.FindFirst(AuthorizationConstants.UniversityIdClaimType) 
+            var claim = User?.FindFirst(AuthorizationConstants.UniversityIdClaimType)
                      ?? User?.FindFirst("UniversityId");
             return claim != null && int.TryParse(claim.Value, out var id) ? id : null;
         }
@@ -92,13 +92,13 @@ public class HttpAuthorizationContext : IAuthorizationContext
             {
                 return yearId;
             }
-            
+
             if (httpContext?.Request.Query.TryGetValue("academicYearId", out var queryValue) == true &&
                 int.TryParse(queryValue.FirstOrDefault(), out var queryYearId))
             {
                 return queryYearId;
             }
-            
+
             return null;
         }
     }
@@ -112,7 +112,7 @@ public class HttpAuthorizationContext : IAuthorizationContext
         get
         {
             if (User == null) return Array.Empty<string>();
-            
+
             return User.FindAll(AuthorizationConstants.RoleClaimType)
                 .Concat(User.FindAll(ClaimTypes.Role))
                 .Select(c => c.Value)
@@ -175,7 +175,7 @@ public class HttpAuthorizationContext : IAuthorizationContext
             return _cachedPermissions;
 
         var permissions = new HashSet<Permission>();
-        
+
         if (User == null)
         {
             _cachedPermissions = permissions;
@@ -184,7 +184,7 @@ public class HttpAuthorizationContext : IAuthorizationContext
 
         // Get all permission claims
         var permissionClaims = User.FindAll(AuthorizationConstants.PermissionClaimType);
-        
+
         foreach (var claim in permissionClaims)
         {
             if (Enum.TryParse<Permission>(claim.Value, out var permission))
@@ -206,7 +206,7 @@ public class HttpAuthorizationContext : IAuthorizationContext
             return cached;
 
         var permissions = new HashSet<Permission>();
-        
+
         if (User == null)
         {
             _cachedDepartmentPermissions[departmentId] = permissions;
@@ -228,8 +228,8 @@ public class HttpAuthorizationContext : IAuthorizationContext
         foreach (var claim in deptClaims)
         {
             var parts = claim.Value.Split(':');
-            if (parts.Length == 2 && 
-                int.TryParse(parts[1], out var claimDeptId) && 
+            if (parts.Length == 2 &&
+                int.TryParse(parts[1], out var claimDeptId) &&
                 claimDeptId == departmentId &&
                 Enum.TryParse<Permission>(parts[0], out var permission))
             {
