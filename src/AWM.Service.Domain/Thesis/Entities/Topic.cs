@@ -135,13 +135,21 @@ public class Topic : AggregateRoot<long>, IAuditable, ISoftDeletable
         IsClosed = true;
         RaiseDomainEvent(new TopicClosedEvent(Id));
     }
-
+    
     /// <summary>
     /// Reopens the topic for applications.
     /// </summary>
     public void Reopen()
     {
         IsClosed = false;
+    }
+    
+    public void AddApplication(TopicApplication application)
+    {
+        if (application is null)
+            throw new ArgumentNullException(nameof(application));
+    
+        _applications.Add(application);
     }
 
     /// <summary>

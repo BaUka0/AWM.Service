@@ -29,7 +29,6 @@ public interface ITopicRepository
     /// Gets all topic applications by student (для страницы "Мои заявки" студента).
     /// </summary>
     Task<IReadOnlyList<TopicApplication>> GetApplicationsByStudentIdAsync(int studentId, CancellationToken cancellationToken = default);
-    
     Task AddAsync(Topic topic, CancellationToken cancellationToken = default);
     Task UpdateAsync(Topic topic, CancellationToken cancellationToken = default);
     Task DeleteAsync(Topic topic, CancellationToken cancellationToken = default);
