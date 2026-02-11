@@ -6,7 +6,7 @@ using AWM.Service.Application.Features.Org.Queries.Institutes.GetInstituteById;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
-namespace AWM.Service.WebAPI.Controllers.v1.institutes;
+namespace AWM.Service.WebAPI.Controllers.v1;
 
 /// <summary>
 /// Controller for managing Institutes.

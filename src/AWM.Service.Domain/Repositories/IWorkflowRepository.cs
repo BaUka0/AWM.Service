@@ -7,6 +7,7 @@ using AWM.Service.Domain.Wf.Entities;
 /// </summary>
 public interface IWorkflowRepository
 {
+    
     #region WorkType
 
     /// <summary>
