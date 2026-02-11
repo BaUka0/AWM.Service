@@ -9,6 +9,7 @@ public class Institute : Entity<int>, IAuditable, ISoftDeletable
 {
     public int UniversityId { get; private set; }
     public string Name { get; private set; } = null!;
+    public string? Code { get; private set; }
 
     public DateTime CreatedAt { get; private set; }
     public int CreatedBy { get; private set; }
@@ -24,13 +25,14 @@ public class Institute : Entity<int>, IAuditable, ISoftDeletable
 
     private Institute() { }
 
-    internal Institute(int universityId, string name, int createdBy = 0)
+    internal Institute(int universityId, string name, int createdBy = 0, string? code = null)
     {
         if (string.IsNullOrWhiteSpace(name))
             throw new ArgumentException("Institute name is required.", nameof(name));
 
         UniversityId = universityId;
         Name = name;
+        Code = code;
         CreatedAt = DateTime.UtcNow;
         CreatedBy = createdBy;
         IsDeleted = false;
@@ -42,6 +44,13 @@ public class Institute : Entity<int>, IAuditable, ISoftDeletable
             throw new ArgumentException("Institute name is required.", nameof(name));
 
         Name = name;
+        LastModifiedAt = DateTime.UtcNow;
+        LastModifiedBy = modifiedBy;
+    }
+
+    public void UpdateCode(string? code, int modifiedBy)
+    {
+        Code = code;
         LastModifiedAt = DateTime.UtcNow;
         LastModifiedBy = modifiedBy;
     }

@@ -1,18 +1,23 @@
 using AWM.Service.Application.Features.Org.Commands.Departments.CreateDepartment;
+using AWM.Service.Application.Features.Org.Commands.Departments.DeleteDepartment;
 using AWM.Service.Application.Features.Org.Commands.Departments.UpdateDepartment;
 using AWM.Service.Application.Features.Org.Queries.Departments.GetDepartmentsByInstitute;
+using AWM.Service.Domain.Auth.Enums;
+using AWM.Service.WebAPI.Authorization;
+using AWM.Service.WebAPI.Common.Contracts.Requests.Departments;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
-namespace AWM.Service.WebAPI.Controllers.v1.departments;
+namespace AWM.Service.WebAPI.Controllers.v1;
 
 /// <summary>
 /// Controller for managing Departments.
 /// </summary>
+[ApiVersion("1.0")]
+[Route("api/v{version:apiVersion}/[controller]")]
 [ApiController]
-[Route("api/v1/[controller]")]
 [Produces("application/json")]
-public class DepartmentsController : ControllerBase
+public class DepartmentsController : BaseController
 {
     private readonly ISender _sender;
 
@@ -27,7 +32,8 @@ public class DepartmentsController : ControllerBase
     /// <param name="instituteId">Institute ID</param>
     /// <returns>List of departments</returns>
     [HttpGet]
-    [Route("/api/v1/institutes/{instituteId}/departments")]
+    [Route("~/api/v{version:apiVersion}/institutes/{instituteId}/departments")]
+    [RequireInstitutePermission(Permission.Institute_Manage)]
     [ProducesResponseType(typeof(IReadOnlyList<Application.Features.Org.DTOs.DepartmentDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -42,7 +48,7 @@ public class DepartmentsController : ControllerBase
 
         if (result.IsFailed)
         {
-            return HandleError(result.Error);
+            return HandleResultError(result.Error);
         }
 
         return Ok(result.Value);
@@ -54,6 +60,7 @@ public class DepartmentsController : ControllerBase
     /// <param name="request">Create department request</param>
     /// <returns>Created department ID</returns>
     [HttpPost]
+    [RequireInstitutePermission(Permission.Department_Manage)]
     [ProducesResponseType(typeof(int), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -64,49 +71,48 @@ public class DepartmentsController : ControllerBase
         {
             InstituteId = request.InstituteId,
             Name = request.Name,
-            Code = request.Code,
-            CreatedBy = GetCurrentUserId() // TODO: Implement user context
+            Code = request.Code
         };
 
         var result = await _sender.Send(command);
 
         if (result.IsFailed)
         {
-            return HandleError(result.Error);
+            return HandleResultError(result.Error);
         }
 
         return CreatedAtAction(
-            nameof(GetByInstituteId), 
-            new { instituteId = request.InstituteId }, 
+            nameof(GetByInstituteId),
+            new { instituteId = request.InstituteId, version = "1.0" },
             result.Value);
     }
 
     /// <summary>
     /// Update an existing department.
     /// </summary>
-    /// <param name="id">Department ID</param>
+    /// <param name="departmentId">Department ID</param>
     /// <param name="request">Update department request</param>
     /// <returns>No content on success</returns>
-    [HttpPut("{id}")]
+    [HttpPut("{departmentId}")]
+    [RequireDepartmentPermission(Permission.Department_Manage)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> Update(int id, [FromBody] UpdateDepartmentRequest request)
+    public async Task<IActionResult> Update(int departmentId, [FromBody] UpdateDepartmentRequest request)
     {
         var command = new UpdateDepartmentCommand
         {
-            DepartmentId = id,
+            DepartmentId = departmentId,
             Name = request.Name,
-            Code = request.Code,
-            ModifiedBy = GetCurrentUserId() // TODO: Implement user context
+            Code = request.Code
         };
 
         var result = await _sender.Send(command);
 
         if (result.IsFailed)
         {
-            return HandleError(result.Error);
+            return HandleResultError(result.Error);
         }
 
         return NoContent();
@@ -115,56 +121,29 @@ public class DepartmentsController : ControllerBase
     /// <summary>
     /// Soft delete a department.
     /// </summary>
-    /// <param name="id">Department ID</param>
+    /// <param name="departmentId">Department ID</param>
     /// <returns>No content on success</returns>
-    [HttpDelete("{id}")]
+    [HttpDelete("{departmentId}")]
+    [RequireDepartmentPermission(Permission.Department_Manage)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-   
-    private IActionResult HandleError(KDS.Primitives.FluentResult.Error error)
+    public async Task<IActionResult> Delete(int departmentId)
     {
-        return error.Code switch
+        var command = new DeleteDepartmentCommand
         {
-            var code when code.StartsWith("NotFound") => NotFound(new { error.Code, error.Message }),
-            var code when code.StartsWith("Validation") => BadRequest(new { error.Code, error.Message }),
-            var code when code.StartsWith("BusinessRule") => Conflict(new { error.Code, error.Message }),
-            _ => StatusCode(StatusCodes.Status500InternalServerError, new { error.Code, error.Message })
+            DepartmentId = departmentId
         };
+
+        var result = await _sender.Send(command);
+
+        if (result.IsFailed)
+        {
+            return HandleResultError(result.Error);
+        }
+
+        return NoContent();
     }
-
-    /// <summary>
-    /// Gets current user ID from authentication context.
-    /// TODO: Implement actual user context retrieval (e.g., from JWT claims).
-    /// </summary>
-    private int GetCurrentUserId()
-    {
-        // TODO: Extract from HttpContext.User.Claims or similar
-        return 1; // Placeholder
-    }
-
 }
 
-#region Request Models
-
-/// <summary>
-/// Request model for creating a department.
-/// </summary>
-public record CreateDepartmentRequest
-{
-    public int InstituteId { get; init; }
-    public string Name { get; init; } = null!;
-    public string? Code { get; init; }
-}
-
-/// <summary>
-/// Request model for updating a department.
-/// </summary>
-public record UpdateDepartmentRequest
-{
-    public string Name { get; init; } = null!;
-    public string? Code { get; init; }
-}
-
-#endregion

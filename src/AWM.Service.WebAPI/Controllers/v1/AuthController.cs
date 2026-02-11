@@ -49,4 +49,28 @@ public class AuthController : BaseController
         
         return HandleResultError(result.Error);
     }
+
+    /// <summary>
+    /// Registers a new user.
+    /// </summary>
+    [HttpPost("register")]
+    [ProducesResponseType(typeof(int), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> Register([FromBody] RegisterRequest request)
+    {
+        var command = new Application.Features.Auth.Commands.Register.RegisterUserCommand(
+            request.Login,
+            request.Email,
+            request.Password,
+            request.UniversityId);
+
+        var result = await _sender.Send(command);
+        
+        if (result.IsSuccess)
+        {
+            return CreatedAtAction(nameof(Register), new { id = result.Value }, result.Value);
+        }
+        
+        return HandleResultError(result.Error);
+    }
 }

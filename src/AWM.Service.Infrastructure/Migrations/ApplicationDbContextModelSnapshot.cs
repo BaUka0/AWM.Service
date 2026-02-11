@@ -1134,6 +1134,10 @@ namespace AWM.Service.Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("Code")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
@@ -2259,7 +2263,7 @@ namespace AWM.Service.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .HasConstraintName("FK_URA_Institute");
 
-                    b.HasOne("AWM.Service.Domain.Auth.Entities.Role", null)
+                    b.HasOne("AWM.Service.Domain.Auth.Entities.Role", "Role")
                         .WithMany()
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -2272,6 +2276,8 @@ namespace AWM.Service.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("FK_URA_User");
+
+                    b.Navigation("Role");
                 });
 
             modelBuilder.Entity("AWM.Service.Domain.CommonDomain.Entities.AcademicYear", b =>

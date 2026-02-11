@@ -1,6 +1,7 @@
 using AWM.Service.Application.Features.Auth.DTOs;
 using AWM.Service.Domain.Auth.Interfaces;
 using AWM.Service.Domain.Repositories;
+using AWM.Service.Domain.Errors;
 using KDS.Primitives.FluentResult;
 using MediatR;
 
@@ -28,41 +29,44 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<AuthResu
 
     public async Task<Result<AuthResult>> Handle(LoginCommand request, CancellationToken cancellationToken)
     {
-        // Find user by login
-        var user = await _userRepository.GetByLoginAsync(request.Login, cancellationToken);
+        // Find user by login (with role assignments for authorization)
+        var user = await _userRepository.GetWithRoleAssignmentsAsync(
+            (await _userRepository.GetByLoginAsync(request.Login, cancellationToken))?.Id ?? 0,
+            cancellationToken);
 
         if (user is null)
         {
-            return Result.Failure<AuthResult>(new Error("401", "Неверный логин или пароль."));
+            return Result.Failure<AuthResult>(new Error(DomainErrors.Auth.InvalidCredentials, "Неверный логин или пароль."));
         }
 
         // Check if user is active
         if (!user.IsActive)
         {
-            return Result.Failure<AuthResult>(new Error("401", "Учетная запись деактивирована."));
+            return Result.Failure<AuthResult>(new Error(DomainErrors.Auth.AccountDeactivated, "Учетная запись деактивирована."));
         }
 
         // Check if user is deleted
         if (user.IsDeleted)
         {
-            return Result.Failure<AuthResult>(new Error("401", "Учетная запись удалена."));
+            return Result.Failure<AuthResult>(new Error(DomainErrors.Auth.AccountDeleted, "Учетная запись удалена."));
         }
 
         // Verify password
         if (string.IsNullOrEmpty(user.PasswordHash))
         {
-            return Result.Failure<AuthResult>(new Error("401", "Для данного пользователя не установлен пароль. Используйте SSO."));
+            return Result.Failure<AuthResult>(new Error(DomainErrors.Auth.PasswordNotSet, "Для данного пользователя не установлен пароль. Используйте SSO."));
         }
 
         if (!_passwordHasher.VerifyPassword(request.Password, user.PasswordHash))
         {
-            return Result.Failure<AuthResult>(new Error("401", "Неверный логин или пароль."));
+            return Result.Failure<AuthResult>(new Error(DomainErrors.Auth.InvalidCredentials, "Неверный логин или пароль."));
         }
 
-        // Get user roles
+        // Get user roles (use Role.SystemName if available, otherwise fall back to RoleId)
         var roles = user.RoleAssignments
             .Where(ra => ra.IsCurrentlyValid())
-            .Select(ra => ra.RoleId.ToString())
+            .Select(ra => ra.Role?.SystemName ?? ra.RoleId.ToString())
+            .Distinct()
             .ToList();
 
         // Generate JWT token

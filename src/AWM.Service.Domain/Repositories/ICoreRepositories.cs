@@ -27,6 +27,11 @@ public interface IUserRepository
     Task<IReadOnlyList<User>> GetByUniversityAsync(int universityId, CancellationToken cancellationToken = default);
     Task AddAsync(User user, CancellationToken cancellationToken = default);
     Task UpdateAsync(User user, CancellationToken cancellationToken = default);
+    
+    /// <summary>
+    /// Gets user with all role assignments eagerly loaded for authorization.
+    /// </summary>
+    Task<User?> GetWithRoleAssignmentsAsync(int id, CancellationToken cancellationToken = default);
 }
 
 /// <summary>
