@@ -113,6 +113,10 @@ builder.Services.AddScoped<AWM.Service.Domain.Auth.Interfaces.IJwtTokenService, 
 builder.Services.AddContextAwareAuthorization();
 builder.Services.AddPermissionPolicies();
 
+// Add Application Services
+builder.Services.AddScoped<AWM.Service.Domain.Wf.Services.IStateMachine, AWM.Service.Application.Features.Workflow.Services.WorkflowService>();
+builder.Services.AddScoped<AWM.Service.Domain.CommonDomain.Services.IPeriodValidationService, AWM.Service.Application.Features.Common.Services.PeriodValidationService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

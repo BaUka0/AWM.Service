@@ -47,15 +47,15 @@ public class ValidationBehavior<TRequest, TResponse> : IPipelineBehavior<TReques
             if (responseType.IsGenericType && responseType.GetGenericTypeDefinition() == typeof(Result<>))
             {
                 var errorMessage = string.Join("; ", failures.Select(f => f.ErrorMessage));
-                var error = new Error("ValidationError", errorMessage);
-                
+                var error = new Error("400", errorMessage);
+
                 // Create Result.Failure<T> using reflection
                 var innerType = responseType.GetGenericArguments()[0];
                 var failureMethod = typeof(Result)
                     .GetMethods()
                     .First(m => m.Name == "Failure" && m.IsGenericMethod && m.GetParameters().Length == 1)
                     .MakeGenericMethod(innerType);
-                
+
                 return (TResponse)failureMethod.Invoke(null, new object[] { error })!;
             }
 

@@ -2,7 +2,6 @@ namespace AWM.Service.Application.Features.Org.Commands.Departments.DeleteDepart
 
 using AWM.Service.Domain.Common;
 using AWM.Service.Domain.Repositories;
-using AWM.Service.Domain.Errors;
 using KDS.Primitives.FluentResult;
 using MediatR;
 
@@ -38,14 +37,11 @@ public sealed class DeleteDepartmentCommandHandler : IRequestHandler<DeleteDepar
     {
         try
         {
-            var universities = await _universityRepository.GetAllAsync(cancellationToken);
-
-            var university = universities.FirstOrDefault(u =>
-                u.Institutes.Any(i => i.Departments.Any(d => d.Id == request.DepartmentId && !d.IsDeleted)));
+            var university = await _universityRepository.GetByDepartmentIdAsync(request.DepartmentId, cancellationToken);
 
             if (university is null)
             {
-                return Result.Failure(new Error(DomainErrors.Org.Department.NotFound, $"Department with ID {request.DepartmentId} not found."));
+                return Result.Failure(new Error("404", $"Department with ID {request.DepartmentId} not found."));
             }
 
             var institute = university.Institutes.FirstOrDefault(i =>
@@ -53,14 +49,14 @@ public sealed class DeleteDepartmentCommandHandler : IRequestHandler<DeleteDepar
 
             if (institute is null)
             {
-                return Result.Failure(new Error(DomainErrors.Org.Department.NotFound, $"Department with ID {request.DepartmentId} not found."));
+                return Result.Failure(new Error("404", $"Department with ID {request.DepartmentId} not found."));
             }
 
             var department = institute.Departments.FirstOrDefault(d => d.Id == request.DepartmentId);
 
             if (department is null || department.IsDeleted)
             {
-                return Result.Failure(new Error(DomainErrors.Org.Department.NotFound, $"Department with ID {request.DepartmentId} not found or already deleted."));
+                return Result.Failure(new Error("404", $"Department with ID {request.DepartmentId} not found or already deleted."));
             }
 
             // 1. Check for active staff
@@ -68,7 +64,7 @@ public sealed class DeleteDepartmentCommandHandler : IRequestHandler<DeleteDepar
             if (staff.Any(s => !s.IsDeleted))
             {
                 return Result.Failure(new Error(
-                    DomainErrors.Org.Department.HasActiveStaff,
+                    "409",
                     "Cannot delete Department with active Staff members. Please reassign or delete Staff first."));
             }
 
@@ -77,7 +73,7 @@ public sealed class DeleteDepartmentCommandHandler : IRequestHandler<DeleteDepar
             if (programs.Any(p => !p.IsDeleted))
             {
                 return Result.Failure(new Error(
-                    DomainErrors.Org.Department.HasActivePrograms,
+                    "409",
                     "Cannot delete Department with active Academic Programs. Please delete Programs first."));
             }
 
@@ -89,7 +85,7 @@ public sealed class DeleteDepartmentCommandHandler : IRequestHandler<DeleteDepar
                 if (topics.Any(t => !t.IsDeleted))
                 {
                     return Result.Failure(new Error(
-                        DomainErrors.Org.Department.HasActiveTopics,
+                        "409",
                         "Cannot delete Department with active Topics in the current academic year."));
                 }
             }
@@ -97,7 +93,7 @@ public sealed class DeleteDepartmentCommandHandler : IRequestHandler<DeleteDepar
             var userId = _currentUserProvider.UserId;
             if (!userId.HasValue)
             {
-                return Result.Failure(new Error(DomainErrors.Auth.InvalidCredentials, "User ID is not available."));
+                return Result.Failure(new Error("401", "User ID is not available."));
             }
             department.Delete(userId.Value);
 
@@ -107,7 +103,7 @@ public sealed class DeleteDepartmentCommandHandler : IRequestHandler<DeleteDepar
         }
         catch (Exception ex)
         {
-            return Result.Failure(new Error(DomainErrors.General.InternalError, $"An error occurred while deleting the Department: {ex.Message}"));
+            return Result.Failure(new Error("500", $"An error occurred while deleting the Department: {ex.Message}"));
         }
     }
 }

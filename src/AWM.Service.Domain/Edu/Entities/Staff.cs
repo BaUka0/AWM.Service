@@ -12,6 +12,7 @@ public class Staff : AggregateRoot<int>, IAuditable, ISoftDeletable
     public string? Position { get; private set; }
     public string? AcademicDegree { get; private set; }
     public int MaxStudentsLoad { get; private set; }
+    public bool IsSupervisor { get; private set; }
 
     public DateTime CreatedAt { get; private set; }
     public int CreatedBy { get; private set; }
@@ -24,7 +25,7 @@ public class Staff : AggregateRoot<int>, IAuditable, ISoftDeletable
 
     private Staff() { }
 
-    public Staff(int userId, int departmentId, int createdBy, string? position = null, string? academicDegree = null, int maxStudentsLoad = 5)
+    public Staff(int userId, int departmentId, int createdBy, bool isSupervisor, string? position = null, string? academicDegree = null, int maxStudentsLoad = 5)
     {
         if (maxStudentsLoad <= 0)
             throw new ArgumentException("Max students load must be positive.", nameof(maxStudentsLoad));
@@ -34,7 +35,8 @@ public class Staff : AggregateRoot<int>, IAuditable, ISoftDeletable
         Position = position;
         AcademicDegree = academicDegree;
         MaxStudentsLoad = maxStudentsLoad;
-        
+        IsSupervisor = isSupervisor;
+
         CreatedAt = DateTime.UtcNow;
         CreatedBy = createdBy;
         IsDeleted = false;
@@ -89,6 +91,16 @@ public class Staff : AggregateRoot<int>, IAuditable, ISoftDeletable
     public bool CanTakeMoreStudents(int currentStudentsCount)
     {
         return currentStudentsCount < MaxStudentsLoad;
+    }
+
+    /// <summary>
+    /// Updates available supervisors for a department.
+    /// </summary>
+    public void SetSupervisorStatus(bool isSupervisor, int modifiedBy)
+    {
+        IsSupervisor = isSupervisor;
+        LastModifiedAt = DateTime.UtcNow;
+        LastModifiedBy = modifiedBy;
     }
 
     /// <summary>

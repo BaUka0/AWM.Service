@@ -3,6 +3,8 @@ namespace AWM.Service.Infrastructure.Persistence.Repositories.Core;
 using AWM.Service.Domain.Auth.Entities;
 using AWM.Service.Domain.Repositories;
 using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
+using System.Linq;
 
 /// <summary>
 /// Repository implementation for User aggregate.
@@ -83,5 +85,17 @@ public sealed class UserRepository : IUserRepository
                 .ThenInclude(ra => ra.Role)
             .Where(u => !u.IsDeleted && u.IsActive)
             .FirstOrDefaultAsync(u => u.Id == id, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<User>> GetByIdsAsync(IEnumerable<int> ids, CancellationToken cancellationToken = default)
+    {
+        if (ids is null || !ids.Any())
+            return new List<User>();
+
+        return await _context.Users
+            .AsNoTracking()
+            .Where(u => ids.Contains(u.Id) && !u.IsDeleted)
+            .ToListAsync(cancellationToken);
     }
 }

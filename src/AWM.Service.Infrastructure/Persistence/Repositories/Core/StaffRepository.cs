@@ -52,7 +52,7 @@ public sealed class StaffRepository : IStaffRepository
         // We need to count via StudentWork's supervisor (from Participant or Topic)
         var staffList = await _context.Staff
             .AsNoTracking()
-            .Where(s => !s.IsDeleted && s.DepartmentId == departmentId)
+            .Where(s => !s.IsDeleted && s.DepartmentId == departmentId && s.IsSupervisor)
             .ToListAsync(cancellationToken);
 
         // For now, return all staff - capacity checking would require
