@@ -17,6 +17,12 @@ public sealed class UpdateInstituteCommandValidator : AbstractValidator<UpdateIn
             .NotEmpty()
             .WithMessage("Institute name is required.")
             .MaximumLength(200)
-            .WithMessage("Institute name must not exceed 200 characters.");
+            .WithMessage("Institute name must not exceed 200 characters.")
+            .Matches(@"^[a-zA-Z0-9\s\-\.,']+$")
+            .WithMessage("Institute name contains invalid characters.");
+
+        RuleFor(x => x.ModifiedBy)
+            .GreaterThan(0)
+            .WithMessage("ModifiedBy must be a valid user ID.");
     }
 }
