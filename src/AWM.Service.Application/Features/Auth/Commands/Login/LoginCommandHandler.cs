@@ -1,7 +1,7 @@
 using AWM.Service.Application.Features.Auth.DTOs;
 using AWM.Service.Domain.Auth.Interfaces;
 using AWM.Service.Domain.Repositories;
-using AWM.Service.Domain.Errors;
+
 using KDS.Primitives.FluentResult;
 using MediatR;
 
@@ -36,30 +36,30 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<AuthResu
 
         if (user is null)
         {
-            return Result.Failure<AuthResult>(new Error(DomainErrors.Auth.InvalidCredentials, "Неверный логин или пароль."));
+            return Result.Failure<AuthResult>(new Error("401", "Неверный логин или пароль."));
         }
 
         // Check if user is active
         if (!user.IsActive)
         {
-            return Result.Failure<AuthResult>(new Error(DomainErrors.Auth.AccountDeactivated, "Учетная запись деактивирована."));
+            return Result.Failure<AuthResult>(new Error("401", "Учетная запись деактивирована."));
         }
 
         // Check if user is deleted
         if (user.IsDeleted)
         {
-            return Result.Failure<AuthResult>(new Error(DomainErrors.Auth.AccountDeleted, "Учетная запись удалена."));
+            return Result.Failure<AuthResult>(new Error("401", "Учетная запись удалена."));
         }
 
         // Verify password
         if (string.IsNullOrEmpty(user.PasswordHash))
         {
-            return Result.Failure<AuthResult>(new Error(DomainErrors.Auth.PasswordNotSet, "Для данного пользователя не установлен пароль. Используйте SSO."));
+            return Result.Failure<AuthResult>(new Error("401", "Для данного пользователя не установлен пароль. Используйте SSO."));
         }
 
         if (!_passwordHasher.VerifyPassword(request.Password, user.PasswordHash))
         {
-            return Result.Failure<AuthResult>(new Error(DomainErrors.Auth.InvalidCredentials, "Неверный логин или пароль."));
+            return Result.Failure<AuthResult>(new Error("401", "Неверный логин или пароль."));
         }
 
         // Get user roles (use Role.SystemName if available, otherwise fall back to RoleId)

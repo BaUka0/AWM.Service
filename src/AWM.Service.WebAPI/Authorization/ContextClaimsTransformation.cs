@@ -85,6 +85,13 @@ public class ContextClaimsTransformation : IClaimsTransformation
                         var deptPermission = $"{permission}:{assignment.DepartmentId}";
                         claims.Add(new Claim(AuthorizationConstants.DepartmentPermissionClaimType, deptPermission));
                     }
+
+                    // Add institute-scoped permission if applicable
+                    if (assignment.InstituteId.HasValue)
+                    {
+                        var instPermission = $"{permission}:{assignment.InstituteId}";
+                        claims.Add(new Claim(AuthorizationConstants.InstitutePermissionClaimType, instPermission));
+                    }
                 }
 
                 // Add context claims

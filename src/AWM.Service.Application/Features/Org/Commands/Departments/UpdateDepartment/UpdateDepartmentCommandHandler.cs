@@ -2,7 +2,6 @@ namespace AWM.Service.Application.Features.Org.Commands.Departments.UpdateDepart
 
 using AWM.Service.Domain.Common;
 using AWM.Service.Domain.Repositories;
-using AWM.Service.Domain.Errors;
 using KDS.Primitives.FluentResult;
 using MediatR;
 
@@ -26,19 +25,11 @@ public sealed class UpdateDepartmentCommandHandler : IRequestHandler<UpdateDepar
     {
         try
         {
-            if (string.IsNullOrWhiteSpace(request.Name))
-            {
-                return Result.Failure(new Error(DomainErrors.Org.Department.NameRequired, "Department name is required."));
-            }
-
-            var universities = await _universityRepository.GetAllAsync(cancellationToken);
-
-            var university = universities.FirstOrDefault(u =>
-                u.Institutes.Any(i => i.Departments.Any(d => d.Id == request.DepartmentId && !d.IsDeleted)));
+            var university = await _universityRepository.GetByDepartmentIdAsync(request.DepartmentId, cancellationToken);
 
             if (university is null)
             {
-                return Result.Failure(new Error(DomainErrors.Org.Department.NotFound, $"Department with ID {request.DepartmentId} not found."));
+                return Result.Failure(new Error("404", $"Department with ID {request.DepartmentId} not found."));
             }
 
             var institute = university.Institutes.FirstOrDefault(i =>
@@ -46,20 +37,20 @@ public sealed class UpdateDepartmentCommandHandler : IRequestHandler<UpdateDepar
 
             if (institute is null)
             {
-                return Result.Failure(new Error(DomainErrors.Org.Department.NotFound, $"Department with ID {request.DepartmentId} not found."));
+                return Result.Failure(new Error("404", $"Department with ID {request.DepartmentId} not found."));
             }
 
             var department = institute.Departments.FirstOrDefault(d => d.Id == request.DepartmentId);
 
             if (department is null || department.IsDeleted)
             {
-                return Result.Failure(new Error(DomainErrors.Org.Department.NotFound, $"Department with ID {request.DepartmentId} not found or has been deleted."));
+                return Result.Failure(new Error("404", $"Department with ID {request.DepartmentId} not found or has been deleted."));
             }
 
             var userId = _currentUserProvider.UserId;
             if (!userId.HasValue)
             {
-                return Result.Failure(new Error(DomainErrors.Auth.InvalidCredentials, "User ID is not available."));
+                return Result.Failure(new Error("401", "User ID is not available."));
             }
             department.UpdateName(request.Name, userId.Value);
 
@@ -74,11 +65,11 @@ public sealed class UpdateDepartmentCommandHandler : IRequestHandler<UpdateDepar
         }
         catch (ArgumentException argEx)
         {
-            return Result.Failure(new Error(DomainErrors.Org.Department.GenericError, argEx.Message));
+            return Result.Failure(new Error("400", argEx.Message));
         }
         catch (Exception ex)
         {
-            return Result.Failure(new Error(DomainErrors.General.InternalError, $"An error occurred while updating the Department: {ex.Message}"));
+            return Result.Failure(new Error("500", $"An error occurred while updating the Department: {ex.Message}"));
         }
     }
 }

@@ -2,7 +2,6 @@ namespace AWM.Service.Application.Features.Org.Queries.Institutes.GetAllInstitut
 
 using AWM.Service.Application.Features.Org.DTOs;
 using AWM.Service.Domain.Repositories;
-using AWM.Service.Domain.Errors;
 using KDS.Primitives.FluentResult;
 using MediatR;
 
@@ -30,7 +29,7 @@ public sealed class GetAllInstitutesQueryHandler
             if (university is null)
             {
                 return Result.Failure<IReadOnlyList<InstituteDto>>(
-                    new Error(DomainErrors.Org.University.NotFound, $"University with ID {request.UniversityId} not found."));
+                    new Error("404", $"University with ID {request.UniversityId} not found."));
             }
 
             var instituteDtos = university.Institutes
@@ -43,7 +42,7 @@ public sealed class GetAllInstitutesQueryHandler
         catch (Exception ex)
         {
             return Result.Failure<IReadOnlyList<InstituteDto>>(
-                new Error(DomainErrors.General.InternalError, $"An error occurred while retrieving institutes: {ex.Message}"));
+                new Error("500", $"An error occurred while retrieving institutes: {ex.Message}"));
         }
     }
 
