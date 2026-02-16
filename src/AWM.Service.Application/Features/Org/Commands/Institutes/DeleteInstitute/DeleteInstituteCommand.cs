@@ -9,5 +9,4 @@ using MediatR;
 public sealed record DeleteInstituteCommand : IRequest<Result>
 {
     public int InstituteId { get; init; }
-    public int DeletedBy { get; init; }
 }

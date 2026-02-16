@@ -1,5 +1,6 @@
 namespace AWM.Service.Application.Features.Org.Commands.Departments.CreateDepartment;
 
+using AWM.Service.Domain.Common;
 using AWM.Service.Domain.Repositories;
 using KDS.Primitives.FluentResult;
 using MediatR;
@@ -10,39 +11,40 @@ using MediatR;
 public sealed class CreateDepartmentCommandHandler : IRequestHandler<CreateDepartmentCommand, Result<int>>
 {
     private readonly IUniversityRepository _universityRepository;
+    private readonly ICurrentUserProvider _currentUserProvider;
 
-    public CreateDepartmentCommandHandler(IUniversityRepository universityRepository)
+    public CreateDepartmentCommandHandler(
+        IUniversityRepository universityRepository,
+        ICurrentUserProvider currentUserProvider)
     {
         _universityRepository = universityRepository ?? throw new ArgumentNullException(nameof(universityRepository));
+        _currentUserProvider = currentUserProvider ?? throw new ArgumentNullException(nameof(currentUserProvider));
     }
 
     public async Task<Result<int>> Handle(CreateDepartmentCommand request, CancellationToken cancellationToken)
     {
         try
         {
-            if (string.IsNullOrWhiteSpace(request.Name))
-            {
-                return Result.Failure<int>(new Error("Validation.Department.NameRequired", "Department name is required."));
-            }
-
-            var universities = await _universityRepository.GetAllAsync(cancellationToken);
-            
-            var university = universities.FirstOrDefault(u => 
-                u.Institutes.Any(i => i.Id == request.InstituteId && !i.IsDeleted));
+            var university = await _universityRepository.GetByInstituteIdAsync(request.InstituteId, cancellationToken);
 
             if (university is null)
             {
-                return Result.Failure<int>(new Error("NotFound.Institute", $"Institute with ID {request.InstituteId} not found."));
+                return Result.Failure<int>(new Error("404", $"Institute with ID {request.InstituteId} not found."));
             }
 
             var institute = university.Institutes.FirstOrDefault(i => i.Id == request.InstituteId);
-            
+
             if (institute is null || institute.IsDeleted)
             {
-                return Result.Failure<int>(new Error("NotFound.Institute", $"Institute with ID {request.InstituteId} not found or has been deleted."));
+                return Result.Failure<int>(new Error("404", $"Institute with ID {request.InstituteId} not found or has been deleted."));
             }
 
-            var department = institute.AddDepartment(request.Name, request.CreatedBy, request.Code);
+            var userId = _currentUserProvider.UserId;
+            if (!userId.HasValue)
+            {
+                return Result.Failure<int>(new Error("401", "User ID is not available."));
+            }
+            var department = institute.AddDepartment(request.Name, userId.Value, request.Code);
 
             await _universityRepository.UpdateAsync(university, cancellationToken);
 
@@ -50,11 +52,11 @@ public sealed class CreateDepartmentCommandHandler : IRequestHandler<CreateDepar
         }
         catch (ArgumentException argEx)
         {
-            return Result.Failure<int>(new Error("Validation.Department", argEx.Message));
+            return Result.Failure<int>(new Error("400", argEx.Message));
         }
         catch (Exception ex)
         {
-            return Result.Failure<int>(new Error("InternalError", $"An error occurred while creating the Department: {ex.Message}"));
+            return Result.Failure<int>(new Error("500", $"An error occurred while creating the Department: {ex.Message}"));
         }
     }
 }

@@ -11,5 +11,4 @@ public sealed record CreateDepartmentCommand : IRequest<Result<int>>
     public int InstituteId { get; init; }
     public string Name { get; init; } = null!;
     public string? Code { get; init; }
-    public int CreatedBy { get; init; }
 }

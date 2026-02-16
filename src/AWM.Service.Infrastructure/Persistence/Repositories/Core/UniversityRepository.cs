@@ -33,7 +33,7 @@ public sealed class UniversityRepository : IUniversityRepository
             return null;
 
         var normalizedCode = code.ToUpperInvariant();
-        
+
         return await _context.Universities
             .Include(u => u.Institutes)
                 .ThenInclude(i => i.Departments)
@@ -64,5 +64,25 @@ public sealed class UniversityRepository : IUniversityRepository
         ArgumentNullException.ThrowIfNull(university);
         _context.Universities.Update(university);
         return Task.CompletedTask;
+    }
+
+    /// <inheritdoc />
+    public async Task<University?> GetByInstituteIdAsync(int instituteId, CancellationToken cancellationToken = default)
+    {
+        return await _context.Universities
+            .Include(u => u.Institutes)
+                .ThenInclude(i => i.Departments)
+            .Where(u => !u.IsDeleted && u.Institutes.Any(i => i.Id == instituteId && !i.IsDeleted))
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task<University?> GetByDepartmentIdAsync(int departmentId, CancellationToken cancellationToken = default)
+    {
+        return await _context.Universities
+            .Include(u => u.Institutes)
+                .ThenInclude(i => i.Departments)
+            .Where(u => !u.IsDeleted && u.Institutes.Any(i => i.Departments.Any(d => d.Id == departmentId && !d.IsDeleted)))
+            .FirstOrDefaultAsync(cancellationToken);
     }
 }

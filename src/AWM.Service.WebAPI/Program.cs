@@ -6,14 +6,24 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using AWM.Service.WebAPI.Authorization;
+using FluentValidation;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllers();
 
-// Add MediatR
-builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
+// Add MediatR with ValidationBehavior
+var applicationAssembly = typeof(AWM.Service.Application.Features.Auth.Commands.Login.LoginCommand).Assembly;
+builder.Services.AddMediatR(cfg =>
+{
+    cfg.RegisterServicesFromAssembly(applicationAssembly);
+    cfg.AddBehavior(typeof(MediatR.IPipelineBehavior<,>), typeof(AWM.Service.Application.Common.Behaviors.ValidationBehavior<,>));
+});
+
+// Add FluentValidation
+builder.Services.AddValidatorsFromAssembly(applicationAssembly);
 
 // Add API Versioning
 builder.Services.AddApiVersioning(options =>
@@ -98,6 +108,14 @@ builder.Services.AddScoped<AWM.Service.Domain.Common.ICurrentUserProvider, AWM.S
 // Add Authentication Services
 builder.Services.AddScoped<AWM.Service.Domain.Auth.Interfaces.IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<AWM.Service.Domain.Auth.Interfaces.IJwtTokenService, JwtTokenService>();
+
+// Add Context-Aware RBAC Authorization
+builder.Services.AddContextAwareAuthorization();
+builder.Services.AddPermissionPolicies();
+
+// Add Application Services
+builder.Services.AddScoped<AWM.Service.Domain.Wf.Services.IStateMachine, AWM.Service.Application.Features.Workflow.Services.WorkflowService>();
+builder.Services.AddScoped<AWM.Service.Domain.CommonDomain.Services.IPeriodValidationService, AWM.Service.Application.Features.Common.Services.PeriodValidationService>();
 
 var app = builder.Build();
 

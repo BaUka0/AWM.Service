@@ -3,6 +3,7 @@ namespace AWM.Service.Domain.Repositories;
 using AWM.Service.Domain.Org.Entities;
 using AWM.Service.Domain.Auth.Entities;
 using AWM.Service.Domain.Edu.Entities;
+using System.Collections.Generic;
 
 /// <summary>
 /// Repository interface for University aggregate.
@@ -14,6 +15,8 @@ public interface IUniversityRepository
     Task<IReadOnlyList<University>> GetAllAsync(CancellationToken cancellationToken = default);
     Task AddAsync(University university, CancellationToken cancellationToken = default);
     Task UpdateAsync(University university, CancellationToken cancellationToken = default);
+    Task<University?> GetByInstituteIdAsync(int instituteId, CancellationToken cancellationToken = default);
+    Task<University?> GetByDepartmentIdAsync(int departmentId, CancellationToken cancellationToken = default);
 }
 
 /// <summary>
@@ -27,6 +30,16 @@ public interface IUserRepository
     Task<IReadOnlyList<User>> GetByUniversityAsync(int universityId, CancellationToken cancellationToken = default);
     Task AddAsync(User user, CancellationToken cancellationToken = default);
     Task UpdateAsync(User user, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets a list of users by their IDs.
+    /// </summary>
+    Task<IReadOnlyList<User>> GetByIdsAsync(IEnumerable<int> ids, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets user with all role assignments eagerly loaded for authorization.
+    /// </summary>
+    Task<User?> GetWithRoleAssignmentsAsync(int id, CancellationToken cancellationToken = default);
 }
 
 /// <summary>

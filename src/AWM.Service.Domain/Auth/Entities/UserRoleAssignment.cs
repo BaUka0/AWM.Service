@@ -28,6 +28,14 @@ public class UserRoleAssignment : Entity<long>, IAuditable
     // Legacy field
     public int? AssignedBy => CreatedBy;
 
+    // Navigation property for authorization
+    
+    /// <summary>
+    /// Navigation property to the Role entity.
+    /// Used for eager loading in authorization queries.
+    /// </summary>
+    public Role? Role { get; private set; }
+
     private UserRoleAssignment() { }
 
     internal UserRoleAssignment(
