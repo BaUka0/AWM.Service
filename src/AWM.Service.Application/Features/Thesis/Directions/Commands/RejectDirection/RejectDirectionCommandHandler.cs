@@ -1,5 +1,6 @@
 namespace AWM.Service.Application.Features.Thesis.Directions.Commands.RejectDirection;
 
+using AWM.Service.Domain.Common;
 using AWM.Service.Domain.Repositories;
 using KDS.Primitives.FluentResult;
 using MediatR;
@@ -7,22 +8,25 @@ using MediatR;
 /// <summary>
 /// Handler for rejecting a direction.
 /// </summary>
-public sealed class RejectDirectionCommandHandler 
+public sealed class RejectDirectionCommandHandler
     : IRequestHandler<RejectDirectionCommand, Result>
 {
     private readonly IDirectionRepository _directionRepository;
     private readonly IWorkflowRepository _workflowRepository;
+    private readonly ICurrentUserProvider _currentUserProvider;
 
     public RejectDirectionCommandHandler(
         IDirectionRepository directionRepository,
-        IWorkflowRepository workflowRepository)
+        IWorkflowRepository workflowRepository,
+        ICurrentUserProvider currentUserProvider)
     {
         _directionRepository = directionRepository;
         _workflowRepository = workflowRepository;
+        _currentUserProvider = currentUserProvider;
     }
 
     public async Task<Result> Handle(
-        RejectDirectionCommand request, 
+        RejectDirectionCommand request,
         CancellationToken cancellationToken)
     {
         // Get existing direction
@@ -32,7 +36,7 @@ public sealed class RejectDirectionCommandHandler
         if (direction is null)
         {
             return Result.Failure(new Error(
-                "Direction.NotFound", 
+                "404",
                 $"Direction with ID {request.Id} not found."));
         }
 
@@ -40,7 +44,7 @@ public sealed class RejectDirectionCommandHandler
         if (direction.IsDeleted)
         {
             return Result.Failure(new Error(
-                "Direction.Deleted", 
+                "409",
                 $"Direction with ID {request.Id} has been deleted."));
         }
 
@@ -51,7 +55,7 @@ public sealed class RejectDirectionCommandHandler
         if (submittedState is null)
         {
             return Result.Failure(new Error(
-                "State.NotFound", 
+                "404",
                 "Submitted state not found for this work type."));
         }
 
@@ -59,7 +63,7 @@ public sealed class RejectDirectionCommandHandler
         if (direction.CurrentStateId != submittedState.Id)
         {
             return Result.Failure(new Error(
-                "Direction.InvalidState", 
+                "409",
                 "Only submitted directions can be rejected. Current state does not allow rejection."));
         }
 
@@ -70,14 +74,20 @@ public sealed class RejectDirectionCommandHandler
         if (rejectedState is null)
         {
             return Result.Failure(new Error(
-                "State.NotFound", 
+                "404",
                 "Rejected state not found for this work type."));
+        }
+
+        var userId = _currentUserProvider.UserId;
+        if (!userId.HasValue)
+        {
+            return Result.Failure(new Error("401", "User ID is not available."));
         }
 
         try
         {
             // Reject using domain method (raises DirectionRejectedEvent)
-            direction.Reject(rejectedState.Id, request.RejectedBy, request.Comment);
+            direction.Reject(rejectedState.Id, userId.Value, request.Comment);
 
             // Save changes
             await _directionRepository.UpdateAsync(direction, cancellationToken);
@@ -87,7 +97,7 @@ public sealed class RejectDirectionCommandHandler
         catch (Exception ex)
         {
             // Unexpected errors
-            return Result.Failure(new Error("InternalError", ex.Message));
+            return Result.Failure(new Error("500", ex.Message));
         }
     }
 }

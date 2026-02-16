@@ -27,9 +27,5 @@ public sealed class CreateDepartmentCommandValidator : AbstractValidator<CreateD
             .Matches(@"^[A-Z0-9\-]*$")
             .WithMessage("Department code must contain only uppercase letters, numbers, and hyphens.")
             .When(x => !string.IsNullOrWhiteSpace(x.Code));
-
-        RuleFor(x => x.CreatedBy)
-            .GreaterThan(0)
-            .WithMessage("CreatedBy must be a valid user ID.");
     }
 }

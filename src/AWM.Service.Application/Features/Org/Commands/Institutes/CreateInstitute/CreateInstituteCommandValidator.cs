@@ -20,9 +20,5 @@ public sealed class CreateInstituteCommandValidator : AbstractValidator<CreateIn
             .WithMessage("Institute name must not exceed 200 characters.")
             .Matches(@"^[a-zA-Z0-9\s\-\.,']+$")
             .WithMessage("Institute name contains invalid characters.");
-
-        RuleFor(x => x.CreatedBy)
-            .GreaterThan(0)
-            .WithMessage("CreatedBy must be a valid user ID.");
     }
 }

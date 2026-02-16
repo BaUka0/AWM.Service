@@ -20,9 +20,5 @@ public sealed class UpdateInstituteCommandValidator : AbstractValidator<UpdateIn
             .WithMessage("Institute name must not exceed 200 characters.")
             .Matches(@"^[a-zA-Z0-9\s\-\.,']+$")
             .WithMessage("Institute name contains invalid characters.");
-
-        RuleFor(x => x.ModifiedBy)
-            .GreaterThan(0)
-            .WithMessage("ModifiedBy must be a valid user ID.");
     }
 }

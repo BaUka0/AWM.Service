@@ -16,7 +16,7 @@ using Microsoft.AspNetCore.Mvc;
 [ApiController]
 [Route("api/v1/topics")]
 [Produces("application/json")]
-public class TopicsController : ControllerBase
+public class TopicsController : BaseController
 {
     private readonly ISender _sender;
 
@@ -41,7 +41,7 @@ public class TopicsController : ControllerBase
 
         if (result.IsFailed)
         {
-            return HandleError(result.Error);
+            return HandleResultError(result.Error);
         }
 
         return Ok(result.Value);
@@ -70,7 +70,7 @@ public class TopicsController : ControllerBase
 
         if (result.IsFailed)
         {
-            return HandleError(result.Error);
+            return HandleResultError(result.Error);
         }
 
         return Ok(result.Value);
@@ -92,7 +92,7 @@ public class TopicsController : ControllerBase
 
         if (result.IsFailed)
         {
-            return HandleError(result.Error);
+            return HandleResultError(result.Error);
         }
 
         return Ok(result.Value);
@@ -122,14 +122,13 @@ public class TopicsController : ControllerBase
             TitleEn = request.TitleEn,
             Description = request.Description,
             MaxParticipants = request.MaxParticipants,
-            CreatedBy = GetCurrentUserId() // TODO: Implement user context
         };
 
         var result = await _sender.Send(command);
 
         if (result.IsFailed)
         {
-            return HandleError(result.Error);
+            return HandleResultError(result.Error);
         }
 
         return CreatedAtAction(nameof(GetById), new { id = result.Value }, result.Value);
@@ -157,14 +156,13 @@ public class TopicsController : ControllerBase
             TitleEn = request.TitleEn,
             Description = request.Description,
             MaxParticipants = request.MaxParticipants,
-            ModifiedBy = GetCurrentUserId() // TODO: Implement user context
         };
 
         var result = await _sender.Send(command);
 
         if (result.IsFailed)
         {
-            return HandleError(result.Error);
+            return HandleResultError(result.Error);
         }
 
         return NoContent();
@@ -185,14 +183,13 @@ public class TopicsController : ControllerBase
         var command = new ApproveTopicCommand
         {
             TopicId = id,
-            ApprovedBy = GetCurrentUserId() // TODO: Implement user context
         };
 
         var result = await _sender.Send(command);
 
         if (result.IsFailed)
         {
-            return HandleError(result.Error);
+            return HandleResultError(result.Error);
         }
 
         return NoContent();
@@ -213,43 +210,15 @@ public class TopicsController : ControllerBase
         var command = new CloseTopicCommand
         {
             TopicId = id,
-            ClosedBy = GetCurrentUserId() // TODO: Implement user context
         };
 
         var result = await _sender.Send(command);
 
         if (result.IsFailed)
         {
-            return HandleError(result.Error);
+            return HandleResultError(result.Error);
         }
 
         return NoContent();
     }
-
-    #region Helper Methods
-
-    /// <summary>
-    /// Handles errors from FluentResult and returns appropriate HTTP status codes.
-    /// </summary>
-    private IActionResult HandleError(KDS.Primitives.FluentResult.Error error)
-    {
-        return error.Code switch
-        {
-            var code when code.StartsWith("NotFound") => NotFound(new { error.Code, error.Message }),
-            var code when code.StartsWith("Validation") => BadRequest(new { error.Code, error.Message }),
-            var code when code.StartsWith("BusinessRule") => Conflict(new { error.Code, error.Message }),
-            _ => StatusCode(StatusCodes.Status500InternalServerError, new { error.Code, error.Message })
-        };
-    }
-
-    /// <summary>
-    /// Gets current user ID from authentication context.
-    /// TODO: Implement actual user context retrieval.
-    /// </summary>
-    private int GetCurrentUserId()
-    {
-        return 1; // Placeholder
-    }
-
-    #endregion
 }

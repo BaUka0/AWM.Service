@@ -1,5 +1,6 @@
 namespace AWM.Service.Application.Features.Thesis.Topics.Commands.CreateTopic;
 
+using AWM.Service.Domain.Common;
 using AWM.Service.Domain.Repositories;
 using AWM.Service.Domain.Thesis.Entities;
 using KDS.Primitives.FluentResult;
@@ -13,30 +14,28 @@ public sealed class CreateTopicCommandHandler : IRequestHandler<CreateTopicComma
     private readonly ITopicRepository _topicRepository;
     private readonly IDirectionRepository _directionRepository;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ICurrentUserProvider _currentUserProvider;
 
     public CreateTopicCommandHandler(
         ITopicRepository topicRepository,
         IDirectionRepository directionRepository,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        ICurrentUserProvider currentUserProvider)
     {
         _topicRepository = topicRepository ?? throw new ArgumentNullException(nameof(topicRepository));
         _directionRepository = directionRepository ?? throw new ArgumentNullException(nameof(directionRepository));
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
+        _currentUserProvider = currentUserProvider ?? throw new ArgumentNullException(nameof(currentUserProvider));
     }
 
     public async Task<Result<long>> Handle(CreateTopicCommand request, CancellationToken cancellationToken)
     {
         try
         {
-            // 1. Validate input
-            if (string.IsNullOrWhiteSpace(request.TitleRu))
+            var userId = _currentUserProvider.UserId;
+            if (!userId.HasValue)
             {
-                return Result.Failure<long>(new Error("Validation.Topic.TitleRequired", "Russian title is required."));
-            }
-
-            if (request.MaxParticipants < 1 || request.MaxParticipants > 5)
-            {
-                return Result.Failure<long>(new Error("Validation.Topic.InvalidMaxParticipants", "Max participants must be between 1 and 5."));
+                return Result.Failure<long>(new Error("401", "User ID is not available."));
             }
 
             // 2. If DirectionId is provided, verify it exists and is approved
@@ -46,7 +45,7 @@ public sealed class CreateTopicCommandHandler : IRequestHandler<CreateTopicComma
 
                 if (direction is null)
                 {
-                    return Result.Failure<long>(new Error("NotFound.Direction", $"Direction with ID {request.DirectionId} not found."));
+                    return Result.Failure<long>(new Error("404", $"Direction with ID {request.DirectionId} not found."));
                 }
 
                 // Business rule: Topics can only be created for approved directions
@@ -57,7 +56,7 @@ public sealed class CreateTopicCommandHandler : IRequestHandler<CreateTopicComma
             // 3. Create topic using domain constructor
             var topic = new Topic(
                 departmentId: request.DepartmentId,
-                supervisorId: request.SupervisorId,
+                supervisorId: userId.Value, // Use current user ID as supervisor ID
                 academicYearId: request.AcademicYearId,
                 workTypeId: request.WorkTypeId,
                 titleRu: request.TitleRu,
@@ -78,12 +77,12 @@ public sealed class CreateTopicCommandHandler : IRequestHandler<CreateTopicComma
         catch (ArgumentException argEx)
         {
             // Domain validation errors
-            return Result.Failure<long>(new Error("Validation.Topic", argEx.Message));
+            return Result.Failure<long>(new Error("400", argEx.Message));
         }
         catch (Exception ex)
         {
             // Unexpected errors
-            return Result.Failure<long>(new Error("InternalError", $"An error occurred while creating the topic: {ex.Message}"));
+            return Result.Failure<long>(new Error("500", ex.Message));
         }
     }
 }
