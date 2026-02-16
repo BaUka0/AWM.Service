@@ -14,7 +14,7 @@ using Microsoft.AspNetCore.Mvc;
 [ApiController]
 [Route("api/v1/academic-programs")]
 [Produces("application/json")]
-public sealed class AcademicProgramsController : ControllerBase
+public sealed class AcademicProgramsController : BaseController
 {
     private readonly ISender _sender;
 
@@ -97,16 +97,12 @@ public sealed class AcademicProgramsController : ControllerBase
         [FromBody] CreateAcademicProgramRequest request,
         CancellationToken cancellationToken = default)
     {
-        // TODO: Get current user ID from HttpContext/Claims
-        var currentUserId = GetCurrentUserId();
-
         var command = new CreateAcademicProgramCommand
         {
             DepartmentId = request.DepartmentId,
             DegreeLevelId = request.DegreeLevelId,
             Code = request.Code,
-            Name = request.Name,
-            CreatedBy = currentUserId
+            Name = request.Name
         };
 
         var result = await _sender.Send(command, cancellationToken);
@@ -117,8 +113,8 @@ public sealed class AcademicProgramsController : ControllerBase
         }
 
         return CreatedAtAction(
-            nameof(GetAcademicPrograms), 
-            new { departmentId = request.DepartmentId }, 
+            nameof(GetAcademicPrograms),
+            new { departmentId = request.DepartmentId },
             result.Value);
     }
 
@@ -139,15 +135,11 @@ public sealed class AcademicProgramsController : ControllerBase
         [FromBody] UpdateAcademicProgramRequest request,
         CancellationToken cancellationToken = default)
     {
-        // TODO: Get current user ID from HttpContext/Claims
-        var currentUserId = GetCurrentUserId();
-
         var command = new UpdateAcademicProgramCommand
         {
             Id = id,
             Code = request.Code,
-            Name = request.Name,
-            ModifiedBy = currentUserId
+            Name = request.Name
         };
 
         var result = await _sender.Send(command, cancellationToken);
@@ -158,37 +150,5 @@ public sealed class AcademicProgramsController : ControllerBase
         }
 
         return NoContent();
-    }
-
-    /// <summary>
-    /// Handles Result errors and converts them to appropriate HTTP responses.
-    /// </summary>
-    private IActionResult HandleResultError(KDS.Primitives.FluentResult.Error error)
-    {
-        return error.Code switch
-        {
-            "404" or "AcademicProgram.NotFound" or "Department.NotFound" or "DegreeLevel.NotFound" 
-                => NotFound(new { error.Code, error.Message }),
-            
-            "Validation.Error" or "AcademicProgram.Deleted" 
-                => BadRequest(new { error.Code, error.Message }),
-            
-            "Query.NotSupported" 
-                => BadRequest(new { error.Code, error.Message }),
-            
-            _ => StatusCode(StatusCodes.Status500InternalServerError, 
-                new { error.Code, error.Message })
-        };
-    }
-
-    /// <summary>
-    /// Gets current user ID from authentication context.
-    /// TODO: Implement actual user resolution from JWT/Claims.
-    /// </summary>
-    private int GetCurrentUserId()
-    {
-        // Placeholder: Extract from User.Claims or ICurrentUserService
-        // Example: return int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
-        return 1; // Mock user ID for now
     }
 }

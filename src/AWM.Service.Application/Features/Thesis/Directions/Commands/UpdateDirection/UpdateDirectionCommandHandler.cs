@@ -1,5 +1,6 @@
 namespace AWM.Service.Application.Features.Thesis.Directions.Commands.UpdateDirection;
 
+using AWM.Service.Domain.Common;
 using AWM.Service.Domain.Repositories;
 using KDS.Primitives.FluentResult;
 using MediatR;
@@ -7,22 +8,25 @@ using MediatR;
 /// <summary>
 /// Handler for updating a research direction.
 /// </summary>
-public sealed class UpdateDirectionCommandHandler 
+public sealed class UpdateDirectionCommandHandler
     : IRequestHandler<UpdateDirectionCommand, Result>
 {
     private readonly IDirectionRepository _directionRepository;
     private readonly IWorkflowRepository _workflowRepository;
+    private readonly ICurrentUserProvider _currentUserProvider;
 
     public UpdateDirectionCommandHandler(
         IDirectionRepository directionRepository,
-        IWorkflowRepository workflowRepository)
+        IWorkflowRepository workflowRepository,
+        ICurrentUserProvider currentUserProvider)
     {
         _directionRepository = directionRepository;
         _workflowRepository = workflowRepository;
+        _currentUserProvider = currentUserProvider;
     }
 
     public async Task<Result> Handle(
-        UpdateDirectionCommand request, 
+        UpdateDirectionCommand request,
         CancellationToken cancellationToken)
     {
         // Get existing direction
@@ -32,7 +36,7 @@ public sealed class UpdateDirectionCommandHandler
         if (direction is null)
         {
             return Result.Failure(new Error(
-                "Direction.NotFound", 
+                "404",
                 $"Direction with ID {request.Id} not found."));
         }
 
@@ -40,7 +44,7 @@ public sealed class UpdateDirectionCommandHandler
         if (direction.IsDeleted)
         {
             return Result.Failure(new Error(
-                "Direction.Deleted", 
+                "409",
                 $"Direction with ID {request.Id} has been deleted."));
         }
 
@@ -51,15 +55,21 @@ public sealed class UpdateDirectionCommandHandler
         if (draftState is null)
         {
             return Result.Failure(new Error(
-                "State.NotFound", 
+                "404",
                 "Draft state not found for this work type."));
         }
 
         if (direction.CurrentStateId != draftState.Id)
         {
             return Result.Failure(new Error(
-                "Direction.NotEditable", 
+                "409",
                 "Only draft directions can be edited. Current state does not allow modifications."));
+        }
+
+        var userId = _currentUserProvider.UserId;
+        if (!userId.HasValue)
+        {
+            return Result.Failure(new Error("401", "User ID is not available."));
         }
 
         try
@@ -79,7 +89,7 @@ public sealed class UpdateDirectionCommandHandler
                 .GetProperty("LastModifiedBy", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
 
             lastModifiedAtProperty?.SetValue(direction, DateTime.UtcNow);
-            lastModifiedByProperty?.SetValue(direction, request.ModifiedBy);
+            lastModifiedByProperty?.SetValue(direction, userId.Value);
 
             // Save changes
             await _directionRepository.UpdateAsync(direction, cancellationToken);
@@ -89,12 +99,12 @@ public sealed class UpdateDirectionCommandHandler
         catch (ArgumentException ex)
         {
             // Domain validation errors (from entity method)
-            return Result.Failure(new Error("Validation.Error", ex.Message));
+            return Result.Failure(new Error("400", ex.Message));
         }
         catch (Exception ex)
         {
             // Unexpected errors
-            return Result.Failure(new Error("InternalError", ex.Message));
+            return Result.Failure(new Error("500", ex.Message));
         }
     }
 }

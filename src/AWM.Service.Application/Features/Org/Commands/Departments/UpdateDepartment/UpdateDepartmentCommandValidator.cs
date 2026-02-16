@@ -27,9 +27,5 @@ public sealed class UpdateDepartmentCommandValidator : AbstractValidator<UpdateD
             .Matches(@"^[A-Z0-9\-]*$")
             .WithMessage("Department code must contain only uppercase letters, numbers, and hyphens.")
             .When(x => !string.IsNullOrWhiteSpace(x.Code));
-
-        RuleFor(x => x.ModifiedBy)
-            .GreaterThan(0)
-            .WithMessage("ModifiedBy must be a valid user ID.");
     }
 }

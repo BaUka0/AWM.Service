@@ -13,7 +13,7 @@ using Microsoft.AspNetCore.Mvc;
 [ApiController]
 [Route("api/v1/degree-levels")]
 [Produces("application/json")]
-public sealed class DegreeLevelsController : ControllerBase
+public sealed class DegreeLevelsController : BaseController
 {
     private readonly ISender _sender;
 
@@ -84,14 +84,10 @@ public sealed class DegreeLevelsController : ControllerBase
         [FromBody] CreateDegreeLevelRequest request,
         CancellationToken cancellationToken = default)
     {
-        // TODO: Get current user ID from HttpContext/Claims
-        var currentUserId = GetCurrentUserId();
-
         var command = new CreateDegreeLevelCommand
         {
             Name = request.Name,
-            DurationYears = request.DurationYears,
-            CreatedBy = currentUserId
+            DurationYears = request.DurationYears
         };
 
         var result = await _sender.Send(command, cancellationToken);
@@ -102,34 +98,8 @@ public sealed class DegreeLevelsController : ControllerBase
         }
 
         return CreatedAtAction(
-            nameof(GetDegreeLevels), 
-            new { name = request.Name }, 
+            nameof(GetDegreeLevels),
+            new { name = request.Name },
             result.Value);
-    }
-
-    /// <summary>
-    /// Handles Result errors and converts them to appropriate HTTP responses.
-    /// </summary>
-    private IActionResult HandleResultError(KDS.Primitives.FluentResult.Error error)
-    {
-        return error.Code switch
-        {
-            "Validation.Error" 
-                => BadRequest(new { error.Code, error.Message }),
-            
-            _ => StatusCode(StatusCodes.Status500InternalServerError, 
-                new { error.Code, error.Message })
-        };
-    }
-
-    /// <summary>
-    /// Gets current user ID from authentication context.
-    /// TODO: Implement actual user resolution from JWT/Claims.
-    /// </summary>
-    private int GetCurrentUserId()
-    {
-        // Placeholder: Extract from User.Claims or ICurrentUserService
-        // Example: return int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
-        return 1; // Mock user ID for now
     }
 }

@@ -20,7 +20,7 @@ using Microsoft.AspNetCore.Mvc;
 [ApiController]
 [Route("api/v1/directions")]
 [Produces("application/json")]
-public sealed class DirectionsController : ControllerBase
+public sealed class DirectionsController : BaseController
 {
     private readonly ISender _sender;
 
@@ -275,17 +275,13 @@ public sealed class DirectionsController : ControllerBase
         [FromBody] UpdateDirectionRequest request,
         CancellationToken cancellationToken = default)
     {
-        // TODO: Get current user ID from HttpContext/Claims
-        var currentUserId = GetCurrentUserId();
-
         var command = new UpdateDirectionCommand
         {
             Id = id,
             TitleRu = request.TitleRu,
             TitleKz = request.TitleKz,
             TitleEn = request.TitleEn,
-            Description = request.Description,
-            ModifiedBy = currentUserId
+            Description = request.Description
         };
 
         var result = await _sender.Send(command, cancellationToken);
@@ -317,13 +313,9 @@ public sealed class DirectionsController : ControllerBase
         [FromRoute] long id,
         CancellationToken cancellationToken = default)
     {
-        // TODO: Get current user ID from HttpContext/Claims
-        var currentUserId = GetCurrentUserId();
-
         var command = new SubmitDirectionCommand
         {
-            Id = id,
-            SubmittedBy = currentUserId
+            Id = id
         };
 
         var result = await _sender.Send(command, cancellationToken);
@@ -351,13 +343,9 @@ public sealed class DirectionsController : ControllerBase
         [FromRoute] long id,
         CancellationToken cancellationToken = default)
     {
-        // TODO: Get current user ID from HttpContext/Claims
-        var currentUserId = GetCurrentUserId();
-
         var command = new ApproveDirectionCommand
         {
-            Id = id,
-            ApprovedBy = currentUserId
+            Id = id
         };
 
         var result = await _sender.Send(command, cancellationToken);
@@ -387,13 +375,9 @@ public sealed class DirectionsController : ControllerBase
         [FromBody] RejectDirectionRequest request,
         CancellationToken cancellationToken = default)
     {
-        // TODO: Get current user ID from HttpContext/Claims
-        var currentUserId = GetCurrentUserId();
-
         var command = new RejectDirectionCommand
         {
             Id = id,
-            RejectedBy = currentUserId,
             Comment = request.Comment
         };
 
@@ -424,13 +408,9 @@ public sealed class DirectionsController : ControllerBase
         [FromBody] RequestRevisionRequest request,
         CancellationToken cancellationToken = default)
     {
-        // TODO: Get current user ID from HttpContext/Claims
-        var currentUserId = GetCurrentUserId();
-
         var command = new RequestRevisionCommand
         {
             Id = id,
-            RequestedBy = currentUserId,
             Comment = request.Comment
         };
 
@@ -442,42 +422,6 @@ public sealed class DirectionsController : ControllerBase
         }
 
         return NoContent();
-    }
-
-    #endregion
-
-    #region Helper Methods
-
-    /// <summary>
-    /// Handles Result errors and converts them to appropriate HTTP responses.
-    /// </summary>
-    private IActionResult HandleResultError(KDS.Primitives.FluentResult.Error error)
-    {
-        return error.Code switch
-        {
-            "Direction.NotFound" or "Department.NotFound" or "WorkType.NotFound" or "State.NotFound"
-                => NotFound(new { error.Code, error.Message }),
-
-            "Direction.Deleted" or "Direction.NotEditable" or "Direction.InvalidState" or "Direction.Unauthorized"
-                => BadRequest(new { error.Code, error.Message }),
-
-            "Validation.Error"
-                => BadRequest(new { error.Code, error.Message }),
-
-            _ => StatusCode(StatusCodes.Status500InternalServerError,
-                new { error.Code, error.Message })
-        };
-    }
-
-    /// <summary>
-    /// Gets current user ID from authentication context.
-    /// TODO: Implement actual user resolution from JWT/Claims.
-    /// </summary>
-    private int GetCurrentUserId()
-    {
-        // Placeholder: Extract from User.Claims or ICurrentUserService
-        // Example: return int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
-        return 1; // Mock user ID for now
     }
 
     #endregion

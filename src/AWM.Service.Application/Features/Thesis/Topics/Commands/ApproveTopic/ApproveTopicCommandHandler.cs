@@ -1,5 +1,6 @@
 namespace AWM.Service.Application.Features.Thesis.Topics.Commands.ApproveTopic;
 
+using AWM.Service.Domain.Common;
 using AWM.Service.Domain.Repositories;
 using KDS.Primitives.FluentResult;
 using MediatR;
@@ -12,13 +13,16 @@ public sealed class ApproveTopicCommandHandler : IRequestHandler<ApproveTopicCom
 {
     private readonly ITopicRepository _topicRepository;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ICurrentUserProvider _currentUserProvider;
 
     public ApproveTopicCommandHandler(
         ITopicRepository topicRepository,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        ICurrentUserProvider currentUserProvider)
     {
         _topicRepository = topicRepository ?? throw new ArgumentNullException(nameof(topicRepository));
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
+        _currentUserProvider = currentUserProvider ?? throw new ArgumentNullException(nameof(currentUserProvider));
     }
 
     public async Task<Result> Handle(ApproveTopicCommand request, CancellationToken cancellationToken)
@@ -30,14 +34,14 @@ public sealed class ApproveTopicCommandHandler : IRequestHandler<ApproveTopicCom
 
             if (topic is null)
             {
-                return Result.Failure(new Error("NotFound.Topic", $"Topic with ID {request.TopicId} not found."));
+                return Result.Failure(new Error("404", $"Topic with ID {request.TopicId} not found."));
             }
 
             // 2. Business rule: Cannot approve already approved topics
             if (topic.IsApproved)
             {
                 return Result.Failure(new Error(
-                    "BusinessRule.Topic.AlreadyApproved", 
+                    "409",
                     "This topic is already approved."));
             }
 
@@ -45,7 +49,7 @@ public sealed class ApproveTopicCommandHandler : IRequestHandler<ApproveTopicCom
             if (topic.IsClosed)
             {
                 return Result.Failure(new Error(
-                    "BusinessRule.Topic.CannotApproveClosed", 
+                    "409",
                     "Cannot approve a closed topic. Please reopen it first."));
             }
 
@@ -53,7 +57,7 @@ public sealed class ApproveTopicCommandHandler : IRequestHandler<ApproveTopicCom
             if (string.IsNullOrWhiteSpace(topic.TitleRu))
             {
                 return Result.Failure(new Error(
-                    "BusinessRule.Topic.InvalidContent", 
+                    "400",
                     "Topic must have a valid Russian title before approval."));
             }
 
@@ -72,7 +76,7 @@ public sealed class ApproveTopicCommandHandler : IRequestHandler<ApproveTopicCom
         catch (Exception ex)
         {
             // Unexpected errors
-            return Result.Failure(new Error("InternalError", $"An error occurred while approving the topic: {ex.Message}"));
+            return Result.Failure(new Error("500", ex.Message));
         }
     }
 }

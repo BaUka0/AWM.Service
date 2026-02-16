@@ -1,5 +1,6 @@
 namespace AWM.Service.Application.Features.Thesis.Topics.Commands.CloseTopic;
 
+using AWM.Service.Domain.Common;
 using AWM.Service.Domain.Repositories;
 using KDS.Primitives.FluentResult;
 using MediatR;
@@ -12,13 +13,16 @@ public sealed class CloseTopicCommandHandler : IRequestHandler<CloseTopicCommand
 {
     private readonly ITopicRepository _topicRepository;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ICurrentUserProvider _currentUserProvider;
 
     public CloseTopicCommandHandler(
         ITopicRepository topicRepository,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        ICurrentUserProvider currentUserProvider)
     {
         _topicRepository = topicRepository ?? throw new ArgumentNullException(nameof(topicRepository));
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
+        _currentUserProvider = currentUserProvider ?? throw new ArgumentNullException(nameof(currentUserProvider));
     }
 
     public async Task<Result> Handle(CloseTopicCommand request, CancellationToken cancellationToken)
@@ -30,14 +34,14 @@ public sealed class CloseTopicCommandHandler : IRequestHandler<CloseTopicCommand
 
             if (topic is null)
             {
-                return Result.Failure(new Error("NotFound.Topic", $"Topic with ID {request.TopicId} not found."));
+                return Result.Failure(new Error("404", $"Topic with ID {request.TopicId} not found."));
             }
 
             // 2. Business rule: Cannot close already closed topics
             if (topic.IsClosed)
             {
                 return Result.Failure(new Error(
-                    "BusinessRule.Topic.AlreadyClosed", 
+                    "409",
                     "This topic is already closed."));
             }
 
@@ -46,7 +50,7 @@ public sealed class CloseTopicCommandHandler : IRequestHandler<CloseTopicCommand
             if (!topic.IsApproved)
             {
                 return Result.Failure(new Error(
-                    "BusinessRule.Topic.CannotCloseUnapproved", 
+                    "409",
                     "Cannot close an unapproved topic. Only approved topics can be closed."));
             }
 
@@ -73,7 +77,7 @@ public sealed class CloseTopicCommandHandler : IRequestHandler<CloseTopicCommand
         catch (Exception ex)
         {
             // Unexpected errors
-            return Result.Failure(new Error("InternalError", $"An error occurred while closing the topic: {ex.Message}"));
+            return Result.Failure(new Error("500", ex.Message));
         }
     }
 }

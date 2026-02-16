@@ -70,8 +70,8 @@ public sealed class UniversityRepository : IUniversityRepository
     public async Task<University?> GetByInstituteIdAsync(int instituteId, CancellationToken cancellationToken = default)
     {
         return await _context.Universities
-            .Include(u => u.Institutes)
-                .ThenInclude(i => i.Departments)
+            .Include(u => u.Institutes.Where(i => i.Id == instituteId && !i.IsDeleted))
+                .ThenInclude(i => i.Departments.Where(d => !d.IsDeleted))
             .Where(u => !u.IsDeleted && u.Institutes.Any(i => i.Id == instituteId && !i.IsDeleted))
             .FirstOrDefaultAsync(cancellationToken);
     }
@@ -80,8 +80,8 @@ public sealed class UniversityRepository : IUniversityRepository
     public async Task<University?> GetByDepartmentIdAsync(int departmentId, CancellationToken cancellationToken = default)
     {
         return await _context.Universities
-            .Include(u => u.Institutes)
-                .ThenInclude(i => i.Departments)
+            .Include(u => u.Institutes.Where(i => i.Departments.Any(d => d.Id == departmentId && !d.IsDeleted)))
+                .ThenInclude(i => i.Departments.Where(d => d.Id == departmentId && !d.IsDeleted))
             .Where(u => !u.IsDeleted && u.Institutes.Any(i => i.Departments.Any(d => d.Id == departmentId && !d.IsDeleted)))
             .FirstOrDefaultAsync(cancellationToken);
     }
