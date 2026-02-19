@@ -49,9 +49,18 @@ public class PermissionService : IPermissionService
             Permission.Notifications_View,
             Permission.Notifications_MarkRead,
             
+            // Academic Programs & Degree Levels (view)
+            Permission.AcademicPrograms_View,
+            Permission.DegreeLevels_View,
+            
             // Defense (view only)
             Permission.PreDefense_View,
-            Permission.Defense_View
+            Permission.Defense_View,
+            
+            // Organization (view)
+            Permission.Periods_View,
+            Permission.Institutes_View,
+            Permission.Departments_View
         },
 
         // ========== Supervisor (Scientific Advisor) ==========
@@ -90,9 +99,18 @@ public class PermissionService : IPermissionService
             // Attachments
             Permission.Attachments_Download,
             
+            // Academic Programs & Degree Levels (view)
+            Permission.AcademicPrograms_View,
+            Permission.DegreeLevels_View,
+            
             // Defense (view)
             Permission.PreDefense_View,
             Permission.Defense_View,
+            
+            // Organization (view)
+            Permission.Periods_View,
+            Permission.Institutes_View,
+            Permission.Departments_View,
             
             // Notifications
             Permission.Notifications_View,
@@ -141,7 +159,25 @@ public class PermissionService : IPermissionService
             
             // Department management
             Permission.Department_Manage,
+            Permission.Periods_View,
             Permission.Periods_Manage,
+            Permission.Institutes_View,
+            Permission.Departments_View,
+            
+            // Academic Programs & Degree Levels
+            Permission.AcademicPrograms_View,
+            Permission.AcademicPrograms_Create,
+            Permission.AcademicPrograms_Edit,
+            Permission.DegreeLevels_View,
+            Permission.DegreeLevels_Create,
+            
+            // Staff & Students
+            Permission.Staff_View,
+            Permission.Staff_Create,
+            Permission.Staff_Edit,
+            Permission.Students_View,
+            Permission.Students_Create,
+            Permission.Students_Edit,
             
             // Users (view in department)
             Permission.Users_View,
@@ -194,6 +230,19 @@ public class PermissionService : IPermissionService
             // Reviews
             Permission.Reviews_View,
             Permission.Reviews_UploadExternal,
+            
+            // Academic Programs & Degree Levels (view)
+            Permission.AcademicPrograms_View,
+            Permission.DegreeLevels_View,
+            
+            // Organization (view)
+            Permission.Periods_View,
+            Permission.Institutes_View,
+            Permission.Departments_View,
+            
+            // Staff & Students (view)
+            Permission.Staff_View,
+            Permission.Students_View,
             
             // Attachments
             Permission.Attachments_Upload,
@@ -270,6 +319,19 @@ public class PermissionService : IPermissionService
             Permission.Reports_Export,
             Permission.Statistics_ViewDepartment,
             Permission.Statistics_ViewUniversity,
+            
+            // Academic Programs & Degree Levels (view)
+            Permission.AcademicPrograms_View,
+            Permission.DegreeLevels_View,
+            
+            // Organization (view)
+            Permission.Periods_View,
+            Permission.Institutes_View,
+            Permission.Departments_View,
+            
+            // Staff & Students (view)
+            Permission.Staff_View,
+            Permission.Students_View,
             
             // Users
             Permission.Users_View,

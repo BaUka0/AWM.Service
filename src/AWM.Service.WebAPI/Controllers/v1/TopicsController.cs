@@ -7,44 +7,85 @@ using AWM.Service.Application.Features.Thesis.Topics.Commands.UpdateTopic;
 using AWM.Service.Application.Features.Thesis.Topics.Queries.GetAvailableTopics;
 using AWM.Service.Application.Features.Thesis.Topics.Queries.GetTopicById;
 using AWM.Service.Application.Features.Thesis.Topics.Queries.GetTopicsByDirection;
+using AWM.Service.WebAPI.Common.Contracts.Requests.Thesis;
+using AWM.Service.WebAPI.Common.Contracts.Responses.Thesis;
+using AWM.Service.Domain.Auth.Enums;
+using AWM.Service.WebAPI.Authorization;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
 /// <summary>
 /// Controller for managing Thesis Topics.
 /// </summary>
+[ApiVersion("1.0")]
 [ApiController]
-[Route("api/v1/topics")]
+[Route("api/v{version:apiVersion}/[controller]")]
 [Produces("application/json")]
-public class TopicsController : BaseController
+public sealed class TopicsController : BaseController
 {
     private readonly ISender _sender;
 
     public TopicsController(ISender sender)
     {
-        _sender = sender ?? throw new ArgumentNullException(nameof(sender));
+        _sender = sender;
     }
 
     /// <summary>
     /// Get a specific topic by ID with full details.
     /// </summary>
     /// <param name="id">Topic ID</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Topic details with applications</returns>
     [HttpGet("{id}")]
-    [ProducesResponseType(typeof(Application.Features.Thesis.Topics.DTOs.TopicDetailDto), StatusCodes.Status200OK)]
+    [RequirePermission(Permission.Topics_View)]
+    [ProducesResponseType(typeof(TopicDetailResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> GetById(long id)
+    public async Task<IActionResult> GetById(long id, CancellationToken cancellationToken = default)
     {
         var query = new GetTopicByIdQuery { TopicId = id };
-        var result = await _sender.Send(query);
+        var result = await _sender.Send(query, cancellationToken);
 
         if (result.IsFailed)
         {
             return HandleResultError(result.Error);
         }
 
-        return Ok(result.Value);
+        var dto = result.Value;
+        var response = new TopicDetailResponse
+        {
+            Id = dto.Id,
+            DirectionId = dto.DirectionId,
+            DepartmentId = dto.DepartmentId,
+            SupervisorId = dto.SupervisorId,
+            AcademicYearId = dto.AcademicYearId,
+            WorkTypeId = dto.WorkTypeId,
+            TitleRu = dto.TitleRu,
+            TitleEn = dto.TitleEn,
+            TitleKz = dto.TitleKz,
+            Description = dto.Description,
+            MaxParticipants = dto.MaxParticipants,
+            AvailableSpots = dto.AvailableSpots,
+            IsApproved = dto.IsApproved,
+            IsClosed = dto.IsClosed,
+            IsTeamTopic = dto.IsTeamTopic,
+            CreatedAt = dto.CreatedAt,
+            CreatedBy = dto.CreatedBy,
+            LastModifiedAt = dto.LastModifiedAt,
+            LastModifiedBy = dto.LastModifiedBy,
+            Applications = dto.Applications?.Select(a => new TopicApplicationResponse
+            {
+                Id = a.Id,
+                StudentId = a.StudentId,
+                Status = a.Status,
+                AppliedAt = a.AppliedAt,
+                ReviewedAt = a.ReviewedAt,
+                ReviewedBy = a.ReviewedBy,
+                ReviewComment = a.ReviewComment
+            }).ToList()
+        };
+
+        return Ok(response);
     }
 
     /// <summary>
@@ -52,13 +93,16 @@ public class TopicsController : BaseController
     /// </summary>
     /// <param name="departmentId">Department ID</param>
     /// <param name="academicYearId">Academic year ID</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>List of available topics</returns>
     [HttpGet("available")]
-    [ProducesResponseType(typeof(IReadOnlyList<Application.Features.Thesis.Topics.DTOs.TopicDto>), StatusCodes.Status200OK)]
+    [RequirePermission(Permission.Topics_ViewAvailable)]
+    [ProducesResponseType(typeof(IReadOnlyList<TopicResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetAvailable(
         [FromQuery] int departmentId,
-        [FromQuery] int academicYearId)
+        [FromQuery] int academicYearId,
+        CancellationToken cancellationToken = default)
     {
         var query = new GetAvailableTopicsQuery
         {
@@ -66,49 +110,97 @@ public class TopicsController : BaseController
             AcademicYearId = academicYearId
         };
 
-        var result = await _sender.Send(query);
+        var result = await _sender.Send(query, cancellationToken);
 
         if (result.IsFailed)
         {
             return HandleResultError(result.Error);
         }
 
-        return Ok(result.Value);
+        var response = result.Value
+            .Select(dto => new TopicResponse
+            {
+                Id = dto.Id,
+                DirectionId = dto.DirectionId,
+                DepartmentId = dto.DepartmentId,
+                SupervisorId = dto.SupervisorId,
+                AcademicYearId = dto.AcademicYearId,
+                WorkTypeId = dto.WorkTypeId,
+                TitleRu = dto.TitleRu,
+                TitleEn = dto.TitleEn,
+                TitleKz = dto.TitleKz,
+                MaxParticipants = dto.MaxParticipants,
+                AvailableSpots = dto.AvailableSpots,
+                IsApproved = dto.IsApproved,
+                IsClosed = dto.IsClosed,
+                IsTeamTopic = dto.IsTeamTopic,
+                CreatedAt = dto.CreatedAt
+            })
+            .ToList();
+
+        return Ok(response);
     }
 
     /// <summary>
     /// Get topics by research direction.
     /// </summary>
     /// <param name="directionId">Direction ID</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>List of topics linked to the direction</returns>
     [HttpGet("by-direction/{directionId}")]
-    [ProducesResponseType(typeof(IReadOnlyList<Application.Features.Thesis.Topics.DTOs.TopicDto>), StatusCodes.Status200OK)]
+    [RequirePermission(Permission.Topics_View)]
+    [ProducesResponseType(typeof(IReadOnlyList<TopicResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> GetByDirection(long directionId)
+    public async Task<IActionResult> GetByDirection(long directionId, CancellationToken cancellationToken = default)
     {
         var query = new GetTopicsByDirectionQuery { DirectionId = directionId };
-        var result = await _sender.Send(query);
+        var result = await _sender.Send(query, cancellationToken);
 
         if (result.IsFailed)
         {
             return HandleResultError(result.Error);
         }
 
-        return Ok(result.Value);
+        var response = result.Value
+            .Select(dto => new TopicResponse
+            {
+                Id = dto.Id,
+                DirectionId = dto.DirectionId,
+                DepartmentId = dto.DepartmentId,
+                SupervisorId = dto.SupervisorId,
+                AcademicYearId = dto.AcademicYearId,
+                WorkTypeId = dto.WorkTypeId,
+                TitleRu = dto.TitleRu,
+                TitleEn = dto.TitleEn,
+                TitleKz = dto.TitleKz,
+                MaxParticipants = dto.MaxParticipants,
+                AvailableSpots = dto.AvailableSpots,
+                IsApproved = dto.IsApproved,
+                IsClosed = dto.IsClosed,
+                IsTeamTopic = dto.IsTeamTopic,
+                CreatedAt = dto.CreatedAt
+            })
+            .ToList();
+
+        return Ok(response);
     }
 
     /// <summary>
     /// Create a new thesis topic.
     /// </summary>
     /// <param name="request">Create topic request</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Created topic ID</returns>
     [HttpPost]
+    [RequirePermission(Permission.Topics_Create)]
     [ProducesResponseType(typeof(long), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> Create([FromBody] Common.Contracts.Requests.Thesis.CreateTopicRequest request)
+    public async Task<IActionResult> Create(
+        [FromBody] CreateTopicRequest request,
+        CancellationToken cancellationToken = default)
     {
         var command = new CreateTopicCommand
         {
@@ -124,7 +216,7 @@ public class TopicsController : BaseController
             MaxParticipants = request.MaxParticipants,
         };
 
-        var result = await _sender.Send(command);
+        var result = await _sender.Send(command, cancellationToken);
 
         if (result.IsFailed)
         {
@@ -139,14 +231,19 @@ public class TopicsController : BaseController
     /// </summary>
     /// <param name="id">Topic ID</param>
     /// <param name="request">Update topic request</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>No content on success</returns>
     [HttpPut("{id}")]
+    [RequirePermission(Permission.Topics_Edit)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> Update(long id, [FromBody] Common.Contracts.Requests.Thesis.UpdateTopicRequest request)
+    public async Task<IActionResult> Update(
+        long id,
+        [FromBody] UpdateTopicRequest request,
+        CancellationToken cancellationToken = default)
     {
         var command = new UpdateTopicCommand
         {
@@ -158,7 +255,7 @@ public class TopicsController : BaseController
             MaxParticipants = request.MaxParticipants,
         };
 
-        var result = await _sender.Send(command);
+        var result = await _sender.Send(command, cancellationToken);
 
         if (result.IsFailed)
         {
@@ -172,20 +269,22 @@ public class TopicsController : BaseController
     /// Approve a thesis topic (department action).
     /// </summary>
     /// <param name="id">Topic ID</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>No content on success</returns>
     [HttpPost("{id}/approve")]
+    [RequireDepartmentPermission(Permission.Topics_Approve)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> Approve(long id)
+    public async Task<IActionResult> Approve(long id, CancellationToken cancellationToken = default)
     {
         var command = new ApproveTopicCommand
         {
             TopicId = id,
         };
 
-        var result = await _sender.Send(command);
+        var result = await _sender.Send(command, cancellationToken);
 
         if (result.IsFailed)
         {
@@ -199,20 +298,22 @@ public class TopicsController : BaseController
     /// Close a thesis topic (no more applications accepted).
     /// </summary>
     /// <param name="id">Topic ID</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>No content on success</returns>
     [HttpPost("{id}/close")]
+    [RequirePermission(Permission.Topics_Close)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> Close(long id)
+    public async Task<IActionResult> Close(long id, CancellationToken cancellationToken = default)
     {
         var command = new CloseTopicCommand
         {
             TopicId = id,
         };
 
-        var result = await _sender.Send(command);
+        var result = await _sender.Send(command, cancellationToken);
 
         if (result.IsFailed)
         {

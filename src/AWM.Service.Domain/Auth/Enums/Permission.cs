@@ -142,11 +142,47 @@ public enum Permission
     /// <summary>Manage role assignments.</summary>
     Roles_Manage,
 
+    // ========== Academic Programs ==========
+    /// <summary>View academic programs.</summary>
+    AcademicPrograms_View,
+    /// <summary>Create academic programs.</summary>
+    AcademicPrograms_Create,
+    /// <summary>Edit academic programs.</summary>
+    AcademicPrograms_Edit,
+
+    // ========== Degree Levels ==========
+    /// <summary>View degree levels.</summary>
+    DegreeLevels_View,
+    /// <summary>Create degree levels.</summary>
+    DegreeLevels_Create,
+
+    // ========== Staff ==========
+    /// <summary>View staff members.</summary>
+    Staff_View,
+    /// <summary>Create staff members.</summary>
+    Staff_Create,
+    /// <summary>Edit staff members.</summary>
+    Staff_Edit,
+
+    // ========== Students ==========
+    /// <summary>View students.</summary>
+    Students_View,
+    /// <summary>Create students.</summary>
+    Students_Create,
+    /// <summary>Edit students.</summary>
+    Students_Edit,
+
     // ========== Organization Management ==========
+    /// <summary>View departments.</summary>
+    Departments_View,
     /// <summary>Manage department settings.</summary>
     Department_Manage,
+    /// <summary>View institutes.</summary>
+    Institutes_View,
     /// <summary>Manage institute settings.</summary>
     Institute_Manage,
+    /// <summary>View periods.</summary>
+    Periods_View,
     /// <summary>Manage periods.</summary>
     Periods_Manage,
 

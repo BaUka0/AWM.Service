@@ -8,7 +8,7 @@ using MediatR;
 /// <summary>
 /// Handler for retrieving all departments belonging to a specific institute.
 /// </summary>
-public sealed class GetDepartmentsByInstituteQueryHandler 
+public sealed class GetDepartmentsByInstituteQueryHandler
     : IRequestHandler<GetDepartmentsByInstituteQuery, Result<IReadOnlyList<DepartmentDto>>>
 {
     private readonly IUniversityRepository _universityRepository;
@@ -19,15 +19,12 @@ public sealed class GetDepartmentsByInstituteQueryHandler
     }
 
     public async Task<Result<IReadOnlyList<DepartmentDto>>> Handle(
-        GetDepartmentsByInstituteQuery request, 
+        GetDepartmentsByInstituteQuery request,
         CancellationToken cancellationToken)
     {
         try
         {
-            var universities = await _universityRepository.GetAllAsync(cancellationToken);
-            
-            var university = universities.FirstOrDefault(u => 
-                u.Institutes.Any(i => i.Id == request.InstituteId && !i.IsDeleted));
+            var university = await _universityRepository.GetByInstituteIdAsync(request.InstituteId, cancellationToken);
 
             if (university is null)
             {
