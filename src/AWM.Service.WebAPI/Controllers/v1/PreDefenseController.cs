@@ -4,12 +4,12 @@ using AWM.Service.Application.Features.Defense.PreDefense.Commands.FinalizePreDe
 using AWM.Service.Application.Features.Defense.PreDefense.Commands.RecordAttendance;
 using AWM.Service.Application.Features.Defense.PreDefense.Commands.SchedulePreDefense;
 using AWM.Service.Application.Features.Defense.PreDefense.Commands.SubmitPreDefenseGrade;
+using AWM.Service.Application.Features.Defense.PreDefense.DTOs;
 using AWM.Service.Application.Features.Defense.PreDefense.Queries.GetPreDefenseAttempts;
 using AWM.Service.Application.Features.Defense.PreDefense.Queries.GetPreDefenseSchedule;
 using AWM.Service.Domain.Auth.Enums;
 using AWM.Service.WebAPI.Authorization;
 using AWM.Service.WebAPI.Common.Contracts.Requests.Defense;
-using AWM.Service.WebAPI.Common.Contracts.Responses.Defense;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -36,7 +36,7 @@ public class PreDefenseController : BaseController
     /// <returns>List of schedule slots ordered by defense date</returns>
     [HttpGet("schedule")]
     [RequireDepartmentPermission(Permission.PreDefense_View)]
-    [ProducesResponseType(typeof(IReadOnlyList<PreDefenseScheduleResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(IReadOnlyList<PreDefenseScheduleDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -48,21 +48,7 @@ public class PreDefenseController : BaseController
         if (result.IsFailed)
             return HandleResultError(result.Error);
 
-        var response = result.Value
-            .Select(s => new PreDefenseScheduleResponse
-            {
-                Id = s.Id,
-                CommissionId = s.CommissionId,
-                WorkId = s.WorkId,
-                DefenseDate = s.DefenseDate,
-                Location = s.Location,
-                AverageScore = s.AverageScore,
-                GradeCount = s.GradeCount,
-                CreatedAt = s.CreatedAt
-            })
-            .ToList();
-
-        return Ok(response);
+        return Ok(result.Value);
     }
 
     /// <summary>
@@ -72,7 +58,7 @@ public class PreDefenseController : BaseController
     /// <returns>List of attempts ordered by attempt number</returns>
     [HttpGet("works/{workId:long}/attempts")]
     [RequireDepartmentPermission(Permission.PreDefense_View)]
-    [ProducesResponseType(typeof(IReadOnlyList<PreDefenseAttemptResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(IReadOnlyList<PreDefenseAttemptDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -85,23 +71,7 @@ public class PreDefenseController : BaseController
         if (result.IsFailed)
             return HandleResultError(result.Error);
 
-        var response = result.Value
-            .Select(a => new PreDefenseAttemptResponse
-            {
-                Id = a.Id,
-                WorkId = a.WorkId,
-                PreDefenseNumber = a.PreDefenseNumber,
-                ScheduleId = a.ScheduleId,
-                AttendanceStatus = a.AttendanceStatus,
-                AverageScore = a.AverageScore,
-                IsPassed = a.IsPassed,
-                NeedsRetake = a.NeedsRetake,
-                AttemptDate = a.AttemptDate,
-                CreatedAt = a.CreatedAt
-            })
-            .ToList();
-
-        return Ok(response);
+        return Ok(result.Value);
     }
 
     /// <summary>
@@ -199,7 +169,7 @@ public class PreDefenseController : BaseController
         if (result.IsFailed)
             return HandleResultError(result.Error);
 
-        return CreatedAtAction(nameof(GetSchedule), new { commissionId = 0 }, result.Value);
+        return Ok(result.Value);
     }
 
     /// <summary>

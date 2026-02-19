@@ -52,6 +52,26 @@ public class QualityCheck : Entity<long>, IAuditable
     }
 
     /// <summary>
+    /// Records the expert's result on a pending quality check.
+    /// Called by StudentWork.CompleteQualityCheck.
+    /// </summary>
+    internal void SetResult(
+        int expertId,
+        bool isPassed,
+        decimal? resultValue = null,
+        string? comment = null,
+        string? documentPath = null)
+    {
+        AssignedExpertId = expertId;
+        IsPassed = isPassed;
+        ResultValue = resultValue;
+        Comment = comment;
+        DocumentPath = documentPath;
+        LastModifiedAt = DateTime.UtcNow;
+        LastModifiedBy = expertId;
+    }
+
+    /// <summary>
     /// Checks if this is an anti-plagiarism check with percentage result.
     /// </summary>
     public bool HasPercentageResult => CheckType == CheckType.AntiPlagiarism && ResultValue.HasValue;

@@ -1,18 +1,11 @@
 namespace AWM.Service.WebAPI.Common.Contracts.Requests.Thesis;
 
-using AWM.Service.Domain.Thesis.Enums;
-
 /// <summary>
 /// Request contract for an expert recording a quality check result.
+/// The check type is inferred from the existing pending record identified by {checkId} in the route.
 /// </summary>
 public sealed record RecordCheckResultRequest
 {
-    /// <summary>
-    /// Type of check being recorded (0 = NormControl, 1 = SoftwareCheck, 2 = AntiPlagiarism).
-    /// </summary>
-    /// <example>2</example>
-    public CheckType CheckType { get; init; }
-
     /// <summary>
     /// Whether the work passed this check.
     /// </summary>

@@ -13,9 +13,9 @@ public sealed class RecordCheckResultCommandValidator : AbstractValidator<Record
             .GreaterThan(0)
             .WithMessage("Work ID must be greater than 0.");
 
-        RuleFor(x => x.CheckType)
-            .IsInEnum()
-            .WithMessage("Check type must be a valid value (NormControl, SoftwareCheck, AntiPlagiarism).");
+        RuleFor(x => x.CheckId)
+            .GreaterThan(0)
+            .WithMessage("Check ID must be greater than 0.");
 
         RuleFor(x => x.ResultValue)
             .InclusiveBetween(0m, 100m)

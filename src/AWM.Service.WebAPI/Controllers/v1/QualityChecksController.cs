@@ -2,13 +2,13 @@ namespace AWM.Service.WebAPI.Controllers.v1;
 
 using AWM.Service.Application.Features.Thesis.QualityChecks.Commands.RecordCheckResult;
 using AWM.Service.Application.Features.Thesis.QualityChecks.Commands.SubmitForCheck;
+using AWM.Service.Application.Features.Thesis.QualityChecks.DTOs;
 using AWM.Service.Application.Features.Thesis.QualityChecks.Queries.GetChecksByWork;
 using AWM.Service.Application.Features.Thesis.QualityChecks.Queries.GetPendingChecks;
 using AWM.Service.Domain.Auth.Enums;
 using AWM.Service.Domain.Thesis.Enums;
 using AWM.Service.WebAPI.Authorization;
 using AWM.Service.WebAPI.Common.Contracts.Requests.Thesis;
-using AWM.Service.WebAPI.Common.Contracts.Responses.Thesis;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -35,7 +35,7 @@ public class QualityChecksController : BaseController
     /// <returns>List of quality check records ordered by type and attempt</returns>
     [HttpGet("by-work/{workId:long}")]
     [RequireDepartmentPermission(Permission.QualityChecks_View)]
-    [ProducesResponseType(typeof(IReadOnlyList<QualityCheckResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(IReadOnlyList<QualityCheckDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -48,23 +48,7 @@ public class QualityChecksController : BaseController
         if (result.IsFailed)
             return HandleResultError(result.Error);
 
-        var response = result.Value
-            .Select(c => new QualityCheckResponse
-            {
-                Id = c.Id,
-                WorkId = c.WorkId,
-                CheckType = c.CheckType,
-                AttemptNumber = c.AttemptNumber,
-                IsPassed = c.IsPassed,
-                ResultValue = c.ResultValue,
-                Comment = c.Comment,
-                DocumentPath = c.DocumentPath,
-                AssignedExpertId = c.AssignedExpertId,
-                CheckedAt = c.CheckedAt
-            })
-            .ToList();
-
-        return Ok(response);
+        return Ok(result.Value);
     }
 
     /// <summary>
@@ -76,7 +60,7 @@ public class QualityChecksController : BaseController
     /// <returns>List of pending quality checks</returns>
     [HttpGet("pending")]
     [RequireDepartmentPermission(Permission.QualityChecks_Perform)]
-    [ProducesResponseType(typeof(IReadOnlyList<QualityCheckResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(IReadOnlyList<QualityCheckDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -97,23 +81,7 @@ public class QualityChecksController : BaseController
         if (result.IsFailed)
             return HandleResultError(result.Error);
 
-        var response = result.Value
-            .Select(c => new QualityCheckResponse
-            {
-                Id = c.Id,
-                WorkId = c.WorkId,
-                CheckType = c.CheckType,
-                AttemptNumber = c.AttemptNumber,
-                IsPassed = c.IsPassed,
-                ResultValue = c.ResultValue,
-                Comment = c.Comment,
-                DocumentPath = c.DocumentPath,
-                AssignedExpertId = c.AssignedExpertId,
-                CheckedAt = c.CheckedAt
-            })
-            .ToList();
-
-        return Ok(response);
+        return Ok(result.Value);
     }
 
     /// <summary>
@@ -150,24 +118,26 @@ public class QualityChecksController : BaseController
 
     /// <summary>
     /// Record a quality check result (expert action).
+    /// Updates the existing pending check record created by the student's submission.
     /// </summary>
     /// <param name="workId">StudentWork ID</param>
+    /// <param name="checkId">ID of the pending QualityCheck to complete (returned by SubmitForCheck)</param>
     /// <param name="request">Check result details</param>
-    /// <returns>Created quality check ID</returns>
-    [HttpPost("works/{workId:long}/record")]
+    /// <returns>Updated quality check ID</returns>
+    [HttpPut("works/{workId:long}/checks/{checkId:long}/record")]
     [RequireDepartmentPermission(Permission.QualityChecks_Perform)]
-    [ProducesResponseType(typeof(long), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(long), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> RecordResult(long workId, [FromBody] RecordCheckResultRequest request)
+    public async Task<IActionResult> RecordResult(long workId, long checkId, [FromBody] RecordCheckResultRequest request)
     {
         var command = new RecordCheckResultCommand
         {
             WorkId = workId,
-            CheckType = request.CheckType,
+            CheckId = checkId,
             IsPassed = request.IsPassed,
             ResultValue = request.ResultValue,
             Comment = request.Comment,
@@ -179,6 +149,6 @@ public class QualityChecksController : BaseController
         if (result.IsFailed)
             return HandleResultError(result.Error);
 
-        return CreatedAtAction(nameof(GetByWork), new { workId }, result.Value);
+        return Ok(result.Value);
     }
 }

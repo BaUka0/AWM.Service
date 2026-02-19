@@ -7,8 +7,8 @@ using MediatR;
 
 /// <summary>
 /// Handler for recording a quality check result by an expert.
-/// Uses StudentWork.AddQualityCheck with the expert's credentials to
-/// record an official result (with domain event raised).
+/// Finds the existing pending QualityCheck (created by SubmitForCheck) by CheckId
+/// and updates it in-place with the expert's verdict.
 /// </summary>
 public sealed class RecordCheckResultCommandHandler : IRequestHandler<RecordCheckResultCommand, Result<long>>
 {
@@ -43,11 +43,11 @@ public sealed class RecordCheckResultCommandHandler : IRequestHandler<RecordChec
                     $"StudentWork with ID {request.WorkId} not found."));
             }
 
-            // Record the expert result — domain method calculates attempt number and raises domain event
-            var check = work.AddQualityCheck(
-                checkType: request.CheckType,
-                isPassed: request.IsPassed,
+            // Find the pending check and record the expert's result in-place
+            var check = work.CompleteQualityCheck(
+                checkId: request.CheckId,
                 expertId: expertId.Value,
+                isPassed: request.IsPassed,
                 resultValue: request.ResultValue,
                 comment: request.Comment,
                 documentPath: request.DocumentPath);

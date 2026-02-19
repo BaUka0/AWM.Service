@@ -4,12 +4,12 @@ using AWM.Service.Application.Features.Defense.Commissions.Commands.AddCommissio
 using AWM.Service.Application.Features.Defense.Commissions.Commands.CreateCommission;
 using AWM.Service.Application.Features.Defense.Commissions.Commands.RemoveCommissionMember;
 using AWM.Service.Application.Features.Defense.Commissions.Commands.UpdateCommission;
+using AWM.Service.Application.Features.Defense.Commissions.DTOs;
 using AWM.Service.Application.Features.Defense.Commissions.Queries.GetCommissionById;
 using AWM.Service.Application.Features.Defense.Commissions.Queries.GetCommissionsByDepartment;
 using AWM.Service.Domain.Auth.Enums;
 using AWM.Service.WebAPI.Authorization;
 using AWM.Service.WebAPI.Common.Contracts.Requests.Defense;
-using AWM.Service.WebAPI.Common.Contracts.Responses.Defense;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -37,7 +37,7 @@ public class CommissionsController : BaseController
     /// <returns>List of commissions</returns>
     [HttpGet]
     [RequireDepartmentPermission(Permission.Commissions_View)]
-    [ProducesResponseType(typeof(IReadOnlyList<CommissionResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(IReadOnlyList<CommissionDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -56,21 +56,7 @@ public class CommissionsController : BaseController
         if (result.IsFailed)
             return HandleResultError(result.Error);
 
-        var response = result.Value
-            .Select(c => new CommissionResponse
-            {
-                Id = c.Id,
-                DepartmentId = c.DepartmentId,
-                AcademicYearId = c.AcademicYearId,
-                CommissionType = c.CommissionType,
-                Name = c.Name,
-                PreDefenseNumber = c.PreDefenseNumber,
-                MemberCount = c.MemberCount,
-                CreatedAt = c.CreatedAt
-            })
-            .ToList();
-
-        return Ok(response);
+        return Ok(result.Value);
     }
 
     /// <summary>
@@ -80,7 +66,7 @@ public class CommissionsController : BaseController
     /// <returns>Commission with member list</returns>
     [HttpGet("{id:int}")]
     [RequireDepartmentPermission(Permission.Commissions_View)]
-    [ProducesResponseType(typeof(CommissionDetailResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(CommissionDetailDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -93,32 +79,7 @@ public class CommissionsController : BaseController
         if (result.IsFailed)
             return HandleResultError(result.Error);
 
-        var dto = result.Value;
-        var response = new CommissionDetailResponse
-        {
-            Id = dto.Id,
-            DepartmentId = dto.DepartmentId,
-            AcademicYearId = dto.AcademicYearId,
-            CommissionType = dto.CommissionType,
-            Name = dto.Name,
-            PreDefenseNumber = dto.PreDefenseNumber,
-            CreatedAt = dto.CreatedAt,
-            CreatedBy = dto.CreatedBy,
-            LastModifiedAt = dto.LastModifiedAt,
-            LastModifiedBy = dto.LastModifiedBy,
-            Members = dto.Members
-                .Select(m => new CommissionMemberResponse
-                {
-                    Id = m.Id,
-                    CommissionId = m.CommissionId,
-                    UserId = m.UserId,
-                    RoleInCommission = m.RoleInCommission,
-                    CreatedAt = m.CreatedAt
-                })
-                .ToList()
-        };
-
-        return Ok(response);
+        return Ok(result.Value);
     }
 
     /// <summary>

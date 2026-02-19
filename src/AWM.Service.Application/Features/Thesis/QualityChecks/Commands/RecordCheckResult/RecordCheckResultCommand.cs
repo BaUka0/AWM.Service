@@ -1,23 +1,23 @@
 namespace AWM.Service.Application.Features.Thesis.QualityChecks.Commands.RecordCheckResult;
 
-using AWM.Service.Domain.Thesis.Enums;
 using KDS.Primitives.FluentResult;
 using MediatR;
 
 /// <summary>
 /// Command for an expert recording the result of a quality check.
+/// The CheckId identifies the pending QualityCheck created by SubmitForCheck.
 /// </summary>
 public sealed record RecordCheckResultCommand : IRequest<Result<long>>
 {
     /// <summary>
-    /// StudentWork ID to record the check result for.
+    /// StudentWork ID that owns the quality check.
     /// </summary>
     public long WorkId { get; init; }
 
     /// <summary>
-    /// Type of check being recorded.
+    /// ID of the pending QualityCheck (returned by SubmitForCheck) to complete.
     /// </summary>
-    public CheckType CheckType { get; init; }
+    public long CheckId { get; init; }
 
     /// <summary>
     /// Whether the work passed this check.
