@@ -109,6 +109,21 @@ public class Commission : AggregateRoot<int>, IAuditable, ISoftDeletable
     }
 
     /// <summary>
+    /// Removes a member from the commission by member ID.
+    /// </summary>
+    /// <returns>True if the member was found and removed; otherwise, false.</returns>
+    public bool RemoveMember(int memberId)
+    {
+        var member = _members.FirstOrDefault(m => m.Id == memberId);
+        if (member is null)
+            return false;
+
+        _members.Remove(member);
+        LastModifiedAt = DateTime.UtcNow;
+        return true;
+    }
+
+    /// <summary>
     /// Soft deletes the commission.
     /// </summary>
     public void Delete(int deletedBy)
