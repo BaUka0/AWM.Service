@@ -5,14 +5,17 @@ using AWM.Service.Application.Features.Edu.Commands.AcademicPrograms.UpdateAcade
 using AWM.Service.Application.Features.Edu.Queries.AcademicPrograms.GetAcademicPrograms;
 using AWM.Service.WebAPI.Common.Contracts.Requests.Edu;
 using AWM.Service.WebAPI.Common.Contracts.Responses.Edu;
+using AWM.Service.Domain.Auth.Enums;
+using AWM.Service.WebAPI.Authorization;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
 /// <summary>
 /// Controller for managing academic programs.
 /// </summary>
+[ApiVersion("1.0")]
 [ApiController]
-[Route("api/v1/academic-programs")]
+[Route("api/v{version:apiVersion}/academic-programs")]
 [Produces("application/json")]
 public sealed class AcademicProgramsController : BaseController
 {
@@ -34,6 +37,7 @@ public sealed class AcademicProgramsController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>List of academic programs.</returns>
     [HttpGet]
+    [RequirePermission(Permission.AcademicPrograms_View)]
     [ProducesResponseType(typeof(IReadOnlyList<AcademicProgramResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -89,6 +93,7 @@ public sealed class AcademicProgramsController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Created program ID.</returns>
     [HttpPost]
+    [RequirePermission(Permission.AcademicPrograms_Create)]
     [ProducesResponseType(typeof(int), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -126,6 +131,7 @@ public sealed class AcademicProgramsController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>No content on success.</returns>
     [HttpPut("{id}")]
+    [RequirePermission(Permission.AcademicPrograms_Edit)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

@@ -122,6 +122,14 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
+    // Seed test data (only when tables are empty)
+    using (var scope = app.Services.CreateScope())
+    {
+        var dbContext = scope.ServiceProvider.GetRequiredService<AWM.Service.Infrastructure.Persistence.ApplicationDbContext>();
+        var passwordHasher = scope.ServiceProvider.GetRequiredService<AWM.Service.Domain.Auth.Interfaces.IPasswordHasher>();
+        await AWM.Service.Infrastructure.Persistence.DbSeeder.SeedAsync(dbContext, passwordHasher);
+    }
+
     app.UseSwagger();
     app.UseSwaggerUI(options =>
     {

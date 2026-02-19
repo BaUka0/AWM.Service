@@ -11,14 +11,17 @@ using AWM.Service.Application.Features.Thesis.Directions.Queries.GetDirectionsBy
 using AWM.Service.Application.Features.Thesis.Directions.Queries.GetDirectionsBySupervisor;
 using AWM.Service.WebAPI.Common.Contracts.Requests.Thesis;
 using AWM.Service.WebAPI.Common.Contracts.Responses.Thesis;
+using AWM.Service.Domain.Auth.Enums;
+using AWM.Service.WebAPI.Authorization;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
 /// <summary>
 /// Controller for managing research directions.
 /// </summary>
+[ApiVersion("1.0")]
 [ApiController]
-[Route("api/v1/directions")]
+[Route("api/v{version:apiVersion}/[controller]")]
 [Produces("application/json")]
 public sealed class DirectionsController : BaseController
 {
@@ -43,6 +46,7 @@ public sealed class DirectionsController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>List of directions.</returns>
     [HttpGet("by-department")]
+    [RequireDepartmentPermission(Permission.Directions_View)]
     [ProducesResponseType(typeof(IReadOnlyList<DirectionResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -106,6 +110,7 @@ public sealed class DirectionsController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>List of directions.</returns>
     [HttpGet("by-supervisor")]
+    [RequirePermission(Permission.Directions_View)]
     [ProducesResponseType(typeof(IReadOnlyList<DirectionResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -164,6 +169,7 @@ public sealed class DirectionsController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Direction details.</returns>
     [HttpGet("{id}")]
+    [RequirePermission(Permission.Directions_View)]
     [ProducesResponseType(typeof(DirectionDetailResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -225,6 +231,7 @@ public sealed class DirectionsController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Created direction ID.</returns>
     [HttpPost]
+    [RequireDepartmentPermission(Permission.Directions_Create)]
     [ProducesResponseType(typeof(long), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -266,6 +273,7 @@ public sealed class DirectionsController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>No content on success.</returns>
     [HttpPut("{id}")]
+    [RequireDepartmentPermission(Permission.Directions_Edit)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -305,6 +313,7 @@ public sealed class DirectionsController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>No content on success.</returns>
     [HttpPost("{id}/submit")]
+    [RequirePermission(Permission.Directions_Submit)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -335,6 +344,7 @@ public sealed class DirectionsController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>No content on success.</returns>
     [HttpPost("{id}/approve")]
+    [RequireDepartmentPermission(Permission.Directions_Approve)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -366,6 +376,7 @@ public sealed class DirectionsController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>No content on success.</returns>
     [HttpPost("{id}/reject")]
+    [RequireDepartmentPermission(Permission.Directions_Reject)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -399,6 +410,7 @@ public sealed class DirectionsController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>No content on success.</returns>
     [HttpPost("{id}/request-revision")]
+    [RequireDepartmentPermission(Permission.Directions_RequestRevision)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

@@ -1,7 +1,6 @@
 ﻿using AWM.Service.Application.Features.Auth.Commands.Login;
 using AWM.Service.WebAPI.Common.Contracts.Requests;
 using AWM.Service.WebAPI.Common.Contracts.Responses;
-using AWM.Service.WebAPI.Controllers;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -15,7 +14,7 @@ namespace AWM.Service.WebAPI.Controllers.v1;
 [Route("api/v{version:apiVersion}/[controller]")]
 [ApiController]
 [AllowAnonymous]
-public class AuthController : BaseController
+public sealed class AuthController : BaseController
 {
     private readonly ISender _sender;
 
@@ -30,24 +29,24 @@ public class AuthController : BaseController
     [HttpPost("login")]
     [ProducesResponseType(typeof(LoginResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> Login([FromBody] LoginRequest request)
+    public async Task<IActionResult> Login([FromBody] LoginRequest request, CancellationToken cancellationToken = default)
     {
-        var result = await _sender.Send(new LoginCommand(request.Login, request.Password));
-        
-        if (result.IsSuccess)
+        var result = await _sender.Send(new LoginCommand(request.Login, request.Password), cancellationToken);
+
+        if (result.IsFailed)
         {
-            var authResult = result.Value;
-            var response = new LoginResponse(
-                Token: authResult.Token,
-                Login: authResult.Login,
-                UserId: authResult.UserId,
-                Email: authResult.Email,
-                Roles: authResult.Roles
-            );
-            return Ok(response);
+            return HandleResultError(result.Error);
         }
-        
-        return HandleResultError(result.Error);
+
+        var authResult = result.Value;
+        var response = new LoginResponse(
+            Token: authResult.Token,
+            Login: authResult.Login,
+            UserId: authResult.UserId,
+            Email: authResult.Email,
+            Roles: authResult.Roles
+        );
+        return Ok(response);
     }
 
     /// <summary>
@@ -56,7 +55,7 @@ public class AuthController : BaseController
     [HttpPost("register")]
     [ProducesResponseType(typeof(int), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> Register([FromBody] RegisterRequest request)
+    public async Task<IActionResult> Register([FromBody] RegisterRequest request, CancellationToken cancellationToken = default)
     {
         var command = new Application.Features.Auth.Commands.Register.RegisterUserCommand(
             request.Login,
@@ -64,13 +63,13 @@ public class AuthController : BaseController
             request.Password,
             request.UniversityId);
 
-        var result = await _sender.Send(command);
-        
-        if (result.IsSuccess)
+        var result = await _sender.Send(command, cancellationToken);
+
+        if (result.IsFailed)
         {
-            return CreatedAtAction(nameof(Register), new { id = result.Value }, result.Value);
+            return HandleResultError(result.Error);
         }
-        
-        return HandleResultError(result.Error);
+
+        return CreatedAtAction(nameof(Register), new { id = result.Value }, result.Value);
     }
 }

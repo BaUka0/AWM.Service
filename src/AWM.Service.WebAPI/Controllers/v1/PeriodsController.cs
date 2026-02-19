@@ -1,3 +1,5 @@
+namespace AWM.Service.WebAPI.Controllers.v1;
+
 using AWM.Service.Application.Features.Common.Commands.Periods.CreatePeriod;
 using AWM.Service.Application.Features.Common.Commands.Periods.UpdatePeriod;
 using AWM.Service.Application.Features.Common.Queries.Periods.GetActivePeriod;
@@ -6,10 +8,9 @@ using AWM.Service.Domain.Auth.Enums;
 using AWM.Service.Domain.CommonDomain.Enums;
 using AWM.Service.WebAPI.Authorization;
 using AWM.Service.WebAPI.Common.Contracts.Requests.Common;
+using AWM.Service.WebAPI.Common.Contracts.Responses.Common;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
-
-namespace AWM.Service.WebAPI.Controllers.v1;
 
 /// <summary>
 /// Controller for managing Periods (workflow stage time constraints).
@@ -18,13 +19,13 @@ namespace AWM.Service.WebAPI.Controllers.v1;
 [Route("api/v{version:apiVersion}/departments/{departmentId}/[controller]")]
 [ApiController]
 [Produces("application/json")]
-public class PeriodsController : BaseController
+public sealed class PeriodsController : BaseController
 {
     private readonly ISender _sender;
 
     public PeriodsController(ISender sender)
     {
-        _sender = sender ?? throw new ArgumentNullException(nameof(sender));
+        _sender = sender;
     }
 
     /// <summary>
@@ -32,11 +33,13 @@ public class PeriodsController : BaseController
     /// </summary>
     /// <param name="departmentId">Department ID</param>
     /// <param name="academicYearId">Academic Year ID</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>List of periods</returns>
     [HttpGet]
-    [ProducesResponseType(typeof(IReadOnlyList<Application.Features.Common.DTOs.PeriodDto>), StatusCodes.Status200OK)]
+    [RequireDepartmentPermission(Permission.Periods_View)]
+    [ProducesResponseType(typeof(IReadOnlyList<PeriodResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> GetAll(int departmentId, [FromQuery] int academicYearId)
+    public async Task<IActionResult> GetAll(int departmentId, [FromQuery] int academicYearId, CancellationToken cancellationToken = default)
     {
         var query = new GetPeriodsByDepartmentQuery
         {
@@ -44,12 +47,28 @@ public class PeriodsController : BaseController
             AcademicYearId = academicYearId
         };
 
-        var result = await _sender.Send(query);
+        var result = await _sender.Send(query, cancellationToken);
 
         if (result.IsFailed)
+        {
             return HandleResultError(result.Error);
+        }
 
-        return Ok(result.Value);
+        var response = result.Value
+            .Select(dto => new PeriodResponse
+            {
+                Id = dto.Id,
+                DepartmentId = dto.DepartmentId,
+                AcademicYearId = dto.AcademicYearId,
+                WorkflowStage = dto.WorkflowStage,
+                StartDate = dto.StartDate,
+                EndDate = dto.EndDate,
+                IsActive = dto.IsActive,
+                IsCurrentlyOpen = dto.IsCurrentlyOpen
+            })
+            .ToList();
+
+        return Ok(response);
     }
 
     /// <summary>
@@ -58,11 +77,17 @@ public class PeriodsController : BaseController
     /// <param name="departmentId">Department ID</param>
     /// <param name="academicYearId">Academic Year ID</param>
     /// <param name="stage">Workflow stage</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Active period or null</returns>
     [HttpGet("active")]
-    [ProducesResponseType(typeof(Application.Features.Common.DTOs.PeriodDto), StatusCodes.Status200OK)]
+    [RequireDepartmentPermission(Permission.Periods_View)]
+    [ProducesResponseType(typeof(PeriodResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> GetActive(int departmentId, [FromQuery] int academicYearId, [FromQuery] WorkflowStage stage)
+    public async Task<IActionResult> GetActive(
+        int departmentId,
+        [FromQuery] int academicYearId,
+        [FromQuery] WorkflowStage stage,
+        CancellationToken cancellationToken = default)
     {
         var query = new GetActivePeriodQuery
         {
@@ -71,12 +96,33 @@ public class PeriodsController : BaseController
             WorkflowStage = stage
         };
 
-        var result = await _sender.Send(query);
+        var result = await _sender.Send(query, cancellationToken);
 
         if (result.IsFailed)
+        {
             return HandleResultError(result.Error);
+        }
 
-        return Ok(result.Value);
+        var dto = result.Value;
+
+        if (dto is null)
+        {
+            return NotFound();
+        }
+
+        var response = new PeriodResponse
+        {
+            Id = dto.Id,
+            DepartmentId = dto.DepartmentId,
+            AcademicYearId = dto.AcademicYearId,
+            WorkflowStage = dto.WorkflowStage,
+            StartDate = dto.StartDate,
+            EndDate = dto.EndDate,
+            IsActive = dto.IsActive,
+            IsCurrentlyOpen = dto.IsCurrentlyOpen
+        };
+
+        return Ok(response);
     }
 
     /// <summary>
@@ -84,6 +130,7 @@ public class PeriodsController : BaseController
     /// </summary>
     /// <param name="departmentId">Department ID (from route)</param>
     /// <param name="request">Create period request</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Created period ID</returns>
     [HttpPost]
     [RequireDepartmentPermission(Permission.Periods_Manage)]
@@ -91,7 +138,7 @@ public class PeriodsController : BaseController
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> Create(int departmentId, [FromBody] CreatePeriodRequest request)
+    public async Task<IActionResult> Create(int departmentId, [FromBody] CreatePeriodRequest request, CancellationToken cancellationToken = default)
     {
         var command = new CreatePeriodCommand
         {
@@ -102,10 +149,12 @@ public class PeriodsController : BaseController
             EndDate = request.EndDate
         };
 
-        var result = await _sender.Send(command);
+        var result = await _sender.Send(command, cancellationToken);
 
         if (result.IsFailed)
+        {
             return HandleResultError(result.Error);
+        }
 
         return CreatedAtAction(nameof(GetAll), new { departmentId, version = "1.0" }, result.Value);
     }
@@ -116,6 +165,7 @@ public class PeriodsController : BaseController
     /// <param name="departmentId">Department ID (from route)</param>
     /// <param name="periodId">Period ID</param>
     /// <param name="request">Update period request</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>No content on success</returns>
     [HttpPut("{periodId}")]
     [RequireDepartmentPermission(Permission.Periods_Manage)]
@@ -123,7 +173,7 @@ public class PeriodsController : BaseController
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> Update(int departmentId, int periodId, [FromBody] UpdatePeriodRequest request)
+    public async Task<IActionResult> Update(int departmentId, int periodId, [FromBody] UpdatePeriodRequest request, CancellationToken cancellationToken = default)
     {
         var command = new UpdatePeriodCommand
         {
@@ -133,10 +183,12 @@ public class PeriodsController : BaseController
             IsActive = request.IsActive
         };
 
-        var result = await _sender.Send(command);
+        var result = await _sender.Send(command, cancellationToken);
 
         if (result.IsFailed)
+        {
             return HandleResultError(result.Error);
+        }
 
         return NoContent();
     }

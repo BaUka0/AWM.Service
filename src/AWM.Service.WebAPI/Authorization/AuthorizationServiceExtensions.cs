@@ -38,6 +38,12 @@ public static class AuthorizationServiceExtensions
     {
         services.AddAuthorization(options =>
         {
+            // Require authentication by default for all endpoints.
+            // Endpoints explicitly marked with [AllowAnonymous] will bypass this.
+            options.FallbackPolicy = new AuthorizationPolicyBuilder()
+                .RequireAuthenticatedUser()
+                .Build();
+
             // Create a policy for each permission
             foreach (Permission permission in Enum.GetValues<Permission>())
             {

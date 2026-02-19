@@ -4,14 +4,17 @@ using AWM.Service.Application.Features.Edu.Commands.DegreeLevels.CreateDegreeLev
 using AWM.Service.Application.Features.Edu.Queries.DegreeLevels.GetDegreeLevels;
 using AWM.Service.WebAPI.Common.Contracts.Requests.Edu;
 using AWM.Service.WebAPI.Common.Contracts.Responses.Edu;
+using AWM.Service.Domain.Auth.Enums;
+using AWM.Service.WebAPI.Authorization;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
 /// <summary>
 /// Controller for managing degree levels.
 /// </summary>
+[ApiVersion("1.0")]
 [ApiController]
-[Route("api/v1/degree-levels")]
+[Route("api/v{version:apiVersion}/degree-levels")]
 [Produces("application/json")]
 public sealed class DegreeLevelsController : BaseController
 {
@@ -31,6 +34,7 @@ public sealed class DegreeLevelsController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>List of degree levels.</returns>
     [HttpGet]
+    [RequirePermission(Permission.DegreeLevels_View)]
     [ProducesResponseType(typeof(IReadOnlyList<DegreeLevelResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -77,6 +81,7 @@ public sealed class DegreeLevelsController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Created degree level ID.</returns>
     [HttpPost]
+    [RequirePermission(Permission.DegreeLevels_Create)]
     [ProducesResponseType(typeof(int), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]

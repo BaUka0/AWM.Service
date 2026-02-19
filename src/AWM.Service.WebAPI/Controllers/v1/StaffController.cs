@@ -1,81 +1,86 @@
+namespace AWM.Service.WebAPI.Controllers.v1;
+
 using AWM.Service.Application.Features.Edu.Commands.Staff.CreateStaff;
 using AWM.Service.Application.Features.Edu.Commands.Staff.UpdateStaff;
 using AWM.Service.Application.Features.Edu.Queries.Staff.GetStaffByDepartment;
-using AWM.Service.Application.Features.Edu.Queries.Staff.GetSupervisors;
 using AWM.Service.Domain.Auth.Enums;
 using AWM.Service.WebAPI.Authorization;
 using AWM.Service.WebAPI.Common.Contracts.Requests.Edu;
+using AWM.Service.WebAPI.Common.Contracts.Responses.Edu;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
-namespace AWM.Service.WebAPI.Controllers.v1;
-
 /// <summary>
-/// Controller for managing Staff profiles.
+/// Controller for managing Staff members.
 /// </summary>
 [ApiVersion("1.0")]
 [Route("api/v{version:apiVersion}/[controller]")]
 [ApiController]
 [Produces("application/json")]
-public class StaffController : BaseController
+public sealed class StaffController : BaseController
 {
     private readonly ISender _sender;
 
     public StaffController(ISender sender)
     {
-        _sender = sender ?? throw new ArgumentNullException(nameof(sender));
+        _sender = sender;
     }
 
     /// <summary>
-    /// Get staff by department.
+    /// Get staff members by department.
     /// </summary>
     /// <param name="departmentId">Department ID</param>
-    /// <returns>List of staff</returns>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>List of staff in the department</returns>
     [HttpGet]
-    [ProducesResponseType(typeof(IReadOnlyList<Application.Features.Edu.DTOs.StaffDto>), StatusCodes.Status200OK)]
+    [RequireDepartmentPermission(Permission.Staff_View)]
+    [ProducesResponseType(typeof(IReadOnlyList<StaffResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> GetAll([FromQuery] int departmentId)
+    public async Task<IActionResult> GetByDepartment([FromQuery] int departmentId, CancellationToken cancellationToken = default)
     {
-        var query = new GetStaffByDepartmentQuery { DepartmentId = departmentId };
-        var result = await _sender.Send(query);
+        var query = new GetStaffByDepartmentQuery
+        {
+            DepartmentId = departmentId
+        };
+
+        var result = await _sender.Send(query, cancellationToken);
 
         if (result.IsFailed)
+        {
             return HandleResultError(result.Error);
+        }
 
-        return Ok(result.Value);
+        var response = result.Value
+            .Select(dto => new StaffResponse
+            {
+                Id = dto.Id,
+                UserId = dto.UserId,
+                FullName = dto.FullName,
+                Email = dto.Email,
+                Position = dto.Position,
+                AcademicDegree = dto.AcademicDegree,
+                DepartmentId = dto.DepartmentId,
+                DepartmentName = dto.DepartmentName,
+                MaxStudentsLoad = dto.MaxStudentsLoad
+            })
+            .ToList();
+
+        return Ok(response);
     }
 
     /// <summary>
-    /// Get supervisors (staff with capacity) for a department.
-    /// </summary>
-    /// <param name="departmentId">Department ID</param>
-    /// <returns>List of supervisors</returns>
-    [HttpGet("supervisors")]
-    [ProducesResponseType(typeof(IReadOnlyList<Application.Features.Edu.DTOs.StaffDto>), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> GetSupervisors([FromQuery] int departmentId)
-    {
-        var query = new GetSupervisorsQuery { DepartmentId = departmentId };
-        var result = await _sender.Send(query);
-
-        if (result.IsFailed)
-            return HandleResultError(result.Error);
-
-        return Ok(result.Value);
-    }
-
-    /// <summary>
-    /// Create a new staff profile.
+    /// Create a new staff member.
     /// </summary>
     /// <param name="request">Create staff request</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Created staff ID</returns>
     [HttpPost]
-    [RequirePermission(Permission.Users_Create)]
+    [RequireDepartmentPermission(Permission.Staff_Create)]
     [ProducesResponseType(typeof(int), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> Create([FromBody] CreateStaffRequest request)
+    public async Task<IActionResult> Create([FromBody] CreateStaffRequest request, CancellationToken cancellationToken = default)
     {
         var command = new CreateStaffCommand
         {
@@ -87,27 +92,30 @@ public class StaffController : BaseController
             MaxStudentsLoad = request.MaxStudentsLoad
         };
 
-        var result = await _sender.Send(command);
+        var result = await _sender.Send(command, cancellationToken);
 
         if (result.IsFailed)
+        {
             return HandleResultError(result.Error);
+        }
 
-        return CreatedAtAction(nameof(GetAll), new { departmentId = request.DepartmentId, version = "1.0" }, result.Value);
+        return CreatedAtAction(nameof(GetByDepartment), new { departmentId = request.DepartmentId, version = "1.0" }, result.Value);
     }
 
     /// <summary>
-    /// Update an existing staff profile.
+    /// Update an existing staff member.
     /// </summary>
     /// <param name="staffId">Staff ID</param>
     /// <param name="request">Update staff request</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>No content on success</returns>
     [HttpPut("{staffId}")]
-    [RequirePermission(Permission.Users_Edit)]
+    [RequireDepartmentPermission(Permission.Staff_Edit)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> Update(int staffId, [FromBody] UpdateStaffRequest request)
+    public async Task<IActionResult> Update(int staffId, [FromBody] UpdateStaffRequest request, CancellationToken cancellationToken = default)
     {
         var command = new UpdateStaffCommand
         {
@@ -119,10 +127,12 @@ public class StaffController : BaseController
             DepartmentId = request.DepartmentId
         };
 
-        var result = await _sender.Send(command);
+        var result = await _sender.Send(command, cancellationToken);
 
         if (result.IsFailed)
+        {
             return HandleResultError(result.Error);
+        }
 
         return NoContent();
     }

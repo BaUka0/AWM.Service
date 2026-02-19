@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using AWM.Service.Domain.Common;
+using AWM.Service.WebAPI.Authorization;
 
 namespace AWM.Service.WebAPI.Common.Services;
 
@@ -28,7 +29,7 @@ public class CurrentUserProvider : ICurrentUserProvider
     {
         get
         {
-            var universityClaim = _httpContextAccessor.HttpContext?.User?.FindFirst("university_id");
+            var universityClaim = _httpContextAccessor.HttpContext?.User?.FindFirst(AuthorizationConstants.UniversityIdClaimType);
             return universityClaim != null && int.TryParse(universityClaim.Value, out var id) ? id : null;
         }
     }

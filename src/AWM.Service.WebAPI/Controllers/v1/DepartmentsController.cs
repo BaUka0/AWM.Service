@@ -1,3 +1,5 @@
+namespace AWM.Service.WebAPI.Controllers.v1;
+
 using AWM.Service.Application.Features.Org.Commands.Departments.CreateDepartment;
 using AWM.Service.Application.Features.Org.Commands.Departments.DeleteDepartment;
 using AWM.Service.Application.Features.Org.Commands.Departments.UpdateDepartment;
@@ -5,10 +7,9 @@ using AWM.Service.Application.Features.Org.Queries.Departments.GetDepartmentsByI
 using AWM.Service.Domain.Auth.Enums;
 using AWM.Service.WebAPI.Authorization;
 using AWM.Service.WebAPI.Common.Contracts.Requests.Departments;
+using AWM.Service.WebAPI.Common.Contracts.Responses.Org;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
-
-namespace AWM.Service.WebAPI.Controllers.v1;
 
 /// <summary>
 /// Controller for managing Departments.
@@ -17,47 +18,63 @@ namespace AWM.Service.WebAPI.Controllers.v1;
 [Route("api/v{version:apiVersion}/[controller]")]
 [ApiController]
 [Produces("application/json")]
-public class DepartmentsController : BaseController
+public sealed class DepartmentsController : BaseController
 {
     private readonly ISender _sender;
 
     public DepartmentsController(ISender sender)
     {
-        _sender = sender ?? throw new ArgumentNullException(nameof(sender));
+        _sender = sender;
     }
 
     /// <summary>
     /// Get all departments for a specific institute.
     /// </summary>
     /// <param name="instituteId">Institute ID</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>List of departments</returns>
     [HttpGet]
     [Route("~/api/v{version:apiVersion}/institutes/{instituteId}/departments")]
-    [RequireInstitutePermission(Permission.Institute_Manage)]
-    [ProducesResponseType(typeof(IReadOnlyList<Application.Features.Org.DTOs.DepartmentDto>), StatusCodes.Status200OK)]
+    [RequirePermission(Permission.Departments_View)]
+    [ProducesResponseType(typeof(IReadOnlyList<DepartmentResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> GetByInstituteId(int instituteId)
+    public async Task<IActionResult> GetByInstituteId(int instituteId, CancellationToken cancellationToken = default)
     {
         var query = new GetDepartmentsByInstituteQuery
         {
             InstituteId = instituteId
         };
 
-        var result = await _sender.Send(query);
+        var result = await _sender.Send(query, cancellationToken);
 
         if (result.IsFailed)
         {
             return HandleResultError(result.Error);
         }
 
-        return Ok(result.Value);
+        var response = result.Value
+            .Select(dto => new DepartmentResponse
+            {
+                Id = dto.Id,
+                InstituteId = dto.InstituteId,
+                Name = dto.Name,
+                Code = dto.Code,
+                CreatedAt = dto.CreatedAt,
+                CreatedBy = dto.CreatedBy,
+                LastModifiedAt = dto.LastModifiedAt,
+                LastModifiedBy = dto.LastModifiedBy
+            })
+            .ToList();
+
+        return Ok(response);
     }
 
     /// <summary>
     /// Create a new department.
     /// </summary>
     /// <param name="request">Create department request</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Created department ID</returns>
     [HttpPost]
     [RequireInstitutePermission(Permission.Department_Manage)]
@@ -65,7 +82,7 @@ public class DepartmentsController : BaseController
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> Create([FromBody] CreateDepartmentRequest request)
+    public async Task<IActionResult> Create([FromBody] CreateDepartmentRequest request, CancellationToken cancellationToken = default)
     {
         var command = new CreateDepartmentCommand
         {
@@ -74,7 +91,7 @@ public class DepartmentsController : BaseController
             Code = request.Code
         };
 
-        var result = await _sender.Send(command);
+        var result = await _sender.Send(command, cancellationToken);
 
         if (result.IsFailed)
         {
@@ -92,6 +109,7 @@ public class DepartmentsController : BaseController
     /// </summary>
     /// <param name="departmentId">Department ID</param>
     /// <param name="request">Update department request</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>No content on success</returns>
     [HttpPut("{departmentId}")]
     [RequireDepartmentPermission(Permission.Department_Manage)]
@@ -99,7 +117,7 @@ public class DepartmentsController : BaseController
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> Update(int departmentId, [FromBody] UpdateDepartmentRequest request)
+    public async Task<IActionResult> Update(int departmentId, [FromBody] UpdateDepartmentRequest request, CancellationToken cancellationToken = default)
     {
         var command = new UpdateDepartmentCommand
         {
@@ -108,7 +126,7 @@ public class DepartmentsController : BaseController
             Code = request.Code
         };
 
-        var result = await _sender.Send(command);
+        var result = await _sender.Send(command, cancellationToken);
 
         if (result.IsFailed)
         {
@@ -122,6 +140,7 @@ public class DepartmentsController : BaseController
     /// Soft delete a department.
     /// </summary>
     /// <param name="departmentId">Department ID</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>No content on success</returns>
     [HttpDelete("{departmentId}")]
     [RequireDepartmentPermission(Permission.Department_Manage)]
@@ -129,14 +148,14 @@ public class DepartmentsController : BaseController
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> Delete(int departmentId)
+    public async Task<IActionResult> Delete(int departmentId, CancellationToken cancellationToken = default)
     {
         var command = new DeleteDepartmentCommand
         {
             DepartmentId = departmentId
         };
 
-        var result = await _sender.Send(command);
+        var result = await _sender.Send(command, cancellationToken);
 
         if (result.IsFailed)
         {
@@ -146,4 +165,3 @@ public class DepartmentsController : BaseController
         return NoContent();
     }
 }
-
