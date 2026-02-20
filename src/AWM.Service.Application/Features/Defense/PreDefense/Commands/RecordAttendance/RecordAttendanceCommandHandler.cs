@@ -42,13 +42,11 @@ public sealed class RecordAttendanceCommandHandler : IRequestHandler<RecordAtten
             // Determine action based on attendance status
             if (request.AttendanceStatus == AttendanceStatus.Attended)
             {
-                // No-op: default status is Attended; if re-recording, we rely on domain state.
-                // Considered valid — recording "attended" means student showed up.
+                // No-op: default status is Attended; no state changes needed.
+                return Result.Success();
             }
-            else
-            {
-                attempt.MarkAbsent(userId.Value, excused: request.IsExcused);
-            }
+
+            attempt.MarkAbsent(userId.Value, excused: request.IsExcused);
 
             await _attemptRepository.UpdateAsync(attempt, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);

@@ -150,6 +150,8 @@ public class StudentWork : AggregateRoot<long>, IAuditable, ISoftDeletable
             documentPath);
 
         _qualityChecks.Add(check);
+        LastModifiedAt = DateTime.UtcNow;
+        LastModifiedBy = expertId ?? CreatedBy;
 
         return check;
     }
@@ -176,6 +178,8 @@ public class StudentWork : AggregateRoot<long>, IAuditable, ISoftDeletable
                 "This quality check result has already been recorded by an expert.");
 
         check.SetResult(expertId, isPassed, resultValue, comment, documentPath);
+        LastModifiedAt = DateTime.UtcNow;
+        LastModifiedBy = expertId;
 
         RaiseDomainEvent(new QualityCheckCompletedEvent(Id, check.CheckType.ToString(), isPassed, expertId));
 

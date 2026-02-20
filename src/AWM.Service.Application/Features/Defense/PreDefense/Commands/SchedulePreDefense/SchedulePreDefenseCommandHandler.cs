@@ -68,7 +68,6 @@ public sealed class SchedulePreDefenseCommandHandler : IRequestHandler<ScheduleP
                 request.Location);
 
             await _scheduleRepository.AddAsync(schedule, cancellationToken);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             // Create pre-defense attempt tied to the schedule
             var attempt = new PreDefenseAttempt(
@@ -78,6 +77,8 @@ public sealed class SchedulePreDefenseCommandHandler : IRequestHandler<ScheduleP
                 scheduleId: schedule.Id);
 
             await _attemptRepository.AddAsync(attempt, cancellationToken);
+
+            // Save both entities in a single transaction for atomicity
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             return Result.Success(schedule.Id);

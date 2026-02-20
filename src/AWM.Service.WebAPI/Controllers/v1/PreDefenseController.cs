@@ -169,7 +169,7 @@ public class PreDefenseController : BaseController
         if (result.IsFailed)
             return HandleResultError(result.Error);
 
-        return Ok(result.Value);
+        return StatusCode(StatusCodes.Status201Created, result.Value);
     }
 
     /// <summary>
@@ -187,13 +187,13 @@ public class PreDefenseController : BaseController
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> Finalize(long attemptId, [FromQuery] decimal averageScore, [FromQuery] bool isPassed)
+    public async Task<IActionResult> Finalize(long attemptId, [FromBody] FinalizePreDefenseRequest request)
     {
         var command = new FinalizePreDefenseCommand
         {
             AttemptId = attemptId,
-            AverageScore = averageScore,
-            IsPassed = isPassed
+            AverageScore = request.AverageScore,
+            IsPassed = request.IsPassed
         };
 
         var result = await _sender.Send(command);

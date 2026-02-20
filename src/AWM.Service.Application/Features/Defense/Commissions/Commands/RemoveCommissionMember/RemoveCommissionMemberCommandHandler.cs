@@ -12,19 +12,26 @@ public sealed class RemoveCommissionMemberCommandHandler : IRequestHandler<Remov
 {
     private readonly ICommissionRepository _commissionRepository;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ICurrentUserProvider _currentUserProvider;
 
     public RemoveCommissionMemberCommandHandler(
         ICommissionRepository commissionRepository,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        ICurrentUserProvider currentUserProvider)
     {
         _commissionRepository = commissionRepository ?? throw new ArgumentNullException(nameof(commissionRepository));
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
+        _currentUserProvider = currentUserProvider ?? throw new ArgumentNullException(nameof(currentUserProvider));
     }
 
     public async Task<Result> Handle(RemoveCommissionMemberCommand request, CancellationToken cancellationToken)
     {
         try
         {
+            var userId = _currentUserProvider.UserId;
+            if (!userId.HasValue)
+                return Result.Failure(new Error("401", "User ID is not available."));
+
             var commission = await _commissionRepository.GetByIdWithMembersAsync(
                 request.CommissionId, cancellationToken);
 
@@ -34,7 +41,7 @@ public sealed class RemoveCommissionMemberCommandHandler : IRequestHandler<Remov
                     $"Commission with ID {request.CommissionId} not found."));
             }
 
-            var removed = commission.RemoveMember(request.MemberId);
+            var removed = commission.RemoveMember(request.MemberId, userId.Value);
             if (!removed)
             {
                 return Result.Failure(new Error("NotFound.CommissionMember",

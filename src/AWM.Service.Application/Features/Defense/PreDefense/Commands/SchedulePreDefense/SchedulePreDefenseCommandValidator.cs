@@ -18,7 +18,7 @@ public sealed class SchedulePreDefenseCommandValidator : AbstractValidator<Sched
             .WithMessage("Work ID must be greater than 0.");
 
         RuleFor(x => x.DefenseDate)
-            .GreaterThan(DateTime.UtcNow)
+            .Must(date => date > DateTime.UtcNow)
             .WithMessage("Defense date must be in the future.");
 
         RuleFor(x => x.Location)
