@@ -12,10 +12,14 @@ using MediatR;
 public sealed class CreateApplicationCommandHandler : IRequestHandler<CreateApplicationCommand, Result<long>>
 {
     private readonly ITopicRepository _topicRepository;
+    private readonly ITopicApplicationRepository _applicationRepository;
 
-    public CreateApplicationCommandHandler(ITopicRepository topicRepository)
+    public CreateApplicationCommandHandler(
+        ITopicRepository topicRepository,
+        ITopicApplicationRepository applicationRepository)
     {
         _topicRepository = topicRepository;
+        _applicationRepository = applicationRepository;
     }
 
     public async Task<Result<long>> Handle(CreateApplicationCommand request, CancellationToken cancellationToken)
@@ -52,45 +56,42 @@ public sealed class CreateApplicationCommandHandler : IRequestHandler<CreateAppl
         }
 
         // 6. Check if student already applied to this topic
-        var existingApplication = topic.Applications
-            .FirstOrDefault(a => a.StudentId == request.StudentId && !a.IsDeleted);
+        var hasApplied = await _applicationRepository.HasStudentAppliedToTopicAsync(
+            request.StudentId, 
+            request.TopicId, 
+            cancellationToken);
         
-        if (existingApplication is not null)
+        if (hasApplied)
         {
             return Result.Failure<long>(new Error("Application.Duplicate", "You have already applied to this topic."));
         }
 
-        // 7. Create application
+        // 7. Optional: Check if student already has an accepted application this year
+        // Uncomment if business rule requires only one accepted application per year
+        /*
+        var hasAccepted = await _applicationRepository.HasAcceptedApplicationAsync(
+            request.StudentId,
+            topic.AcademicYearId,
+            cancellationToken);
+        
+        if (hasAccepted)
+        {
+            return Result.Failure<long>(new Error("Application.AlreadyAccepted", 
+                "You already have an accepted application for this academic year."));
+        }
+        */
+
+        // 8. Create application
         var application = new TopicApplication(
             topicId: request.TopicId,
             studentId: request.StudentId,
             motivationLetter: request.MotivationLetter
         );
 
-        // 8. Add application to topic (assuming Topic has a method for this)
-        // NOTE: If Topic doesn't have an AddApplication method, we need to add it to the domain entity
-        // For now, we'll use reflection to add to private collection, but ideally this should be a domain method
-        
-        // TODO: Add this method to Topic entity:
-        // public void AddApplication(TopicApplication application) { _applications.Add(application); }
-        
-        // Temporary workaround - directly accessing private field (NOT RECOMMENDED for production)
-        // This should be replaced with a proper domain method
-        var applicationsField = typeof(Topic).GetField("_applications", 
-            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        
-        if (applicationsField is null)
-        {
-            return Result.Failure<long>(new Error("Internal.Error", "Failed to add application."));
-        }
-
-        var applications = applicationsField.GetValue(topic) as List<TopicApplication>;
-        applications?.Add(application);
-
-        // 9. Update topic
+        // 9. Add application to repository
         try
         {
-            await _topicRepository.UpdateAsync(topic, cancellationToken);
+            await _applicationRepository.AddAsync(application, cancellationToken);
             return Result.Success(application.Id);
         }
         catch (Exception ex)
