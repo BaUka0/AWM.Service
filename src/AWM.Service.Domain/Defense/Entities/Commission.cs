@@ -77,7 +77,7 @@ public class Commission : AggregateRoot<int>, IAuditable, ISoftDeletable
 
         var member = new CommissionMember(Id, userId, role);
         _members.Add(member);
-        
+
         LastModifiedAt = DateTime.UtcNow;
         return member;
     }
@@ -106,6 +106,22 @@ public class Commission : AggregateRoot<int>, IAuditable, ISoftDeletable
         Name = name;
         LastModifiedAt = DateTime.UtcNow;
         LastModifiedBy = modifiedBy;
+    }
+
+    /// <summary>
+    /// Removes a member from the commission by member ID.
+    /// </summary>
+    /// <returns>True if the member was found and removed; otherwise, false.</returns>
+    public bool RemoveMember(int memberId, int modifiedBy)
+    {
+        var member = _members.FirstOrDefault(m => m.Id == memberId);
+        if (member is null)
+            return false;
+
+        _members.Remove(member);
+        LastModifiedAt = DateTime.UtcNow;
+        LastModifiedBy = modifiedBy;
+        return true;
     }
 
     /// <summary>

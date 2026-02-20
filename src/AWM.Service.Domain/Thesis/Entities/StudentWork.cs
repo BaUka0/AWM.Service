@@ -126,7 +126,8 @@ public class StudentWork : AggregateRoot<long>, IAuditable, ISoftDeletable
     }
 
     /// <summary>
-    /// Adds a quality check result.
+    /// Submits the work for a quality check by creating a pending (unreviewed) record.
+    /// The expert will later complete it via CompleteQualityCheck.
     /// </summary>
     public QualityCheck AddQualityCheck(
         CheckType checkType,
@@ -149,11 +150,38 @@ public class StudentWork : AggregateRoot<long>, IAuditable, ISoftDeletable
             documentPath);
 
         _qualityChecks.Add(check);
+        LastModifiedAt = DateTime.UtcNow;
+        LastModifiedBy = expertId ?? CreatedBy;
 
-        if (expertId.HasValue)
-        {
-            RaiseDomainEvent(new QualityCheckCompletedEvent(Id, checkType.ToString(), isPassed, expertId.Value));
-        }
+        return check;
+    }
+
+    /// <summary>
+    /// Records an expert's result on an existing pending quality check.
+    /// Finds the check by ID, validates it is still pending, updates it in-place,
+    /// and raises the QualityCheckCompletedEvent domain event.
+    /// </summary>
+    public QualityCheck CompleteQualityCheck(
+        long checkId,
+        int expertId,
+        bool isPassed,
+        decimal? resultValue = null,
+        string? comment = null,
+        string? documentPath = null)
+    {
+        var check = _qualityChecks.FirstOrDefault(c => c.Id == checkId)
+            ?? throw new InvalidOperationException(
+                $"QualityCheck with ID {checkId} was not found on this work.");
+
+        if (check.AssignedExpertId.HasValue)
+            throw new InvalidOperationException(
+                "This quality check result has already been recorded by an expert.");
+
+        check.SetResult(expertId, isPassed, resultValue, comment, documentPath);
+        LastModifiedAt = DateTime.UtcNow;
+        LastModifiedBy = expertId;
+
+        RaiseDomainEvent(new QualityCheckCompletedEvent(Id, check.CheckType.ToString(), isPassed, expertId));
 
         return check;
     }
