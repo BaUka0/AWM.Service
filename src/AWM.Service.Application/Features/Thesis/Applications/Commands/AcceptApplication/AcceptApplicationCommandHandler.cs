@@ -1,5 +1,6 @@
 namespace AWM.Service.Application.Features.Thesis.Applications.Commands.AcceptApplication;
 
+using AWM.Service.Application.Features.Thesis.Works.Commands.CreateStudentWork;
 using AWM.Service.Domain.Repositories;
 using KDS.Primitives.FluentResult;
 using MediatR;
@@ -12,22 +13,28 @@ public sealed class AcceptApplicationCommandHandler : IRequestHandler<AcceptAppl
 {
     private readonly ITopicApplicationRepository _applicationRepository;
     private readonly ITopicRepository _topicRepository;
+    private readonly IMediator _mediator;
+    private readonly IUnitOfWork _unitOfWork;
 
     public AcceptApplicationCommandHandler(
         ITopicApplicationRepository applicationRepository,
-        ITopicRepository topicRepository)
+        ITopicRepository topicRepository,
+        IMediator mediator,
+        IUnitOfWork unitOfWork)
     {
         _applicationRepository = applicationRepository;
         _topicRepository = topicRepository;
+        _mediator = mediator;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<Result> Handle(AcceptApplicationCommand request, CancellationToken cancellationToken)
     {
         // 1. Get application with topic (for authorization)
         var application = await _applicationRepository.GetByIdWithTopicAsync(
-            request.ApplicationId, 
+            request.ApplicationId,
             cancellationToken);
-        
+
         if (application is null)
         {
             return Result.Failure(new Error("Application.NotFound", $"Application with ID {request.ApplicationId} not found."));
@@ -84,14 +91,37 @@ public sealed class AcceptApplicationCommandHandler : IRequestHandler<AcceptAppl
             return Result.Failure(new Error("Application.InvalidState", ex.Message));
         }
 
-        // 8. Update application
+        // 8. Persist application update + create StudentWork atomically in one transaction
+        await _unitOfWork.BeginTransactionAsync(cancellationToken);
         try
         {
             await _applicationRepository.UpdateAsync(application, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            // 9. Automatically create StudentWork for the accepted student
+            var createWorkCommand = new CreateStudentWorkCommand
+            {
+                TopicId = topic.Id,
+                AcademicYearId = topic.AcademicYearId,
+                DepartmentId = topic.DepartmentId,
+                StudentId = application.StudentId
+            };
+
+            var workResult = await _mediator.Send(createWorkCommand, cancellationToken);
+
+            if (workResult.IsFailed)
+            {
+                await _unitOfWork.RollbackTransactionAsync(cancellationToken);
+                return Result.Failure(new Error("AcceptApplication.WorkCreationFailure",
+                    $"Failed to create student work: {workResult.Error.Message}"));
+            }
+
+            await _unitOfWork.CommitTransactionAsync(cancellationToken);
             return Result.Success();
         }
         catch (Exception ex)
         {
+            await _unitOfWork.RollbackTransactionAsync(cancellationToken);
             return Result.Failure(new Error("Database.Error", $"Failed to accept application: {ex.Message}"));
         }
     }

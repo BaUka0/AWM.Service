@@ -24,7 +24,7 @@ public static class DependencyInjection
         services.AddDbContext<ApplicationDbContext>((sp, options) =>
         {
             var interceptor = sp.GetRequiredService<AuditableEntityInterceptor>();
-            
+
             options.UseSqlServer(connectionString, sqlOptions =>
                    {
                        sqlOptions.EnableRetryOnFailure(
@@ -63,6 +63,7 @@ public static class DependencyInjection
         // Register Thesis Repositories
         services.AddScoped<IDirectionRepository, DirectionRepository>();
         services.AddScoped<ITopicRepository, TopicRepository>();
+        services.AddScoped<ITopicApplicationRepository, TopicApplicationRepository>();
         services.AddScoped<IStudentWorkRepository, StudentWorkRepository>();
         services.AddScoped<IReviewerRepository, ReviewerRepository>();
         services.AddScoped<IExpertRepository, ExpertRepository>();
