@@ -7,12 +7,17 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using AWM.Service.WebAPI.Authorization;
+using AWM.Service.WebAPI.Common.Middleware;
 using FluentValidation;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllers();
+
+// Add Global Exception Handling
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
 
 // Add MediatR with ValidationBehavior
 var applicationAssembly = typeof(AWM.Service.Application.Features.Auth.Commands.Login.LoginCommand).Assembly;
@@ -120,6 +125,8 @@ builder.Services.AddScoped<AWM.Service.Domain.CommonDomain.Services.IPeriodValid
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
+app.UseExceptionHandler();
+
 if (app.Environment.IsDevelopment())
 {
     // Seed test data (only when tables are empty)
