@@ -86,6 +86,20 @@ public class StudentWork : AggregateRoot<long>, IAuditable, ISoftDeletable
     }
 
     /// <summary>
+    /// Removes a participant from the work.
+    /// </summary>
+    public void RemoveParticipant(int studentId)
+    {
+        var participant = _participants.FirstOrDefault(p => p.StudentId == studentId)
+            ?? throw new InvalidOperationException("Student is not a participant of this work.");
+
+        if (participant.Role == ParticipantRole.Leader && _participants.Count > 1)
+            throw new InvalidOperationException("Cannot remove the leader while other participants exist. Transfer leadership first.");
+
+        _participants.Remove(participant);
+    }
+
+    /// <summary>
     /// Changes the work state.
     /// </summary>
     public void ChangeState(int newStateId, int changedBy, string? comment = null)

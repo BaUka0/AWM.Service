@@ -40,13 +40,13 @@ public sealed class StudentWorkRepository : IStudentWorkRepository
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<StudentWork>> GetByStudentAsync(
-        int studentId, 
+        int studentId,
         CancellationToken cancellationToken = default)
     {
         return await _context.StudentWorks
             .AsNoTracking()
             .Include(w => w.Participants)
-            .Where(w => !w.IsDeleted && 
+            .Where(w => !w.IsDeleted &&
                         w.Participants.Any(p => p.StudentId == studentId))
             .OrderByDescending(w => w.CreatedAt)
             .ToListAsync(cancellationToken);
@@ -54,31 +54,52 @@ public sealed class StudentWorkRepository : IStudentWorkRepository
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<StudentWork>> GetByDepartmentAsync(
-        int departmentId, 
-        int academicYearId, 
+        int departmentId,
+        int academicYearId,
         CancellationToken cancellationToken = default)
     {
         return await _context.StudentWorks
             .AsNoTracking()
             .Include(w => w.Participants)
-            .Where(w => !w.IsDeleted && 
-                        w.DepartmentId == departmentId && 
+            .Where(w => !w.IsDeleted &&
+                        w.DepartmentId == departmentId &&
                         w.AcademicYearId == academicYearId)
             .OrderByDescending(w => w.CreatedAt)
             .ToListAsync(cancellationToken);
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<StudentWork>> GetByStateAsync(
-        int stateId, 
-        int departmentId, 
+    public async Task<IReadOnlyList<StudentWork>> GetBySupervisorAsync(
+        int supervisorId,
+        int academicYearId,
         CancellationToken cancellationToken = default)
     {
         return await _context.StudentWorks
             .AsNoTracking()
             .Include(w => w.Participants)
-            .Where(w => !w.IsDeleted && 
-                        w.CurrentStateId == stateId && 
+            .Join(_context.Topics,
+                  work => work.TopicId,
+                  topic => topic.Id,
+                  (work, topic) => new { work, topic })
+            .Where(x => !x.work.IsDeleted &&
+                        x.topic.SupervisorId == supervisorId &&
+                        x.work.AcademicYearId == academicYearId)
+            .Select(x => x.work)
+            .OrderByDescending(w => w.CreatedAt)
+            .ToListAsync(cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<StudentWork>> GetByStateAsync(
+        int stateId,
+        int departmentId,
+        CancellationToken cancellationToken = default)
+    {
+        return await _context.StudentWorks
+            .AsNoTracking()
+            .Include(w => w.Participants)
+            .Where(w => !w.IsDeleted &&
+                        w.CurrentStateId == stateId &&
                         w.DepartmentId == departmentId)
             .OrderByDescending(w => w.LastModifiedAt)
             .ToListAsync(cancellationToken);
@@ -86,21 +107,21 @@ public sealed class StudentWorkRepository : IStudentWorkRepository
 
     /// <inheritdoc />
     public async Task<(IReadOnlyList<StudentWork> Items, int TotalCount)> GetByDepartmentPagedAsync(
-        int departmentId, 
-        int academicYearId, 
-        int skip = 0, 
-        int take = 50, 
+        int departmentId,
+        int academicYearId,
+        int skip = 0,
+        int take = 50,
         CancellationToken cancellationToken = default)
     {
         var query = _context.StudentWorks
             .AsNoTracking()
             .Include(w => w.Participants)
-            .Where(w => !w.IsDeleted && 
-                        w.DepartmentId == departmentId && 
+            .Where(w => !w.IsDeleted &&
+                        w.DepartmentId == departmentId &&
                         w.AcademicYearId == academicYearId);
 
         var totalCount = await query.CountAsync(cancellationToken);
-        
+
         var items = await query
             .OrderByDescending(w => w.CreatedAt)
             .Skip(skip)
@@ -112,21 +133,21 @@ public sealed class StudentWorkRepository : IStudentWorkRepository
 
     /// <inheritdoc />
     public async Task<(IReadOnlyList<StudentWork> Items, int TotalCount)> GetByStatePagedAsync(
-        int stateId, 
-        int departmentId, 
-        int skip = 0, 
-        int take = 50, 
+        int stateId,
+        int departmentId,
+        int skip = 0,
+        int take = 50,
         CancellationToken cancellationToken = default)
     {
         var query = _context.StudentWorks
             .AsNoTracking()
             .Include(w => w.Participants)
-            .Where(w => !w.IsDeleted && 
-                        w.CurrentStateId == stateId && 
+            .Where(w => !w.IsDeleted &&
+                        w.CurrentStateId == stateId &&
                         w.DepartmentId == departmentId);
 
         var totalCount = await query.CountAsync(cancellationToken);
-        
+
         var items = await query
             .OrderByDescending(w => w.LastModifiedAt)
             .Skip(skip)

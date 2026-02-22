@@ -1,5 +1,6 @@
 namespace AWM.Service.Application.Features.Thesis.Applications.Commands.AcceptApplication;
 
+using AWM.Service.Application.Features.Thesis.Works.Commands.CreateStudentWork;
 using AWM.Service.Domain.Repositories;
 using KDS.Primitives.FluentResult;
 using MediatR;
@@ -12,22 +13,25 @@ public sealed class AcceptApplicationCommandHandler : IRequestHandler<AcceptAppl
 {
     private readonly ITopicApplicationRepository _applicationRepository;
     private readonly ITopicRepository _topicRepository;
+    private readonly IMediator _mediator;
 
     public AcceptApplicationCommandHandler(
         ITopicApplicationRepository applicationRepository,
-        ITopicRepository topicRepository)
+        ITopicRepository topicRepository,
+        IMediator mediator)
     {
         _applicationRepository = applicationRepository;
         _topicRepository = topicRepository;
+        _mediator = mediator;
     }
 
     public async Task<Result> Handle(AcceptApplicationCommand request, CancellationToken cancellationToken)
     {
         // 1. Get application with topic (for authorization)
         var application = await _applicationRepository.GetByIdWithTopicAsync(
-            request.ApplicationId, 
+            request.ApplicationId,
             cancellationToken);
-        
+
         if (application is null)
         {
             return Result.Failure(new Error("Application.NotFound", $"Application with ID {request.ApplicationId} not found."));
@@ -88,6 +92,26 @@ public sealed class AcceptApplicationCommandHandler : IRequestHandler<AcceptAppl
         try
         {
             await _applicationRepository.UpdateAsync(application, cancellationToken);
+
+            // 9. Automatically create StudentWork for the accepted student
+            var createWorkCommand = new CreateStudentWorkCommand
+            {
+                TopicId = topic.Id,
+                AcademicYearId = topic.AcademicYearId,
+                DepartmentId = topic.DepartmentId,
+                StudentId = application.StudentId
+            };
+
+            var workResult = await _mediator.Send(createWorkCommand, cancellationToken);
+
+            if (workResult.IsFailed)
+            {
+                // In a real robust system, we might want to use a UnitOfWork/Transaction here
+                // For now, if work creation fails, we return a failure indicating partial success/warning
+                return Result.Failure(new Error("AcceptApplication.WorkCreationFailure",
+                    $"Application was accepted but failed to create student work: {workResult.Error.Message}"));
+            }
+
             return Result.Success();
         }
         catch (Exception ex)
