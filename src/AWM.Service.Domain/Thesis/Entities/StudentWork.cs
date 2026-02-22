@@ -93,6 +93,9 @@ public class StudentWork : AggregateRoot<long>, IAuditable, ISoftDeletable
         var participant = _participants.FirstOrDefault(p => p.StudentId == studentId)
             ?? throw new InvalidOperationException("Student is not a participant of this work.");
 
+        if (_participants.Count == 1)
+            throw new InvalidOperationException("Cannot remove the last participant from the work.");
+
         if (participant.Role == ParticipantRole.Leader && _participants.Count > 1)
             throw new InvalidOperationException("Cannot remove the leader while other participants exist. Transfer leadership first.");
 

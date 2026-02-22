@@ -20,6 +20,7 @@ public sealed class TopicApplicationRepository : ITopicApplicationRepository
     public async Task<TopicApplication?> GetByIdAsync(long id, CancellationToken cancellationToken = default)
     {
         return await _context.TopicApplications
+            .AsNoTracking()
             .Where(a => !a.IsDeleted)
             .FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
     }
@@ -27,10 +28,11 @@ public sealed class TopicApplicationRepository : ITopicApplicationRepository
     /// <inheritdoc />
     public async Task<TopicApplication?> GetByIdWithTopicAsync(long id, CancellationToken cancellationToken = default)
     {
-        // This method signature suggests we might want to load the Topic along with the Application,
-        // but ApplicationDbContext doesn't have a direct navigation property from TopicApplication to Topic 
-        // in standard DDD unless configured. We can just load the application. The query handlers load Topic separately.
+        // Despite the method name, this repository method intentionally only loads the TopicApplication entity.
+        // The corresponding Topic is resolved by higher-level query handlers using TopicId (for example, via a separate repository).
+        // This keeps the repository focused on the TopicApplication aggregate and avoids assuming a specific navigation configuration.
         return await _context.TopicApplications
+            .AsNoTracking()
             .Where(a => !a.IsDeleted)
             .FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
     }

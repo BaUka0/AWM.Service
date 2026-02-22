@@ -77,14 +77,10 @@ public sealed class StudentWorkRepository : IStudentWorkRepository
         return await _context.StudentWorks
             .AsNoTracking()
             .Include(w => w.Participants)
-            .Join(_context.Topics,
-                  work => work.TopicId,
-                  topic => topic.Id,
-                  (work, topic) => new { work, topic })
-            .Where(x => !x.work.IsDeleted &&
-                        x.topic.SupervisorId == supervisorId &&
-                        x.work.AcademicYearId == academicYearId)
-            .Select(x => x.work)
+            .Where(w => !w.IsDeleted &&
+                        w.AcademicYearId == academicYearId &&
+                        _context.Topics.Any(t => t.Id == w.TopicId &&
+                                                 t.SupervisorId == supervisorId))
             .OrderByDescending(w => w.CreatedAt)
             .ToListAsync(cancellationToken);
     }

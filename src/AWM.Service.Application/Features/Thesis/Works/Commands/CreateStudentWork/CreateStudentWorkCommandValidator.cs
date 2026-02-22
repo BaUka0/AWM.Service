@@ -22,8 +22,10 @@ public sealed class CreateStudentWorkCommandValidator : AbstractValidator<Create
             .WithMessage("StudentId must be a positive number.");
 
         RuleFor(x => x.TopicId)
+            .NotNull()
+            .WithMessage("TopicId is required.")
             .GreaterThan(0)
-            .When(x => x.TopicId.HasValue)
-            .WithMessage("TopicId must be a positive number when provided.");
+            .WithMessage("TopicId must be a positive number.");
     }
 }
+

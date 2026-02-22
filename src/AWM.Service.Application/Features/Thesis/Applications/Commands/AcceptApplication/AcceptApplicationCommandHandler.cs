@@ -14,15 +14,18 @@ public sealed class AcceptApplicationCommandHandler : IRequestHandler<AcceptAppl
     private readonly ITopicApplicationRepository _applicationRepository;
     private readonly ITopicRepository _topicRepository;
     private readonly IMediator _mediator;
+    private readonly IUnitOfWork _unitOfWork;
 
     public AcceptApplicationCommandHandler(
         ITopicApplicationRepository applicationRepository,
         ITopicRepository topicRepository,
-        IMediator mediator)
+        IMediator mediator,
+        IUnitOfWork unitOfWork)
     {
         _applicationRepository = applicationRepository;
         _topicRepository = topicRepository;
         _mediator = mediator;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<Result> Handle(AcceptApplicationCommand request, CancellationToken cancellationToken)
@@ -88,10 +91,12 @@ public sealed class AcceptApplicationCommandHandler : IRequestHandler<AcceptAppl
             return Result.Failure(new Error("Application.InvalidState", ex.Message));
         }
 
-        // 8. Update application
+        // 8. Persist application update + create StudentWork atomically in one transaction
+        await _unitOfWork.BeginTransactionAsync(cancellationToken);
         try
         {
             await _applicationRepository.UpdateAsync(application, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             // 9. Automatically create StudentWork for the accepted student
             var createWorkCommand = new CreateStudentWorkCommand
@@ -106,16 +111,17 @@ public sealed class AcceptApplicationCommandHandler : IRequestHandler<AcceptAppl
 
             if (workResult.IsFailed)
             {
-                // In a real robust system, we might want to use a UnitOfWork/Transaction here
-                // For now, if work creation fails, we return a failure indicating partial success/warning
+                await _unitOfWork.RollbackTransactionAsync(cancellationToken);
                 return Result.Failure(new Error("AcceptApplication.WorkCreationFailure",
-                    $"Application was accepted but failed to create student work: {workResult.Error.Message}"));
+                    $"Failed to create student work: {workResult.Error.Message}"));
             }
 
+            await _unitOfWork.CommitTransactionAsync(cancellationToken);
             return Result.Success();
         }
         catch (Exception ex)
         {
+            await _unitOfWork.RollbackTransactionAsync(cancellationToken);
             return Result.Failure(new Error("Database.Error", $"Failed to accept application: {ex.Message}"));
         }
     }

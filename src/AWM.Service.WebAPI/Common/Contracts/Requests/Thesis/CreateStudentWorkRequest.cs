@@ -9,7 +9,7 @@ public sealed record CreateStudentWorkRequest
     /// ID of the topic the work is based on.
     /// </summary>
     /// <example>1</example>
-    public long TopicId { get; init; }
+    public long? TopicId { get; init; }
 
     /// <summary>
     /// Academic year ID.
@@ -23,3 +23,4 @@ public sealed record CreateStudentWorkRequest
     /// <example>1</example>
     public int DepartmentId { get; init; }
 }
+

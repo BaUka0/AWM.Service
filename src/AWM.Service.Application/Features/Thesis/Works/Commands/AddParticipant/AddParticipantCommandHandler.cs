@@ -1,6 +1,5 @@
 namespace AWM.Service.Application.Features.Thesis.Works.Commands.AddParticipant;
 
-using AWM.Service.Domain.Common;
 using AWM.Service.Domain.Repositories;
 using KDS.Primitives.FluentResult;
 using MediatR;
@@ -12,14 +11,14 @@ using MediatR;
 public sealed class AddParticipantCommandHandler : IRequestHandler<AddParticipantCommand, Result<long>>
 {
     private readonly IStudentWorkRepository _workRepository;
-    private readonly ICurrentUserProvider _currentUserProvider;
+    private readonly IUnitOfWork _unitOfWork;
 
     public AddParticipantCommandHandler(
         IStudentWorkRepository workRepository,
-        ICurrentUserProvider currentUserProvider)
+        IUnitOfWork unitOfWork)
     {
         _workRepository = workRepository;
-        _currentUserProvider = currentUserProvider;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<Result<long>> Handle(AddParticipantCommand request, CancellationToken cancellationToken)
@@ -40,6 +39,7 @@ public sealed class AddParticipantCommandHandler : IRequestHandler<AddParticipan
 
             // 3. Persist
             await _workRepository.UpdateAsync(work, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             return Result.Success(participant.Id);
         }

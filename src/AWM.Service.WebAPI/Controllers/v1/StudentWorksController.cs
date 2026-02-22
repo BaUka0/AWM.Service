@@ -42,18 +42,18 @@ public class StudentWorksController : BaseController
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>List of works</returns>
     [HttpGet("supervisor/{supervisorId:int}")]
-    [RequireDepartmentPermission(Permission.Works_View)] // Assuming this permission is appropriate
+    [RequireDepartmentPermission(Permission.Works_View)]
     [ProducesResponseType(typeof(IReadOnlyList<StudentWorkResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetBySupervisor(
         int supervisorId,
-        [FromQuery] int academicYearId,
+        [FromQuery] int? academicYearId,
         CancellationToken cancellationToken)
     {
         var result = await _sender.Send(
-            new GetStudentWorksBySupervisorQuery { SupervisorId = supervisorId, AcademicYearId = academicYearId },
+            new GetStudentWorksBySupervisorQuery { SupervisorId = supervisorId, AcademicYearId = academicYearId ?? 0 },
             cancellationToken);
 
         return result.IsSuccess
@@ -131,9 +131,12 @@ public class StudentWorksController : BaseController
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetMyWorks(CancellationToken cancellationToken = default)
     {
+        if (!_currentUserProvider.UserId.HasValue)
+            return Unauthorized();
+
         var query = new GetMyWorkQuery
         {
-            StudentId = _currentUserProvider.UserId!.Value
+            StudentId = _currentUserProvider.UserId.Value
         };
 
         var result = await _sender.Send(query, cancellationToken);
@@ -163,12 +166,15 @@ public class StudentWorksController : BaseController
         [FromBody] CreateStudentWorkRequest request,
         CancellationToken cancellationToken = default)
     {
+        if (!_currentUserProvider.UserId.HasValue)
+            return Unauthorized();
+
         var command = new CreateStudentWorkCommand
         {
             TopicId = request.TopicId,
             AcademicYearId = request.AcademicYearId,
             DepartmentId = request.DepartmentId,
-            StudentId = _currentUserProvider.UserId!.Value
+            StudentId = _currentUserProvider.UserId.Value
         };
 
         var result = await _sender.Send(command, cancellationToken);

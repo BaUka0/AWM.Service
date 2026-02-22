@@ -11,10 +11,14 @@ using MediatR;
 public sealed class RemoveParticipantCommandHandler : IRequestHandler<RemoveParticipantCommand, Result>
 {
     private readonly IStudentWorkRepository _workRepository;
+    private readonly IUnitOfWork _unitOfWork;
 
-    public RemoveParticipantCommandHandler(IStudentWorkRepository workRepository)
+    public RemoveParticipantCommandHandler(
+        IStudentWorkRepository workRepository,
+        IUnitOfWork unitOfWork)
     {
         _workRepository = workRepository;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<Result> Handle(RemoveParticipantCommand request, CancellationToken cancellationToken)
@@ -33,6 +37,7 @@ public sealed class RemoveParticipantCommandHandler : IRequestHandler<RemovePart
         {
             work.RemoveParticipant(request.StudentId);
             await _workRepository.UpdateAsync(work, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
             return Result.Success();
         }
         catch (InvalidOperationException ex)
