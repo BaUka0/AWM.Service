@@ -163,6 +163,7 @@ public class StudentWorksController : BaseController
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> Create(
+        [FromQuery] int departmentId,
         [FromBody] CreateStudentWorkRequest request,
         CancellationToken cancellationToken = default)
     {
@@ -173,7 +174,7 @@ public class StudentWorksController : BaseController
         {
             TopicId = request.TopicId,
             AcademicYearId = request.AcademicYearId,
-            DepartmentId = request.DepartmentId,
+            DepartmentId = departmentId,
             StudentId = _currentUserProvider.UserId.Value
         };
 
