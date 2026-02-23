@@ -3,6 +3,7 @@ namespace AWM.Service.WebAPI.Authorization;
 using System.Security.Claims;
 using AWM.Service.Domain.Auth.Enums;
 using AWM.Service.Domain.Auth.Interfaces;
+using AWM.Service.Domain.Common;
 
 /// <summary>
 /// Implementation of IAuthorizationContext that reads from HttpContext claims.
@@ -11,36 +12,23 @@ using AWM.Service.Domain.Auth.Interfaces;
 public class HttpAuthorizationContext : IAuthorizationContext
 {
     private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly ICurrentUserProvider _currentUserProvider;
     private IReadOnlySet<Permission>? _cachedPermissions;
     private Dictionary<int, HashSet<Permission>>? _cachedDepartmentPermissions;
 
-    public HttpAuthorizationContext(IHttpContextAccessor httpContextAccessor)
+    public HttpAuthorizationContext(IHttpContextAccessor httpContextAccessor, ICurrentUserProvider currentUserProvider)
     {
         _httpContextAccessor = httpContextAccessor;
+        _currentUserProvider = currentUserProvider;
     }
 
     private ClaimsPrincipal? User => _httpContextAccessor.HttpContext?.User;
 
     /// <inheritdoc />
-    public int? UserId
-    {
-        get
-        {
-            var claim = User?.FindFirst(ClaimTypes.NameIdentifier);
-            return claim != null && int.TryParse(claim.Value, out var id) ? id : null;
-        }
-    }
+    public int? UserId => _currentUserProvider.UserId;
 
     /// <inheritdoc />
-    public int? UniversityId
-    {
-        get
-        {
-            var claim = User?.FindFirst(AuthorizationConstants.UniversityIdClaimType)
-                     ?? User?.FindFirst("UniversityId");
-            return claim != null && int.TryParse(claim.Value, out var id) ? id : null;
-        }
-    }
+    public int? UniversityId => _currentUserProvider.UniversityId;
 
     /// <inheritdoc />
     public int? CurrentDepartmentId
@@ -104,7 +92,7 @@ public class HttpAuthorizationContext : IAuthorizationContext
     }
 
     /// <inheritdoc />
-    public bool IsAuthenticated => User?.Identity?.IsAuthenticated ?? false;
+    public bool IsAuthenticated => _currentUserProvider.IsAuthenticated;
 
     /// <inheritdoc />
     public IReadOnlyList<string> Roles
