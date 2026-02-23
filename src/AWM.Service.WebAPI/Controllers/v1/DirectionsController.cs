@@ -37,12 +37,7 @@ public sealed class DirectionsController : BaseController
     /// <summary>
     /// Get directions by department with optional filtering.
     /// </summary>
-    /// <param name="departmentId">Department ID (required).</param>
-    /// <param name="academicYearId">Academic year ID (required).</param>
-    /// <param name="workTypeId">Filter by work type ID (optional).</param>
-    /// <param name="stateId">Filter by state ID (optional).</param>
-    /// <param name="supervisorId">Filter by supervisor ID (optional).</param>
-    /// <param name="includeDeleted">Include soft-deleted directions (default: false).</param>
+    /// <param name="request">Request parameters.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>List of directions.</returns>
     [HttpGet("by-department")]
@@ -51,22 +46,17 @@ public sealed class DirectionsController : BaseController
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetDirectionsByDepartment(
-        [FromQuery] int departmentId,
-        [FromQuery] int academicYearId,
-        [FromQuery] int? workTypeId = null,
-        [FromQuery] int? stateId = null,
-        [FromQuery] int? supervisorId = null,
-        [FromQuery] bool includeDeleted = false,
+        [FromQuery] GetDirectionsByDepartmentRequest request,
         CancellationToken cancellationToken = default)
     {
         var query = new GetDirectionsByDepartmentQuery
         {
-            DepartmentId = departmentId,
-            AcademicYearId = academicYearId,
-            WorkTypeId = workTypeId,
-            StateId = stateId,
-            SupervisorId = supervisorId,
-            IncludeDeleted = includeDeleted
+            DepartmentId = request.DepartmentId,
+            AcademicYearId = request.AcademicYearId,
+            WorkTypeId = request.WorkTypeId,
+            StateId = request.StateId,
+            SupervisorId = request.SupervisorId,
+            IncludeDeleted = request.IncludeDeleted
         };
 
         var result = await _sender.Send(query, cancellationToken);
