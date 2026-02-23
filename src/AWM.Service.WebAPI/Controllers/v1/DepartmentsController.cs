@@ -73,20 +73,22 @@ public sealed class DepartmentsController : BaseController
     /// <summary>
     /// Create a new department.
     /// </summary>
+    /// <param name="instituteId">Institute ID</param>
     /// <param name="request">Create department request</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Created department ID</returns>
     [HttpPost]
+    [Route("~/api/v{version:apiVersion}/institutes/{instituteId}/departments")]
     [RequireInstitutePermission(Permission.Department_Manage)]
     [ProducesResponseType(typeof(int), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> Create([FromBody] CreateDepartmentRequest request, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> Create(int instituteId, [FromBody] CreateDepartmentRequest request, CancellationToken cancellationToken = default)
     {
         var command = new CreateDepartmentCommand
         {
-            InstituteId = request.InstituteId,
+            InstituteId = instituteId,
             Name = request.Name,
             Code = request.Code
         };
@@ -100,7 +102,7 @@ public sealed class DepartmentsController : BaseController
 
         return CreatedAtAction(
             nameof(GetByInstituteId),
-            new { instituteId = request.InstituteId, version = "1.0" },
+            new { instituteId = instituteId, version = "1.0" },
             result.Value);
     }
 
