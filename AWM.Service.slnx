@@ -5,4 +5,7 @@
     <Project Path="src/AWM.Service.Infrastructure/AWM.Service.Infrastructure.csproj" />
     <Project Path="src/AWM.Service.WebAPI/AWM.Service.WebAPI.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/AWM.Service.Application.Tests/AWM.Service.Application.Tests.csproj" />
+  </Folder>
 </Solution>
