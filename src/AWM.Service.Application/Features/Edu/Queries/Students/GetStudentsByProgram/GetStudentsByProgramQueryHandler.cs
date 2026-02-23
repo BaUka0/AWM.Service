@@ -24,10 +24,21 @@ public sealed class GetStudentsByProgramQueryHandler : IRequestHandler<GetStuden
         {
             var students = await _studentRepository.GetByProgramAsync(request.ProgramId, cancellationToken);
 
-            var dtos = new List<StudentDto>();
-            foreach (var student in students.Where(s => !s.IsDeleted))
+            var activeStudents = students.Where(s => !s.IsDeleted).ToList();
+
+            if (activeStudents.Count == 0)
             {
-                var user = await _userRepository.GetByIdAsync(student.UserId, cancellationToken);
+                return Result.Success<IReadOnlyList<StudentDto>>(new List<StudentDto>());
+            }
+
+            var userIds = activeStudents.Select(s => s.UserId).Distinct();
+            var users = await _userRepository.GetByIdsAsync(userIds, cancellationToken);
+            var usersById = users.ToDictionary(u => u.Id);
+
+            var dtos = new List<StudentDto>();
+            foreach (var student in activeStudents)
+            {
+                usersById.TryGetValue(student.UserId, out var user);
                 dtos.Add(new StudentDto
                 {
                     Id = student.Id,
