@@ -23,7 +23,7 @@ public class PermissionService : IPermissionService
     private static readonly Dictionary<string, HashSet<Permission>> RolePermissions = new()
     {
         // ========== Student ==========
-        ["Student"] = new()
+        [nameof(RoleType.Student)] = new()
         {
             // Topics
             Permission.Topics_View,
@@ -64,7 +64,7 @@ public class PermissionService : IPermissionService
         },
 
         // ========== Supervisor (Scientific Advisor) ==========
-        ["Supervisor"] = new()
+        [nameof(RoleType.Supervisor)] = new()
         {
             // Directions
             Permission.Directions_View,
@@ -118,7 +118,7 @@ public class PermissionService : IPermissionService
         },
 
         // ========== Head of Department ==========
-        ["HeadOfDepartment"] = new()
+        [nameof(RoleType.HeadOfDepartment)] = new()
         {
             // Directions (approval)
             Permission.Directions_View,
@@ -197,7 +197,7 @@ public class PermissionService : IPermissionService
         },
 
         // ========== Secretary ==========
-        ["Secretary"] = new()
+        [nameof(RoleType.Secretary)] = new()
         {
             // Directions (view)
             Permission.Directions_View,
@@ -258,7 +258,7 @@ public class PermissionService : IPermissionService
         },
 
         // ========== Expert (Quality Control) ==========
-        ["Expert"] = new()
+        [nameof(RoleType.Expert)] = new()
         {
             // Quality Checks
             Permission.QualityChecks_View,
@@ -276,7 +276,7 @@ public class PermissionService : IPermissionService
         },
 
         // ========== Commission Member ==========
-        ["CommissionMember"] = new()
+        [nameof(RoleType.CommissionMember)] = new()
         {
             // Pre-Defense
             Permission.PreDefense_View,
@@ -301,7 +301,7 @@ public class PermissionService : IPermissionService
         },
 
         // ========== Vice-Rector ==========
-        ["ViceRector"] = new()
+        [nameof(RoleType.ViceRector)] = new()
         {
             // View everything
             Permission.Directions_View,
@@ -345,7 +345,7 @@ public class PermissionService : IPermissionService
         },
 
         // ========== Admin ==========
-        ["Admin"] = new(Enum.GetValues<Permission>()) // All permissions
+        [nameof(RoleType.Admin)] = new(Enum.GetValues<Permission>()) // All permissions
     };
 
     /// <inheritdoc />
