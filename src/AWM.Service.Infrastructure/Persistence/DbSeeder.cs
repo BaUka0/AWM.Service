@@ -19,7 +19,79 @@ using AWM.Service.Domain.Wf.Entities;
 /// </summary>
 public static class DbSeeder
 {
-    private const string TestPassword = "Test123!";
+    private static class SeedConstants
+    {
+        public static class Org
+        {
+            public const string UniversityName = "Тестовый Университет";
+            public const string UniversityCode = "TESTUNI";
+
+            public const string InstituteITName = "Институт информационных технологий";
+            public const string InstituteITCode = "IIT";
+
+            public const string InstituteEngName = "Институт инженерии";
+            public const string InstituteEngCode = "IE";
+
+            public const string DeptCSName = "Компьютерные науки";
+            public const string DeptCSCode = "CS";
+
+            public const string DeptSEName = "Программная инженерия";
+            public const string DeptSECode = "SE";
+
+            public const string DeptMEName = "Машиностроение";
+            public const string DeptMECode = "ME";
+        }
+
+        public static class Auth
+        {
+            public const string TestPassword = "Test123!";
+            public const string EmailDomain = "test.edu";
+
+            public const string AdminLogin = "admin";
+            public const string ViceRectorLogin = "vicerector";
+            public const string HeadCSLogin = "head_cs";
+            public const string Supervisor1Login = "supervisor1";
+            public const string Supervisor2Login = "supervisor2";
+            public const string Secretary1Login = "secretary1";
+            public const string Expert1Login = "expert1";
+            public const string Commission1Login = "commission1";
+            public const string Student1Login = "student1";
+            public const string Student2Login = "student2";
+            public const string Student3Login = "student3";
+        }
+
+        public static class Common
+        {
+            public const string AcademicYearName = "2025-2026";
+        }
+
+        public static class Edu
+        {
+            public const string DegreeBachelor = "Bachelor";
+            public const string DegreeMaster = "Master";
+            public const string DegreePhD = "PhD";
+
+            public const string ProgramCSBachelorName = "Информатика (бакалавр)";
+            public const string ProgramCSBachelorCode = "6B06101";
+
+            public const string ProgramCSMasterName = "Информатика (магистр)";
+            public const string ProgramCSMasterCode = "7M06101";
+
+            public const string ProgramSEBachelorName = "Программная инженерия (бакалавр)";
+            public const string ProgramSEBachelorCode = "6B06102";
+
+            public const string GroupCodeCS22 = "CS-22-1";
+            public const string GroupCodeCSM24 = "CS-M-24";
+            public const string GroupCodeSE22 = "SE-22-1";
+        }
+
+        public static class Wf
+        {
+            public const string WorkTypeCourseWork = "CourseWork";
+            public const string WorkTypeDiploma = "DiplomaWork";
+            public const string WorkTypeMaster = "MasterThesis";
+        }
+    }
 
     public static async Task SeedAsync(ApplicationDbContext db, IPasswordHasher passwordHasher)
     {
@@ -28,52 +100,44 @@ public static class DbSeeder
         // =======================================================
         if (!await db.Universities.AnyAsync())
         {
-            db.Universities.Add(new University("Тестовый Университет", "TESTUNI"));
+            db.Universities.Add(new University(SeedConstants.Org.UniversityName, SeedConstants.Org.UniversityCode));
             await db.SaveChangesAsync();
         }
 
-        var university = await db.Universities.FirstAsync(u => u.Code == "TESTUNI");
+        var university = await db.Universities.FirstAsync(u => u.Code == SeedConstants.Org.UniversityCode);
 
         // =======================================================
         // 2. ORG: Institutes
         // =======================================================
         if (!await db.Institutes.AnyAsync())
         {
-            db.Institutes.AddRange(
-                new[]
-                {
-                    university.AddInstitute("Институт информационных технологий", 0),
-                    university.AddInstitute("Институт инженерии", 0)
-                });
-            await db.SaveChangesAsync();
+            var itInstitute = university.AddInstitute(SeedConstants.Org.InstituteITName, 0);
+            itInstitute.UpdateCode(SeedConstants.Org.InstituteITCode, 0);
 
-            // Set codes via raw update (Code setter is through UpdateCode)
-            var itInstitute = await db.Institutes.FirstAsync(i => i.Name.Contains("информационных"));
-            itInstitute.UpdateCode("IIT", 0);
+            var engInstitute = university.AddInstitute(SeedConstants.Org.InstituteEngName, 0);
+            engInstitute.UpdateCode(SeedConstants.Org.InstituteEngCode, 0);
 
-            var engInstitute = await db.Institutes.FirstAsync(i => i.Name.Contains("инженерии"));
-            engInstitute.UpdateCode("IE", 0);
-
+            db.Institutes.AddRange(itInstitute, engInstitute);
             await db.SaveChangesAsync();
         }
 
-        var instituteIT = await db.Institutes.FirstAsync(i => i.Code == "IIT");
-        var instituteEng = await db.Institutes.FirstAsync(i => i.Code == "IE");
+        var instituteIT = await db.Institutes.FirstAsync(i => i.Code == SeedConstants.Org.InstituteITCode);
+        var instituteEng = await db.Institutes.FirstAsync(i => i.Code == SeedConstants.Org.InstituteEngCode);
 
         // =======================================================
         // 3. ORG: Departments
         // =======================================================
         if (!await db.Departments.AnyAsync())
         {
-            var deptCS = instituteIT.AddDepartment("Компьютерные науки", 0, "CS");
-            var deptSE = instituteIT.AddDepartment("Программная инженерия", 0, "SE");
-            var deptME = instituteEng.AddDepartment("Машиностроение", 0, "ME");
+            var deptCS = instituteIT.AddDepartment(SeedConstants.Org.DeptCSName, 0, SeedConstants.Org.DeptCSCode);
+            var deptSE = instituteIT.AddDepartment(SeedConstants.Org.DeptSEName, 0, SeedConstants.Org.DeptSECode);
+            var deptME = instituteEng.AddDepartment(SeedConstants.Org.DeptMEName, 0, SeedConstants.Org.DeptMECode);
             await db.SaveChangesAsync();
         }
 
-        var departmentCS = await db.Departments.FirstAsync(d => d.Code == "CS");
-        var departmentSE = await db.Departments.FirstAsync(d => d.Code == "SE");
-        var departmentME = await db.Departments.FirstAsync(d => d.Code == "ME");
+        var departmentCS = await db.Departments.FirstAsync(d => d.Code == SeedConstants.Org.DeptCSCode);
+        var departmentSE = await db.Departments.FirstAsync(d => d.Code == SeedConstants.Org.DeptSECode);
+        var departmentME = await db.Departments.FirstAsync(d => d.Code == SeedConstants.Org.DeptMECode);
 
         // =======================================================
         // 4. AUTH: Roles (all 8 RoleTypes)
@@ -105,37 +169,37 @@ public static class DbSeeder
         // =======================================================
         // 5. AUTH: Users (8 test users, one per role)
         // =======================================================
-        var hashedPassword = passwordHasher.HashPassword(TestPassword);
+        var hashedPassword = passwordHasher.HashPassword(SeedConstants.Auth.TestPassword);
 
         if (!await db.Users.AnyAsync())
         {
             db.Users.AddRange(
-                new User(university.Id, "admin", "admin@test.edu", hashedPassword),
-                new User(university.Id, "vicerector", "vicerector@test.edu", hashedPassword),
-                new User(university.Id, "head_cs", "head_cs@test.edu", hashedPassword),
-                new User(university.Id, "supervisor1", "supervisor1@test.edu", hashedPassword),
-                new User(university.Id, "supervisor2", "supervisor2@test.edu", hashedPassword),
-                new User(university.Id, "secretary1", "secretary1@test.edu", hashedPassword),
-                new User(university.Id, "expert1", "expert1@test.edu", hashedPassword),
-                new User(university.Id, "commission1", "commission1@test.edu", hashedPassword),
-                new User(university.Id, "student1", "student1@test.edu", hashedPassword),
-                new User(university.Id, "student2", "student2@test.edu", hashedPassword),
-                new User(university.Id, "student3", "student3@test.edu", hashedPassword)
+                new User(university.Id, SeedConstants.Auth.AdminLogin, $"{SeedConstants.Auth.AdminLogin}@{SeedConstants.Auth.EmailDomain}", hashedPassword),
+                new User(university.Id, SeedConstants.Auth.ViceRectorLogin, $"{SeedConstants.Auth.ViceRectorLogin}@{SeedConstants.Auth.EmailDomain}", hashedPassword),
+                new User(university.Id, SeedConstants.Auth.HeadCSLogin, $"{SeedConstants.Auth.HeadCSLogin}@{SeedConstants.Auth.EmailDomain}", hashedPassword),
+                new User(university.Id, SeedConstants.Auth.Supervisor1Login, $"{SeedConstants.Auth.Supervisor1Login}@{SeedConstants.Auth.EmailDomain}", hashedPassword),
+                new User(university.Id, SeedConstants.Auth.Supervisor2Login, $"{SeedConstants.Auth.Supervisor2Login}@{SeedConstants.Auth.EmailDomain}", hashedPassword),
+                new User(university.Id, SeedConstants.Auth.Secretary1Login, $"{SeedConstants.Auth.Secretary1Login}@{SeedConstants.Auth.EmailDomain}", hashedPassword),
+                new User(university.Id, SeedConstants.Auth.Expert1Login, $"{SeedConstants.Auth.Expert1Login}@{SeedConstants.Auth.EmailDomain}", hashedPassword),
+                new User(university.Id, SeedConstants.Auth.Commission1Login, $"{SeedConstants.Auth.Commission1Login}@{SeedConstants.Auth.EmailDomain}", hashedPassword),
+                new User(university.Id, SeedConstants.Auth.Student1Login, $"{SeedConstants.Auth.Student1Login}@{SeedConstants.Auth.EmailDomain}", hashedPassword),
+                new User(university.Id, SeedConstants.Auth.Student2Login, $"{SeedConstants.Auth.Student2Login}@{SeedConstants.Auth.EmailDomain}", hashedPassword),
+                new User(university.Id, SeedConstants.Auth.Student3Login, $"{SeedConstants.Auth.Student3Login}@{SeedConstants.Auth.EmailDomain}", hashedPassword)
             );
             await db.SaveChangesAsync();
         }
 
-        var userAdmin = await db.Users.FirstAsync(u => u.Login == "admin");
-        var userViceRector = await db.Users.FirstAsync(u => u.Login == "vicerector");
-        var userHeadCS = await db.Users.FirstAsync(u => u.Login == "head_cs");
-        var userSupervisor1 = await db.Users.FirstAsync(u => u.Login == "supervisor1");
-        var userSupervisor2 = await db.Users.FirstAsync(u => u.Login == "supervisor2");
-        var userSecretary1 = await db.Users.FirstAsync(u => u.Login == "secretary1");
-        var userExpert1 = await db.Users.FirstAsync(u => u.Login == "expert1");
-        var userCommission1 = await db.Users.FirstAsync(u => u.Login == "commission1");
-        var userStudent1 = await db.Users.FirstAsync(u => u.Login == "student1");
-        var userStudent2 = await db.Users.FirstAsync(u => u.Login == "student2");
-        var userStudent3 = await db.Users.FirstAsync(u => u.Login == "student3");
+        var userAdmin = await db.Users.FirstAsync(u => u.Login == SeedConstants.Auth.AdminLogin);
+        var userViceRector = await db.Users.FirstAsync(u => u.Login == SeedConstants.Auth.ViceRectorLogin);
+        var userHeadCS = await db.Users.FirstAsync(u => u.Login == SeedConstants.Auth.HeadCSLogin);
+        var userSupervisor1 = await db.Users.FirstAsync(u => u.Login == SeedConstants.Auth.Supervisor1Login);
+        var userSupervisor2 = await db.Users.FirstAsync(u => u.Login == SeedConstants.Auth.Supervisor2Login);
+        var userSecretary1 = await db.Users.FirstAsync(u => u.Login == SeedConstants.Auth.Secretary1Login);
+        var userExpert1 = await db.Users.FirstAsync(u => u.Login == SeedConstants.Auth.Expert1Login);
+        var userCommission1 = await db.Users.FirstAsync(u => u.Login == SeedConstants.Auth.Commission1Login);
+        var userStudent1 = await db.Users.FirstAsync(u => u.Login == SeedConstants.Auth.Student1Login);
+        var userStudent2 = await db.Users.FirstAsync(u => u.Login == SeedConstants.Auth.Student2Login);
+        var userStudent3 = await db.Users.FirstAsync(u => u.Login == SeedConstants.Auth.Student3Login);
 
         // =======================================================
         // 6. COMMON: Academic Year (current, 2025-2026)
@@ -144,7 +208,7 @@ public static class DbSeeder
         {
             var year = new AcademicYear(
                 university.Id,
-                "2025-2026",
+                SeedConstants.Common.AcademicYearName,
                 new DateTime(2025, 9, 1, 0, 0, 0, DateTimeKind.Utc),
                 new DateTime(2026, 6, 30, 23, 59, 59, DateTimeKind.Utc),
                 userAdmin.Id);
@@ -153,7 +217,7 @@ public static class DbSeeder
             await db.SaveChangesAsync();
         }
 
-        var academicYear = await db.AcademicYears.FirstAsync(y => y.Name == "2025-2026");
+        var academicYear = await db.AcademicYears.FirstAsync(y => y.Name == SeedConstants.Common.AcademicYearName);
 
         // =======================================================
         // 7. AUTH: User Role Assignments (context-aware RBAC)
@@ -236,16 +300,16 @@ public static class DbSeeder
         if (!await db.DegreeLevels.AnyAsync())
         {
             db.DegreeLevels.AddRange(
-                DegreeLevel.Bachelor(userAdmin.Id),
-                DegreeLevel.Master(userAdmin.Id),
-                DegreeLevel.PhD(userAdmin.Id)
+                new DegreeLevel(SeedConstants.Edu.DegreeBachelor, 4, userAdmin.Id),
+                new DegreeLevel(SeedConstants.Edu.DegreeMaster, 2, userAdmin.Id),
+                new DegreeLevel(SeedConstants.Edu.DegreePhD, 3, userAdmin.Id)
             );
             await db.SaveChangesAsync();
         }
 
-        var bachelor = await db.DegreeLevels.FirstAsync(d => d.Name == "Bachelor");
-        var master = await db.DegreeLevels.FirstAsync(d => d.Name == "Master");
-        var phd = await db.DegreeLevels.FirstAsync(d => d.Name == "PhD");
+        var bachelor = await db.DegreeLevels.FirstAsync(d => d.Name == SeedConstants.Edu.DegreeBachelor);
+        var master = await db.DegreeLevels.FirstAsync(d => d.Name == SeedConstants.Edu.DegreeMaster);
+        var phd = await db.DegreeLevels.FirstAsync(d => d.Name == SeedConstants.Edu.DegreePhD);
 
         // =======================================================
         // 9. EDU: Academic Programs
@@ -253,16 +317,16 @@ public static class DbSeeder
         if (!await db.AcademicPrograms.AnyAsync())
         {
             db.AcademicPrograms.AddRange(
-                new AcademicProgram(departmentCS.Id, bachelor.Id, "Информатика (бакалавр)", userAdmin.Id, "6B06101"),
-                new AcademicProgram(departmentCS.Id, master.Id, "Информатика (магистр)", userAdmin.Id, "7M06101"),
-                new AcademicProgram(departmentSE.Id, bachelor.Id, "Программная инженерия (бакалавр)", userAdmin.Id, "6B06102")
+                new AcademicProgram(departmentCS.Id, bachelor.Id, SeedConstants.Edu.ProgramCSBachelorName, userAdmin.Id, SeedConstants.Edu.ProgramCSBachelorCode),
+                new AcademicProgram(departmentCS.Id, master.Id, SeedConstants.Edu.ProgramCSMasterName, userAdmin.Id, SeedConstants.Edu.ProgramCSMasterCode),
+                new AcademicProgram(departmentSE.Id, bachelor.Id, SeedConstants.Edu.ProgramSEBachelorName, userAdmin.Id, SeedConstants.Edu.ProgramSEBachelorCode)
             );
             await db.SaveChangesAsync();
         }
 
-        var programCSBachelor = await db.AcademicPrograms.FirstAsync(p => p.Code == "6B06101");
-        var programCSMaster = await db.AcademicPrograms.FirstAsync(p => p.Code == "7M06101");
-        var programSEBachelor = await db.AcademicPrograms.FirstAsync(p => p.Code == "6B06102");
+        var programCSBachelor = await db.AcademicPrograms.FirstAsync(p => p.Code == SeedConstants.Edu.ProgramCSBachelorCode);
+        var programCSMaster = await db.AcademicPrograms.FirstAsync(p => p.Code == SeedConstants.Edu.ProgramCSMasterCode);
+        var programSEBachelor = await db.AcademicPrograms.FirstAsync(p => p.Code == SeedConstants.Edu.ProgramSEBachelorCode);
 
         // =======================================================
         // 10. EDU: Staff
@@ -290,11 +354,11 @@ public static class DbSeeder
         {
             db.Students.AddRange(
                 new Student(userStudent1.Id, programCSBachelor.Id, admissionYear: 2022, currentCourse: 4,
-                    userAdmin.Id, groupCode: "CS-22-1"),
+                    userAdmin.Id, groupCode: SeedConstants.Edu.GroupCodeCS22),
                 new Student(userStudent2.Id, programCSMaster.Id, admissionYear: 2024, currentCourse: 2,
-                    userAdmin.Id, groupCode: "CS-M-24"),
+                    userAdmin.Id, groupCode: SeedConstants.Edu.GroupCodeCSM24),
                 new Student(userStudent3.Id, programSEBachelor.Id, admissionYear: 2022, currentCourse: 4,
-                    userAdmin.Id, groupCode: "SE-22-1")
+                    userAdmin.Id, groupCode: SeedConstants.Edu.GroupCodeSE22)
             );
             await db.SaveChangesAsync();
         }
@@ -334,15 +398,15 @@ public static class DbSeeder
         if (!await db.WorkTypes.AnyAsync())
         {
             db.WorkTypes.AddRange(
-                WorkType.CourseWork(userAdmin.Id),
-                WorkType.DiplomaWork(bachelor.Id, userAdmin.Id),
-                WorkType.MasterThesis(master.Id, userAdmin.Id)
+                new WorkType(SeedConstants.Wf.WorkTypeCourseWork, userAdmin.Id),
+                new WorkType(SeedConstants.Wf.WorkTypeDiploma, userAdmin.Id, bachelor.Id),
+                new WorkType(SeedConstants.Wf.WorkTypeMaster, userAdmin.Id, master.Id)
             );
             await db.SaveChangesAsync();
         }
 
-        var workTypeDiploma = await db.WorkTypes.FirstAsync(w => w.Name == "DiplomaWork");
-        var workTypeMaster = await db.WorkTypes.FirstAsync(w => w.Name == "MasterThesis");
+        var workTypeDiploma = await db.WorkTypes.FirstAsync(w => w.Name == SeedConstants.Wf.WorkTypeDiploma);
+        var workTypeMaster = await db.WorkTypes.FirstAsync(w => w.Name == SeedConstants.Wf.WorkTypeMaster);
 
         // =======================================================
         // 14. WF: States (Direction + StudentWork workflows)
