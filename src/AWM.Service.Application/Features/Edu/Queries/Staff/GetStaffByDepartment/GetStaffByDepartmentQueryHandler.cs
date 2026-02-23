@@ -24,10 +24,16 @@ public sealed class GetStaffByDepartmentQueryHandler : IRequestHandler<GetStaffB
         {
             var staffList = await _staffRepository.GetByDepartmentAsync(request.DepartmentId, cancellationToken);
 
-            var dtos = new List<StaffDto>();
-            foreach (var staff in staffList.Where(s => !s.IsDeleted))
+            var activeStaff = staffList.Where(s => !s.IsDeleted).ToList();
+            var userIds = activeStaff.Select(s => s.UserId).Distinct().ToList();
+
+            var users = await _userRepository.GetByIdsAsync(userIds, cancellationToken);
+            var userMap = users.ToDictionary(u => u.Id);
+
+            var dtos = new List<StaffDto>(activeStaff.Count);
+            foreach (var staff in activeStaff)
             {
-                var user = await _userRepository.GetByIdAsync(staff.UserId, cancellationToken);
+                userMap.TryGetValue(staff.UserId, out var user);
                 dtos.Add(MapToDto(staff, user));
             }
 
