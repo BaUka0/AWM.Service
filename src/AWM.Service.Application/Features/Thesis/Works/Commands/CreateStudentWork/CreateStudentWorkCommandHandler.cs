@@ -69,7 +69,8 @@ public sealed class CreateStudentWorkCommandHandler : IRequestHandler<CreateStud
             topicId: request.TopicId);
 
         // 4. Add the student as Leader
-        work.AddParticipant(request.StudentId, ParticipantRole.Leader);
+        var studentId = request.StudentId > 0 ? request.StudentId : _currentUserProvider.UserId.Value;
+        work.AddParticipant(studentId, ParticipantRole.Leader);
 
         // 5. Persist
         await _workRepository.AddAsync(work, cancellationToken);

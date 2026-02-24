@@ -1,6 +1,7 @@
 namespace AWM.Service.Application.Features.Thesis.Applications.Commands.CreateApplication;
 
 using AWM.Service.Domain.Repositories;
+using AWM.Service.Domain.Common;
 using AWM.Service.Domain.Thesis.Entities;
 using KDS.Primitives.FluentResult;
 using MediatR;
@@ -13,17 +14,27 @@ public sealed class CreateApplicationCommandHandler : IRequestHandler<CreateAppl
 {
     private readonly ITopicRepository _topicRepository;
     private readonly ITopicApplicationRepository _applicationRepository;
+    private readonly ICurrentUserProvider _currentUserProvider;
 
     public CreateApplicationCommandHandler(
         ITopicRepository topicRepository,
-        ITopicApplicationRepository applicationRepository)
+        ITopicApplicationRepository applicationRepository,
+        ICurrentUserProvider currentUserProvider)
     {
         _topicRepository = topicRepository;
         _applicationRepository = applicationRepository;
+        _currentUserProvider = currentUserProvider;
     }
 
     public async Task<Result<long>> Handle(CreateApplicationCommand request, CancellationToken cancellationToken)
     {
+        if (!_currentUserProvider.UserId.HasValue)
+        {
+            return Result.Failure<long>(new Error("Authorization.Unauthorized", "User identity could not be determined."));
+        }
+
+        var userId = _currentUserProvider.UserId.Value;
+
         // 1. Get topic
         var topic = await _topicRepository.GetByIdAsync(request.TopicId, cancellationToken);
         if (topic is null)
@@ -57,10 +68,10 @@ public sealed class CreateApplicationCommandHandler : IRequestHandler<CreateAppl
 
         // 6. Check if student already applied to this topic
         var hasApplied = await _applicationRepository.HasStudentAppliedToTopicAsync(
-            request.StudentId, 
-            request.TopicId, 
+            userId,
+            request.TopicId,
             cancellationToken);
-        
+
         if (hasApplied)
         {
             return Result.Failure<long>(new Error("Application.Duplicate", "You have already applied to this topic."));
@@ -84,7 +95,7 @@ public sealed class CreateApplicationCommandHandler : IRequestHandler<CreateAppl
         // 8. Create application
         var application = new TopicApplication(
             topicId: request.TopicId,
-            studentId: request.StudentId,
+            studentId: userId,
             motivationLetter: request.MotivationLetter
         );
 

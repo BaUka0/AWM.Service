@@ -26,12 +26,10 @@ using Microsoft.AspNetCore.Mvc;
 public class TopicApplicationsController : BaseController
 {
     private readonly ISender _sender;
-    private readonly ICurrentUserProvider _currentUserProvider;
 
-    public TopicApplicationsController(ISender sender, ICurrentUserProvider currentUserProvider)
+    public TopicApplicationsController(ISender sender)
     {
         _sender = sender ?? throw new ArgumentNullException(nameof(sender));
-        _currentUserProvider = currentUserProvider ?? throw new ArgumentNullException(nameof(currentUserProvider));
     }
 
     /// <summary>
@@ -52,13 +50,9 @@ public class TopicApplicationsController : BaseController
         [FromBody] CreateApplicationRequest request,
         CancellationToken cancellationToken = default)
     {
-        if (!_currentUserProvider.UserId.HasValue)
-            return Unauthorized();
-
         var command = new CreateApplicationCommand
         {
             TopicId = request.TopicId,
-            StudentId = _currentUserProvider.UserId.Value,
             MotivationLetter = request.MotivationLetter
         };
 
@@ -89,14 +83,10 @@ public class TopicApplicationsController : BaseController
         [FromQuery] ApplicationStatus? status = null,
         CancellationToken cancellationToken = default)
     {
-        if (!_currentUserProvider.UserId.HasValue)
-            return Unauthorized();
-
         var query = new GetApplicationsByTopicQuery
         {
             TopicId = topicId,
-            StatusFilter = status.HasValue ? (int)status.Value : null,
-            RequestingUserId = _currentUserProvider.UserId.Value
+            StatusFilter = status.HasValue ? (int)status.Value : null
         };
 
         var result = await _sender.Send(query, cancellationToken);
@@ -124,16 +114,9 @@ public class TopicApplicationsController : BaseController
         [FromQuery] int? academicYearId = null,
         CancellationToken cancellationToken = default)
     {
-        if (!_currentUserProvider.UserId.HasValue)
-            return Unauthorized();
-
-        var userId = _currentUserProvider.UserId.Value;
-
         var query = new GetApplicationsByStudentQuery
         {
-            StudentId = userId,
-            AcademicYearId = academicYearId,
-            RequestingUserId = userId
+            AcademicYearId = academicYearId
         };
 
         var result = await _sender.Send(query, cancellationToken);
@@ -163,13 +146,9 @@ public class TopicApplicationsController : BaseController
         long applicationId,
         CancellationToken cancellationToken = default)
     {
-        if (!_currentUserProvider.UserId.HasValue)
-            return Unauthorized();
-
         var command = new AcceptApplicationCommand
         {
-            ApplicationId = applicationId,
-            SupervisorId = _currentUserProvider.UserId.Value
+            ApplicationId = applicationId
         };
 
         var result = await _sender.Send(command, cancellationToken);
@@ -200,13 +179,9 @@ public class TopicApplicationsController : BaseController
         [FromBody] RejectApplicationRequest request,
         CancellationToken cancellationToken = default)
     {
-        if (!_currentUserProvider.UserId.HasValue)
-            return Unauthorized();
-
         var command = new RejectApplicationCommand
         {
             ApplicationId = applicationId,
-            SupervisorId = _currentUserProvider.UserId.Value,
             RejectReason = request.RejectReason
         };
 
@@ -236,13 +211,9 @@ public class TopicApplicationsController : BaseController
         long applicationId,
         CancellationToken cancellationToken = default)
     {
-        if (!_currentUserProvider.UserId.HasValue)
-            return Unauthorized();
-
         var command = new WithdrawApplicationCommand
         {
-            ApplicationId = applicationId,
-            StudentId = _currentUserProvider.UserId.Value
+            ApplicationId = applicationId
         };
 
         var result = await _sender.Send(command, cancellationToken);

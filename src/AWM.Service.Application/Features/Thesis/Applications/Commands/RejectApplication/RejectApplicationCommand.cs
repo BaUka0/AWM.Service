@@ -14,11 +14,6 @@ public sealed record RejectApplicationCommand : IRequest<Result>
     public long ApplicationId { get; init; }
 
     /// <summary>
-    /// ID of the supervisor rejecting the application (usually taken from authenticated user context).
-    /// </summary>
-    public int SupervisorId { get; init; }
-
-    /// <summary>
     /// Optional comment explaining the rejection reason.
     /// </summary>
     public string? RejectReason { get; init; }

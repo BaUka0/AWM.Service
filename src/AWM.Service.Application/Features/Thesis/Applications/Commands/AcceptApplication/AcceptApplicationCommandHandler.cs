@@ -2,6 +2,7 @@ namespace AWM.Service.Application.Features.Thesis.Applications.Commands.AcceptAp
 
 using AWM.Service.Application.Features.Thesis.Works.Commands.CreateStudentWork;
 using AWM.Service.Domain.Repositories;
+using AWM.Service.Domain.Common;
 using KDS.Primitives.FluentResult;
 using MediatR;
 
@@ -15,21 +16,31 @@ public sealed class AcceptApplicationCommandHandler : IRequestHandler<AcceptAppl
     private readonly ITopicRepository _topicRepository;
     private readonly IMediator _mediator;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ICurrentUserProvider _currentUserProvider;
 
     public AcceptApplicationCommandHandler(
         ITopicApplicationRepository applicationRepository,
         ITopicRepository topicRepository,
         IMediator mediator,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        ICurrentUserProvider currentUserProvider)
     {
         _applicationRepository = applicationRepository;
         _topicRepository = topicRepository;
         _mediator = mediator;
         _unitOfWork = unitOfWork;
+        _currentUserProvider = currentUserProvider;
     }
 
     public async Task<Result> Handle(AcceptApplicationCommand request, CancellationToken cancellationToken)
     {
+        if (!_currentUserProvider.UserId.HasValue)
+        {
+            return Result.Failure(new Error("Authorization.Unauthorized", "User identity could not be determined."));
+        }
+
+        var userId = _currentUserProvider.UserId.Value;
+
         // 1. Get application with topic (for authorization)
         var application = await _applicationRepository.GetByIdWithTopicAsync(
             request.ApplicationId,
@@ -54,7 +65,7 @@ public sealed class AcceptApplicationCommandHandler : IRequestHandler<AcceptAppl
         }
 
         // 4. Check authorization - only the topic's supervisor can accept
-        if (topic.SupervisorId != request.SupervisorId)
+        if (topic.SupervisorId != userId)
         {
             return Result.Failure(new Error("Authorization.Forbidden", "Only the topic supervisor can accept applications."));
         }
@@ -84,7 +95,7 @@ public sealed class AcceptApplicationCommandHandler : IRequestHandler<AcceptAppl
         // 7. Accept the application (domain method)
         try
         {
-            application.Accept(request.SupervisorId);
+            application.Accept(userId);
         }
         catch (InvalidOperationException ex)
         {

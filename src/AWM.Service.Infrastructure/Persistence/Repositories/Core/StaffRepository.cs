@@ -50,18 +50,12 @@ public sealed class StaffRepository : IStaffRepository
         // Get all active staff from department with their current student count
         // WorkParticipant links students to works, not staff directly
         // We need to count via StudentWork's supervisor (from Participant or Topic)
-        var staffList = await _context.Staff
+        // Optimization: Filter by MaxStudentsLoad > 0 and OrderBy Position in the database query
+        return await _context.Staff
             .AsNoTracking()
-            .Where(s => !s.IsDeleted && s.DepartmentId == departmentId && s.IsSupervisor)
-            .ToListAsync(cancellationToken);
-
-        // For now, return all staff - capacity checking would require
-        // a more complex query joining StudentWork -> WorkParticipant -> Topic -> Supervisor
-        // This is a simplified implementation that can be enhanced later
-        return staffList
-            .Where(s => s.MaxStudentsLoad > 0)
+            .Where(s => !s.IsDeleted && s.DepartmentId == departmentId && s.IsSupervisor && s.MaxStudentsLoad > 0)
             .OrderBy(s => s.Position)
-            .ToList();
+            .ToListAsync(cancellationToken);
     }
 
     /// <inheritdoc />

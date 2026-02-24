@@ -19,9 +19,4 @@ public sealed record GetApplicationsByTopicQuery : IRequest<Result<IReadOnlyList
     /// Optional: Filter by application status.
     /// </summary>
     public int? StatusFilter { get; init; }
-
-    /// <summary>
-    /// ID of the requesting user (for authorization check).
-    /// </summary>
-    public int RequestingUserId { get; init; }
 }

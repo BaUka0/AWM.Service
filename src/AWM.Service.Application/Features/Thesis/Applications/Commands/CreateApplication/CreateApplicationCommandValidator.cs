@@ -13,10 +13,6 @@ public sealed class CreateApplicationCommandValidator : AbstractValidator<Create
             .GreaterThan(0)
             .WithMessage("TopicId must be greater than 0.");
 
-        RuleFor(x => x.StudentId)
-            .GreaterThan(0)
-            .WithMessage("StudentId must be greater than 0.");
-
         RuleFor(x => x.MotivationLetter)
             .MaximumLength(2000)
             .When(x => !string.IsNullOrWhiteSpace(x.MotivationLetter))

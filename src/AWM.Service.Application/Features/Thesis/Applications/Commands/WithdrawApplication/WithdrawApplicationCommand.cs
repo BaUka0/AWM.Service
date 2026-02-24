@@ -12,9 +12,4 @@ public sealed record WithdrawApplicationCommand : IRequest<Result>
     /// ID of the application to withdraw.
     /// </summary>
     public long ApplicationId { get; init; }
-
-    /// <summary>
-    /// ID of the student withdrawing the application (usually taken from authenticated user context).
-    /// </summary>
-    public int StudentId { get; init; }
 }

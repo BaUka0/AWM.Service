@@ -25,7 +25,7 @@ public class QualityChecksController : BaseController
 
     public QualityChecksController(ISender sender)
     {
-        _sender = sender ?? throw new ArgumentNullException(nameof(sender));
+        _sender = sender;
     }
 
     /// <summary>

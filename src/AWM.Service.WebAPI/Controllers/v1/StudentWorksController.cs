@@ -26,12 +26,10 @@ using Microsoft.AspNetCore.Mvc;
 public class StudentWorksController : BaseController
 {
     private readonly ISender _sender;
-    private readonly ICurrentUserProvider _currentUserProvider;
 
-    public StudentWorksController(ISender sender, ICurrentUserProvider currentUserProvider)
+    public StudentWorksController(ISender sender)
     {
         _sender = sender ?? throw new ArgumentNullException(nameof(sender));
-        _currentUserProvider = currentUserProvider ?? throw new ArgumentNullException(nameof(currentUserProvider));
     }
 
     /// <summary>
@@ -131,13 +129,7 @@ public class StudentWorksController : BaseController
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetMyWorks(CancellationToken cancellationToken = default)
     {
-        if (!_currentUserProvider.UserId.HasValue)
-            return Unauthorized();
-
-        var query = new GetMyWorkQuery
-        {
-            StudentId = _currentUserProvider.UserId.Value
-        };
+        var query = new GetMyWorkQuery();
 
         var result = await _sender.Send(query, cancellationToken);
 
@@ -166,15 +158,11 @@ public class StudentWorksController : BaseController
         [FromBody] CreateStudentWorkRequest request,
         CancellationToken cancellationToken = default)
     {
-        if (!_currentUserProvider.UserId.HasValue)
-            return Unauthorized();
-
         var command = new CreateStudentWorkCommand
         {
             TopicId = request.TopicId,
             AcademicYearId = request.AcademicYearId,
-            DepartmentId = request.DepartmentId,
-            StudentId = _currentUserProvider.UserId.Value
+            DepartmentId = request.DepartmentId
         };
 
         var result = await _sender.Send(command, cancellationToken);
