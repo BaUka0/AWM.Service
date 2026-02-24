@@ -7,6 +7,7 @@ using AWM.Service.Application.Features.Thesis.Directions.Commands.RequestRevisio
 using AWM.Service.Application.Features.Thesis.Directions.Commands.SubmitDirection;
 using AWM.Service.Application.Features.Thesis.Directions.Commands.UpdateDirection;
 using AWM.Service.Application.Features.Thesis.Directions.Queries.GetDirectionById;
+using AWM.Service.Application.Features.Thesis.Directions.DTOs;
 using AWM.Service.Application.Features.Thesis.Directions.Queries.GetDirectionsByDepartment;
 using AWM.Service.Application.Features.Thesis.Directions.Queries.GetDirectionsBySupervisor;
 using AWM.Service.WebAPI.Common.Contracts.Requests.Thesis;
@@ -77,23 +78,7 @@ public sealed class DirectionsController : BaseController
         }
 
         var response = result.Value
-            .Select(dto => new DirectionResponse
-            {
-                Id = dto.Id,
-                DepartmentId = dto.DepartmentId,
-                SupervisorId = dto.SupervisorId,
-                AcademicYearId = dto.AcademicYearId,
-                WorkTypeId = dto.WorkTypeId,
-                TitleRu = dto.TitleRu,
-                TitleKz = dto.TitleKz,
-                TitleEn = dto.TitleEn,
-                CurrentStateId = dto.CurrentStateId,
-                SubmittedAt = dto.SubmittedAt,
-                ReviewedAt = dto.ReviewedAt,
-                ReviewedBy = dto.ReviewedBy,
-                CreatedAt = dto.CreatedAt,
-                IsDeleted = dto.IsDeleted
-            })
+            .Select(MapToResponse)
             .ToList();
 
         return Ok(response);
@@ -139,23 +124,7 @@ public sealed class DirectionsController : BaseController
         }
 
         var response = result.Value
-            .Select(dto => new DirectionResponse
-            {
-                Id = dto.Id,
-                DepartmentId = dto.DepartmentId,
-                SupervisorId = dto.SupervisorId,
-                AcademicYearId = dto.AcademicYearId,
-                WorkTypeId = dto.WorkTypeId,
-                TitleRu = dto.TitleRu,
-                TitleKz = dto.TitleKz,
-                TitleEn = dto.TitleEn,
-                CurrentStateId = dto.CurrentStateId,
-                SubmittedAt = dto.SubmittedAt,
-                ReviewedAt = dto.ReviewedAt,
-                ReviewedBy = dto.ReviewedBy,
-                CreatedAt = dto.CreatedAt,
-                IsDeleted = dto.IsDeleted
-            })
+            .Select(MapToResponse)
             .ToList();
 
         return Ok(response);
@@ -437,4 +406,25 @@ public sealed class DirectionsController : BaseController
     }
 
     #endregion
+
+    private static DirectionResponse MapToResponse(DirectionDto dto)
+    {
+        return new DirectionResponse
+        {
+            Id = dto.Id,
+            DepartmentId = dto.DepartmentId,
+            SupervisorId = dto.SupervisorId,
+            AcademicYearId = dto.AcademicYearId,
+            WorkTypeId = dto.WorkTypeId,
+            TitleRu = dto.TitleRu,
+            TitleKz = dto.TitleKz,
+            TitleEn = dto.TitleEn,
+            CurrentStateId = dto.CurrentStateId,
+            SubmittedAt = dto.SubmittedAt,
+            ReviewedAt = dto.ReviewedAt,
+            ReviewedBy = dto.ReviewedBy,
+            CreatedAt = dto.CreatedAt,
+            IsDeleted = dto.IsDeleted
+        };
+    }
 }
