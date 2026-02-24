@@ -29,7 +29,9 @@ public class CurrentUserProvider : ICurrentUserProvider
     {
         get
         {
-            var universityClaim = _httpContextAccessor.HttpContext?.User?.FindFirst(AuthorizationConstants.UniversityIdClaimType);
+            var user = _httpContextAccessor.HttpContext?.User;
+            var universityClaim = user?.FindFirst(AuthorizationConstants.UniversityIdClaimType)
+                               ?? user?.FindFirst("UniversityId");
             return universityClaim != null && int.TryParse(universityClaim.Value, out var id) ? id : null;
         }
     }

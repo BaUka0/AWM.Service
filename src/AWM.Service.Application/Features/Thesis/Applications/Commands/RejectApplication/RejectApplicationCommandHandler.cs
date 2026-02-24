@@ -1,6 +1,7 @@
 namespace AWM.Service.Application.Features.Thesis.Applications.Commands.RejectApplication;
 
 using AWM.Service.Domain.Repositories;
+using AWM.Service.Domain.Common;
 using KDS.Primitives.FluentResult;
 using MediatR;
 
@@ -12,22 +13,32 @@ public sealed class RejectApplicationCommandHandler : IRequestHandler<RejectAppl
 {
     private readonly ITopicApplicationRepository _applicationRepository;
     private readonly ITopicRepository _topicRepository;
+    private readonly ICurrentUserProvider _currentUserProvider;
 
     public RejectApplicationCommandHandler(
         ITopicApplicationRepository applicationRepository,
-        ITopicRepository topicRepository)
+        ITopicRepository topicRepository,
+        ICurrentUserProvider currentUserProvider)
     {
         _applicationRepository = applicationRepository;
         _topicRepository = topicRepository;
+        _currentUserProvider = currentUserProvider;
     }
 
     public async Task<Result> Handle(RejectApplicationCommand request, CancellationToken cancellationToken)
     {
+        if (!_currentUserProvider.UserId.HasValue)
+        {
+            return Result.Failure(new Error("Authorization.Unauthorized", "User identity could not be determined."));
+        }
+
+        var userId = _currentUserProvider.UserId.Value;
+
         // 1. Get application with topic (for authorization)
         var application = await _applicationRepository.GetByIdWithTopicAsync(
-            request.ApplicationId, 
+            request.ApplicationId,
             cancellationToken);
-        
+
         if (application is null)
         {
             return Result.Failure(new Error("Application.NotFound", $"Application with ID {request.ApplicationId} not found."));
@@ -47,7 +58,7 @@ public sealed class RejectApplicationCommandHandler : IRequestHandler<RejectAppl
         }
 
         // 4. Check authorization - only the topic's supervisor can reject
-        if (topic.SupervisorId != request.SupervisorId)
+        if (topic.SupervisorId != userId)
         {
             return Result.Failure(new Error("Authorization.Forbidden", "Only the topic supervisor can reject applications."));
         }
@@ -61,7 +72,7 @@ public sealed class RejectApplicationCommandHandler : IRequestHandler<RejectAppl
         // 6. Reject the application (domain method)
         try
         {
-            application.Reject(request.SupervisorId, request.RejectReason);
+            application.Reject(userId, request.RejectReason);
         }
         catch (InvalidOperationException ex)
         {

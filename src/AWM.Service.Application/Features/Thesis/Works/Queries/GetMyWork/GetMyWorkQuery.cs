@@ -9,8 +9,4 @@ using MediatR;
 /// </summary>
 public sealed record GetMyWorkQuery : IRequest<Result<IReadOnlyList<StudentWorkDto>>>
 {
-    /// <summary>
-    /// ID of the student.
-    /// </summary>
-    public int StudentId { get; init; }
 }

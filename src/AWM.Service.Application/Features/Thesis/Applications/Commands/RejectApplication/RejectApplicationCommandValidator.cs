@@ -13,10 +13,6 @@ public sealed class RejectApplicationCommandValidator : AbstractValidator<Reject
             .GreaterThan(0)
             .WithMessage("ApplicationId must be greater than 0.");
 
-        RuleFor(x => x.SupervisorId)
-            .GreaterThan(0)
-            .WithMessage("SupervisorId must be greater than 0.");
-
         RuleFor(x => x.RejectReason)
             .NotEmpty()
             .WithMessage("Rejection reason is required.")

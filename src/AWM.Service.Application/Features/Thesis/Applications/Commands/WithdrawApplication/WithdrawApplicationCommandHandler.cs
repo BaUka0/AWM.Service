@@ -1,6 +1,7 @@
 namespace AWM.Service.Application.Features.Thesis.Applications.Commands.WithdrawApplication;
 
 using AWM.Service.Domain.Repositories;
+using AWM.Service.Domain.Common;
 using KDS.Primitives.FluentResult;
 using MediatR;
 
@@ -11,19 +12,30 @@ using MediatR;
 public sealed class WithdrawApplicationCommandHandler : IRequestHandler<WithdrawApplicationCommand, Result>
 {
     private readonly ITopicApplicationRepository _applicationRepository;
+    private readonly ICurrentUserProvider _currentUserProvider;
 
-    public WithdrawApplicationCommandHandler(ITopicApplicationRepository applicationRepository)
+    public WithdrawApplicationCommandHandler(
+        ITopicApplicationRepository applicationRepository,
+        ICurrentUserProvider currentUserProvider)
     {
         _applicationRepository = applicationRepository;
+        _currentUserProvider = currentUserProvider;
     }
 
     public async Task<Result> Handle(WithdrawApplicationCommand request, CancellationToken cancellationToken)
     {
+        if (!_currentUserProvider.UserId.HasValue)
+        {
+            return Result.Failure(new Error("Authorization.Unauthorized", "User identity could not be determined."));
+        }
+
+        var userId = _currentUserProvider.UserId.Value;
+
         // 1. Get application
         var application = await _applicationRepository.GetByIdAsync(
-            request.ApplicationId, 
+            request.ApplicationId,
             cancellationToken);
-        
+
         if (application is null)
         {
             return Result.Failure(new Error("Application.NotFound", $"Application with ID {request.ApplicationId} not found."));
@@ -36,7 +48,7 @@ public sealed class WithdrawApplicationCommandHandler : IRequestHandler<Withdraw
         }
 
         // 3. Check authorization - only the student who created the application can withdraw it
-        if (application.StudentId != request.StudentId)
+        if (application.StudentId != userId)
         {
             return Result.Failure(new Error("Authorization.Forbidden", "You can only withdraw your own applications."));
         }
@@ -52,7 +64,7 @@ public sealed class WithdrawApplicationCommandHandler : IRequestHandler<Withdraw
         */
 
         // 5. Withdraw the application (soft delete)
-        application.Delete(request.StudentId);
+        application.Delete(userId);
 
         // 6. Update application
         try

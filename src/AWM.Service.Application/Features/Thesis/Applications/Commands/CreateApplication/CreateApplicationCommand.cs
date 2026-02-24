@@ -14,11 +14,6 @@ public sealed record CreateApplicationCommand : IRequest<Result<long>>
     public long TopicId { get; init; }
 
     /// <summary>
-    /// ID of the student applying (usually taken from authenticated user context).
-    /// </summary>
-    public int StudentId { get; init; }
-
-    /// <summary>
     /// Optional motivation letter.
     /// </summary>
     public string? MotivationLetter { get; init; }

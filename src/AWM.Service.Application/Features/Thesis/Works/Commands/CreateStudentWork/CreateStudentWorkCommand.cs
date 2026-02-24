@@ -24,7 +24,8 @@ public sealed record CreateStudentWorkCommand : IRequest<Result<long>>
     public int DepartmentId { get; init; }
 
     /// <summary>
-    /// ID of the student who will be the leader/primary participant.
+    /// ID of the student who will be the leader/primary participant. 
+    /// If not provided, defaults to the current authenticated user.
     /// </summary>
     public int StudentId { get; init; }
 }

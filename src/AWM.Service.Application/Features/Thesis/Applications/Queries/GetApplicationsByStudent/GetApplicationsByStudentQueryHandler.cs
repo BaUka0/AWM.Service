@@ -1,7 +1,9 @@
 namespace AWM.Service.Application.Features.Thesis.Applications.Queries.GetApplicationsByStudent;
 
 using AWM.Service.Application.Features.Thesis.Applications.DTOs;
+
 using AWM.Service.Domain.Repositories;
+using AWM.Service.Domain.Common;
 using KDS.Primitives.FluentResult;
 using MediatR;
 
@@ -9,36 +11,39 @@ using MediatR;
 /// Handler for GetApplicationsByStudentQuery.
 /// Retrieves all applications submitted by a student with authorization check.
 /// </summary>
-public sealed class GetApplicationsByStudentQueryHandler 
+public sealed class GetApplicationsByStudentQueryHandler
     : IRequestHandler<GetApplicationsByStudentQuery, Result<IReadOnlyList<TopicApplicationDto>>>
 {
     private readonly ITopicApplicationRepository _applicationRepository;
+    private readonly ICurrentUserProvider _currentUserProvider;
 
-    public GetApplicationsByStudentQueryHandler(ITopicApplicationRepository applicationRepository)
+    public GetApplicationsByStudentQueryHandler(
+        ITopicApplicationRepository applicationRepository,
+        ICurrentUserProvider currentUserProvider)
     {
         _applicationRepository = applicationRepository;
+        _currentUserProvider = currentUserProvider;
     }
 
     public async Task<Result<IReadOnlyList<TopicApplicationDto>>> Handle(
-        GetApplicationsByStudentQuery request, 
+        GetApplicationsByStudentQuery request,
         CancellationToken cancellationToken)
     {
-        // 1. Check authorization - students can only view their own applications
-        // Note: In a real system, you might also allow admins/advisors
-        if (request.StudentId != request.RequestingUserId)
+        if (!_currentUserProvider.UserId.HasValue)
         {
-            return Result.Failure<IReadOnlyList<TopicApplicationDto>>(
-                new Error("Authorization.Forbidden", "You can only view your own applications."));
+            return Result.Failure<IReadOnlyList<TopicApplicationDto>>(new Error("Authorization.Unauthorized", "User identity could not be determined."));
         }
 
-        // 2. Get applications
+        var userId = _currentUserProvider.UserId.Value;
+
+        // 1. Get applications
         IReadOnlyList<Domain.Thesis.Entities.TopicApplication> applications;
 
         if (request.AcademicYearId.HasValue)
         {
             // Get applications for specific academic year
             applications = await _applicationRepository.GetByStudentIdAndYearAsync(
-                request.StudentId, 
+                userId,
                 request.AcademicYearId.Value,
                 cancellationToken);
         }
@@ -46,7 +51,7 @@ public sealed class GetApplicationsByStudentQueryHandler
         {
             // Get all applications
             applications = await _applicationRepository.GetByStudentIdAsync(
-                request.StudentId, 
+                userId,
                 cancellationToken);
         }
 

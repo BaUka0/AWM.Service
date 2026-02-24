@@ -1,7 +1,9 @@
 namespace AWM.Service.Application.Features.Thesis.Applications.Queries.GetApplicationsByTopic;
 
 using AWM.Service.Application.Features.Thesis.Applications.DTOs;
+
 using AWM.Service.Domain.Repositories;
+using AWM.Service.Domain.Common;
 using AWM.Service.Domain.Thesis.Enums;
 using KDS.Primitives.FluentResult;
 using MediatR;
@@ -10,24 +12,32 @@ using MediatR;
 /// Handler for GetApplicationsByTopicQuery.
 /// Retrieves all applications for a specific topic with authorization check.
 /// </summary>
-public sealed class GetApplicationsByTopicQueryHandler 
+public sealed class GetApplicationsByTopicQueryHandler
     : IRequestHandler<GetApplicationsByTopicQuery, Result<IReadOnlyList<TopicApplicationDto>>>
 {
     private readonly ITopicApplicationRepository _applicationRepository;
     private readonly ITopicRepository _topicRepository;
+    private readonly ICurrentUserProvider _currentUserProvider;
 
     public GetApplicationsByTopicQueryHandler(
         ITopicApplicationRepository applicationRepository,
-        ITopicRepository topicRepository)
+        ITopicRepository topicRepository,
+        ICurrentUserProvider currentUserProvider)
     {
         _applicationRepository = applicationRepository;
         _topicRepository = topicRepository;
+        _currentUserProvider = currentUserProvider;
     }
 
     public async Task<Result<IReadOnlyList<TopicApplicationDto>>> Handle(
-        GetApplicationsByTopicQuery request, 
+        GetApplicationsByTopicQuery request,
         CancellationToken cancellationToken)
     {
+        if (!_currentUserProvider.UserId.HasValue)
+        {
+            return Result.Failure<IReadOnlyList<TopicApplicationDto>>(new Error("Authorization.Unauthorized", "User identity could not be determined."));
+        }
+
         // 1. Get topic for authorization check
         var topic = await _topicRepository.GetByIdAsync(request.TopicId, cancellationToken);
         if (topic is null)
@@ -38,7 +48,7 @@ public sealed class GetApplicationsByTopicQueryHandler
 
         // 2. Check authorization - only supervisor of the topic can view applications
         // Note: In a real system, you might also allow admins/department heads
-        if (topic.SupervisorId != request.RequestingUserId)
+        if (topic.SupervisorId != _currentUserProvider.UserId.Value)
         {
             return Result.Failure<IReadOnlyList<TopicApplicationDto>>(
                 new Error("Authorization.Forbidden", "You can only view applications for your own topics."));
@@ -46,7 +56,7 @@ public sealed class GetApplicationsByTopicQueryHandler
 
         // 3. Get applications
         var applications = await _applicationRepository.GetByTopicIdAsync(
-            request.TopicId, 
+            request.TopicId,
             cancellationToken);
 
         // 4. Apply status filter if provided

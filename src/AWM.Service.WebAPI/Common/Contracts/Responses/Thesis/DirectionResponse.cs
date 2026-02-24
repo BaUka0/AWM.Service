@@ -3,7 +3,7 @@ namespace AWM.Service.WebAPI.Common.Contracts.Responses.Thesis;
 /// <summary>
 /// Response contract for direction (list view).
 /// </summary>
-public sealed record DirectionResponse
+public record DirectionResponse
 {
     public long Id { get; init; }
     public int DepartmentId { get; init; }

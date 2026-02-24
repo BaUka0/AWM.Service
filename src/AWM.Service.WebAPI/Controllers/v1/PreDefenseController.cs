@@ -26,7 +26,7 @@ public class PreDefenseController : BaseController
 
     public PreDefenseController(ISender sender)
     {
-        _sender = sender ?? throw new ArgumentNullException(nameof(sender));
+        _sender = sender;
     }
 
     /// <summary>

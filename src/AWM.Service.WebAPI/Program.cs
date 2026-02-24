@@ -7,12 +7,17 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using AWM.Service.WebAPI.Authorization;
+using AWM.Service.WebAPI.Common.Middleware;
 using FluentValidation;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllers();
+
+// Add Global Exception Handling
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
 
 // Add MediatR with ValidationBehavior
 var applicationAssembly = typeof(AWM.Service.Application.Features.Auth.Commands.Login.LoginCommand).Assembly;
@@ -68,7 +73,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "AWM.Service API", Version = "v1" });
-    
+
     // Add JWT Authentication support to Swagger
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
@@ -118,6 +123,8 @@ builder.Services.AddScoped<AWM.Service.Domain.Wf.Services.IStateMachine, AWM.Ser
 builder.Services.AddScoped<AWM.Service.Domain.CommonDomain.Services.IPeriodValidationService, AWM.Service.Application.Features.Common.Services.PeriodValidationService>();
 
 var app = builder.Build();
+
+app.UseExceptionHandler();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

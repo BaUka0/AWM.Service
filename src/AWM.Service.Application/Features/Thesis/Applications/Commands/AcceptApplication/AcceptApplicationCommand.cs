@@ -12,9 +12,4 @@ public sealed record AcceptApplicationCommand : IRequest<Result>
     /// ID of the application to accept.
     /// </summary>
     public long ApplicationId { get; init; }
-
-    /// <summary>
-    /// ID of the supervisor accepting the application (usually taken from authenticated user context).
-    /// </summary>
-    public int SupervisorId { get; init; }
 }
