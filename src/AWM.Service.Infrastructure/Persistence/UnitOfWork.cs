@@ -98,7 +98,6 @@ public sealed class UnitOfWork : IUnitOfWork
         if (!_disposed && disposing)
         {
             _currentTransaction?.Dispose();
-            _context.Dispose();
         }
         _disposed = true;
     }
