@@ -29,7 +29,7 @@ public class TopicApplicationsController : BaseController
 
     public TopicApplicationsController(ISender sender)
     {
-        _sender = sender ?? throw new ArgumentNullException(nameof(sender));
+        _sender = sender;
     }
 
     /// <summary>

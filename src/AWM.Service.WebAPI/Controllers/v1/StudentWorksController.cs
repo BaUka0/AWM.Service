@@ -29,7 +29,7 @@ public class StudentWorksController : BaseController
 
     public StudentWorksController(ISender sender)
     {
-        _sender = sender ?? throw new ArgumentNullException(nameof(sender));
+        _sender = sender;
     }
 
     /// <summary>
