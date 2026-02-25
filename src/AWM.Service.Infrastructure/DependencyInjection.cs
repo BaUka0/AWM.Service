@@ -1,4 +1,6 @@
+using AWM.Service.Domain.Thesis.Service;
 using AWM.Service.Domain.Repositories;
+using AWM.Service.Infrastructure.FileStorage;
 using AWM.Service.Infrastructure.Persistence;
 using AWM.Service.Infrastructure.Persistence.Interceptors;
 using AWM.Service.Infrastructure.Persistence.Repositories.Common;
@@ -75,6 +77,10 @@ public static class DependencyInjection
         services.AddScoped<IDegreeLevelRepository, DegreeLevelRepository>();
         services.AddScoped<IRoleRepository, RoleRepository>();
         services.AddScoped<IOrganizationLookupRepository, OrganizationLookupRepository>();
+
+        // Register File Storage Service
+        // Switch to S3FileStorageService for production (add AWSSDK.S3 NuGet + configure "FileStorage:S3" section)
+        services.AddScoped<IAttachmentService, LocalFileStorageService>();
 
         return services;
     }

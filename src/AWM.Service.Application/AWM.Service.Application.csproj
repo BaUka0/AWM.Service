@@ -16,6 +16,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\AWM.Service.Domain\AWM.Service.Domain.csproj" />
   </ItemGroup>
 
