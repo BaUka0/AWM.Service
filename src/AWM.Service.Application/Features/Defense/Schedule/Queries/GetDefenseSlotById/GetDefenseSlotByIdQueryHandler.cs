@@ -30,6 +30,10 @@ public sealed class GetDefenseSlotByIdQueryHandler
                 return Result.Failure<DefenseSlotDto>(new Error("NotFound.Schedule",
                     $"Schedule with ID {request.SlotId} not found."));
 
+            if (schedule.IsDeleted)
+                return Result.Failure<DefenseSlotDto>(new Error("NotFound.Schedule",
+                    $"Schedule with ID {request.SlotId} not found."));
+
             var dto = new DefenseSlotDto
             {
                 Id = schedule.Id,

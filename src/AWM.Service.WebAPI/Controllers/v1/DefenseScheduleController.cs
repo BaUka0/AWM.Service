@@ -9,6 +9,7 @@ using AWM.Service.Application.Features.Defense.Schedule.Queries.GetDefenseSlotBy
 using AWM.Service.Domain.Auth.Enums;
 using AWM.Service.WebAPI.Authorization;
 using AWM.Service.WebAPI.Common.Contracts.Requests.Defense;
+using AWM.Service.WebAPI.Common.Contracts.Responses.Defense;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -35,7 +36,7 @@ public class DefenseScheduleController : BaseController
     /// <returns>List of schedule slots ordered by defense date</returns>
     [HttpGet]
     [RequireDepartmentPermission(Permission.Defense_View)]
-    [ProducesResponseType(typeof(IReadOnlyList<ScheduleDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(IReadOnlyList<ScheduleResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -47,7 +48,19 @@ public class DefenseScheduleController : BaseController
         if (result.IsFailed)
             return HandleResultError(result.Error);
 
-        return Ok(result.Value);
+        var response = result.Value.Select(dto => new ScheduleResponse
+        {
+            Id = dto.Id,
+            CommissionId = dto.CommissionId,
+            WorkId = dto.WorkId,
+            DefenseDate = dto.DefenseDate,
+            Location = dto.Location,
+            AverageScore = dto.AverageScore,
+            GradeCount = dto.GradeCount,
+            CreatedAt = dto.CreatedAt
+        }).ToList();
+
+        return Ok(response);
     }
 
     /// <summary>
@@ -57,7 +70,7 @@ public class DefenseScheduleController : BaseController
     /// <returns>Detailed slot information with grades</returns>
     [HttpGet("{slotId:long}")]
     [RequireDepartmentPermission(Permission.Defense_View)]
-    [ProducesResponseType(typeof(DefenseSlotDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(DefenseSlotResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -70,7 +83,29 @@ public class DefenseScheduleController : BaseController
         if (result.IsFailed)
             return HandleResultError(result.Error);
 
-        return Ok(result.Value);
+        var dto = result.Value;
+        var response = new DefenseSlotResponse
+        {
+            Id = dto.Id,
+            CommissionId = dto.CommissionId,
+            WorkId = dto.WorkId,
+            DefenseDate = dto.DefenseDate,
+            Location = dto.Location,
+            AverageScore = dto.AverageScore,
+            Grades = dto.Grades.Select(g => new GradeResponse
+            {
+                Id = g.Id,
+                ScheduleId = g.ScheduleId,
+                MemberId = g.MemberId,
+                CriteriaId = g.CriteriaId,
+                Score = g.Score,
+                Comment = g.Comment,
+                GradedAt = g.GradedAt
+            }).ToList(),
+            CreatedAt = dto.CreatedAt
+        };
+
+        return Ok(response);
     }
 
     /// <summary>

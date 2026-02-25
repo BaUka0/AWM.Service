@@ -49,15 +49,10 @@ public sealed class AssignWorkToSlotCommandHandler : IRequestHandler<AssignWorkT
                 return Result.Failure(new Error("BusinessRule.Schedule",
                     $"Work with ID {request.WorkId} is already assigned to schedule {existingSchedule.Id}."));
 
-            // Create a new schedule slot that links the work to the same commission and date
-            var assignedSchedule = new Schedule(
-                schedule.CommissionId,
-                request.WorkId,
-                schedule.DefenseDate,
-                userId.Value,
-                schedule.Location);
+            // Assign the work to the existing empty slot
+            schedule.AssignWork(request.WorkId, userId.Value);
 
-            await _scheduleRepository.AddAsync(assignedSchedule, cancellationToken);
+            await _scheduleRepository.UpdateAsync(schedule, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             return Result.Success();

@@ -29,6 +29,10 @@ public sealed class GetGradesByWorkQueryHandler
                 return Result.Failure<IReadOnlyList<GradeDto>>(new Error("NotFound.Schedule",
                     $"Schedule with ID {request.ScheduleId} not found."));
 
+            if (schedule.IsDeleted)
+                return Result.Failure<IReadOnlyList<GradeDto>>(new Error("NotFound.Schedule",
+                    $"Schedule with ID {request.ScheduleId} not found."));
+
             var dtos = schedule.Grades
                 .Select(g => new GradeDto
                 {

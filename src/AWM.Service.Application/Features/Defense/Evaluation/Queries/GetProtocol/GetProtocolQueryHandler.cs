@@ -29,6 +29,10 @@ public sealed class GetProtocolQueryHandler
                 return Result.Failure<ProtocolDto>(new Error("NotFound.Protocol",
                     $"Protocol with ID {request.ProtocolId} not found."));
 
+            if (protocol.IsDeleted)
+                return Result.Failure<ProtocolDto>(new Error("NotFound.Protocol",
+                    $"Protocol with ID {request.ProtocolId} not found."));
+
             var dto = new ProtocolDto
             {
                 Id = protocol.Id,

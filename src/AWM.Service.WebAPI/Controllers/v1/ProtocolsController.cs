@@ -6,6 +6,7 @@ using AWM.Service.Application.Features.Defense.Evaluation.Queries.GetProtocol;
 using AWM.Service.Domain.Auth.Enums;
 using AWM.Service.WebAPI.Authorization;
 using AWM.Service.WebAPI.Common.Contracts.Requests.Defense;
+using AWM.Service.WebAPI.Common.Contracts.Responses.Defense;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -32,7 +33,7 @@ public class ProtocolsController : BaseController
     /// <returns>Protocol details</returns>
     [HttpGet("{protocolId:long}")]
     [RequireDepartmentPermission(Permission.Defense_View)]
-    [ProducesResponseType(typeof(ProtocolDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProtocolResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -45,7 +46,21 @@ public class ProtocolsController : BaseController
         if (result.IsFailed)
             return HandleResultError(result.Error);
 
-        return Ok(result.Value);
+        var dto = result.Value;
+        var response = new ProtocolResponse
+        {
+            Id = dto.Id,
+            ScheduleId = dto.ScheduleId,
+            CommissionId = dto.CommissionId,
+            SessionDate = dto.SessionDate,
+            DocumentPath = dto.DocumentPath,
+            IsFinalized = dto.IsFinalized,
+            FinalizedBy = dto.FinalizedBy,
+            FinalizedAt = dto.FinalizedAt,
+            CreatedAt = dto.CreatedAt
+        };
+
+        return Ok(response);
     }
 
     /// <summary>

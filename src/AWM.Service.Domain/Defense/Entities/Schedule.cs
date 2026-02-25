@@ -47,9 +47,18 @@ public class Schedule : Entity<long>, IAuditable, ISoftDeletable
     public void Reschedule(DateTime newDate, int modifiedBy, string? newLocation = null)
     {
         DefenseDate = newDate;
-        if (newLocation != null)
-            Location = newLocation;
+        Location = newLocation;
 
+        LastModifiedAt = DateTime.UtcNow;
+        LastModifiedBy = modifiedBy;
+    }
+
+    /// <summary>
+    /// Assigns a student work to this schedule slot.
+    /// </summary>
+    public void AssignWork(long workId, int modifiedBy)
+    {
+        WorkId = workId;
         LastModifiedAt = DateTime.UtcNow;
         LastModifiedBy = modifiedBy;
     }
@@ -75,7 +84,7 @@ public class Schedule : Entity<long>, IAuditable, ISoftDeletable
 
         var grade = new Grade(Id, memberId, criteriaId, score, comment);
         _grades.Add(grade);
-        
+
         LastModifiedAt = DateTime.UtcNow;
         return grade;
     }
