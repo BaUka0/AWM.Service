@@ -37,9 +37,9 @@ public interface IReviewRepository
     Task<Review?> GetByIdAsync(long id, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Gets the external review for a specific work.
+    /// Gets the external reviews for a specific work.
     /// </summary>
-    Task<Review?> GetByWorkIdAsync(long workId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<Review>> GetByWorkIdAsync(long workId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets all reviews by a reviewer.

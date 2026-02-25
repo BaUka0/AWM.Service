@@ -79,11 +79,12 @@ public sealed class ReviewRepository : IReviewRepository
     }
 
     /// <inheritdoc />
-    public async Task<Review?> GetByWorkIdAsync(long workId, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<Review>> GetByWorkIdAsync(long workId, CancellationToken cancellationToken = default)
     {
         return await _context.Reviews
+            .AsNoTracking()
             .Where(r => !r.IsDeleted && r.WorkId == workId)
-            .FirstOrDefaultAsync(cancellationToken);
+            .ToListAsync(cancellationToken);
     }
 
     /// <inheritdoc />

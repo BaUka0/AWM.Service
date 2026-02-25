@@ -11,15 +11,18 @@ public sealed class DeleteAttachmentCommandHandler : IRequestHandler<DeleteAttac
     private readonly IStudentWorkRepository _workRepository;
     private readonly IAttachmentService _attachmentService;
     private readonly ICurrentUserProvider _currentUserProvider;
+    private readonly IUnitOfWork _unitOfWork;
 
     public DeleteAttachmentCommandHandler(
         IStudentWorkRepository workRepository,
         IAttachmentService attachmentService,
-        ICurrentUserProvider currentUserProvider)
+        ICurrentUserProvider currentUserProvider,
+        IUnitOfWork unitOfWork)
     {
         _workRepository = workRepository ?? throw new ArgumentNullException(nameof(workRepository));
         _attachmentService = attachmentService ?? throw new ArgumentNullException(nameof(attachmentService));
         _currentUserProvider = currentUserProvider ?? throw new ArgumentNullException(nameof(currentUserProvider));
+        _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
     }
 
     public async Task<Result> Handle(DeleteAttachmentCommand request, CancellationToken cancellationToken)
@@ -40,7 +43,13 @@ public sealed class DeleteAttachmentCommandHandler : IRequestHandler<DeleteAttac
 
             var storagePath = attachment.FileStoragePath;
 
-            // Remove record from the physical store
+            // Updates aggregate
+            work.RemoveAttachment(request.AttachmentId, userId.Value);
+
+            await _workRepository.UpdateAsync(work, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            // Remove record from the physical store *after* DB success
             await _attachmentService.DeleteAsync(storagePath, cancellationToken);
 
             return Result.Success();

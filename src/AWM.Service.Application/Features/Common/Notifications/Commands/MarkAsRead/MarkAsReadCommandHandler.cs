@@ -9,13 +9,16 @@ public sealed class MarkAsReadCommandHandler : IRequestHandler<MarkAsReadCommand
 {
     private readonly INotificationRepository _notificationRepository;
     private readonly ICurrentUserProvider _currentUserProvider;
+    private readonly IUnitOfWork _unitOfWork;
 
     public MarkAsReadCommandHandler(
         INotificationRepository notificationRepository,
-        ICurrentUserProvider currentUserProvider)
+        ICurrentUserProvider currentUserProvider,
+        IUnitOfWork unitOfWork)
     {
         _notificationRepository = notificationRepository ?? throw new ArgumentNullException(nameof(notificationRepository));
         _currentUserProvider = currentUserProvider ?? throw new ArgumentNullException(nameof(currentUserProvider));
+        _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
     }
 
     public async Task<Result> Handle(MarkAsReadCommand request, CancellationToken cancellationToken)
@@ -39,6 +42,7 @@ public sealed class MarkAsReadCommandHandler : IRequestHandler<MarkAsReadCommand
 
             notification.MarkAsRead();
             await _notificationRepository.UpdateAsync(notification, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             return Result.Success();
         }

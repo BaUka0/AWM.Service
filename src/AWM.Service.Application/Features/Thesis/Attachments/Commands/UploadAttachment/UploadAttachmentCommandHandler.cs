@@ -11,15 +11,18 @@ public sealed class UploadAttachmentCommandHandler : IRequestHandler<UploadAttac
     private readonly IStudentWorkRepository _workRepository;
     private readonly IAttachmentService _attachmentService;
     private readonly ICurrentUserProvider _currentUserProvider;
+    private readonly IUnitOfWork _unitOfWork;
 
     public UploadAttachmentCommandHandler(
         IStudentWorkRepository workRepository,
         IAttachmentService attachmentService,
-        ICurrentUserProvider currentUserProvider)
+        ICurrentUserProvider currentUserProvider,
+        IUnitOfWork unitOfWork)
     {
         _workRepository = workRepository ?? throw new ArgumentNullException(nameof(workRepository));
         _attachmentService = attachmentService ?? throw new ArgumentNullException(nameof(attachmentService));
         _currentUserProvider = currentUserProvider ?? throw new ArgumentNullException(nameof(currentUserProvider));
+        _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
     }
 
     public async Task<Result<long>> Handle(UploadAttachmentCommand request, CancellationToken cancellationToken)
@@ -55,6 +58,7 @@ public sealed class UploadAttachmentCommandHandler : IRequestHandler<UploadAttac
                 userId.Value);
 
             await _workRepository.UpdateAsync(work, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             return Result.Success(attachment.Id);
         }

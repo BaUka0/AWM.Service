@@ -9,6 +9,11 @@ public sealed record UploadReviewCommand : IRequest<Result>
     public long ReviewId { get; init; }
 
     /// <summary>
+    /// Student work ID to verify review ownership.
+    /// </summary>
+    public long WorkId { get; init; }
+
+    /// <summary>
     /// Content of the external review (optional if file is provided).
     /// </summary>
     public string? ReviewText { get; init; }

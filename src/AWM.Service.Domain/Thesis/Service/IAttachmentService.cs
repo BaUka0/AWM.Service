@@ -35,7 +35,7 @@ public interface IAttachmentService
     Task<Stream> GetAsync(string fileStoragePath, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Computes a SHA-256 hex hash of the given stream (does not rewind the stream beforehand).
+    /// Computes a SHA-256 hex hash of the given stream (rewinds the stream to position 0 before hashing).
     /// </summary>
     Task<string> ComputeHashAsync(Stream fileStream, CancellationToken cancellationToken = default);
 }

@@ -13,15 +13,18 @@ public sealed class UploadReviewCommandHandler : IRequestHandler<UploadReviewCom
     private readonly IReviewRepository _reviewRepository;
     private readonly IAttachmentService _attachmentService;
     private readonly ICurrentUserProvider _currentUserProvider;
+    private readonly IUnitOfWork _unitOfWork;
 
     public UploadReviewCommandHandler(
         IReviewRepository reviewRepository,
         IAttachmentService attachmentService,
-        ICurrentUserProvider currentUserProvider)
+        ICurrentUserProvider currentUserProvider,
+        IUnitOfWork unitOfWork)
     {
         _reviewRepository = reviewRepository ?? throw new ArgumentNullException(nameof(reviewRepository));
         _attachmentService = attachmentService ?? throw new ArgumentNullException(nameof(attachmentService));
         _currentUserProvider = currentUserProvider ?? throw new ArgumentNullException(nameof(currentUserProvider));
+        _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
     }
 
     public async Task<Result> Handle(UploadReviewCommand request, CancellationToken cancellationToken)
@@ -33,6 +36,9 @@ public sealed class UploadReviewCommandHandler : IRequestHandler<UploadReviewCom
         var existingReview = await _reviewRepository.GetByIdAsync(request.ReviewId, cancellationToken);
         if (existingReview is null)
             return Result.Failure(new Error("404", $"Review with ID {request.ReviewId} not found."));
+
+        if (existingReview.WorkId != request.WorkId)
+            return Result.Failure(new Error("400", "Review does not belong to the specified student work."));
 
         // Verify that the current user is the assigned reviewer (in a real system)
         // or has admin rights. For now we assume implicitly trusted by endpoint permission.
@@ -70,6 +76,7 @@ public sealed class UploadReviewCommandHandler : IRequestHandler<UploadReviewCom
                 userId.Value);
 
             await _reviewRepository.UpdateAsync(existingReview, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
             return Result.Success();
         }
         catch (ArgumentException argEx)

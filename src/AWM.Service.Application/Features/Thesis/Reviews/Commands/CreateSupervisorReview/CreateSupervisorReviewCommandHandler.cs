@@ -15,17 +15,20 @@ public sealed class CreateSupervisorReviewCommandHandler : IRequestHandler<Creat
     private readonly ISupervisorReviewRepository _reviewRepository;
     private readonly IAttachmentService _attachmentService;
     private readonly ICurrentUserProvider _currentUserProvider;
+    private readonly IUnitOfWork _unitOfWork;
 
     public CreateSupervisorReviewCommandHandler(
         IStudentWorkRepository workRepository,
         ISupervisorReviewRepository reviewRepository,
         IAttachmentService attachmentService,
-        ICurrentUserProvider currentUserProvider)
+        ICurrentUserProvider currentUserProvider,
+        IUnitOfWork unitOfWork)
     {
         _workRepository = workRepository ?? throw new ArgumentNullException(nameof(workRepository));
         _reviewRepository = reviewRepository ?? throw new ArgumentNullException(nameof(reviewRepository));
         _attachmentService = attachmentService ?? throw new ArgumentNullException(nameof(attachmentService));
         _currentUserProvider = currentUserProvider ?? throw new ArgumentNullException(nameof(currentUserProvider));
+        _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
     }
 
     public async Task<Result<long>> Handle(CreateSupervisorReviewCommand request, CancellationToken cancellationToken)
@@ -75,6 +78,7 @@ public sealed class CreateSupervisorReviewCommandHandler : IRequestHandler<Creat
 
             existingReview.UpdateReview(request.ReviewText, storagePath, userId.Value);
             await _reviewRepository.UpdateAsync(existingReview, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             return Result.Success(existingReview.Id);
         }
@@ -92,6 +96,7 @@ public sealed class CreateSupervisorReviewCommandHandler : IRequestHandler<Creat
                 storagePath);
 
             await _reviewRepository.AddAsync(review, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             return Result.Success(review.Id);
         }

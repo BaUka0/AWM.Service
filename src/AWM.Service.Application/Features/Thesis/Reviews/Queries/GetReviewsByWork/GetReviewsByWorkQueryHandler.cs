@@ -49,26 +49,7 @@ public sealed class GetReviewsByWorkQueryHandler : IRequestHandler<GetReviewsByW
         }
 
         // Map External Reviews
-        var reviewDtos = new List<ReviewDto>();
-        if (reviews is not null)
-        {
-            // Note: If GetByWorkIdAsync returns a single review or list (usually work has 1 or more external reviews)
-            // Let's assume GetByWorkIdAsync returns a single Review for now based on typical interface,
-            // or IReadOnlyList. I will handle it as a single review to be safe, then wrap in list.
-            
-            // Checking if `reviews` is IEnumerable or single object
-            if (reviews is IEnumerable<AWM.Service.Domain.Thesis.Entities.Review> list)
-            {
-                foreach (var r in list)
-                {
-                    reviewDtos.Add(MapReviewToDto(r));
-                }
-            }
-            else
-            {
-                reviewDtos.Add(MapReviewToDto((AWM.Service.Domain.Thesis.Entities.Review)(object)reviews));
-            }
-        }
+        var reviewDtos = reviews.Select(MapReviewToDto).ToList();
 
         var dto = new WorkReviewsDto
         {

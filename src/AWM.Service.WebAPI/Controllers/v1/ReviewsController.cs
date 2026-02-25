@@ -47,7 +47,7 @@ public sealed class ReviewsController : BaseController
             return HandleResultError(result.Error);
 
         var dto = result.Value;
-        
+
         SupervisorReviewResponse? supervisorResponse = null;
         if (dto.SupervisorReview is not null)
         {
@@ -148,6 +148,7 @@ public sealed class ReviewsController : BaseController
     {
         var command = new UploadReviewCommand
         {
+            WorkId = workId,
             ReviewId = reviewId,
             ReviewText = request.ReviewText,
             File = request.File

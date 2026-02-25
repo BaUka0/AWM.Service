@@ -9,13 +9,16 @@ public sealed class MarkAllAsReadCommandHandler : IRequestHandler<MarkAllAsReadC
 {
     private readonly INotificationRepository _notificationRepository;
     private readonly ICurrentUserProvider _currentUserProvider;
+    private readonly IUnitOfWork _unitOfWork;
 
     public MarkAllAsReadCommandHandler(
         INotificationRepository notificationRepository,
-        ICurrentUserProvider currentUserProvider)
+        ICurrentUserProvider currentUserProvider,
+        IUnitOfWork unitOfWork)
     {
         _notificationRepository = notificationRepository ?? throw new ArgumentNullException(nameof(notificationRepository));
         _currentUserProvider = currentUserProvider ?? throw new ArgumentNullException(nameof(currentUserProvider));
+        _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
     }
 
     public async Task<Result> Handle(MarkAllAsReadCommand request, CancellationToken cancellationToken)
@@ -27,6 +30,7 @@ public sealed class MarkAllAsReadCommandHandler : IRequestHandler<MarkAllAsReadC
                 return Result.Failure(new Error("401", "User is not authenticated."));
 
             await _notificationRepository.MarkAllAsReadAsync(userId.Value, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             return Result.Success();
         }

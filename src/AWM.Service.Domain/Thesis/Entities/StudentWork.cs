@@ -143,6 +143,19 @@ public class StudentWork : AggregateRoot<long>, IAuditable, ISoftDeletable
     }
 
     /// <summary>
+    /// Removes an attachment from the work.
+    /// </summary>
+    public void RemoveAttachment(long attachmentId, int removedBy)
+    {
+        var attachment = _attachments.FirstOrDefault(a => a.Id == attachmentId)
+            ?? throw new InvalidOperationException($"Attachment with ID {attachmentId} was not found on this work.");
+
+        _attachments.Remove(attachment);
+        LastModifiedAt = DateTime.UtcNow;
+        LastModifiedBy = removedBy;
+    }
+
+    /// <summary>
     /// Submits the work for a quality check by creating a pending (unreviewed) record.
     /// The expert will later complete it via CompleteQualityCheck.
     /// </summary>
