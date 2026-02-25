@@ -1,6 +1,6 @@
 namespace AWM.Service.Application.Features.Thesis.Attachments.Commands.UploadAttachment;
 
-using AWM.Service.Application.Features.Thesis.Attachments.Services;
+using AWM.Service.Domain.Thesis.Service;
 using AWM.Service.Domain.Common;
 using AWM.Service.Domain.Repositories;
 using KDS.Primitives.FluentResult;

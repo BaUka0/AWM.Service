@@ -1,7 +1,7 @@
 namespace AWM.Service.Infrastructure.FileStorage;
 
 using System.Security.Cryptography;
-using AWM.Service.Application.Features.Thesis.Attachments.Services;
+using AWM.Service.Domain.Thesis.Service;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 

@@ -1,4 +1,4 @@
-namespace AWM.Service.Application.Features.Thesis.Attachments.Services;
+namespace AWM.Service.Domain.Thesis.Service;
 
 /// <summary>
 /// Application-layer abstraction for physical file storage operations.

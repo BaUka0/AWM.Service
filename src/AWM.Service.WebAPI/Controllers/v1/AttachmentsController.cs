@@ -4,7 +4,7 @@ using AWM.Service.Application.Features.Thesis.Attachments.Commands.DeleteAttachm
 using AWM.Service.Application.Features.Thesis.Attachments.Commands.UploadAttachment;
 using AWM.Service.Application.Features.Thesis.Attachments.Queries.GetAttachmentById;
 using AWM.Service.Application.Features.Thesis.Attachments.Queries.GetAttachmentsByWork;
-using AWM.Service.Application.Features.Thesis.Attachments.Services;
+using AWM.Service.Domain.Thesis.Service;
 using AWM.Service.Domain.Auth.Enums;
 using AWM.Service.WebAPI.Authorization;
 using AWM.Service.WebAPI.Common.Contracts.Requests.Thesis;
@@ -219,18 +219,18 @@ public sealed class AttachmentsController : BaseController
         var extension = Path.GetExtension(fileName).ToLowerInvariant();
         return extension switch
         {
-            ".pdf"  => "application/pdf",
-            ".doc"  => "application/msword",
+            ".pdf" => "application/pdf",
+            ".doc" => "application/msword",
             ".docx" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            ".ppt"  => "application/vnd.ms-powerpoint",
+            ".ppt" => "application/vnd.ms-powerpoint",
             ".pptx" => "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-            ".zip"  => "application/zip",
-            ".rar"  => "application/x-rar-compressed",
-            ".7z"   => "application/x-7z-compressed",
-            ".png"  => "image/png",
-            ".jpg"  => "image/jpeg",
+            ".zip" => "application/zip",
+            ".rar" => "application/x-rar-compressed",
+            ".7z" => "application/x-7z-compressed",
+            ".png" => "image/png",
+            ".jpg" => "image/jpeg",
             ".jpeg" => "image/jpeg",
-            _       => "application/octet-stream"
+            _ => "application/octet-stream"
         };
     }
 }

@@ -1,6 +1,6 @@
 namespace AWM.Service.Application.Features.Thesis.Reviews.Commands.UploadReview;
 
-using AWM.Service.Application.Features.Thesis.Attachments.Services;
+using AWM.Service.Domain.Thesis.Service;
 using AWM.Service.Domain.Common;
 using AWM.Service.Domain.Repositories;
 using KDS.Primitives.FluentResult;
@@ -36,7 +36,7 @@ public sealed class UploadReviewCommandHandler : IRequestHandler<UploadReviewCom
 
         // Verify that the current user is the assigned reviewer (in a real system)
         // or has admin rights. For now we assume implicitly trusted by endpoint permission.
-        
+
         string? storagePath = existingReview.FileStoragePath;
 
         if (request.File is not null)
@@ -44,11 +44,11 @@ public sealed class UploadReviewCommandHandler : IRequestHandler<UploadReviewCom
             // Delete old file if updating
             if (!string.IsNullOrWhiteSpace(storagePath))
             {
-                try 
+                try
                 {
                     await _attachmentService.DeleteAsync(storagePath, cancellationToken);
-                } 
-                catch 
+                }
+                catch
                 {
                     // Ignore deletion error
                 }
@@ -65,10 +65,10 @@ public sealed class UploadReviewCommandHandler : IRequestHandler<UploadReviewCom
         try
         {
             existingReview.UploadReview(
-                request.ReviewText ?? existingReview.ReviewText, 
-                storagePath, 
+                request.ReviewText ?? existingReview.ReviewText,
+                storagePath,
                 userId.Value);
-                
+
             await _reviewRepository.UpdateAsync(existingReview, cancellationToken);
             return Result.Success();
         }

@@ -1,6 +1,6 @@
 namespace AWM.Service.Application.Features.Thesis.Reviews.Commands.CreateSupervisorReview;
 
-using AWM.Service.Application.Features.Thesis.Attachments.Services;
+using AWM.Service.Domain.Thesis.Service;
 using AWM.Service.Domain.Common;
 using AWM.Service.Domain.Repositories;
 using AWM.Service.Domain.Thesis.Entities;
@@ -58,11 +58,11 @@ public sealed class CreateSupervisorReviewCommandHandler : IRequestHandler<Creat
             if (request.File is not null && !string.IsNullOrWhiteSpace(existingReview.FileStoragePath))
             {
                 // Optionally delete old file to save space
-                try 
+                try
                 {
                     await _attachmentService.DeleteAsync(existingReview.FileStoragePath, cancellationToken);
-                } 
-                catch 
+                }
+                catch
                 {
                     // Ignore deletion error (e.g. file missing)
                 }
@@ -83,7 +83,7 @@ public sealed class CreateSupervisorReviewCommandHandler : IRequestHandler<Creat
             // The supervisor logic: in real system we would verify that userId is actually the supervisor
             // Assuming for now userId = supervisorId or it's implicitly trusted via permission
             var supervisorId = userId.Value; // Ideally retrieved from work/topic details
-            
+
             var review = new SupervisorReview(
                 work.Id,
                 supervisorId,

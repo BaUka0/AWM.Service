@@ -1,4 +1,4 @@
-using AWM.Service.Application.Features.Thesis.Attachments.Services;
+using AWM.Service.Domain.Thesis.Service;
 using AWM.Service.Domain.Repositories;
 using AWM.Service.Infrastructure.FileStorage;
 using AWM.Service.Infrastructure.Persistence;
