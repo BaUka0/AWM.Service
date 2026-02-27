@@ -5,7 +5,7 @@ namespace AWM.Service.Domain.Common;
 /// and are responsible for maintaining consistency boundaries.
 /// </summary>
 /// <typeparam name="TId">Type of the aggregate identifier.</typeparam>
-public abstract class AggregateRoot<TId> : Entity<TId> where TId : notnull
+public abstract class AggregateRoot<TId> : Entity<TId>, IAggregateRoot where TId : notnull
 {
     private readonly List<IDomainEvent> _domainEvents = new();
 

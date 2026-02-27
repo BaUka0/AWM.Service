@@ -1,9 +1,11 @@
+using MediatR;
+
 namespace AWM.Service.Domain.Common;
 
 /// <summary>
 /// Base interface for domain events.
 /// </summary>
-public interface IDomainEvent
+public interface IDomainEvent : INotification
 {
     DateTime OccurredAt { get; }
 }
