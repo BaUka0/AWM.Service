@@ -25,6 +25,8 @@ var applicationAssembly = typeof(AWM.Service.Application.Features.Auth.Commands.
 builder.Services.AddMediatR(cfg =>
 {
     cfg.RegisterServicesFromAssembly(applicationAssembly);
+    cfg.AddBehavior(typeof(MediatR.IPipelineBehavior<,>), typeof(AWM.Service.Application.Common.Behaviors.LoggingBehavior<,>));
+    cfg.AddBehavior(typeof(MediatR.IPipelineBehavior<,>), typeof(AWM.Service.Application.Common.Behaviors.PerformanceBehavior<,>));
     cfg.AddBehavior(typeof(MediatR.IPipelineBehavior<,>), typeof(AWM.Service.Application.Common.Behaviors.ValidationBehavior<,>));
 });
 
