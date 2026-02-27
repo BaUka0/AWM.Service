@@ -21,7 +21,6 @@ public sealed class TopicApplicationRepository : ITopicApplicationRepository
     {
         return await _context.TopicApplications
             .AsNoTracking()
-            .Where(a => !a.IsDeleted)
             .FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
     }
 
@@ -33,7 +32,6 @@ public sealed class TopicApplicationRepository : ITopicApplicationRepository
         // This keeps the repository focused on the TopicApplication aggregate and avoids assuming a specific navigation configuration.
         return await _context.TopicApplications
             .AsNoTracking()
-            .Where(a => !a.IsDeleted)
             .FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
     }
 
@@ -42,7 +40,7 @@ public sealed class TopicApplicationRepository : ITopicApplicationRepository
     {
         return await _context.TopicApplications
             .AsNoTracking()
-            .Where(a => !a.IsDeleted && a.TopicId == topicId)
+            .Where(a => a.TopicId == topicId)
             .OrderByDescending(a => a.AppliedAt)
             .ToListAsync(cancellationToken);
     }
@@ -52,7 +50,7 @@ public sealed class TopicApplicationRepository : ITopicApplicationRepository
     {
         return await _context.TopicApplications
             .AsNoTracking()
-            .Where(a => !a.IsDeleted && a.StudentId == studentId)
+            .Where(a => a.StudentId == studentId)
             .OrderByDescending(a => a.AppliedAt)
             .ToListAsync(cancellationToken);
     }
@@ -80,7 +78,7 @@ public sealed class TopicApplicationRepository : ITopicApplicationRepository
     public async Task<bool> HasStudentAppliedToTopicAsync(int studentId, long topicId, CancellationToken cancellationToken = default)
     {
         return await _context.TopicApplications
-            .AnyAsync(a => !a.IsDeleted && a.StudentId == studentId && a.TopicId == topicId, cancellationToken);
+            .AnyAsync(a => a.StudentId == studentId && a.TopicId == topicId, cancellationToken);
     }
 
     /// <inheritdoc />

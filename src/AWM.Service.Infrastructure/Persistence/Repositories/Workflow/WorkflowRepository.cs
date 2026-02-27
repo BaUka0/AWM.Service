@@ -23,7 +23,6 @@ public sealed class WorkflowRepository : IWorkflowRepository
     {
         return await _context.WorkTypes
             .Include(w => w.States.Where(s => !s.IsDeleted))
-            .Where(w => !w.IsDeleted)
             .FirstOrDefaultAsync(w => w.Id == id, cancellationToken);
     }
 
@@ -32,7 +31,6 @@ public sealed class WorkflowRepository : IWorkflowRepository
     {
         return await _context.WorkTypes
             .AsNoTracking()
-            .Where(w => !w.IsDeleted)
             .OrderBy(w => w.Name)
             .ToListAsync(cancellationToken);
     }
@@ -42,7 +40,7 @@ public sealed class WorkflowRepository : IWorkflowRepository
     {
         return await _context.WorkTypes
             .AsNoTracking()
-            .Where(w => !w.IsDeleted && w.DegreeLevelId == degreeLevelId)
+            .Where(w => w.DegreeLevelId == degreeLevelId)
             .OrderBy(w => w.Name)
             .ToListAsync(cancellationToken);
     }
@@ -55,7 +53,6 @@ public sealed class WorkflowRepository : IWorkflowRepository
     public async Task<State?> GetStateByIdAsync(int id, CancellationToken cancellationToken = default)
     {
         return await _context.States
-            .Where(s => !s.IsDeleted)
             .FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
     }
 
@@ -66,7 +63,7 @@ public sealed class WorkflowRepository : IWorkflowRepository
             return null;
 
         return await _context.States
-            .Where(s => !s.IsDeleted && s.WorkTypeId == workTypeId && s.SystemName == systemName)
+            .Where(s => s.WorkTypeId == workTypeId && s.SystemName == systemName)
             .FirstOrDefaultAsync(cancellationToken);
     }
 
@@ -75,7 +72,7 @@ public sealed class WorkflowRepository : IWorkflowRepository
     {
         return await _context.States
             .AsNoTracking()
-            .Where(s => !s.IsDeleted && s.WorkTypeId == workTypeId)
+            .Where(s => s.WorkTypeId == workTypeId)
             .OrderBy(s => s.Id)
             .ToListAsync(cancellationToken);
     }
@@ -88,7 +85,6 @@ public sealed class WorkflowRepository : IWorkflowRepository
     public async Task<Transition?> GetTransitionByIdAsync(int id, CancellationToken cancellationToken = default)
     {
         return await _context.Transitions
-            .Where(t => !t.IsDeleted)
             .FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
     }
 
@@ -97,7 +93,7 @@ public sealed class WorkflowRepository : IWorkflowRepository
     {
         return await _context.Transitions
             .AsNoTracking()
-            .Where(t => !t.IsDeleted && t.FromStateId == fromStateId)
+            .Where(t => t.FromStateId == fromStateId)
             .ToListAsync(cancellationToken);
     }
 
@@ -106,14 +102,14 @@ public sealed class WorkflowRepository : IWorkflowRepository
     {
         // Get all state IDs for this work type
         var stateIds = await _context.States
-            .Where(s => !s.IsDeleted && s.WorkTypeId == workTypeId)
+            .Where(s => s.WorkTypeId == workTypeId)
             .Select(s => s.Id)
             .ToListAsync(cancellationToken);
 
         // Get all transitions involving these states
         return await _context.Transitions
             .AsNoTracking()
-            .Where(t => !t.IsDeleted && stateIds.Contains(t.FromStateId))
+            .Where(t => stateIds.Contains(t.FromStateId))
             .ToListAsync(cancellationToken);
     }
 
@@ -121,8 +117,7 @@ public sealed class WorkflowRepository : IWorkflowRepository
     public async Task<bool> CanTransitionAsync(int fromStateId, int toStateId, int roleId, CancellationToken cancellationToken = default)
     {
         var transition = await _context.Transitions
-            .Where(t => !t.IsDeleted && 
-                        t.FromStateId == fromStateId && 
+            .Where(t => t.FromStateId == fromStateId &&
                         t.ToStateId == toStateId &&
                         !t.IsAutomatic &&
                         (t.AllowedRoleId == null || t.AllowedRoleId == roleId))

@@ -20,7 +20,6 @@ public sealed class ReviewerRepository : IReviewerRepository
     public async Task<Reviewer?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
         return await _context.Reviewers
-            .Where(r => !r.IsDeleted)
             .FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
     }
 
@@ -29,7 +28,7 @@ public sealed class ReviewerRepository : IReviewerRepository
     {
         return await _context.Reviewers
             .AsNoTracking()
-            .Where(r => !r.IsDeleted && r.IsActive)
+            .Where(r => r.IsActive)
             .OrderBy(r => r.FullName)
             .ToListAsync(cancellationToken);
     }
@@ -43,7 +42,7 @@ public sealed class ReviewerRepository : IReviewerRepository
         var term = searchTerm.ToLower();
         return await _context.Reviewers
             .AsNoTracking()
-            .Where(r => !r.IsDeleted && r.IsActive &&
+            .Where(r => r.IsActive &&
                         (r.FullName.ToLower().Contains(term) ||
                          (r.Organization != null && r.Organization.ToLower().Contains(term))))
             .OrderBy(r => r.FullName)

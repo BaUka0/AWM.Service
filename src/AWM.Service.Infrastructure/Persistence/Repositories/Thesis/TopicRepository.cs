@@ -22,21 +22,19 @@ public sealed class TopicRepository : ITopicRepository
     {
         return await _context.Topics
             .Include(t => t.Applications.Where(a => !a.IsDeleted))
-            .Where(t => !t.IsDeleted)
             .FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
     }
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<Topic>> GetByDepartmentAsync(
-        int departmentId, 
-        int academicYearId, 
+        int departmentId,
+        int academicYearId,
         CancellationToken cancellationToken = default)
     {
         return await _context.Topics
             .AsNoTracking()
             .Include(t => t.Applications.Where(a => !a.IsDeleted))
-            .Where(t => !t.IsDeleted && 
-                        t.DepartmentId == departmentId && 
+            .Where(t => t.DepartmentId == departmentId &&
                         t.AcademicYearId == academicYearId)
             .OrderByDescending(t => t.CreatedAt)
             .ToListAsync(cancellationToken);
@@ -44,15 +42,14 @@ public sealed class TopicRepository : ITopicRepository
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<Topic>> GetBySupervisorAsync(
-        int supervisorId, 
-        int academicYearId, 
+        int supervisorId,
+        int academicYearId,
         CancellationToken cancellationToken = default)
     {
         return await _context.Topics
             .AsNoTracking()
             .Include(t => t.Applications.Where(a => !a.IsDeleted))
-            .Where(t => !t.IsDeleted && 
-                        t.SupervisorId == supervisorId && 
+            .Where(t => t.SupervisorId == supervisorId &&
                         t.AcademicYearId == academicYearId)
             .OrderByDescending(t => t.CreatedAt)
             .ToListAsync(cancellationToken);
@@ -60,16 +57,15 @@ public sealed class TopicRepository : ITopicRepository
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<Topic>> GetAvailableForSelectionAsync(
-        int departmentId, 
-        int academicYearId, 
+        int departmentId,
+        int academicYearId,
         CancellationToken cancellationToken = default)
     {
         // Get approved, open topics with available spots
         var topics = await _context.Topics
             .AsNoTracking()
             .Include(t => t.Applications.Where(a => !a.IsDeleted))
-            .Where(t => !t.IsDeleted && 
-                        t.DepartmentId == departmentId && 
+            .Where(t => t.DepartmentId == departmentId &&
                         t.AcademicYearId == academicYearId &&
                         t.IsApproved &&
                         !t.IsClosed)
@@ -85,12 +81,12 @@ public sealed class TopicRepository : ITopicRepository
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<TopicApplication>> GetApplicationsByStudentIdAsync(
-        int studentId, 
+        int studentId,
         CancellationToken cancellationToken = default)
     {
         return await _context.TopicApplications
             .AsNoTracking()
-            .Where(a => !a.IsDeleted && a.StudentId == studentId)
+            .Where(a => a.StudentId == studentId)
             .OrderByDescending(a => a.AppliedAt)
             .ToListAsync(cancellationToken);
     }

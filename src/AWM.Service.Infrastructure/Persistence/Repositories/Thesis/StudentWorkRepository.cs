@@ -21,7 +21,6 @@ public sealed class StudentWorkRepository : IStudentWorkRepository
     {
         return await _context.StudentWorks
             .Include(w => w.Participants)
-            .Where(w => !w.IsDeleted)
             .FirstOrDefaultAsync(w => w.Id == id, cancellationToken);
     }
 
@@ -33,7 +32,6 @@ public sealed class StudentWorkRepository : IStudentWorkRepository
             .Include(w => w.Attachments)
             .Include(w => w.QualityChecks)
             .Include(w => w.WorkflowHistory)
-            .Where(w => !w.IsDeleted)
             .AsSplitQuery() // Split for performance with multiple collections
             .FirstOrDefaultAsync(w => w.Id == id, cancellationToken);
     }
@@ -46,8 +44,7 @@ public sealed class StudentWorkRepository : IStudentWorkRepository
         return await _context.StudentWorks
             .AsNoTracking()
             .Include(w => w.Participants)
-            .Where(w => !w.IsDeleted &&
-                        w.Participants.Any(p => p.StudentId == studentId))
+            .Where(w => w.Participants.Any(p => p.StudentId == studentId))
             .OrderByDescending(w => w.CreatedAt)
             .ToListAsync(cancellationToken);
     }
@@ -61,8 +58,7 @@ public sealed class StudentWorkRepository : IStudentWorkRepository
         return await _context.StudentWorks
             .AsNoTracking()
             .Include(w => w.Participants)
-            .Where(w => !w.IsDeleted &&
-                        w.DepartmentId == departmentId &&
+            .Where(w => w.DepartmentId == departmentId &&
                         w.AcademicYearId == academicYearId)
             .OrderByDescending(w => w.CreatedAt)
             .ToListAsync(cancellationToken);
@@ -77,8 +73,7 @@ public sealed class StudentWorkRepository : IStudentWorkRepository
         return await _context.StudentWorks
             .AsNoTracking()
             .Include(w => w.Participants)
-            .Where(w => !w.IsDeleted &&
-                        w.AcademicYearId == academicYearId &&
+            .Where(w => w.AcademicYearId == academicYearId &&
                         _context.Topics.Any(t => t.Id == w.TopicId &&
                                                  t.SupervisorId == supervisorId))
             .OrderByDescending(w => w.CreatedAt)
@@ -94,8 +89,7 @@ public sealed class StudentWorkRepository : IStudentWorkRepository
         return await _context.StudentWorks
             .AsNoTracking()
             .Include(w => w.Participants)
-            .Where(w => !w.IsDeleted &&
-                        w.CurrentStateId == stateId &&
+            .Where(w => w.CurrentStateId == stateId &&
                         w.DepartmentId == departmentId)
             .OrderByDescending(w => w.LastModifiedAt)
             .ToListAsync(cancellationToken);
@@ -112,8 +106,7 @@ public sealed class StudentWorkRepository : IStudentWorkRepository
         var query = _context.StudentWorks
             .AsNoTracking()
             .Include(w => w.Participants)
-            .Where(w => !w.IsDeleted &&
-                        w.DepartmentId == departmentId &&
+            .Where(w => w.DepartmentId == departmentId &&
                         w.AcademicYearId == academicYearId);
 
         var totalCount = await query.CountAsync(cancellationToken);
@@ -138,8 +131,7 @@ public sealed class StudentWorkRepository : IStudentWorkRepository
         var query = _context.StudentWorks
             .AsNoTracking()
             .Include(w => w.Participants)
-            .Where(w => !w.IsDeleted &&
-                        w.CurrentStateId == stateId &&
+            .Where(w => w.CurrentStateId == stateId &&
                         w.DepartmentId == departmentId);
 
         var totalCount = await query.CountAsync(cancellationToken);

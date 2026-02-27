@@ -20,7 +20,6 @@ public sealed class SupervisorReviewRepository : ISupervisorReviewRepository
     public async Task<SupervisorReview?> GetByIdAsync(long id, CancellationToken cancellationToken = default)
     {
         return await _context.SupervisorReviews
-            .Where(r => !r.IsDeleted)
             .FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
     }
 
@@ -28,7 +27,7 @@ public sealed class SupervisorReviewRepository : ISupervisorReviewRepository
     public async Task<SupervisorReview?> GetByWorkIdAsync(long workId, CancellationToken cancellationToken = default)
     {
         return await _context.SupervisorReviews
-            .Where(r => !r.IsDeleted && r.WorkId == workId)
+            .Where(r => r.WorkId == workId)
             .FirstOrDefaultAsync(cancellationToken);
     }
 
@@ -37,7 +36,7 @@ public sealed class SupervisorReviewRepository : ISupervisorReviewRepository
     {
         return await _context.SupervisorReviews
             .AsNoTracking()
-            .Where(r => !r.IsDeleted && r.SupervisorId == supervisorId)
+            .Where(r => r.SupervisorId == supervisorId)
             .OrderByDescending(r => r.CreatedAt)
             .ToListAsync(cancellationToken);
     }

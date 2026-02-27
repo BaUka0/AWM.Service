@@ -21,7 +21,6 @@ public sealed class ExpertRepository : IExpertRepository
     public async Task<Expert?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
         return await _context.Experts
-            .Where(e => !e.IsDeleted)
             .FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
     }
 
@@ -33,8 +32,7 @@ public sealed class ExpertRepository : IExpertRepository
     {
         return await _context.Experts
             .AsNoTracking()
-            .Where(e => !e.IsDeleted &&
-                        e.IsActive &&
+            .Where(e => e.IsActive &&
                         e.DepartmentId == departmentId &&
                         e.ExpertiseType == expertiseType)
             .ToListAsync(cancellationToken);
@@ -45,7 +43,7 @@ public sealed class ExpertRepository : IExpertRepository
     {
         return await _context.Experts
             .AsNoTracking()
-            .Where(e => !e.IsDeleted && e.IsActive && e.DepartmentId == departmentId)
+            .Where(e => e.IsActive && e.DepartmentId == departmentId)
             .ToListAsync(cancellationToken);
     }
 
