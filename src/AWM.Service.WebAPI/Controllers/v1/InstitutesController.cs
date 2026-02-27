@@ -1,10 +1,10 @@
 namespace AWM.Service.WebAPI.Controllers.v1;
 
-using AWM.Service.Application.Features.Org.Commands.Institutes.CreateInstitute;
-using AWM.Service.Application.Features.Org.Commands.Institutes.DeleteInstitute;
-using AWM.Service.Application.Features.Org.Commands.Institutes.UpdateInstitute;
-using AWM.Service.Application.Features.Org.Queries.Institutes.GetAllInstitutes;
-using AWM.Service.Application.Features.Org.Queries.Institutes.GetInstituteById;
+using AWM.Service.Application.Features.Org.Institutes.Commands.CreateInstitute;
+using AWM.Service.Application.Features.Org.Institutes.Commands.DeleteInstitute;
+using AWM.Service.Application.Features.Org.Institutes.Commands.UpdateInstitute;
+using AWM.Service.Application.Features.Org.Institutes.Queries.GetAllInstitutes;
+using AWM.Service.Application.Features.Org.Institutes.Queries.GetInstituteById;
 using AWM.Service.Domain.Auth.Enums;
 using AWM.Service.WebAPI.Authorization;
 using AWM.Service.WebAPI.Common.Contracts.Requests.Institutes;

@@ -9,6 +9,7 @@ using Microsoft.OpenApi.Models;
 using AWM.Service.WebAPI.Authorization;
 using AWM.Service.WebAPI.Common.Middleware;
 using FluentValidation;
+using AWM.Service.Application.Common.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -120,7 +121,7 @@ builder.Services.AddPermissionPolicies();
 
 // Add Application Services
 builder.Services.AddScoped<AWM.Service.Domain.Wf.Services.IStateMachine, AWM.Service.Application.Features.Workflow.Services.WorkflowService>();
-builder.Services.AddScoped<AWM.Service.Domain.CommonDomain.Services.IPeriodValidationService, AWM.Service.Application.Features.Common.Services.PeriodValidationService>();
+builder.Services.AddScoped<AWM.Service.Domain.CommonDomain.Services.IPeriodValidationService, PeriodValidationService>();
 
 var app = builder.Build();
 

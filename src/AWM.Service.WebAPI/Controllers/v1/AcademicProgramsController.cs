@@ -1,8 +1,8 @@
 namespace AWM.Service.WebAPI.Controllers.v1;
 
-using AWM.Service.Application.Features.Edu.Commands.AcademicPrograms.CreateAcademicProgram;
-using AWM.Service.Application.Features.Edu.Commands.AcademicPrograms.UpdateAcademicProgram;
-using AWM.Service.Application.Features.Edu.Queries.AcademicPrograms.GetAcademicPrograms;
+using AWM.Service.Application.Features.Edu.AcademicPrograms.Commands.CreateAcademicProgram;
+using AWM.Service.Application.Features.Edu.AcademicPrograms.Commands.UpdateAcademicProgram;
+using AWM.Service.Application.Features.Edu.AcademicPrograms.Queries.GetAcademicPrograms;
 using AWM.Service.WebAPI.Common.Contracts.Requests.Edu;
 using AWM.Service.WebAPI.Common.Contracts.Responses.Edu;
 using AWM.Service.Domain.Auth.Enums;

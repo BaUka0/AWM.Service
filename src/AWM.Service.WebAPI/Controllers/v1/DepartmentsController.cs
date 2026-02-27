@@ -1,9 +1,9 @@
 namespace AWM.Service.WebAPI.Controllers.v1;
 
-using AWM.Service.Application.Features.Org.Commands.Departments.CreateDepartment;
-using AWM.Service.Application.Features.Org.Commands.Departments.DeleteDepartment;
-using AWM.Service.Application.Features.Org.Commands.Departments.UpdateDepartment;
-using AWM.Service.Application.Features.Org.Queries.Departments.GetDepartmentsByInstitute;
+using AWM.Service.Application.Features.Org.Departments.Commands.CreateDepartment;
+using AWM.Service.Application.Features.Org.Departments.Commands.DeleteDepartment;
+using AWM.Service.Application.Features.Org.Departments.Commands.UpdateDepartment;
+using AWM.Service.Application.Features.Org.Departments.Queries.GetDepartmentsByInstitute;
 using AWM.Service.Domain.Auth.Enums;
 using AWM.Service.WebAPI.Authorization;
 using AWM.Service.WebAPI.Common.Contracts.Requests.Departments;

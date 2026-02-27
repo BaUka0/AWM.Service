@@ -1,9 +1,9 @@
 namespace AWM.Service.WebAPI.Controllers.v1;
 
-using AWM.Service.Application.Features.Common.Commands.Periods.CreatePeriod;
-using AWM.Service.Application.Features.Common.Commands.Periods.UpdatePeriod;
-using AWM.Service.Application.Features.Common.Queries.Periods.GetActivePeriod;
-using AWM.Service.Application.Features.Common.Queries.Periods.GetPeriodsByDepartment;
+using AWM.Service.Application.Features.Common.Periods.Commands.CreatePeriod;
+using AWM.Service.Application.Features.Common.Periods.Commands.UpdatePeriod;
+using AWM.Service.Application.Features.Common.Periods.Queries.GetActivePeriod;
+using AWM.Service.Application.Features.Common.Periods.Queries.GetPeriodsByDepartment;
 using AWM.Service.Domain.Auth.Enums;
 using AWM.Service.Domain.CommonDomain.Enums;
 using AWM.Service.WebAPI.Authorization;

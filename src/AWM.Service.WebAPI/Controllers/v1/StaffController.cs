@@ -1,8 +1,8 @@
 namespace AWM.Service.WebAPI.Controllers.v1;
 
-using AWM.Service.Application.Features.Edu.Commands.Staff.CreateStaff;
-using AWM.Service.Application.Features.Edu.Commands.Staff.UpdateStaff;
-using AWM.Service.Application.Features.Edu.Queries.Staff.GetStaffByDepartment;
+using AWM.Service.Application.Features.Edu.Staff.Commands.CreateStaff;
+using AWM.Service.Application.Features.Edu.Staff.Commands.UpdateStaff;
+using AWM.Service.Application.Features.Edu.Staff.Queries.GetStaffByDepartment;
 using AWM.Service.Domain.Auth.Enums;
 using AWM.Service.WebAPI.Authorization;
 using AWM.Service.WebAPI.Common.Contracts.Requests.Edu;

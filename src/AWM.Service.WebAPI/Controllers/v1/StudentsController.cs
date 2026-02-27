@@ -1,9 +1,9 @@
 namespace AWM.Service.WebAPI.Controllers.v1;
 
-using AWM.Service.Application.Features.Edu.Commands.Students.CreateStudent;
-using AWM.Service.Application.Features.Edu.Commands.Students.UpdateStudent;
-using AWM.Service.Application.Features.Edu.Queries.Students.GetStudentById;
-using AWM.Service.Application.Features.Edu.Queries.Students.GetStudentsByProgram;
+using AWM.Service.Application.Features.Edu.Students.Commands.CreateStudent;
+using AWM.Service.Application.Features.Edu.Students.Commands.UpdateStudent;
+using AWM.Service.Application.Features.Edu.Students.Queries.GetStudentById;
+using AWM.Service.Application.Features.Edu.Students.Queries.GetStudentsByProgram;
 using AWM.Service.Domain.Auth.Enums;
 using AWM.Service.WebAPI.Authorization;
 using AWM.Service.WebAPI.Common.Contracts.Requests.Edu;

@@ -1,7 +1,7 @@
 namespace AWM.Service.WebAPI.Controllers.v1;
 
-using AWM.Service.Application.Features.Edu.Commands.DegreeLevels.CreateDegreeLevel;
-using AWM.Service.Application.Features.Edu.Queries.DegreeLevels.GetDegreeLevels;
+using AWM.Service.Application.Features.Edu.DegreeLevels.Commands.CreateDegreeLevel;
+using AWM.Service.Application.Features.Edu.DegreeLevels.Queries.GetDegreeLevels;
 using AWM.Service.WebAPI.Common.Contracts.Requests.Edu;
 using AWM.Service.WebAPI.Common.Contracts.Responses.Edu;
 using AWM.Service.Domain.Auth.Enums;
