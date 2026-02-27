@@ -8,6 +8,7 @@ using AWM.Service.Domain.Common;
 using AWM.Service.Domain.Repositories;
 using AWM.Service.WebAPI.Authorization;
 using AWM.Service.WebAPI.Common.Contracts.Responses.Common;
+using Mapster;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -65,23 +66,7 @@ public sealed class NotificationsController : BaseController
         if (result.IsFailed)
             return HandleResultError(result.Error);
 
-        var items = result.Value
-            .Select(dto => new NotificationResponse
-            {
-                Id = dto.Id,
-                UserId = dto.UserId,
-                TemplateId = dto.TemplateId,
-                Title = dto.Title,
-                Body = dto.Body,
-                RelatedEntityType = dto.RelatedEntityType,
-                RelatedEntityId = dto.RelatedEntityId,
-                IsRead = dto.IsRead,
-                CreatedAt = dto.CreatedAt,
-                CreatedBy = dto.CreatedBy,
-                LastModifiedAt = dto.LastModifiedAt,
-                LastModifiedBy = dto.LastModifiedBy
-            })
-            .ToList();
+        var items = result.Value.Adapt<List<NotificationResponse>>();
 
         var unreadCount = items.Count(n => !n.IsRead);
 

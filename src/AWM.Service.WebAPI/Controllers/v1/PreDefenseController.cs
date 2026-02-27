@@ -10,6 +10,7 @@ using AWM.Service.Application.Features.Defense.PreDefense.Queries.GetPreDefenseS
 using AWM.Service.Domain.Auth.Enums;
 using AWM.Service.WebAPI.Authorization;
 using AWM.Service.WebAPI.Common.Contracts.Requests.Defense;
+using Mapster;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -91,13 +92,7 @@ public class PreDefenseController : BaseController
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> Schedule(long workId, [FromBody] SchedulePreDefenseRequest request)
     {
-        var command = new SchedulePreDefenseCommand
-        {
-            CommissionId = request.CommissionId,
-            WorkId = workId,
-            DefenseDate = request.DefenseDate,
-            Location = request.Location
-        };
+        var command = request.Adapt<SchedulePreDefenseCommand>() with { WorkId = workId };
 
         var result = await _sender.Send(command);
 
@@ -123,12 +118,7 @@ public class PreDefenseController : BaseController
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> RecordAttendance(long attemptId, [FromBody] RecordAttendanceRequest request)
     {
-        var command = new RecordAttendanceCommand
-        {
-            AttemptId = attemptId,
-            AttendanceStatus = request.AttendanceStatus,
-            IsExcused = request.IsExcused
-        };
+        var command = request.Adapt<RecordAttendanceCommand>() with { AttemptId = attemptId };
 
         var result = await _sender.Send(command);
 
@@ -155,14 +145,7 @@ public class PreDefenseController : BaseController
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> SubmitGrade(long scheduleId, [FromBody] SubmitPreDefenseGradeRequest request)
     {
-        var command = new SubmitPreDefenseGradeCommand
-        {
-            ScheduleId = scheduleId,
-            MemberId = request.MemberId,
-            CriteriaId = request.CriteriaId,
-            Score = request.Score,
-            Comment = request.Comment
-        };
+        var command = request.Adapt<SubmitPreDefenseGradeCommand>() with { ScheduleId = scheduleId };
 
         var result = await _sender.Send(command);
 
@@ -189,12 +172,7 @@ public class PreDefenseController : BaseController
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> Finalize(long attemptId, [FromBody] FinalizePreDefenseRequest request)
     {
-        var command = new FinalizePreDefenseCommand
-        {
-            AttemptId = attemptId,
-            AverageScore = request.AverageScore,
-            IsPassed = request.IsPassed
-        };
+        var command = request.Adapt<FinalizePreDefenseCommand>() with { AttemptId = attemptId };
 
         var result = await _sender.Send(command);
 

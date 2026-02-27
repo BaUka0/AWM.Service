@@ -13,6 +13,7 @@ using AWM.Service.Domain.Thesis.Enums;
 using AWM.Service.WebAPI.Authorization;
 using AWM.Service.WebAPI.Common.Contracts.Requests.Thesis;
 using AWM.Service.WebAPI.Common.Contracts.Responses.Thesis;
+using Mapster;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -50,11 +51,7 @@ public class TopicApplicationsController : BaseController
         [FromBody] CreateApplicationRequest request,
         CancellationToken cancellationToken = default)
     {
-        var command = new CreateApplicationCommand
-        {
-            TopicId = request.TopicId,
-            MotivationLetter = request.MotivationLetter
-        };
+        var command = request.Adapt<CreateApplicationCommand>();
 
         var result = await _sender.Send(command, cancellationToken);
 
@@ -94,7 +91,7 @@ public class TopicApplicationsController : BaseController
         if (result.IsFailed)
             return HandleResultError(result.Error);
 
-        var response = result.Value.Select(MapToResponse).ToList();
+        var response = result.Value.Adapt<IReadOnlyList<TopicApplicationResponse>>();
         return Ok(response);
     }
 
@@ -124,7 +121,7 @@ public class TopicApplicationsController : BaseController
         if (result.IsFailed)
             return HandleResultError(result.Error);
 
-        var response = result.Value.Select(MapToResponse).ToList();
+        var response = result.Value.Adapt<IReadOnlyList<TopicApplicationResponse>>();
         return Ok(response);
     }
 
@@ -179,11 +176,7 @@ public class TopicApplicationsController : BaseController
         [FromBody] RejectApplicationRequest request,
         CancellationToken cancellationToken = default)
     {
-        var command = new RejectApplicationCommand
-        {
-            ApplicationId = applicationId,
-            RejectReason = request.RejectReason
-        };
+        var command = request.Adapt<RejectApplicationCommand>() with { ApplicationId = applicationId };
 
         var result = await _sender.Send(command, cancellationToken);
 
@@ -224,21 +217,4 @@ public class TopicApplicationsController : BaseController
         return NoContent();
     }
 
-    private static TopicApplicationResponse MapToResponse(TopicApplicationDto dto)
-    {
-        return new TopicApplicationResponse
-        {
-            Id = dto.Id,
-            TopicId = dto.TopicId,
-            StudentId = dto.StudentId,
-            MotivationLetter = dto.MotivationLetter,
-            AppliedAt = dto.AppliedAt,
-            Status = dto.Status.ToString(),
-            IsPending = dto.IsPending,
-            IsAccepted = dto.IsAccepted,
-            ReviewedAt = dto.ReviewedAt,
-            ReviewedBy = dto.ReviewedBy,
-            ReviewComment = dto.ReviewComment
-        };
-    }
 }

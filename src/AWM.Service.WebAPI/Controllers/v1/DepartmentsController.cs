@@ -8,6 +8,7 @@ using AWM.Service.Domain.Auth.Enums;
 using AWM.Service.WebAPI.Authorization;
 using AWM.Service.WebAPI.Common.Contracts.Requests.Departments;
 using AWM.Service.WebAPI.Common.Contracts.Responses.Org;
+using Mapster;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -53,19 +54,7 @@ public sealed class DepartmentsController : BaseController
             return HandleResultError(result.Error);
         }
 
-        var response = result.Value
-            .Select(dto => new DepartmentResponse
-            {
-                Id = dto.Id,
-                InstituteId = dto.InstituteId,
-                Name = dto.Name,
-                Code = dto.Code,
-                CreatedAt = dto.CreatedAt,
-                CreatedBy = dto.CreatedBy,
-                LastModifiedAt = dto.LastModifiedAt,
-                LastModifiedBy = dto.LastModifiedBy
-            })
-            .ToList();
+        var response = result.Value.Adapt<IReadOnlyList<DepartmentResponse>>();
 
         return Ok(response);
     }
@@ -86,12 +75,7 @@ public sealed class DepartmentsController : BaseController
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> Create([FromRoute] int instituteId, [FromBody] CreateDepartmentRequest request, CancellationToken cancellationToken = default)
     {
-        var command = new CreateDepartmentCommand
-        {
-            InstituteId = instituteId,
-            Name = request.Name,
-            Code = request.Code
-        };
+        var command = request.Adapt<CreateDepartmentCommand>() with { InstituteId = instituteId };
 
         var result = await _sender.Send(command, cancellationToken);
 
@@ -121,12 +105,7 @@ public sealed class DepartmentsController : BaseController
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> Update(int departmentId, [FromBody] UpdateDepartmentRequest request, CancellationToken cancellationToken = default)
     {
-        var command = new UpdateDepartmentCommand
-        {
-            DepartmentId = departmentId,
-            Name = request.Name,
-            Code = request.Code
-        };
+        var command = request.Adapt<UpdateDepartmentCommand>() with { DepartmentId = departmentId };
 
         var result = await _sender.Send(command, cancellationToken);
 

@@ -10,6 +10,7 @@ using AWM.Service.Domain.Auth.Enums;
 using AWM.Service.WebAPI.Authorization;
 using AWM.Service.WebAPI.Common.Contracts.Requests.Defense;
 using AWM.Service.WebAPI.Common.Contracts.Responses.Defense;
+using Mapster;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -48,17 +49,7 @@ public class DefenseScheduleController : BaseController
         if (result.IsFailed)
             return HandleResultError(result.Error);
 
-        var response = result.Value.Select(dto => new ScheduleResponse
-        {
-            Id = dto.Id,
-            CommissionId = dto.CommissionId,
-            WorkId = dto.WorkId,
-            DefenseDate = dto.DefenseDate,
-            Location = dto.Location,
-            AverageScore = dto.AverageScore,
-            GradeCount = dto.GradeCount,
-            CreatedAt = dto.CreatedAt
-        }).ToList();
+        var response = result.Value.Adapt<IReadOnlyList<ScheduleResponse>>();
 
         return Ok(response);
     }
@@ -83,27 +74,7 @@ public class DefenseScheduleController : BaseController
         if (result.IsFailed)
             return HandleResultError(result.Error);
 
-        var dto = result.Value;
-        var response = new DefenseSlotResponse
-        {
-            Id = dto.Id,
-            CommissionId = dto.CommissionId,
-            WorkId = dto.WorkId,
-            DefenseDate = dto.DefenseDate,
-            Location = dto.Location,
-            AverageScore = dto.AverageScore,
-            Grades = dto.Grades.Select(g => new GradeResponse
-            {
-                Id = g.Id,
-                ScheduleId = g.ScheduleId,
-                MemberId = g.MemberId,
-                CriteriaId = g.CriteriaId,
-                Score = g.Score,
-                Comment = g.Comment,
-                GradedAt = g.GradedAt
-            }).ToList(),
-            CreatedAt = dto.CreatedAt
-        };
+        var response = result.Value.Adapt<DefenseSlotResponse>();
 
         return Ok(response);
     }
@@ -123,12 +94,7 @@ public class DefenseScheduleController : BaseController
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> Create([FromBody] CreateDefenseScheduleRequest request)
     {
-        var command = new CreateDefenseScheduleCommand
-        {
-            CommissionId = request.CommissionId,
-            DefenseDate = request.DefenseDate,
-            Location = request.Location
-        };
+        var command = request.Adapt<CreateDefenseScheduleCommand>();
 
         var result = await _sender.Send(command);
 
@@ -154,12 +120,7 @@ public class DefenseScheduleController : BaseController
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> Update(long scheduleId, [FromBody] UpdateDefenseScheduleRequest request)
     {
-        var command = new UpdateDefenseScheduleCommand
-        {
-            ScheduleId = scheduleId,
-            DefenseDate = request.DefenseDate,
-            Location = request.Location
-        };
+        var command = request.Adapt<UpdateDefenseScheduleCommand>() with { ScheduleId = scheduleId };
 
         var result = await _sender.Send(command);
 
@@ -186,11 +147,7 @@ public class DefenseScheduleController : BaseController
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> AssignWork(long scheduleId, [FromBody] AssignWorkToSlotRequest request)
     {
-        var command = new AssignWorkToSlotCommand
-        {
-            ScheduleId = scheduleId,
-            WorkId = request.WorkId
-        };
+        var command = request.Adapt<AssignWorkToSlotCommand>() with { ScheduleId = scheduleId };
 
         var result = await _sender.Send(command);
 

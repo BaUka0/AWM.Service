@@ -9,6 +9,7 @@ using AWM.Service.Domain.Auth.Enums;
 using AWM.Service.WebAPI.Authorization;
 using AWM.Service.WebAPI.Common.Contracts.Requests.Institutes;
 using AWM.Service.WebAPI.Common.Contracts.Responses.Org;
+using Mapster;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -58,29 +59,7 @@ public sealed class InstitutesController : BaseController
             return HandleResultError(result.Error);
         }
 
-        var response = result.Value
-            .Select(dto => new InstituteResponse
-            {
-                Id = dto.Id,
-                UniversityId = dto.UniversityId,
-                Name = dto.Name,
-                CreatedAt = dto.CreatedAt,
-                CreatedBy = dto.CreatedBy,
-                LastModifiedAt = dto.LastModifiedAt,
-                LastModifiedBy = dto.LastModifiedBy,
-                Departments = dto.Departments?.Select(d => new DepartmentResponse
-                {
-                    Id = d.Id,
-                    InstituteId = d.InstituteId,
-                    Name = d.Name,
-                    Code = d.Code,
-                    CreatedAt = d.CreatedAt,
-                    CreatedBy = d.CreatedBy,
-                    LastModifiedAt = d.LastModifiedAt,
-                    LastModifiedBy = d.LastModifiedBy
-                }).ToList()
-            })
-            .ToList();
+        var response = result.Value.Adapt<IReadOnlyList<InstituteResponse>>();
 
         return Ok(response);
     }
@@ -115,28 +94,7 @@ public sealed class InstitutesController : BaseController
             return HandleResultError(result.Error);
         }
 
-        var dto = result.Value;
-        var response = new InstituteResponse
-        {
-            Id = dto.Id,
-            UniversityId = dto.UniversityId,
-            Name = dto.Name,
-            CreatedAt = dto.CreatedAt,
-            CreatedBy = dto.CreatedBy,
-            LastModifiedAt = dto.LastModifiedAt,
-            LastModifiedBy = dto.LastModifiedBy,
-            Departments = dto.Departments?.Select(d => new DepartmentResponse
-            {
-                Id = d.Id,
-                InstituteId = d.InstituteId,
-                Name = d.Name,
-                Code = d.Code,
-                CreatedAt = d.CreatedAt,
-                CreatedBy = d.CreatedBy,
-                LastModifiedAt = d.LastModifiedAt,
-                LastModifiedBy = d.LastModifiedBy
-            }).ToList()
-        };
+        var response = result.Value.Adapt<InstituteResponse>();
 
         return Ok(response);
     }
@@ -155,11 +113,7 @@ public sealed class InstitutesController : BaseController
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> Create([FromBody] CreateInstituteRequest request, CancellationToken cancellationToken = default)
     {
-        var command = new CreateInstituteCommand
-        {
-            UniversityId = request.UniversityId,
-            Name = request.Name
-        };
+        var command = request.Adapt<CreateInstituteCommand>();
 
         var result = await _sender.Send(command, cancellationToken);
 
@@ -186,11 +140,7 @@ public sealed class InstitutesController : BaseController
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> Update(int instituteId, [FromBody] UpdateInstituteRequest request, CancellationToken cancellationToken = default)
     {
-        var command = new UpdateInstituteCommand
-        {
-            InstituteId = instituteId,
-            Name = request.Name
-        };
+        var command = request.Adapt<UpdateInstituteCommand>() with { InstituteId = instituteId };
 
         var result = await _sender.Send(command, cancellationToken);
 

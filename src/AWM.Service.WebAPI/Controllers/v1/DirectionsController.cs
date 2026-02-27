@@ -13,6 +13,7 @@ using AWM.Service.WebAPI.Common.Contracts.Requests.Thesis;
 using AWM.Service.WebAPI.Common.Contracts.Responses.Thesis;
 using AWM.Service.Domain.Auth.Enums;
 using AWM.Service.WebAPI.Authorization;
+using Mapster;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -49,15 +50,7 @@ public sealed class DirectionsController : BaseController
         [FromQuery] GetDirectionsByDepartmentRequest request,
         CancellationToken cancellationToken = default)
     {
-        var query = new GetDirectionsByDepartmentQuery
-        {
-            DepartmentId = request.DepartmentId,
-            AcademicYearId = request.AcademicYearId,
-            WorkTypeId = request.WorkTypeId,
-            StateId = request.StateId,
-            SupervisorId = request.SupervisorId,
-            IncludeDeleted = request.IncludeDeleted
-        };
+        var query = request.Adapt<GetDirectionsByDepartmentQuery>();
 
         var result = await _sender.Send(query, cancellationToken);
 
@@ -66,25 +59,7 @@ public sealed class DirectionsController : BaseController
             return HandleResultError(result.Error);
         }
 
-        var response = result.Value
-            .Select(dto => new DirectionResponse
-            {
-                Id = dto.Id,
-                DepartmentId = dto.DepartmentId,
-                SupervisorId = dto.SupervisorId,
-                AcademicYearId = dto.AcademicYearId,
-                WorkTypeId = dto.WorkTypeId,
-                TitleRu = dto.TitleRu,
-                TitleKz = dto.TitleKz,
-                TitleEn = dto.TitleEn,
-                CurrentStateId = dto.CurrentStateId,
-                SubmittedAt = dto.SubmittedAt,
-                ReviewedAt = dto.ReviewedAt,
-                ReviewedBy = dto.ReviewedBy,
-                CreatedAt = dto.CreatedAt,
-                IsDeleted = dto.IsDeleted
-            })
-            .ToList();
+        var response = result.Value.Adapt<IReadOnlyList<DirectionResponse>>();
 
         return Ok(response);
     }
@@ -128,25 +103,7 @@ public sealed class DirectionsController : BaseController
             return HandleResultError(result.Error);
         }
 
-        var response = result.Value
-            .Select(dto => new DirectionResponse
-            {
-                Id = dto.Id,
-                DepartmentId = dto.DepartmentId,
-                SupervisorId = dto.SupervisorId,
-                AcademicYearId = dto.AcademicYearId,
-                WorkTypeId = dto.WorkTypeId,
-                TitleRu = dto.TitleRu,
-                TitleKz = dto.TitleKz,
-                TitleEn = dto.TitleEn,
-                CurrentStateId = dto.CurrentStateId,
-                SubmittedAt = dto.SubmittedAt,
-                ReviewedAt = dto.ReviewedAt,
-                ReviewedBy = dto.ReviewedBy,
-                CreatedAt = dto.CreatedAt,
-                IsDeleted = dto.IsDeleted
-            })
-            .ToList();
+        var response = result.Value.Adapt<IReadOnlyList<DirectionResponse>>();
 
         return Ok(response);
     }
@@ -181,31 +138,7 @@ public sealed class DirectionsController : BaseController
             return HandleResultError(result.Error);
         }
 
-        var response = new DirectionDetailResponse
-        {
-            Id = result.Value.Id,
-            DepartmentId = result.Value.DepartmentId,
-            SupervisorId = result.Value.SupervisorId,
-            AcademicYearId = result.Value.AcademicYearId,
-            WorkTypeId = result.Value.WorkTypeId,
-            TitleRu = result.Value.TitleRu,
-            TitleKz = result.Value.TitleKz,
-            TitleEn = result.Value.TitleEn,
-            Description = result.Value.Description,
-            CurrentStateId = result.Value.CurrentStateId,
-            SubmittedAt = result.Value.SubmittedAt,
-            ReviewedAt = result.Value.ReviewedAt,
-            ReviewedBy = result.Value.ReviewedBy,
-            ReviewComment = result.Value.ReviewComment,
-            CreatedAt = result.Value.CreatedAt,
-            CreatedBy = result.Value.CreatedBy,
-            LastModifiedAt = result.Value.LastModifiedAt,
-            LastModifiedBy = result.Value.LastModifiedBy,
-            IsDeleted = result.Value.IsDeleted,
-            DeletedAt = result.Value.DeletedAt,
-            DeletedBy = result.Value.DeletedBy,
-            TopicsCount = result.Value.TopicsCount
-        };
+        var response = result.Value.Adapt<DirectionDetailResponse>();
 
         return Ok(response);
     }
@@ -230,17 +163,7 @@ public sealed class DirectionsController : BaseController
         [FromBody] CreateDirectionRequest request,
         CancellationToken cancellationToken = default)
     {
-        var command = new CreateDirectionCommand
-        {
-            DepartmentId = request.DepartmentId,
-            SupervisorId = request.SupervisorId,
-            AcademicYearId = request.AcademicYearId,
-            WorkTypeId = request.WorkTypeId,
-            TitleRu = request.TitleRu,
-            TitleKz = request.TitleKz,
-            TitleEn = request.TitleEn,
-            Description = request.Description
-        };
+        var command = request.Adapt<CreateDirectionCommand>();
 
         var result = await _sender.Send(command, cancellationToken);
 
@@ -273,14 +196,7 @@ public sealed class DirectionsController : BaseController
         [FromBody] UpdateDirectionRequest request,
         CancellationToken cancellationToken = default)
     {
-        var command = new UpdateDirectionCommand
-        {
-            Id = id,
-            TitleRu = request.TitleRu,
-            TitleKz = request.TitleKz,
-            TitleEn = request.TitleEn,
-            Description = request.Description
-        };
+        var command = request.Adapt<UpdateDirectionCommand>() with { Id = id };
 
         var result = await _sender.Send(command, cancellationToken);
 

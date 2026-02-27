@@ -7,6 +7,7 @@ using AWM.Service.Domain.Auth.Enums;
 using AWM.Service.WebAPI.Authorization;
 using AWM.Service.WebAPI.Common.Contracts.Requests.Defense;
 using AWM.Service.WebAPI.Common.Contracts.Responses.Defense;
+using Mapster;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -47,18 +48,7 @@ public class ProtocolsController : BaseController
             return HandleResultError(result.Error);
 
         var dto = result.Value;
-        var response = new ProtocolResponse
-        {
-            Id = dto.Id,
-            ScheduleId = dto.ScheduleId,
-            CommissionId = dto.CommissionId,
-            SessionDate = dto.SessionDate,
-            DocumentPath = dto.DocumentPath,
-            IsFinalized = dto.IsFinalized,
-            FinalizedBy = dto.FinalizedBy,
-            FinalizedAt = dto.FinalizedAt,
-            CreatedAt = dto.CreatedAt
-        };
+        var response = dto.Adapt<ProtocolResponse>();
 
         return Ok(response);
     }
@@ -79,11 +69,7 @@ public class ProtocolsController : BaseController
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> Generate([FromBody] GenerateProtocolRequest request)
     {
-        var command = new GenerateProtocolCommand
-        {
-            ScheduleId = request.ScheduleId,
-            CommissionId = request.CommissionId
-        };
+        var command = request.Adapt<GenerateProtocolCommand>();
 
         var result = await _sender.Send(command);
 

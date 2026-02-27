@@ -9,6 +9,7 @@ using AWM.Service.Domain.Auth.Enums;
 using AWM.Service.Domain.Thesis.Enums;
 using AWM.Service.WebAPI.Authorization;
 using AWM.Service.WebAPI.Common.Contracts.Requests.Thesis;
+using Mapster;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -101,12 +102,7 @@ public class QualityChecksController : BaseController
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> Submit(long workId, [FromBody] SubmitForCheckRequest request)
     {
-        var command = new SubmitForCheckCommand
-        {
-            WorkId = workId,
-            CheckType = request.CheckType,
-            Comment = request.Comment
-        };
+        var command = request.Adapt<SubmitForCheckCommand>() with { WorkId = workId };
 
         var result = await _sender.Send(command);
 
@@ -134,15 +130,7 @@ public class QualityChecksController : BaseController
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> RecordResult(long workId, long checkId, [FromBody] RecordCheckResultRequest request)
     {
-        var command = new RecordCheckResultCommand
-        {
-            WorkId = workId,
-            CheckId = checkId,
-            IsPassed = request.IsPassed,
-            ResultValue = request.ResultValue,
-            Comment = request.Comment,
-            DocumentPath = request.DocumentPath
-        };
+        var command = request.Adapt<RecordCheckResultCommand>() with { WorkId = workId, CheckId = checkId };
 
         var result = await _sender.Send(command);
 

@@ -7,6 +7,7 @@ using AWM.Service.Domain.Auth.Enums;
 using AWM.Service.WebAPI.Authorization;
 using AWM.Service.WebAPI.Common.Contracts.Requests.Thesis;
 using AWM.Service.WebAPI.Common.Contracts.Responses.Thesis;
+using Mapster;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -51,33 +52,10 @@ public sealed class ReviewsController : BaseController
         SupervisorReviewResponse? supervisorResponse = null;
         if (dto.SupervisorReview is not null)
         {
-            supervisorResponse = new SupervisorReviewResponse
-            {
-                Id = dto.SupervisorReview.Id,
-                WorkId = dto.SupervisorReview.WorkId,
-                SupervisorId = dto.SupervisorReview.SupervisorId,
-                ReviewText = dto.SupervisorReview.ReviewText,
-                FileStoragePath = dto.SupervisorReview.FileStoragePath,
-                CreatedAt = dto.SupervisorReview.CreatedAt,
-                CreatedBy = dto.SupervisorReview.CreatedBy,
-                LastModifiedAt = dto.SupervisorReview.LastModifiedAt,
-                LastModifiedBy = dto.SupervisorReview.LastModifiedBy
-            };
+            supervisorResponse = dto.SupervisorReview.Adapt<SupervisorReviewResponse>();
         }
 
-        var reviewResponses = dto.Reviews.Select(r => new ReviewResponse
-        {
-            Id = r.Id,
-            WorkId = r.WorkId,
-            ReviewerId = r.ReviewerId,
-            ReviewText = r.ReviewText,
-            FileStoragePath = r.FileStoragePath,
-            IsUploaded = r.IsUploaded,
-            CreatedAt = r.CreatedAt,
-            CreatedBy = r.CreatedBy,
-            LastModifiedAt = r.LastModifiedAt,
-            LastModifiedBy = r.LastModifiedBy
-        }).ToList();
+        var reviewResponses = dto.Reviews.Adapt<List<ReviewResponse>>();
 
         var response = new WorkReviewsResponse
         {
@@ -108,12 +86,7 @@ public sealed class ReviewsController : BaseController
         [FromForm] CreateSupervisorReviewRequest request,
         CancellationToken cancellationToken = default)
     {
-        var command = new CreateSupervisorReviewCommand
-        {
-            WorkId = workId,
-            ReviewText = request.ReviewText,
-            File = request.File
-        };
+        var command = request.Adapt<CreateSupervisorReviewCommand>() with { WorkId = workId };
 
         var result = await _sender.Send(command, cancellationToken);
 
@@ -146,13 +119,7 @@ public sealed class ReviewsController : BaseController
         [FromForm] UploadReviewRequest request,
         CancellationToken cancellationToken = default)
     {
-        var command = new UploadReviewCommand
-        {
-            WorkId = workId,
-            ReviewId = reviewId,
-            ReviewText = request.ReviewText,
-            File = request.File
-        };
+        var command = request.Adapt<UploadReviewCommand>() with { WorkId = workId, ReviewId = reviewId };
 
         var result = await _sender.Send(command, cancellationToken);
 

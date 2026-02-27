@@ -11,6 +11,7 @@ using AWM.Service.WebAPI.Common.Contracts.Requests.Thesis;
 using AWM.Service.WebAPI.Common.Contracts.Responses.Thesis;
 using AWM.Service.Domain.Auth.Enums;
 using AWM.Service.WebAPI.Authorization;
+using Mapster;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -51,39 +52,7 @@ public sealed class TopicsController : BaseController
             return HandleResultError(result.Error);
         }
 
-        var dto = result.Value;
-        var response = new TopicDetailResponse
-        {
-            Id = dto.Id,
-            DirectionId = dto.DirectionId,
-            DepartmentId = dto.DepartmentId,
-            SupervisorId = dto.SupervisorId,
-            AcademicYearId = dto.AcademicYearId,
-            WorkTypeId = dto.WorkTypeId,
-            TitleRu = dto.TitleRu,
-            TitleEn = dto.TitleEn,
-            TitleKz = dto.TitleKz,
-            Description = dto.Description,
-            MaxParticipants = dto.MaxParticipants,
-            AvailableSpots = dto.AvailableSpots,
-            IsApproved = dto.IsApproved,
-            IsClosed = dto.IsClosed,
-            IsTeamTopic = dto.IsTeamTopic,
-            CreatedAt = dto.CreatedAt,
-            CreatedBy = dto.CreatedBy,
-            LastModifiedAt = dto.LastModifiedAt,
-            LastModifiedBy = dto.LastModifiedBy,
-            Applications = dto.Applications?.Select(a => new TopicApplicationResponse
-            {
-                Id = a.Id,
-                StudentId = a.StudentId,
-                Status = a.Status,
-                AppliedAt = a.AppliedAt,
-                ReviewedAt = a.ReviewedAt,
-                ReviewedBy = a.ReviewedBy,
-                ReviewComment = a.ReviewComment
-            }).ToList()
-        };
+        var response = result.Value.Adapt<TopicDetailResponse>();
 
         return Ok(response);
     }
@@ -117,26 +86,7 @@ public sealed class TopicsController : BaseController
             return HandleResultError(result.Error);
         }
 
-        var response = result.Value
-            .Select(dto => new TopicResponse
-            {
-                Id = dto.Id,
-                DirectionId = dto.DirectionId,
-                DepartmentId = dto.DepartmentId,
-                SupervisorId = dto.SupervisorId,
-                AcademicYearId = dto.AcademicYearId,
-                WorkTypeId = dto.WorkTypeId,
-                TitleRu = dto.TitleRu,
-                TitleEn = dto.TitleEn,
-                TitleKz = dto.TitleKz,
-                MaxParticipants = dto.MaxParticipants,
-                AvailableSpots = dto.AvailableSpots,
-                IsApproved = dto.IsApproved,
-                IsClosed = dto.IsClosed,
-                IsTeamTopic = dto.IsTeamTopic,
-                CreatedAt = dto.CreatedAt
-            })
-            .ToList();
+        var response = result.Value.Adapt<IReadOnlyList<TopicResponse>>();
 
         return Ok(response);
     }
@@ -162,26 +112,7 @@ public sealed class TopicsController : BaseController
             return HandleResultError(result.Error);
         }
 
-        var response = result.Value
-            .Select(dto => new TopicResponse
-            {
-                Id = dto.Id,
-                DirectionId = dto.DirectionId,
-                DepartmentId = dto.DepartmentId,
-                SupervisorId = dto.SupervisorId,
-                AcademicYearId = dto.AcademicYearId,
-                WorkTypeId = dto.WorkTypeId,
-                TitleRu = dto.TitleRu,
-                TitleEn = dto.TitleEn,
-                TitleKz = dto.TitleKz,
-                MaxParticipants = dto.MaxParticipants,
-                AvailableSpots = dto.AvailableSpots,
-                IsApproved = dto.IsApproved,
-                IsClosed = dto.IsClosed,
-                IsTeamTopic = dto.IsTeamTopic,
-                CreatedAt = dto.CreatedAt
-            })
-            .ToList();
+        var response = result.Value.Adapt<IReadOnlyList<TopicResponse>>();
 
         return Ok(response);
     }
@@ -202,19 +133,7 @@ public sealed class TopicsController : BaseController
         [FromBody] CreateTopicRequest request,
         CancellationToken cancellationToken = default)
     {
-        var command = new CreateTopicCommand
-        {
-            DepartmentId = request.DepartmentId,
-            SupervisorId = request.SupervisorId,
-            AcademicYearId = request.AcademicYearId,
-            WorkTypeId = request.WorkTypeId,
-            DirectionId = request.DirectionId,
-            TitleRu = request.TitleRu,
-            TitleKz = request.TitleKz,
-            TitleEn = request.TitleEn,
-            Description = request.Description,
-            MaxParticipants = request.MaxParticipants,
-        };
+        var command = request.Adapt<CreateTopicCommand>();
 
         var result = await _sender.Send(command, cancellationToken);
 
@@ -245,15 +164,7 @@ public sealed class TopicsController : BaseController
         [FromBody] UpdateTopicRequest request,
         CancellationToken cancellationToken = default)
     {
-        var command = new UpdateTopicCommand
-        {
-            TopicId = id,
-            TitleRu = request.TitleRu,
-            TitleKz = request.TitleKz,
-            TitleEn = request.TitleEn,
-            Description = request.Description,
-            MaxParticipants = request.MaxParticipants,
-        };
+        var command = request.Adapt<UpdateTopicCommand>() with { TopicId = id };
 
         var result = await _sender.Send(command, cancellationToken);
 

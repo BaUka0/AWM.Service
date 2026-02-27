@@ -1,6 +1,8 @@
 ﻿using AWM.Service.Application.Features.Auth.Commands.Login;
 using AWM.Service.WebAPI.Common.Contracts.Requests;
 using AWM.Service.WebAPI.Common.Contracts.Responses;
+using AWM.Service.Application.Features.Auth.Commands.Register;
+using Mapster;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -31,7 +33,8 @@ public sealed class AuthController : BaseController
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Login([FromBody] LoginRequest request, CancellationToken cancellationToken = default)
     {
-        var result = await _sender.Send(new LoginCommand(request.Login, request.Password), cancellationToken);
+        var command = request.Adapt<LoginCommand>();
+        var result = await _sender.Send(command, cancellationToken);
 
         if (result.IsFailed)
         {
@@ -39,13 +42,7 @@ public sealed class AuthController : BaseController
         }
 
         var authResult = result.Value;
-        var response = new LoginResponse(
-            Token: authResult.Token,
-            Login: authResult.Login,
-            UserId: authResult.UserId,
-            Email: authResult.Email,
-            Roles: authResult.Roles
-        );
+        var response = authResult.Adapt<LoginResponse>();
         return Ok(response);
     }
 
@@ -57,11 +54,7 @@ public sealed class AuthController : BaseController
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Register([FromBody] RegisterRequest request, CancellationToken cancellationToken = default)
     {
-        var command = new Application.Features.Auth.Commands.Register.RegisterUserCommand(
-            request.Login,
-            request.Email,
-            request.Password,
-            request.UniversityId);
+        var command = request.Adapt<RegisterUserCommand>();
 
         var result = await _sender.Send(command, cancellationToken);
 

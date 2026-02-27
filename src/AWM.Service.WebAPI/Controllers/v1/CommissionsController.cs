@@ -10,6 +10,7 @@ using AWM.Service.Application.Features.Defense.Commissions.Queries.GetCommission
 using AWM.Service.Domain.Auth.Enums;
 using AWM.Service.WebAPI.Authorization;
 using AWM.Service.WebAPI.Common.Contracts.Requests.Defense;
+using Mapster;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -95,14 +96,7 @@ public class CommissionsController : BaseController
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> Create([FromBody] CreateCommissionRequest request)
     {
-        var command = new CreateCommissionCommand
-        {
-            DepartmentId = request.DepartmentId,
-            AcademicYearId = request.AcademicYearId,
-            CommissionType = request.CommissionType,
-            Name = request.Name,
-            PreDefenseNumber = request.PreDefenseNumber
-        };
+        var command = request.Adapt<CreateCommissionCommand>();
 
         var result = await _sender.Send(command);
 
@@ -127,11 +121,7 @@ public class CommissionsController : BaseController
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateCommissionRequest request)
     {
-        var command = new UpdateCommissionCommand
-        {
-            CommissionId = id,
-            Name = request.Name
-        };
+        var command = request.Adapt<UpdateCommissionCommand>() with { CommissionId = id };
 
         var result = await _sender.Send(command);
 
@@ -156,12 +146,7 @@ public class CommissionsController : BaseController
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> AddMember(int id, [FromBody] AddCommissionMemberRequest request)
     {
-        var command = new AddCommissionMemberCommand
-        {
-            CommissionId = id,
-            UserId = request.UserId,
-            RoleInCommission = request.RoleInCommission
-        };
+        var command = request.Adapt<AddCommissionMemberCommand>() with { CommissionId = id };
 
         var result = await _sender.Send(command);
 
