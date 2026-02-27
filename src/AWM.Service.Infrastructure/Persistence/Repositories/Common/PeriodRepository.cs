@@ -3,27 +3,15 @@ namespace AWM.Service.Infrastructure.Persistence.Repositories.Common;
 using AWM.Service.Domain.CommonDomain.Entities;
 using AWM.Service.Domain.CommonDomain.Enums;
 using AWM.Service.Domain.Repositories;
+using AWM.Service.Infrastructure.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
 
 /// <summary>
 /// Repository implementation for Period.
 /// </summary>
-public sealed class PeriodRepository : IPeriodRepository
+public sealed class PeriodRepository : RepositoryBase<Period, int>, IPeriodRepository
 {
-    private readonly ApplicationDbContext _context;
-
-    public PeriodRepository(ApplicationDbContext context)
-    {
-        _context = context ?? throw new ArgumentNullException(nameof(context));
-    }
-
-    /// <inheritdoc />
-    public async Task<Period?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
-    {
-        return await _context.Periods
-            .Where(p => !p.IsDeleted)
-            .FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
-    }
+    public PeriodRepository(ApplicationDbContext context) : base(context) { }
 
     /// <inheritdoc />
     public async Task<Period?> GetActiveByStageAsync(
@@ -33,9 +21,8 @@ public sealed class PeriodRepository : IPeriodRepository
         CancellationToken cancellationToken = default)
     {
         var now = DateTime.UtcNow;
-        return await _context.Periods
-            .Where(p => !p.IsDeleted &&
-                        p.DepartmentId == departmentId &&
+        return await Context.Periods
+            .Where(p => p.DepartmentId == departmentId &&
                         p.AcademicYearId == academicYearId &&
                         p.WorkflowStage == stage &&
                         p.IsActive &&
@@ -50,10 +37,9 @@ public sealed class PeriodRepository : IPeriodRepository
         int academicYearId,
         CancellationToken cancellationToken = default)
     {
-        return await _context.Periods
+        return await Context.Periods
             .AsNoTracking()
-            .Where(p => !p.IsDeleted &&
-                        p.DepartmentId == departmentId &&
+            .Where(p => p.DepartmentId == departmentId &&
                         p.AcademicYearId == academicYearId)
             .OrderBy(p => p.StartDate)
             .ToListAsync(cancellationToken);
@@ -68,20 +54,5 @@ public sealed class PeriodRepository : IPeriodRepository
     {
         var period = await GetActiveByStageAsync(departmentId, academicYearId, stage, cancellationToken);
         return period != null;
-    }
-
-    /// <inheritdoc />
-    public async Task AddAsync(Period period, CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(period);
-        await _context.Periods.AddAsync(period, cancellationToken);
-    }
-
-    /// <inheritdoc />
-    public Task UpdateAsync(Period period, CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(period);
-        _context.Periods.Update(period);
-        return Task.CompletedTask;
     }
 }

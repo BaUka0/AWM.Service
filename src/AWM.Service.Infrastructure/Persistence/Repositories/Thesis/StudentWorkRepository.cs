@@ -2,24 +2,20 @@ namespace AWM.Service.Infrastructure.Persistence.Repositories.Thesis;
 
 using AWM.Service.Domain.Repositories;
 using AWM.Service.Domain.Thesis.Entities;
+using AWM.Service.Infrastructure.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
 
 /// <summary>
 /// Repository implementation for StudentWork aggregate.
 /// </summary>
-public sealed class StudentWorkRepository : IStudentWorkRepository
+public sealed class StudentWorkRepository : RepositoryBase<StudentWork, long>, IStudentWorkRepository
 {
-    private readonly ApplicationDbContext _context;
-
-    public StudentWorkRepository(ApplicationDbContext context)
-    {
-        _context = context ?? throw new ArgumentNullException(nameof(context));
-    }
+    public StudentWorkRepository(ApplicationDbContext context) : base(context) { }
 
     /// <inheritdoc />
-    public async Task<StudentWork?> GetByIdAsync(long id, CancellationToken cancellationToken = default)
+    public override async Task<StudentWork?> GetByIdAsync(long id, CancellationToken cancellationToken = default)
     {
-        return await _context.StudentWorks
+        return await Context.StudentWorks
             .Include(w => w.Participants)
             .FirstOrDefaultAsync(w => w.Id == id, cancellationToken);
     }
@@ -27,7 +23,7 @@ public sealed class StudentWorkRepository : IStudentWorkRepository
     /// <inheritdoc />
     public async Task<StudentWork?> GetByIdWithDetailsAsync(long id, CancellationToken cancellationToken = default)
     {
-        return await _context.StudentWorks
+        return await Context.StudentWorks
             .Include(w => w.Participants)
             .Include(w => w.Attachments)
             .Include(w => w.QualityChecks)
@@ -41,7 +37,7 @@ public sealed class StudentWorkRepository : IStudentWorkRepository
         int studentId,
         CancellationToken cancellationToken = default)
     {
-        return await _context.StudentWorks
+        return await Context.StudentWorks
             .AsNoTracking()
             .Include(w => w.Participants)
             .Where(w => w.Participants.Any(p => p.StudentId == studentId))
@@ -55,7 +51,7 @@ public sealed class StudentWorkRepository : IStudentWorkRepository
         int academicYearId,
         CancellationToken cancellationToken = default)
     {
-        return await _context.StudentWorks
+        return await Context.StudentWorks
             .AsNoTracking()
             .Include(w => w.Participants)
             .Where(w => w.DepartmentId == departmentId &&
@@ -70,11 +66,11 @@ public sealed class StudentWorkRepository : IStudentWorkRepository
         int academicYearId,
         CancellationToken cancellationToken = default)
     {
-        return await _context.StudentWorks
+        return await Context.StudentWorks
             .AsNoTracking()
             .Include(w => w.Participants)
             .Where(w => w.AcademicYearId == academicYearId &&
-                        _context.Topics.Any(t => t.Id == w.TopicId &&
+                        Context.Topics.Any(t => t.Id == w.TopicId &&
                                                  t.SupervisorId == supervisorId))
             .OrderByDescending(w => w.CreatedAt)
             .ToListAsync(cancellationToken);
@@ -86,7 +82,7 @@ public sealed class StudentWorkRepository : IStudentWorkRepository
         int departmentId,
         CancellationToken cancellationToken = default)
     {
-        return await _context.StudentWorks
+        return await Context.StudentWorks
             .AsNoTracking()
             .Include(w => w.Participants)
             .Where(w => w.CurrentStateId == stateId &&
@@ -103,7 +99,7 @@ public sealed class StudentWorkRepository : IStudentWorkRepository
         int take = 50,
         CancellationToken cancellationToken = default)
     {
-        var query = _context.StudentWorks
+        var query = Context.StudentWorks
             .AsNoTracking()
             .Include(w => w.Participants)
             .Where(w => w.DepartmentId == departmentId &&
@@ -128,7 +124,7 @@ public sealed class StudentWorkRepository : IStudentWorkRepository
         int take = 50,
         CancellationToken cancellationToken = default)
     {
-        var query = _context.StudentWorks
+        var query = Context.StudentWorks
             .AsNoTracking()
             .Include(w => w.Participants)
             .Where(w => w.CurrentStateId == stateId &&
@@ -146,18 +142,17 @@ public sealed class StudentWorkRepository : IStudentWorkRepository
     }
 
     /// <inheritdoc />
-    public async Task AddAsync(StudentWork work, CancellationToken cancellationToken = default)
+    public override async Task AddAsync(StudentWork work, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(work);
-        await _context.StudentWorks.AddAsync(work, cancellationToken);
+        await Context.StudentWorks.AddAsync(work, cancellationToken);
     }
 
     /// <inheritdoc />
-    public Task UpdateAsync(StudentWork work, CancellationToken cancellationToken = default)
+    public override Task UpdateAsync(StudentWork work, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(work);
-        _context.StudentWorks.Update(work);
+        Context.StudentWorks.Update(work);
         return Task.CompletedTask;
     }
 }
-

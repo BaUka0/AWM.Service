@@ -2,27 +2,15 @@ namespace AWM.Service.Infrastructure.Persistence.Repositories.Defense;
 
 using AWM.Service.Domain.Defense.Entities;
 using AWM.Service.Domain.Repositories;
+using AWM.Service.Infrastructure.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
 
 /// <summary>
 /// Repository implementation for EvaluationCriteria.
 /// </summary>
-public sealed class EvaluationCriteriaRepository : IEvaluationCriteriaRepository
+public sealed class EvaluationCriteriaRepository : RepositoryBase<EvaluationCriteria, int>, IEvaluationCriteriaRepository
 {
-    private readonly ApplicationDbContext _context;
-
-    public EvaluationCriteriaRepository(ApplicationDbContext context)
-    {
-        _context = context ?? throw new ArgumentNullException(nameof(context));
-    }
-
-    /// <inheritdoc />
-    public async Task<EvaluationCriteria?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
-    {
-        return await _context.EvaluationCriteria
-            .Where(e => !e.IsDeleted)
-            .FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
-    }
+    public EvaluationCriteriaRepository(ApplicationDbContext context) : base(context) { }
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<EvaluationCriteria>> GetByWorkTypeAsync(
@@ -33,10 +21,9 @@ public sealed class EvaluationCriteriaRepository : IEvaluationCriteriaRepository
         // First try to get department-specific criteria
         if (departmentId.HasValue)
         {
-            var deptCriteria = await _context.EvaluationCriteria
+            var deptCriteria = await Context.EvaluationCriteria
                 .AsNoTracking()
-                .Where(e => !e.IsDeleted &&
-                            e.WorkTypeId == workTypeId &&
+                .Where(e => e.WorkTypeId == workTypeId &&
                             e.DepartmentId == departmentId)
                 .OrderBy(e => e.CriteriaName)
                 .ToListAsync(cancellationToken);
@@ -46,10 +33,9 @@ public sealed class EvaluationCriteriaRepository : IEvaluationCriteriaRepository
         }
 
         // Fall back to university-wide criteria
-        return await _context.EvaluationCriteria
+        return await Context.EvaluationCriteria
             .AsNoTracking()
-            .Where(e => !e.IsDeleted &&
-                        e.WorkTypeId == workTypeId &&
+            .Where(e => e.WorkTypeId == workTypeId &&
                         e.DepartmentId == null)
             .OrderBy(e => e.CriteriaName)
             .ToListAsync(cancellationToken);
@@ -58,26 +44,10 @@ public sealed class EvaluationCriteriaRepository : IEvaluationCriteriaRepository
     /// <inheritdoc />
     public async Task<IReadOnlyList<EvaluationCriteria>> GetAllAsync(CancellationToken cancellationToken = default)
     {
-        return await _context.EvaluationCriteria
+        return await Context.EvaluationCriteria
             .AsNoTracking()
-            .Where(e => !e.IsDeleted)
             .OrderBy(e => e.WorkTypeId)
             .ThenBy(e => e.CriteriaName)
             .ToListAsync(cancellationToken);
-    }
-
-    /// <inheritdoc />
-    public async Task AddAsync(EvaluationCriteria criteria, CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(criteria);
-        await _context.EvaluationCriteria.AddAsync(criteria, cancellationToken);
-    }
-
-    /// <inheritdoc />
-    public Task UpdateAsync(EvaluationCriteria criteria, CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(criteria);
-        _context.EvaluationCriteria.Update(criteria);
-        return Task.CompletedTask;
     }
 }

@@ -3,24 +3,20 @@ namespace AWM.Service.Infrastructure.Persistence.Repositories.Thesis;
 using AWM.Service.Domain.Repositories;
 using AWM.Service.Domain.Thesis.Entities;
 using AWM.Service.Domain.Thesis.Enums;
+using AWM.Service.Infrastructure.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
 
 /// <summary>
 /// Repository implementation for Topic aggregate.
 /// </summary>
-public sealed class TopicRepository : ITopicRepository
+public sealed class TopicRepository : RepositoryBase<Topic, long>, ITopicRepository
 {
-    private readonly ApplicationDbContext _context;
-
-    public TopicRepository(ApplicationDbContext context)
-    {
-        _context = context ?? throw new ArgumentNullException(nameof(context));
-    }
+    public TopicRepository(ApplicationDbContext context) : base(context) { }
 
     /// <inheritdoc />
-    public async Task<Topic?> GetByIdAsync(long id, CancellationToken cancellationToken = default)
+    public override async Task<Topic?> GetByIdAsync(long id, CancellationToken cancellationToken = default)
     {
-        return await _context.Topics
+        return await Context.Topics
             .Include(t => t.Applications.Where(a => !a.IsDeleted))
             .FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
     }
@@ -31,7 +27,7 @@ public sealed class TopicRepository : ITopicRepository
         int academicYearId,
         CancellationToken cancellationToken = default)
     {
-        return await _context.Topics
+        return await Context.Topics
             .AsNoTracking()
             .Include(t => t.Applications.Where(a => !a.IsDeleted))
             .Where(t => t.DepartmentId == departmentId &&
@@ -46,7 +42,7 @@ public sealed class TopicRepository : ITopicRepository
         int academicYearId,
         CancellationToken cancellationToken = default)
     {
-        return await _context.Topics
+        return await Context.Topics
             .AsNoTracking()
             .Include(t => t.Applications.Where(a => !a.IsDeleted))
             .Where(t => t.SupervisorId == supervisorId &&
@@ -62,7 +58,7 @@ public sealed class TopicRepository : ITopicRepository
         CancellationToken cancellationToken = default)
     {
         // Get approved, open topics with available spots
-        var topics = await _context.Topics
+        var topics = await Context.Topics
             .AsNoTracking()
             .Include(t => t.Applications.Where(a => !a.IsDeleted))
             .Where(t => t.DepartmentId == departmentId &&
@@ -84,7 +80,7 @@ public sealed class TopicRepository : ITopicRepository
         int studentId,
         CancellationToken cancellationToken = default)
     {
-        return await _context.TopicApplications
+        return await Context.TopicApplications
             .AsNoTracking()
             .Where(a => a.StudentId == studentId)
             .OrderByDescending(a => a.AppliedAt)
@@ -92,17 +88,17 @@ public sealed class TopicRepository : ITopicRepository
     }
 
     /// <inheritdoc />
-    public async Task AddAsync(Topic topic, CancellationToken cancellationToken = default)
+    public override async Task AddAsync(Topic topic, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(topic);
-        await _context.Topics.AddAsync(topic, cancellationToken);
+        await Context.Topics.AddAsync(topic, cancellationToken);
     }
 
     /// <inheritdoc />
-    public Task UpdateAsync(Topic topic, CancellationToken cancellationToken = default)
+    public override Task UpdateAsync(Topic topic, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(topic);
-        _context.Topics.Update(topic);
+        Context.Topics.Update(topic);
         return Task.CompletedTask;
     }
 
@@ -110,7 +106,7 @@ public sealed class TopicRepository : ITopicRepository
     public Task DeleteAsync(Topic topic, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(topic);
-        _context.Topics.Update(topic);
+        Context.Topics.Update(topic);
         return Task.CompletedTask;
     }
 }
