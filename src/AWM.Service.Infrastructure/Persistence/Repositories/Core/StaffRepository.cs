@@ -2,44 +2,29 @@ namespace AWM.Service.Infrastructure.Persistence.Repositories.Core;
 
 using AWM.Service.Domain.Edu.Entities;
 using AWM.Service.Domain.Repositories;
-using AWM.Service.Domain.Thesis.Entities;
-using AWM.Service.Domain.Thesis.Enums;
+using AWM.Service.Infrastructure.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
 
 /// <summary>
 /// Repository implementation for Staff aggregate.
 /// </summary>
-public sealed class StaffRepository : IStaffRepository
+public sealed class StaffRepository : RepositoryBase<Staff, int>, IStaffRepository
 {
-    private readonly ApplicationDbContext _context;
-
-    public StaffRepository(ApplicationDbContext context)
-    {
-        _context = context ?? throw new ArgumentNullException(nameof(context));
-    }
-
-    /// <inheritdoc />
-    public async Task<Staff?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
-    {
-        return await _context.Staff
-            .Where(s => !s.IsDeleted)
-            .FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
-    }
+    public StaffRepository(ApplicationDbContext context) : base(context) { }
 
     /// <inheritdoc />
     public async Task<Staff?> GetByUserIdAsync(int userId, CancellationToken cancellationToken = default)
     {
-        return await _context.Staff
-            .Where(s => !s.IsDeleted)
+        return await Context.Staff
             .FirstOrDefaultAsync(s => s.UserId == userId, cancellationToken);
     }
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<Staff>> GetByDepartmentAsync(int departmentId, CancellationToken cancellationToken = default)
     {
-        return await _context.Staff
+        return await Context.Staff
             .AsNoTracking()
-            .Where(s => !s.IsDeleted && s.DepartmentId == departmentId)
+            .Where(s => s.DepartmentId == departmentId)
             .OrderBy(s => s.Position)
             .ToListAsync(cancellationToken);
     }
@@ -47,29 +32,10 @@ public sealed class StaffRepository : IStaffRepository
     /// <inheritdoc />
     public async Task<IReadOnlyList<Staff>> GetSupervisorsWithCapacityAsync(int departmentId, CancellationToken cancellationToken = default)
     {
-        // Get all active staff from department with their current student count
-        // WorkParticipant links students to works, not staff directly
-        // We need to count via StudentWork's supervisor (from Participant or Topic)
-        // Optimization: Filter by MaxStudentsLoad > 0 and OrderBy Position in the database query
-        return await _context.Staff
+        return await Context.Staff
             .AsNoTracking()
-            .Where(s => !s.IsDeleted && s.DepartmentId == departmentId && s.IsSupervisor && s.MaxStudentsLoad > 0)
+            .Where(s => s.DepartmentId == departmentId && s.IsSupervisor && s.MaxStudentsLoad > 0)
             .OrderBy(s => s.Position)
             .ToListAsync(cancellationToken);
-    }
-
-    /// <inheritdoc />
-    public async Task AddAsync(Staff staff, CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(staff);
-        await _context.Staff.AddAsync(staff, cancellationToken);
-    }
-
-    /// <inheritdoc />
-    public Task UpdateAsync(Staff staff, CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(staff);
-        _context.Staff.Update(staff);
-        return Task.CompletedTask;
     }
 }

@@ -27,7 +27,7 @@ using AWM.Service.Domain.Defense.Entities;
 /// Main application DbContext for EF Core.
 /// Contains all entity DbSets organized by schema.
 /// </summary>
-public class ApplicationDbContext : DbContext
+public sealed class ApplicationDbContext : DbContext
 {
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
         : base(options)

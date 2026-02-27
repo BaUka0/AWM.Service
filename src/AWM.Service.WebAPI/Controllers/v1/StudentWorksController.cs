@@ -13,6 +13,7 @@ using AWM.Service.Domain.Common;
 using AWM.Service.WebAPI.Authorization;
 using AWM.Service.WebAPI.Common.Contracts.Requests.Thesis;
 using AWM.Service.WebAPI.Common.Contracts.Responses.Thesis;
+using Mapster;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -55,8 +56,8 @@ public class StudentWorksController : BaseController
             cancellationToken);
 
         return result.IsSuccess
-            ? Ok(result.Value.Select(MapToResponse)) // Changed to use existing MapToResponse
-            : HandleResultError(result.Error); // Changed to use existing HandleResultError
+            ? Ok(result.Value.Adapt<IReadOnlyList<StudentWorkResponse>>())
+            : HandleResultError(result.Error);
     }
 
     /// <summary>
@@ -80,7 +81,7 @@ public class StudentWorksController : BaseController
         if (result.IsFailed)
             return HandleResultError(result.Error);
 
-        return Ok(MapToDetailResponse(result.Value));
+        return Ok(result.Value.Adapt<StudentWorkDetailResponse>());
     }
 
     /// <summary>
@@ -112,7 +113,7 @@ public class StudentWorksController : BaseController
         if (result.IsFailed)
             return HandleResultError(result.Error);
 
-        var response = result.Value.Select(MapToResponse).ToList();
+        var response = result.Value.Adapt<IReadOnlyList<StudentWorkResponse>>();
         return Ok(response);
     }
 
@@ -136,7 +137,7 @@ public class StudentWorksController : BaseController
         if (result.IsFailed)
             return HandleResultError(result.Error);
 
-        var response = result.Value.Select(MapToResponse).ToList();
+        var response = result.Value.Adapt<IReadOnlyList<StudentWorkResponse>>();
         return Ok(response);
     }
 
@@ -158,12 +159,7 @@ public class StudentWorksController : BaseController
         [FromBody] CreateStudentWorkRequest request,
         CancellationToken cancellationToken = default)
     {
-        var command = new CreateStudentWorkCommand
-        {
-            TopicId = request.TopicId,
-            AcademicYearId = request.AcademicYearId,
-            DepartmentId = request.DepartmentId
-        };
+        var command = request.Adapt<CreateStudentWorkCommand>();
 
         var result = await _sender.Send(command, cancellationToken);
 
@@ -194,12 +190,7 @@ public class StudentWorksController : BaseController
         [FromBody] AddParticipantRequest request,
         CancellationToken cancellationToken = default)
     {
-        var command = new AddParticipantCommand
-        {
-            WorkId = workId,
-            StudentId = request.StudentId,
-            Role = request.Role
-        };
+        var command = request.Adapt<AddParticipantCommand>() with { WorkId = workId };
 
         var result = await _sender.Send(command, cancellationToken);
 
@@ -243,48 +234,4 @@ public class StudentWorksController : BaseController
         return NoContent();
     }
 
-    #region Mapping Helpers
-
-    private static StudentWorkResponse MapToResponse(StudentWorkDto dto)
-    {
-        return new StudentWorkResponse
-        {
-            Id = dto.Id,
-            TopicId = dto.TopicId,
-            AcademicYearId = dto.AcademicYearId,
-            DepartmentId = dto.DepartmentId,
-            CurrentStateId = dto.CurrentStateId,
-            IsDefended = dto.IsDefended,
-            FinalGrade = dto.FinalGrade,
-            CreatedAt = dto.CreatedAt
-        };
-    }
-
-    private static StudentWorkDetailResponse MapToDetailResponse(StudentWorkDetailDto dto)
-    {
-        return new StudentWorkDetailResponse
-        {
-            Id = dto.Id,
-            TopicId = dto.TopicId,
-            AcademicYearId = dto.AcademicYearId,
-            DepartmentId = dto.DepartmentId,
-            CurrentStateId = dto.CurrentStateId,
-            IsDefended = dto.IsDefended,
-            FinalGrade = dto.FinalGrade,
-            CreatedAt = dto.CreatedAt,
-            CreatedBy = dto.CreatedBy,
-            LastModifiedAt = dto.LastModifiedAt,
-            LastModifiedBy = dto.LastModifiedBy,
-            Participants = dto.Participants.Select(p => new WorkParticipantResponse
-            {
-                Id = p.Id,
-                StudentId = p.StudentId,
-                Role = p.Role,
-                IsLeader = p.IsLeader,
-                JoinedAt = p.JoinedAt
-            }).ToList()
-        };
-    }
-
-    #endregion
 }

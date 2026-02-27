@@ -9,6 +9,7 @@ using AWM.Service.Domain.Auth.Enums;
 using AWM.Service.WebAPI.Authorization;
 using AWM.Service.WebAPI.Common.Contracts.Requests.Defense;
 using AWM.Service.WebAPI.Common.Contracts.Responses.Defense;
+using Mapster;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -53,15 +54,7 @@ public class EvaluationController : BaseController
         if (result.IsFailed)
             return HandleResultError(result.Error);
 
-        var response = result.Value.Select(dto => new EvaluationCriteriaResponse
-        {
-            Id = dto.Id,
-            WorkTypeId = dto.WorkTypeId,
-            DepartmentId = dto.DepartmentId,
-            CriteriaName = dto.CriteriaName,
-            MaxScore = dto.MaxScore,
-            Weight = dto.Weight
-        }).ToList();
+        var response = result.Value.Adapt<IReadOnlyList<EvaluationCriteriaResponse>>();
 
         return Ok(response);
     }
@@ -86,16 +79,7 @@ public class EvaluationController : BaseController
         if (result.IsFailed)
             return HandleResultError(result.Error);
 
-        var response = result.Value.Select(dto => new GradeResponse
-        {
-            Id = dto.Id,
-            ScheduleId = dto.ScheduleId,
-            MemberId = dto.MemberId,
-            CriteriaId = dto.CriteriaId,
-            Score = dto.Score,
-            Comment = dto.Comment,
-            GradedAt = dto.GradedAt
-        }).ToList();
+        var response = result.Value.Adapt<IReadOnlyList<GradeResponse>>();
 
         return Ok(response);
     }
@@ -117,14 +101,7 @@ public class EvaluationController : BaseController
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> SubmitGrade(long scheduleId, [FromBody] SubmitGradeRequest request)
     {
-        var command = new SubmitGradeCommand
-        {
-            ScheduleId = scheduleId,
-            MemberId = request.MemberId,
-            CriteriaId = request.CriteriaId,
-            Score = request.Score,
-            Comment = request.Comment
-        };
+        var command = request.Adapt<SubmitGradeCommand>() with { ScheduleId = scheduleId };
 
         var result = await _sender.Send(command);
 

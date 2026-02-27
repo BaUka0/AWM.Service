@@ -1,12 +1,13 @@
 namespace AWM.Service.WebAPI.Controllers.v1;
 
-using AWM.Service.Application.Features.Edu.Commands.Staff.CreateStaff;
-using AWM.Service.Application.Features.Edu.Commands.Staff.UpdateStaff;
-using AWM.Service.Application.Features.Edu.Queries.Staff.GetStaffByDepartment;
+using AWM.Service.Application.Features.Edu.Staff.Commands.CreateStaff;
+using AWM.Service.Application.Features.Edu.Staff.Commands.UpdateStaff;
+using AWM.Service.Application.Features.Edu.Staff.Queries.GetStaffByDepartment;
 using AWM.Service.Domain.Auth.Enums;
 using AWM.Service.WebAPI.Authorization;
 using AWM.Service.WebAPI.Common.Contracts.Requests.Edu;
 using AWM.Service.WebAPI.Common.Contracts.Responses.Edu;
+using Mapster;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -50,20 +51,7 @@ public sealed class StaffController : BaseController
             return HandleResultError(result.Error);
         }
 
-        var response = result.Value
-            .Select(dto => new StaffResponse
-            {
-                Id = dto.Id,
-                UserId = dto.UserId,
-                FullName = dto.FullName,
-                Email = dto.Email,
-                Position = dto.Position,
-                AcademicDegree = dto.AcademicDegree,
-                DepartmentId = dto.DepartmentId,
-                DepartmentName = dto.DepartmentName,
-                MaxStudentsLoad = dto.MaxStudentsLoad
-            })
-            .ToList();
+        var response = result.Value.Adapt<IReadOnlyList<StaffResponse>>();
 
         return Ok(response);
     }
@@ -82,15 +70,7 @@ public sealed class StaffController : BaseController
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> Create([FromBody] CreateStaffRequest request, CancellationToken cancellationToken = default)
     {
-        var command = new CreateStaffCommand
-        {
-            UserId = request.UserId,
-            DepartmentId = request.DepartmentId,
-            Position = request.Position,
-            AcademicDegree = request.AcademicDegree,
-            IsSupervisor = request.IsSupervisor,
-            MaxStudentsLoad = request.MaxStudentsLoad
-        };
+        var command = request.Adapt<CreateStaffCommand>();
 
         var result = await _sender.Send(command, cancellationToken);
 
@@ -117,15 +97,7 @@ public sealed class StaffController : BaseController
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> Update(int staffId, [FromBody] UpdateStaffRequest request, CancellationToken cancellationToken = default)
     {
-        var command = new UpdateStaffCommand
-        {
-            StaffId = staffId,
-            Position = request.Position,
-            AcademicDegree = request.AcademicDegree,
-            MaxStudentsLoad = request.MaxStudentsLoad,
-            IsSupervisor = request.IsSupervisor,
-            DepartmentId = request.DepartmentId
-        };
+        var command = request.Adapt<UpdateStaffCommand>() with { StaffId = staffId };
 
         var result = await _sender.Send(command, cancellationToken);
 

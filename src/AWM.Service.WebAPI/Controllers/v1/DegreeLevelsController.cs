@@ -1,11 +1,12 @@
 namespace AWM.Service.WebAPI.Controllers.v1;
 
-using AWM.Service.Application.Features.Edu.Commands.DegreeLevels.CreateDegreeLevel;
-using AWM.Service.Application.Features.Edu.Queries.DegreeLevels.GetDegreeLevels;
+using AWM.Service.Application.Features.Edu.DegreeLevels.Commands.CreateDegreeLevel;
+using AWM.Service.Application.Features.Edu.DegreeLevels.Queries.GetDegreeLevels;
 using AWM.Service.WebAPI.Common.Contracts.Requests.Edu;
 using AWM.Service.WebAPI.Common.Contracts.Responses.Edu;
 using AWM.Service.Domain.Auth.Enums;
 using AWM.Service.WebAPI.Authorization;
+using Mapster;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -58,18 +59,7 @@ public sealed class DegreeLevelsController : BaseController
             return HandleResultError(result.Error);
         }
 
-        var response = result.Value
-            .Select(dto => new DegreeLevelResponse
-            {
-                Id = dto.Id,
-                Name = dto.Name,
-                DurationYears = dto.DurationYears,
-                CreatedAt = dto.CreatedAt,
-                CreatedBy = dto.CreatedBy,
-                LastModifiedAt = dto.LastModifiedAt,
-                LastModifiedBy = dto.LastModifiedBy
-            })
-            .ToList();
+        var response = result.Value.Adapt<IReadOnlyList<DegreeLevelResponse>>();
 
         return Ok(response);
     }
@@ -89,11 +79,7 @@ public sealed class DegreeLevelsController : BaseController
         [FromBody] CreateDegreeLevelRequest request,
         CancellationToken cancellationToken = default)
     {
-        var command = new CreateDegreeLevelCommand
-        {
-            Name = request.Name,
-            DurationYears = request.DurationYears
-        };
+        var command = request.Adapt<CreateDegreeLevelCommand>();
 
         var result = await _sender.Send(command, cancellationToken);
 

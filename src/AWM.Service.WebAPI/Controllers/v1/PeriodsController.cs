@@ -1,14 +1,15 @@
 namespace AWM.Service.WebAPI.Controllers.v1;
 
-using AWM.Service.Application.Features.Common.Commands.Periods.CreatePeriod;
-using AWM.Service.Application.Features.Common.Commands.Periods.UpdatePeriod;
-using AWM.Service.Application.Features.Common.Queries.Periods.GetActivePeriod;
-using AWM.Service.Application.Features.Common.Queries.Periods.GetPeriodsByDepartment;
+using AWM.Service.Application.Features.Common.Periods.Commands.CreatePeriod;
+using AWM.Service.Application.Features.Common.Periods.Commands.UpdatePeriod;
+using AWM.Service.Application.Features.Common.Periods.Queries.GetActivePeriod;
+using AWM.Service.Application.Features.Common.Periods.Queries.GetPeriodsByDepartment;
 using AWM.Service.Domain.Auth.Enums;
 using AWM.Service.Domain.CommonDomain.Enums;
 using AWM.Service.WebAPI.Authorization;
 using AWM.Service.WebAPI.Common.Contracts.Requests.Common;
 using AWM.Service.WebAPI.Common.Contracts.Responses.Common;
+using Mapster;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -54,19 +55,7 @@ public sealed class PeriodsController : BaseController
             return HandleResultError(result.Error);
         }
 
-        var response = result.Value
-            .Select(dto => new PeriodResponse
-            {
-                Id = dto.Id,
-                DepartmentId = dto.DepartmentId,
-                AcademicYearId = dto.AcademicYearId,
-                WorkflowStage = dto.WorkflowStage,
-                StartDate = dto.StartDate,
-                EndDate = dto.EndDate,
-                IsActive = dto.IsActive,
-                IsCurrentlyOpen = dto.IsCurrentlyOpen
-            })
-            .ToList();
+        var response = result.Value.Adapt<IReadOnlyList<PeriodResponse>>();
 
         return Ok(response);
     }
@@ -110,17 +99,7 @@ public sealed class PeriodsController : BaseController
             return NotFound();
         }
 
-        var response = new PeriodResponse
-        {
-            Id = dto.Id,
-            DepartmentId = dto.DepartmentId,
-            AcademicYearId = dto.AcademicYearId,
-            WorkflowStage = dto.WorkflowStage,
-            StartDate = dto.StartDate,
-            EndDate = dto.EndDate,
-            IsActive = dto.IsActive,
-            IsCurrentlyOpen = dto.IsCurrentlyOpen
-        };
+        var response = dto.Adapt<PeriodResponse>();
 
         return Ok(response);
     }
@@ -140,14 +119,7 @@ public sealed class PeriodsController : BaseController
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> Create(int departmentId, [FromBody] CreatePeriodRequest request, CancellationToken cancellationToken = default)
     {
-        var command = new CreatePeriodCommand
-        {
-            DepartmentId = departmentId,
-            AcademicYearId = request.AcademicYearId,
-            WorkflowStage = request.WorkflowStage,
-            StartDate = request.StartDate,
-            EndDate = request.EndDate
-        };
+        var command = request.Adapt<CreatePeriodCommand>() with { DepartmentId = departmentId };
 
         var result = await _sender.Send(command, cancellationToken);
 
@@ -175,13 +147,7 @@ public sealed class PeriodsController : BaseController
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> Update(int departmentId, int periodId, [FromBody] UpdatePeriodRequest request, CancellationToken cancellationToken = default)
     {
-        var command = new UpdatePeriodCommand
-        {
-            PeriodId = periodId,
-            StartDate = request.StartDate,
-            EndDate = request.EndDate,
-            IsActive = request.IsActive
-        };
+        var command = request.Adapt<UpdatePeriodCommand>() with { PeriodId = periodId };
 
         var result = await _sender.Send(command, cancellationToken);
 

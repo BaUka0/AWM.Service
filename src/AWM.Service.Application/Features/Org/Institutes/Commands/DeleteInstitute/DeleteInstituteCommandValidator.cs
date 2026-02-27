@@ -1,0 +1,16 @@
+namespace AWM.Service.Application.Features.Org.Institutes.Commands.DeleteInstitute;
+
+using FluentValidation;
+
+/// <summary>
+/// Validator for DeleteInstituteCommand.
+/// </summary>
+public sealed class DeleteInstituteCommandValidator : AbstractValidator<DeleteInstituteCommand>
+{
+    public DeleteInstituteCommandValidator()
+    {
+        RuleFor(x => x.InstituteId)
+            .GreaterThan(0)
+            .WithMessage("Institute ID must be greater than 0.");
+    }
+}

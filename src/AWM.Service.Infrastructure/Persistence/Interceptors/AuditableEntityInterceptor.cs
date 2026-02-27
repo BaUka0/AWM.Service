@@ -7,7 +7,7 @@ namespace AWM.Service.Infrastructure.Persistence.Interceptors;
 /// <summary>
 /// EF Core interceptor to automatically populate audit properties (IAuditable).
 /// </summary>
-public class AuditableEntityInterceptor : SaveChangesInterceptor
+internal sealed class AuditableEntityInterceptor : SaveChangesInterceptor
 {
     private readonly ICurrentUserProvider _currentUserProvider;
 
@@ -50,13 +50,4 @@ public class AuditableEntityInterceptor : SaveChangesInterceptor
             }
         }
     }
-}
-
-public static class Extensions
-{
-    public static bool HasChangedOwnedEntities(this Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry entry) =>
-        entry.References.Any(r => 
-            r.TargetEntry != null && 
-            r.TargetEntry.Metadata.IsOwned() && 
-            (r.TargetEntry.State == EntityState.Added || r.TargetEntry.State == EntityState.Modified));
 }

@@ -10,6 +10,12 @@ using Microsoft.Extensions.Logging;
 /// Suitable for development and single-server deployments.
 /// Configured via "FileStorage:LocalBasePath" in appsettings.json.
 /// </summary>
+/// <remarks>
+/// <b>TEMPORARY IMPLEMENTATION.</b> Will be replaced by a MinIO-based storage service
+/// once the MinIO MVP is ready. Do not use in production deployments.
+/// See <see cref="S3FileStorageService"/> for the planned production implementation.
+/// </remarks>
+[Obsolete("Temporary local storage implementation. Will be replaced by MinIO-based storage.")]
 public sealed class LocalFileStorageService : IAttachmentService
 {
     private readonly string _basePath;

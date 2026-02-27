@@ -1,12 +1,13 @@
 namespace AWM.Service.WebAPI.Controllers.v1;
 
-using AWM.Service.Application.Features.Edu.Commands.AcademicPrograms.CreateAcademicProgram;
-using AWM.Service.Application.Features.Edu.Commands.AcademicPrograms.UpdateAcademicProgram;
-using AWM.Service.Application.Features.Edu.Queries.AcademicPrograms.GetAcademicPrograms;
+using AWM.Service.Application.Features.Edu.AcademicPrograms.Commands.CreateAcademicProgram;
+using AWM.Service.Application.Features.Edu.AcademicPrograms.Commands.UpdateAcademicProgram;
+using AWM.Service.Application.Features.Edu.AcademicPrograms.Queries.GetAcademicPrograms;
 using AWM.Service.WebAPI.Common.Contracts.Requests.Edu;
 using AWM.Service.WebAPI.Common.Contracts.Responses.Edu;
 using AWM.Service.Domain.Auth.Enums;
 using AWM.Service.WebAPI.Authorization;
+using Mapster;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -65,23 +66,7 @@ public sealed class AcademicProgramsController : BaseController
             return HandleResultError(result.Error);
         }
 
-        var response = result.Value
-            .Select(dto => new AcademicProgramResponse
-            {
-                Id = dto.Id,
-                DepartmentId = dto.DepartmentId,
-                DegreeLevelId = dto.DegreeLevelId,
-                Code = dto.Code,
-                Name = dto.Name,
-                CreatedAt = dto.CreatedAt,
-                CreatedBy = dto.CreatedBy,
-                LastModifiedAt = dto.LastModifiedAt,
-                LastModifiedBy = dto.LastModifiedBy,
-                IsDeleted = dto.IsDeleted,
-                DeletedAt = dto.DeletedAt,
-                DeletedBy = dto.DeletedBy
-            })
-            .ToList();
+        var response = result.Value.Adapt<IReadOnlyList<AcademicProgramResponse>>();
 
         return Ok(response);
     }
@@ -102,13 +87,7 @@ public sealed class AcademicProgramsController : BaseController
         [FromBody] CreateAcademicProgramRequest request,
         CancellationToken cancellationToken = default)
     {
-        var command = new CreateAcademicProgramCommand
-        {
-            DepartmentId = request.DepartmentId,
-            DegreeLevelId = request.DegreeLevelId,
-            Code = request.Code,
-            Name = request.Name
-        };
+        var command = request.Adapt<CreateAcademicProgramCommand>();
 
         var result = await _sender.Send(command, cancellationToken);
 
@@ -141,12 +120,7 @@ public sealed class AcademicProgramsController : BaseController
         [FromBody] UpdateAcademicProgramRequest request,
         CancellationToken cancellationToken = default)
     {
-        var command = new UpdateAcademicProgramCommand
-        {
-            Id = id,
-            Code = request.Code,
-            Name = request.Name
-        };
+        var command = request.Adapt<UpdateAcademicProgramCommand>() with { Id = id };
 
         var result = await _sender.Send(command, cancellationToken);
 

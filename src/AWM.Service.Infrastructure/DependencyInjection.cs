@@ -22,10 +22,12 @@ public static class DependencyInjection
         var connectionString = configuration.GetConnectionString("DefaultConnection");
 
         services.AddScoped<AuditableEntityInterceptor>();
+        services.AddScoped<DispatchDomainEventsInterceptor>();
 
         services.AddDbContext<ApplicationDbContext>((sp, options) =>
         {
-            var interceptor = sp.GetRequiredService<AuditableEntityInterceptor>();
+            var auditableInterceptor = sp.GetRequiredService<AuditableEntityInterceptor>();
+            var domainEventsInterceptor = sp.GetRequiredService<DispatchDomainEventsInterceptor>();
 
             options.UseSqlServer(connectionString, sqlOptions =>
                    {
@@ -34,7 +36,7 @@ public static class DependencyInjection
                            maxRetryDelay: TimeSpan.FromSeconds(10),
                            errorNumbersToAdd: null);
                    })
-                   .AddInterceptors(interceptor);
+                   .AddInterceptors(auditableInterceptor, domainEventsInterceptor);
         });
 
         // Register Unit of Work

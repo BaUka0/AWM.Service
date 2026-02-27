@@ -9,6 +9,7 @@ using AWM.Service.Domain.Auth.Enums;
 using AWM.Service.WebAPI.Authorization;
 using AWM.Service.WebAPI.Common.Contracts.Requests.Thesis;
 using AWM.Service.WebAPI.Common.Contracts.Responses.Thesis;
+using Mapster;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -49,21 +50,7 @@ public sealed class AttachmentsController : BaseController
         if (result.IsFailed)
             return HandleResultError(result.Error);
 
-        var response = result.Value
-            .Select(dto => new AttachmentResponse
-            {
-                Id = dto.Id,
-                WorkId = dto.WorkId,
-                StateId = dto.StateId,
-                AttachmentType = dto.AttachmentType.ToString(),
-                FileName = dto.FileName,
-                FileStoragePath = dto.FileStoragePath,
-                CreatedAt = dto.CreatedAt,
-                CreatedBy = dto.CreatedBy,
-                LastModifiedAt = dto.LastModifiedAt,
-                LastModifiedBy = dto.LastModifiedBy
-            })
-            .ToList();
+        var response = result.Value.Adapt<IReadOnlyList<AttachmentResponse>>();
 
         return Ok(response);
     }
@@ -88,20 +75,7 @@ public sealed class AttachmentsController : BaseController
         if (result.IsFailed)
             return HandleResultError(result.Error);
 
-        var dto = result.Value;
-        var response = new AttachmentResponse
-        {
-            Id = dto.Id,
-            WorkId = dto.WorkId,
-            StateId = dto.StateId,
-            AttachmentType = dto.AttachmentType.ToString(),
-            FileName = dto.FileName,
-            FileStoragePath = dto.FileStoragePath,
-            CreatedAt = dto.CreatedAt,
-            CreatedBy = dto.CreatedBy,
-            LastModifiedAt = dto.LastModifiedAt,
-            LastModifiedBy = dto.LastModifiedBy
-        };
+        var response = result.Value.Adapt<AttachmentResponse>();
 
         return Ok(response);
     }
@@ -125,12 +99,7 @@ public sealed class AttachmentsController : BaseController
         [FromForm] UploadAttachmentRequest request,
         CancellationToken cancellationToken = default)
     {
-        var command = new UploadAttachmentCommand
-        {
-            WorkId = workId,
-            AttachmentType = request.AttachmentType,
-            File = request.File
-        };
+        var command = request.Adapt<UploadAttachmentCommand>() with { WorkId = workId };
 
         var result = await _sender.Send(command, cancellationToken);
 

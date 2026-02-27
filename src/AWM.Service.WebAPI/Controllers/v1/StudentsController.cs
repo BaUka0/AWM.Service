@@ -1,13 +1,14 @@
 namespace AWM.Service.WebAPI.Controllers.v1;
 
-using AWM.Service.Application.Features.Edu.Commands.Students.CreateStudent;
-using AWM.Service.Application.Features.Edu.Commands.Students.UpdateStudent;
-using AWM.Service.Application.Features.Edu.Queries.Students.GetStudentById;
-using AWM.Service.Application.Features.Edu.Queries.Students.GetStudentsByProgram;
+using AWM.Service.Application.Features.Edu.Students.Commands.CreateStudent;
+using AWM.Service.Application.Features.Edu.Students.Commands.UpdateStudent;
+using AWM.Service.Application.Features.Edu.Students.Queries.GetStudentById;
+using AWM.Service.Application.Features.Edu.Students.Queries.GetStudentsByProgram;
 using AWM.Service.Domain.Auth.Enums;
 using AWM.Service.WebAPI.Authorization;
 using AWM.Service.WebAPI.Common.Contracts.Requests.Edu;
 using AWM.Service.WebAPI.Common.Contracts.Responses.Edu;
+using Mapster;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -52,20 +53,7 @@ public sealed class StudentsController : BaseController
             return HandleResultError(result.Error);
         }
 
-        var dto = result.Value;
-        var response = new StudentResponse
-        {
-            Id = dto.Id,
-            UserId = dto.UserId,
-            FullName = dto.FullName,
-            Email = dto.Email,
-            GroupCode = dto.GroupCode,
-            ProgramId = dto.ProgramId,
-            ProgramName = dto.ProgramName,
-            AdmissionYear = dto.AdmissionYear,
-            CurrentCourse = dto.CurrentCourse,
-            Status = dto.Status
-        };
+        var response = result.Value.Adapt<StudentResponse>();
 
         return Ok(response);
     }
@@ -94,21 +82,7 @@ public sealed class StudentsController : BaseController
             return HandleResultError(result.Error);
         }
 
-        var response = result.Value
-            .Select(dto => new StudentResponse
-            {
-                Id = dto.Id,
-                UserId = dto.UserId,
-                FullName = dto.FullName,
-                Email = dto.Email,
-                GroupCode = dto.GroupCode,
-                ProgramId = dto.ProgramId,
-                ProgramName = dto.ProgramName,
-                AdmissionYear = dto.AdmissionYear,
-                CurrentCourse = dto.CurrentCourse,
-                Status = dto.Status
-            })
-            .ToList();
+        var response = result.Value.Adapt<IReadOnlyList<StudentResponse>>();
 
         return Ok(response);
     }
@@ -127,14 +101,7 @@ public sealed class StudentsController : BaseController
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> Create([FromBody] CreateStudentRequest request, CancellationToken cancellationToken = default)
     {
-        var command = new CreateStudentCommand
-        {
-            UserId = request.UserId,
-            ProgramId = request.ProgramId,
-            AdmissionYear = request.AdmissionYear,
-            CurrentCourse = request.CurrentCourse,
-            GroupCode = request.GroupCode
-        };
+        var command = request.Adapt<CreateStudentCommand>();
 
         var result = await _sender.Send(command, cancellationToken);
 
@@ -161,13 +128,7 @@ public sealed class StudentsController : BaseController
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> Update(int studentId, [FromBody] UpdateStudentRequest request, CancellationToken cancellationToken = default)
     {
-        var command = new UpdateStudentCommand
-        {
-            StudentId = studentId,
-            ProgramId = request.ProgramId,
-            GroupCode = request.GroupCode,
-            CurrentCourse = request.CurrentCourse
-        };
+        var command = request.Adapt<UpdateStudentCommand>() with { StudentId = studentId };
 
         var result = await _sender.Send(command, cancellationToken);
 
