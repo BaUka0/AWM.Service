@@ -21,6 +21,17 @@ builder.Services.AddControllers();
 // Add Mapster configuration
 builder.Services.AddSingleton(TypeAdapterConfig.GlobalSettings);
 
+// Add CORS Policy for Frontend Integration
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy.WithOrigins("http://localhost:5173", "http://localhost:3000") // Vite and React defaults
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
 // Add Global Exception Handling
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
@@ -140,6 +151,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// Enable CORS before Authentication & Authorization
+app.UseCors("AllowFrontend");
 
 app.UseAuthentication();
 app.UseAuthorization();

@@ -2,6 +2,7 @@
 using AWM.Service.WebAPI.Common.Contracts.Requests;
 using AWM.Service.WebAPI.Common.Contracts.Responses;
 using AWM.Service.Application.Features.Auth.Commands.Register;
+using AWM.Service.Application.Features.Auth.Commands.RefreshToken;
 using Mapster;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -64,5 +65,26 @@ public sealed class AuthController : BaseController
         }
 
         return CreatedAtAction(nameof(Register), new { id = result.Value }, result.Value);
+    }
+
+    /// <summary>
+    /// Refreshes the access token using a refresh token.
+    /// </summary>
+    [HttpPost("refresh-token")]
+    [ProducesResponseType(typeof(LoginResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest request, CancellationToken cancellationToken = default)
+    {
+        var command = request.Adapt<RefreshTokenCommand>();
+        var result = await _sender.Send(command, cancellationToken);
+
+        if (result.IsFailed)
+        {
+            return HandleResultError(result.Error);
+        }
+
+        var authResult = result.Value;
+        var response = authResult.Adapt<LoginResponse>();
+        return Ok(response);
     }
 }

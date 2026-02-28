@@ -26,6 +26,7 @@ public interface IUserRepository
 {
     Task<User?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
     Task<User?> GetByLoginAsync(string login, CancellationToken cancellationToken = default);
+    Task<User?> GetByRefreshTokenAsync(string refreshToken, CancellationToken cancellationToken = default);
     Task<User?> GetByExternalIdAsync(string externalId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<User>> GetByUniversityAsync(int universityId, CancellationToken cancellationToken = default);
     Task AddAsync(User user, CancellationToken cancellationToken = default);

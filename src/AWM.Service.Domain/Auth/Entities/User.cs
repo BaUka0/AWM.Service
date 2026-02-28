@@ -15,6 +15,9 @@ public class User : AggregateRoot<int>, IAuditable, ISoftDeletable
     public string? ExternalId { get; private set; }
     public bool IsActive { get; private set; }
 
+    public string? RefreshToken { get; private set; }
+    public DateTime? RefreshTokenExpiryTime { get; private set; }
+
     public DateTime CreatedAt { get; private set; }
     public int CreatedBy { get; private set; }
     public DateTime? LastModifiedAt { get; private set; }
@@ -42,7 +45,7 @@ public class User : AggregateRoot<int>, IAuditable, ISoftDeletable
         PasswordHash = passwordHash;
         ExternalId = externalId;
         IsActive = true;
-        
+
         CreatedAt = DateTime.UtcNow;
         CreatedBy = 0; // System default
         LastModifiedAt = CreatedAt;
@@ -109,6 +112,26 @@ public class User : AggregateRoot<int>, IAuditable, ISoftDeletable
     public void Deactivate()
     {
         IsActive = false;
+        LastModifiedAt = DateTime.UtcNow;
+    }
+
+    /// <summary>
+    /// Updates the refresh token.
+    /// </summary>
+    public void UpdateRefreshToken(string token, DateTime expiryTime)
+    {
+        RefreshToken = token;
+        RefreshTokenExpiryTime = expiryTime;
+        LastModifiedAt = DateTime.UtcNow;
+    }
+
+    /// <summary>
+    /// Revokes the refresh token.
+    /// </summary>
+    public void RevokeRefreshToken()
+    {
+        RefreshToken = null;
+        RefreshTokenExpiryTime = null;
         LastModifiedAt = DateTime.UtcNow;
     }
 

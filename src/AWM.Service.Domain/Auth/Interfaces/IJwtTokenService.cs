@@ -11,4 +11,9 @@ public interface IJwtTokenService
     /// Generates a JWT token for the specified user with their roles.
     /// </summary>
     string GenerateToken(User user, IEnumerable<string> roles);
+
+    /// <summary>
+    /// Generates a secure random refresh token and its expiration time.
+    /// </summary>
+    (string Token, DateTime Expiry) GenerateRefreshToken();
 }
