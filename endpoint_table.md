@@ -93,6 +93,8 @@
 | TopicsController | PUT | api/v{version:apiVersion}/topics/{id} | Update | id: long | - | request: UpdateTopicRequest | IActionResult (нет T в сигнатуре) |
 | TopicsController | POST | api/v{version:apiVersion}/topics/{id}/approve | Approve | id: long | - | - | IActionResult (нет T в сигнатуре) |
 | TopicsController | POST | api/v{version:apiVersion}/topics/{id}/close | Close | id: long | - | - | IActionResult (нет T в сигнатуре) |
-| TopicsController | GET | api/v{version:apiVersion}/topics/available | GetAvailable | - | departmentId: int; academicYearId: int | - | IActionResult (нет T в сигнатуре) |
+| TopicsController | GET | api/v{version:apiVersion}/topics/available | GetAvailable | - | departmentId: int?; academicYearId: int? | - | IActionResult (нет T в сигнатуре) |
 | TopicsController | GET | api/v{version:apiVersion}/topics/by-direction/{directionId} | GetByDirection | directionId: long | - | - | IActionResult (нет T в сигнатуре) |
-COUNT=95
+| UsersController | GET | api/v{version:apiVersion}/Users/me | GetMe | - | - | - | IActionResult (нет T в сигнатуре) |
+| WorkTypesController | GET | api/v{version:apiVersion}/WorkTypes | GetAll | - | - | - | IActionResult (нет T в сигнатуре) |
+COUNT=97

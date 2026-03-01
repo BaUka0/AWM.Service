@@ -14,6 +14,8 @@ using AWM.Service.WebAPI.Authorization;
 using Mapster;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
+
 
 /// <summary>
 /// Controller for managing Thesis Topics.
@@ -59,24 +61,45 @@ public sealed class TopicsController : BaseController
 
     /// <summary>
     /// Get topics available for student selection.
+    /// Both parameters are optional — when omitted, the department and academic year
+    /// are auto-resolved from the authenticated user's JWT context.
     /// </summary>
-    /// <param name="departmentId">Department ID</param>
-    /// <param name="academicYearId">Academic year ID</param>
+    /// <param name="departmentId">Department ID (optional, auto-resolved from JWT when not provided)</param>
+    /// <param name="academicYearId">Academic year ID (optional, uses current active year when not provided)</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>List of available topics</returns>
     [HttpGet("available")]
     [RequirePermission(Permission.Topics_ViewAvailable)]
     [ProducesResponseType(typeof(IReadOnlyList<TopicResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetAvailable(
-        [FromQuery] int departmentId,
-        [FromQuery] int academicYearId,
+        [FromQuery] int? departmentId = null,
+        [FromQuery] int? academicYearId = null,
         CancellationToken cancellationToken = default)
     {
+        // Extract UserId and UniversityId from JWT for auto-resolution
+        int? userId = null;
+        int? universityId = null;
+
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+        if (userIdClaim != null && int.TryParse(userIdClaim.Value, out var parsedUserId))
+        {
+            userId = parsedUserId;
+        }
+
+        var universityIdClaim = User.FindFirst("UniversityId");
+        if (universityIdClaim != null && int.TryParse(universityIdClaim.Value, out var parsedUniversityId))
+        {
+            universityId = parsedUniversityId;
+        }
+
         var query = new GetAvailableTopicsQuery
         {
             DepartmentId = departmentId,
-            AcademicYearId = academicYearId
+            AcademicYearId = academicYearId,
+            UserId = userId,
+            UniversityId = universityId
         };
 
         var result = await _sender.Send(query, cancellationToken);

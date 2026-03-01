@@ -94,7 +94,9 @@
 | POST | api/v{version:apiVersion}/applications/{applicationId:long}/reject | applicationId: long | - | RejectApplicationRequest / body | empty / NoContent (204) |
 | DELETE | api/v{version:apiVersion}/applications/{applicationId:long} | applicationId: long | - | - | empty / NoContent (204) |
 | GET | api/v{version:apiVersion}/Topics/{id} | id: long | - | - | TopicDetailResponse / Ok (200) |
-| GET | api/v{version:apiVersion}/Topics/available | - | departmentId: int; academicYearId: int | - | IReadOnlyList<TopicResponse> / Ok (200) |
+| GET | api/v{version:apiVersion}/Topics/available | - | departmentId: int?; academicYearId: int? | - | IReadOnlyList<TopicResponse> / Ok (200) |
+| GET | api/v{version:apiVersion}/Users/me | - | - | - | UserProfileResponse / Ok (200) |
+| GET | api/v{version:apiVersion}/WorkTypes | - | - | - | IReadOnlyList<WorkTypeResponse> / Ok (200) |
 | GET | api/v{version:apiVersion}/Topics/by-direction/{directionId} | directionId: long | - | - | IReadOnlyList<TopicResponse> / Ok (200) |
 | POST | api/v{version:apiVersion}/Topics | - | - | CreateTopicRequest / body | long / CreatedAtAction (201) |
 | PUT | api/v{version:apiVersion}/Topics/{id} | id: long | - | UpdateTopicRequest / body | empty / NoContent (204) |
@@ -463,6 +465,25 @@
 - Comment: string?
 - GradedAt: DateTime
 
+### UserProfileResponse
+- UserId: int
+- Login: string
+- Email: string
+- Roles: IReadOnlyList<string>
+- DepartmentId: int?
+- DepartmentName: string?
+- InstituteId: int?
+- InstituteName: string?
+- CurrentAcademicYearId: int?
+- CurrentAcademicYearName: string?
+- StudentId: int?
+- GroupCode: string?
+
+### WorkTypeResponse
+- Id: int
+- Name: string
+- DegreeLevelId: int?
+
 ### InstituteResponse
 - Id: int
 - UniversityId: int
@@ -480,6 +501,8 @@
 - Email: string
 - Roles: IEnumerable<string>
 - RefreshToken: string
+- DepartmentId: int?
+- CurrentAcademicYearId: int?
 
 ### NotificationListResponse
 - UnreadCount: int

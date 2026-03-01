@@ -17,17 +17,20 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<AuthResu
     private readonly IPasswordHasher _passwordHasher;
     private readonly IJwtTokenService _jwtTokenService;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IAcademicYearRepository _academicYearRepository;
 
     public LoginCommandHandler(
         IUserRepository userRepository,
         IPasswordHasher passwordHasher,
         IJwtTokenService jwtTokenService,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        IAcademicYearRepository academicYearRepository)
     {
         _userRepository = userRepository;
         _passwordHasher = passwordHasher;
         _jwtTokenService = jwtTokenService;
         _unitOfWork = unitOfWork;
+        _academicYearRepository = academicYearRepository;
     }
 
     public async Task<Result<AuthResult>> Handle(LoginCommand request, CancellationToken cancellationToken)
@@ -72,6 +75,15 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<AuthResu
             .Distinct()
             .ToList();
 
+        // Resolve department from the first valid role assignment that has a department context
+        var departmentId = user.RoleAssignments
+            .Where(ra => ra.IsCurrentlyValid() && ra.DepartmentId.HasValue)
+            .Select(ra => ra.DepartmentId)
+            .FirstOrDefault();
+
+        // Resolve current academic year
+        var currentYear = await _academicYearRepository.GetCurrentAsync(user.UniversityId, cancellationToken);
+
         // Generate Tokens
         var token = _jwtTokenService.GenerateToken(user, roles);
         var refreshTokenResult = _jwtTokenService.GenerateRefreshToken();
@@ -87,7 +99,9 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<AuthResu
             UserId: user.Id,
             Email: user.Email,
             Roles: roles,
-            RefreshToken: refreshTokenResult.Token
+            RefreshToken: refreshTokenResult.Token,
+            DepartmentId: departmentId,
+            CurrentAcademicYearId: currentYear?.Id
         );
 
         return Result.Success(result);

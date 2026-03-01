@@ -15,20 +15,23 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, R
     private readonly IUserRepository _userRepository;
     private readonly IJwtTokenService _jwtTokenService;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IAcademicYearRepository _academicYearRepository;
 
     public RefreshTokenCommandHandler(
         IUserRepository userRepository,
         IJwtTokenService jwtTokenService,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        IAcademicYearRepository academicYearRepository)
     {
         _userRepository = userRepository;
         _jwtTokenService = jwtTokenService;
         _unitOfWork = unitOfWork;
+        _academicYearRepository = academicYearRepository;
     }
 
     public async Task<Result<AuthResult>> Handle(RefreshTokenCommand request, CancellationToken cancellationToken)
     {
-        // 1. Find user by refresh token
+        // 1. Find user by refresh token (with role assignments for context resolution)
         var user = await _userRepository.GetByRefreshTokenAsync(request.RefreshToken, cancellationToken);
 
         if (user is null)
@@ -51,18 +54,30 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, R
             return Result.Failure<AuthResult>(new Error("401", "Срок действия токена обновления истек. Пожалуйста, выполните вход заново."));
         }
 
-        // 3. Get user roles (use Role.SystemName if available, otherwise fall back to RoleId)
-        var roles = user.RoleAssignments
+        // 3. Load user with role assignments for context resolution
+        var userWithRoles = await _userRepository.GetWithRoleAssignmentsAsync(user.Id, cancellationToken);
+
+        // 4. Get user roles (use Role.SystemName if available, otherwise fall back to RoleId)
+        var roles = (userWithRoles ?? user).RoleAssignments
             .Where(ra => ra.IsCurrentlyValid())
             .Select(ra => ra.Role?.SystemName ?? ra.RoleId.ToString())
             .Distinct()
             .ToList();
 
-        // 4. Generate new tokens
+        // 5. Resolve department from the first valid role assignment that has a department context
+        var departmentId = (userWithRoles ?? user).RoleAssignments
+            .Where(ra => ra.IsCurrentlyValid() && ra.DepartmentId.HasValue)
+            .Select(ra => ra.DepartmentId)
+            .FirstOrDefault();
+
+        // 6. Resolve current academic year
+        var currentYear = await _academicYearRepository.GetCurrentAsync(user.UniversityId, cancellationToken);
+
+        // 7. Generate new tokens
         var token = _jwtTokenService.GenerateToken(user, roles);
         var newRefreshTokenResult = _jwtTokenService.GenerateRefreshToken();
 
-        // 5. Update user's refresh token and save
+        // 8. Update user's refresh token and save
         user.UpdateRefreshToken(newRefreshTokenResult.Token, newRefreshTokenResult.Expiry);
         await _userRepository.UpdateAsync(user, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
@@ -73,7 +88,9 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, R
             UserId: user.Id,
             Email: user.Email,
             Roles: roles,
-            RefreshToken: newRefreshTokenResult.Token
+            RefreshToken: newRefreshTokenResult.Token,
+            DepartmentId: departmentId,
+            CurrentAcademicYearId: currentYear?.Id
         );
 
         return Result.Success(result);
