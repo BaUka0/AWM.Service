@@ -58,7 +58,31 @@
   "login": "string",
   "userId": 0,
   "email": "string",
-  "roles": ["string"]
+  "roles": ["string"],
+  "refreshToken": "string"
+}
+```
+
+### POST `/refresh-token`
+
+Обновление access-токена с использованием refresh-токена.
+
+**Входные данные:**
+```json
+{
+  "refreshToken": "string"
+}
+```
+
+**Возвращаемые данные:**
+```json
+{
+  "token": "string",
+  "login": "string",
+  "userId": 0,
+  "email": "string",
+  "roles": ["string"],
+  "refreshToken": "string"
 }
 ```
 

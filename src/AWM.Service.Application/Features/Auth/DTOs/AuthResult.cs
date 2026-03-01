@@ -8,5 +8,6 @@ public record AuthResult(
     string Login,
     int UserId,
     string Email,
-    IEnumerable<string> Roles
+    IEnumerable<string> Roles,
+    string RefreshToken
 );

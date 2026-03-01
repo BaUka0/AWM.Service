@@ -13,6 +13,7 @@
 | GET | api/v{version:apiVersion}/works/{workId:long}/Attachments/{attachmentId:long}/download | workId: long; attachmentId: long | - | - | file / File (200) |
 | DELETE | api/v{version:apiVersion}/works/{workId:long}/Attachments/{attachmentId:long} | workId: long; attachmentId: long | - | - | empty / NoContent (204) |
 | POST | api/v{version:apiVersion}/Auth/login | - | - | LoginRequest / body | LoginResponse / Ok (200) |
+| POST | api/v{version:apiVersion}/Auth/refresh-token | - | - | RefreshTokenRequest / body | LoginResponse / Ok (200) |
 | POST | api/v{version:apiVersion}/Auth/register | - | - | RegisterRequest / body | int / CreatedAtAction (201) |
 | GET | api/v{version:apiVersion}/commissions | - | departmentId: int; academicYearId: int | - | IReadOnlyList<CommissionDto> / Ok (200) |
 | GET | api/v{version:apiVersion}/commissions/{id:int} | id: int | - | - | CommissionDetailDto / Ok (200) |
@@ -212,6 +213,9 @@
 ### LoginRequest
 - Login: string
 - Password: string
+
+### RefreshTokenRequest
+- RefreshToken: string
 
 ### RecordAttendanceRequest
 - AttendanceStatus: AttendanceStatus
@@ -475,6 +479,7 @@
 - UserId: int
 - Email: string
 - Roles: IEnumerable<string>
+- RefreshToken: string
 
 ### NotificationListResponse
 - UnreadCount: int

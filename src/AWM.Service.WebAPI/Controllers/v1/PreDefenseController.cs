@@ -159,8 +159,7 @@ public class PreDefenseController : BaseController
     /// Finalize a pre-defense attempt by recording the average score and pass/fail result (Secretary action).
     /// </summary>
     /// <param name="attemptId">PreDefenseAttempt ID</param>
-    /// <param name="averageScore">Final average score</param>
-    /// <param name="isPassed">Whether the student passed</param>
+    /// <param name="request">Finalize details including average score and pass/fail result</param>
     /// <returns>No content on success</returns>
     [HttpPut("attempts/{attemptId:long}/finalize")]
     [RequireDepartmentPermission(Permission.PreDefense_Finalize)]

@@ -16,15 +16,18 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<AuthResu
     private readonly IUserRepository _userRepository;
     private readonly IPasswordHasher _passwordHasher;
     private readonly IJwtTokenService _jwtTokenService;
+    private readonly IUnitOfWork _unitOfWork;
 
     public LoginCommandHandler(
         IUserRepository userRepository,
         IPasswordHasher passwordHasher,
-        IJwtTokenService jwtTokenService)
+        IJwtTokenService jwtTokenService,
+        IUnitOfWork unitOfWork)
     {
         _userRepository = userRepository;
         _passwordHasher = passwordHasher;
         _jwtTokenService = jwtTokenService;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<Result<AuthResult>> Handle(LoginCommand request, CancellationToken cancellationToken)
@@ -69,15 +72,22 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<AuthResu
             .Distinct()
             .ToList();
 
-        // Generate JWT token
+        // Generate Tokens
         var token = _jwtTokenService.GenerateToken(user, roles);
+        var refreshTokenResult = _jwtTokenService.GenerateRefreshToken();
+
+        // Update user's refresh token and save
+        user.UpdateRefreshToken(refreshTokenResult.Token, refreshTokenResult.Expiry);
+        await _userRepository.UpdateAsync(user, cancellationToken);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         var result = new AuthResult(
             Token: token,
             Login: user.Login,
             UserId: user.Id,
             Email: user.Email,
-            Roles: roles
+            Roles: roles,
+            RefreshToken: refreshTokenResult.Token
         );
 
         return Result.Success(result);

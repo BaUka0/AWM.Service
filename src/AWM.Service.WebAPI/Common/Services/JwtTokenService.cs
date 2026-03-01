@@ -52,4 +52,17 @@ public class JwtTokenService : IJwtTokenService
 
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
+
+    /// <inheritdoc/>
+    public (string Token, DateTime Expiry) GenerateRefreshToken()
+    {
+        var randomBytes = new byte[32];
+        using (var rng = System.Security.Cryptography.RandomNumberGenerator.Create())
+        {
+            rng.GetBytes(randomBytes);
+            var token = Convert.ToBase64String(randomBytes);
+            var expiry = DateTime.UtcNow.AddDays(_jwtSettings.RefreshTokenExpirationDays);
+            return (token, expiry);
+        }
+    }
 }
