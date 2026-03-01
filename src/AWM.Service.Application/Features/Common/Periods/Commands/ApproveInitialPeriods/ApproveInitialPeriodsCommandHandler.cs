@@ -21,6 +21,7 @@ public sealed class ApproveInitialPeriodsCommandHandler : IRequestHandler<Approv
     private readonly IStudentRepository _studentRepository;
     private readonly ICurrentUserProvider _currentUserProvider;
     private readonly INotificationService _notificationService;
+    private readonly IUnitOfWork _unitOfWork;
 
     public ApproveInitialPeriodsCommandHandler(
         IPeriodRepository periodRepository,
@@ -29,7 +30,8 @@ public sealed class ApproveInitialPeriodsCommandHandler : IRequestHandler<Approv
         IAcademicProgramRepository academicProgramRepository,
         IStudentRepository studentRepository,
         ICurrentUserProvider currentUserProvider,
-        INotificationService notificationService)
+        INotificationService notificationService,
+        IUnitOfWork unitOfWork)
     {
         _periodRepository = periodRepository ?? throw new ArgumentNullException(nameof(periodRepository));
         _academicYearRepository = academicYearRepository ?? throw new ArgumentNullException(nameof(academicYearRepository));
@@ -38,6 +40,7 @@ public sealed class ApproveInitialPeriodsCommandHandler : IRequestHandler<Approv
         _studentRepository = studentRepository ?? throw new ArgumentNullException(nameof(studentRepository));
         _currentUserProvider = currentUserProvider ?? throw new ArgumentNullException(nameof(currentUserProvider));
         _notificationService = notificationService ?? throw new ArgumentNullException(nameof(notificationService));
+        _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
     }
 
     public async Task<Result> Handle(ApproveInitialPeriodsCommand request, CancellationToken cancellationToken)
@@ -129,6 +132,8 @@ public sealed class ApproveInitialPeriodsCommandHandler : IRequestHandler<Approv
                         cancellationToken: cancellationToken);
                 }
             }
+
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             return Result.Success();
         }

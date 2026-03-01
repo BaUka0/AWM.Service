@@ -15,15 +15,18 @@ public sealed class CreateApplicationCommandHandler : IRequestHandler<CreateAppl
     private readonly ITopicRepository _topicRepository;
     private readonly ITopicApplicationRepository _applicationRepository;
     private readonly ICurrentUserProvider _currentUserProvider;
+    private readonly IUnitOfWork _unitOfWork;
 
     public CreateApplicationCommandHandler(
         ITopicRepository topicRepository,
         ITopicApplicationRepository applicationRepository,
-        ICurrentUserProvider currentUserProvider)
+        ICurrentUserProvider currentUserProvider,
+        IUnitOfWork unitOfWork)
     {
         _topicRepository = topicRepository;
         _applicationRepository = applicationRepository;
         _currentUserProvider = currentUserProvider;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<Result<long>> Handle(CreateApplicationCommand request, CancellationToken cancellationToken)
@@ -103,6 +106,7 @@ public sealed class CreateApplicationCommandHandler : IRequestHandler<CreateAppl
         try
         {
             await _applicationRepository.AddAsync(application, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
             return Result.Success(application.Id);
         }
         catch (Exception ex)

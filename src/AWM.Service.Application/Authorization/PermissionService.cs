@@ -4,6 +4,8 @@ using AWM.Service.Domain.Auth.Enums;
 using AWM.Service.Domain.Auth.Interfaces;
 using AWM.Service.Domain.Repositories;
 
+using Microsoft.Extensions.Logging;
+
 /// <summary>
 /// Service that maps roles to their granted permissions.
 /// Implements the role-permission matrix for Context-Aware RBAC.
@@ -11,10 +13,12 @@ using AWM.Service.Domain.Repositories;
 public class PermissionService : IPermissionService
 {
     private readonly IUserRepository _userRepository;
+    private readonly ILogger<PermissionService> _logger;
 
-    public PermissionService(IUserRepository userRepository)
+    public PermissionService(IUserRepository userRepository, ILogger<PermissionService> logger)
     {
         _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
     /// <summary>
     /// Static mapping of roles to their permissions.
@@ -209,9 +213,11 @@ public class PermissionService : IPermissionService
     {
         if (RolePermissions.TryGetValue(roleName, out var permissions))
         {
+            _logger.LogDebug("Permissions found for role {RoleName}: {PermissionsCount} permissions", roleName, permissions.Count);
             return permissions;
         }
 
+        _logger.LogWarning("No permissions defined for role {RoleName}", roleName);
         return new HashSet<Permission>();
     }
 
@@ -226,12 +232,17 @@ public class PermissionService : IPermissionService
         int userId,
         CancellationToken cancellationToken = default)
     {
+        _logger.LogInformation("Getting permissions for user {UserId}", userId);
+
         var user = await _userRepository.GetWithRoleAssignmentsAsync(userId, cancellationToken);
 
         if (user == null)
         {
+            _logger.LogWarning("User {UserId} not found when fetching permissions", userId);
             return new HashSet<Permission>();
         }
+
+        _logger.LogDebug("User {UserId} has {AssignmentsCount} role assignments", userId, user.RoleAssignments.Count);
 
         var permissions = new HashSet<Permission>();
 
@@ -239,11 +250,17 @@ public class PermissionService : IPermissionService
         {
             if (assignment.Role != null)
             {
-                var rolePermissions = GetPermissionsForRole(assignment.Role.SystemName);
+                var roleName = assignment.Role.SystemName;
+                var rolePermissions = GetPermissionsForRole(roleName);
+
+                _logger.LogTrace("Adding {PermissionsCount} permissions from role {RoleName} for user {UserId}",
+                    rolePermissions.Count, roleName, userId);
+
                 permissions.UnionWith(rolePermissions);
             }
         }
 
+        _logger.LogInformation("User {UserId} has total {TotalPermissionsCount} valid permissions", userId, permissions.Count);
         return permissions;
     }
 
@@ -254,23 +271,35 @@ public class PermissionService : IPermissionService
         int? academicYearId,
         CancellationToken cancellationToken = default)
     {
+        _logger.LogInformation("Checking context permissions for user {UserId}. Context: Dept={DepartmentId}, Year={YearId}",
+            userId, departmentId, academicYearId);
+
         var user = await _userRepository.GetWithRoleAssignmentsAsync(userId, cancellationToken);
 
         if (user == null)
         {
+            _logger.LogWarning("User {UserId} not found when checking context permissions", userId);
             return new HashSet<Permission>();
         }
 
         var permissions = new HashSet<Permission>();
 
-        foreach (var assignment in user.RoleAssignments.Where(ra => ra.AppliesToContext(departmentId, academicYearId)))
+        foreach (var assignment in user.RoleAssignments)
         {
-            if (assignment.Role != null)
+            bool applies = assignment.AppliesToContext(departmentId, academicYearId);
+
+            _logger.LogTrace("Assignment ID {AssignmentId} (Role={RoleName}): Valid={IsValid}, MatchesContext={Matches}",
+                assignment.Id, assignment.Role?.SystemName ?? "Unknown", assignment.IsCurrentlyValid(), applies);
+
+            if (applies && assignment.Role != null)
             {
                 var rolePermissions = GetPermissionsForRole(assignment.Role.SystemName);
                 permissions.UnionWith(rolePermissions);
             }
         }
+
+        _logger.LogInformation("User {UserId} has {TotalPermissionsCount} permissions in context Dept={DepartmentId}",
+            userId, permissions.Count, departmentId);
 
         return permissions;
     }

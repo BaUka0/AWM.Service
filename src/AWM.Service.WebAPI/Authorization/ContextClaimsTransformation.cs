@@ -6,6 +6,8 @@ using AWM.Service.Domain.Auth.Interfaces;
 using AWM.Service.Domain.Repositories;
 using Microsoft.AspNetCore.Authentication;
 
+using Microsoft.Extensions.Logging;
+
 /// <summary>
 /// Claims transformation that loads user permissions from the database
 /// and adds them as claims for authorization.
@@ -14,13 +16,16 @@ public class ContextClaimsTransformation : IClaimsTransformation
 {
     private readonly IUserRepository _userRepository;
     private readonly IPermissionService _permissionService;
+    private readonly ILogger<ContextClaimsTransformation> _logger;
 
     public ContextClaimsTransformation(
         IUserRepository userRepository,
-        IPermissionService permissionService)
+        IPermissionService permissionService,
+        ILogger<ContextClaimsTransformation> logger)
     {
         _userRepository = userRepository;
         _permissionService = permissionService;
+        _logger = logger;
     }
 
     public async Task<ClaimsPrincipal> TransformAsync(ClaimsPrincipal principal)
@@ -41,7 +46,13 @@ public class ContextClaimsTransformation : IClaimsTransformation
         // Load user with role assignments from database
         var user = await _userRepository.GetWithRoleAssignmentsAsync(userId);
         if (user == null)
+        {
+            _logger.LogWarning("User {UserId} not found in database during claims transformation", userId);
             return principal;
+        }
+
+        _logger.LogInformation("Starting claims transformation for user {UserId} ({Login})", userId, user.Login);
+        _logger.LogDebug("User {UserId} has {AssignmentsCount} role assignments", userId, user.RoleAssignments.Count);
 
         // Create new identity with additional claims
         var identity = new ClaimsIdentity();
@@ -51,9 +62,14 @@ public class ContextClaimsTransformation : IClaimsTransformation
         foreach (var assignment in user.RoleAssignments)
         {
             if (!assignment.IsCurrentlyValid())
+            {
+                _logger.LogTrace("Skipping expired/inactive role assignment {AssignmentId}", assignment.Id);
                 continue;
+            }
 
             var roleName = assignment.Role?.SystemName ?? assignment.RoleId.ToString();
+            _logger.LogDebug("Processing assignment {AssignmentId}: Role={RoleName}, Dept={DeptId}, Year={YearId}",
+                assignment.Id, roleName, assignment.DepartmentId, assignment.AcademicYearId);
 
             // Add role claim
             claims.Add(new Claim(AuthorizationConstants.RoleClaimType, roleName));
@@ -115,6 +131,8 @@ public class ContextClaimsTransformation : IClaimsTransformation
 
         // Remove duplicates
         var distinctClaims = claims.DistinctBy(c => $"{c.Type}:{c.Value}").ToList();
+        _logger.LogInformation("Generated {TotalClaims} claims for user {UserId}", distinctClaims.Count, userId);
+
         identity.AddClaims(distinctClaims);
 
         // Clone principal and add new identity

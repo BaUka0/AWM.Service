@@ -14,15 +14,18 @@ public sealed class ApproveDirectionCommandHandler
     private readonly IDirectionRepository _directionRepository;
     private readonly IWorkflowRepository _workflowRepository;
     private readonly ICurrentUserProvider _currentUserProvider;
+    private readonly IUnitOfWork _unitOfWork;
 
     public ApproveDirectionCommandHandler(
         IDirectionRepository directionRepository,
         IWorkflowRepository workflowRepository,
-        ICurrentUserProvider currentUserProvider)
+        ICurrentUserProvider currentUserProvider,
+        IUnitOfWork unitOfWork)
     {
         _directionRepository = directionRepository;
         _workflowRepository = workflowRepository;
         _currentUserProvider = currentUserProvider;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<Result> Handle(
@@ -91,6 +94,7 @@ public sealed class ApproveDirectionCommandHandler
 
             // Save changes
             await _directionRepository.UpdateAsync(direction, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             return Result.Success();
         }

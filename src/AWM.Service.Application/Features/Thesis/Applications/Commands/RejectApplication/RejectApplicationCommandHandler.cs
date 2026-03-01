@@ -14,15 +14,18 @@ public sealed class RejectApplicationCommandHandler : IRequestHandler<RejectAppl
     private readonly ITopicApplicationRepository _applicationRepository;
     private readonly ITopicRepository _topicRepository;
     private readonly ICurrentUserProvider _currentUserProvider;
+    private readonly IUnitOfWork _unitOfWork;
 
     public RejectApplicationCommandHandler(
         ITopicApplicationRepository applicationRepository,
         ITopicRepository topicRepository,
-        ICurrentUserProvider currentUserProvider)
+        ICurrentUserProvider currentUserProvider,
+        IUnitOfWork unitOfWork)
     {
         _applicationRepository = applicationRepository;
         _topicRepository = topicRepository;
         _currentUserProvider = currentUserProvider;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<Result> Handle(RejectApplicationCommand request, CancellationToken cancellationToken)
@@ -83,6 +86,7 @@ public sealed class RejectApplicationCommandHandler : IRequestHandler<RejectAppl
         try
         {
             await _applicationRepository.UpdateAsync(application, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
             return Result.Success();
         }
         catch (Exception ex)

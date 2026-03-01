@@ -13,13 +13,16 @@ public sealed class WithdrawApplicationCommandHandler : IRequestHandler<Withdraw
 {
     private readonly ITopicApplicationRepository _applicationRepository;
     private readonly ICurrentUserProvider _currentUserProvider;
+    private readonly IUnitOfWork _unitOfWork;
 
     public WithdrawApplicationCommandHandler(
         ITopicApplicationRepository applicationRepository,
-        ICurrentUserProvider currentUserProvider)
+        ICurrentUserProvider currentUserProvider,
+        IUnitOfWork unitOfWork)
     {
         _applicationRepository = applicationRepository;
         _currentUserProvider = currentUserProvider;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<Result> Handle(WithdrawApplicationCommand request, CancellationToken cancellationToken)
@@ -70,6 +73,7 @@ public sealed class WithdrawApplicationCommandHandler : IRequestHandler<Withdraw
         try
         {
             await _applicationRepository.UpdateAsync(application, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
             return Result.Success();
         }
         catch (Exception ex)

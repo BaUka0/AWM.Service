@@ -11,15 +11,18 @@ public sealed class CreatePeriodCommandHandler : IRequestHandler<CreatePeriodCom
     private readonly IPeriodRepository _periodRepository;
     private readonly IAcademicYearRepository _academicYearRepository;
     private readonly ICurrentUserProvider _currentUserProvider;
+    private readonly IUnitOfWork _unitOfWork;
 
     public CreatePeriodCommandHandler(
         IPeriodRepository periodRepository,
         IAcademicYearRepository academicYearRepository,
-        ICurrentUserProvider currentUserProvider)
+        ICurrentUserProvider currentUserProvider,
+        IUnitOfWork unitOfWork)
     {
         _periodRepository = periodRepository ?? throw new ArgumentNullException(nameof(periodRepository));
         _academicYearRepository = academicYearRepository ?? throw new ArgumentNullException(nameof(academicYearRepository));
         _currentUserProvider = currentUserProvider ?? throw new ArgumentNullException(nameof(currentUserProvider));
+        _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
     }
 
     public async Task<Result<int>> Handle(CreatePeriodCommand request, CancellationToken cancellationToken)
@@ -52,6 +55,7 @@ public sealed class CreatePeriodCommandHandler : IRequestHandler<CreatePeriodCom
                 userId.Value);
 
             await _periodRepository.AddAsync(period, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
             return Result.Success(period.Id);
         }
         catch (ArgumentException argEx)

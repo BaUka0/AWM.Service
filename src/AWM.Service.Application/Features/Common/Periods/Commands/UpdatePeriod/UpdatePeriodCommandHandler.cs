@@ -9,13 +9,16 @@ public sealed class UpdatePeriodCommandHandler : IRequestHandler<UpdatePeriodCom
 {
     private readonly IPeriodRepository _periodRepository;
     private readonly ICurrentUserProvider _currentUserProvider;
+    private readonly IUnitOfWork _unitOfWork;
 
     public UpdatePeriodCommandHandler(
         IPeriodRepository periodRepository,
-        ICurrentUserProvider currentUserProvider)
+        ICurrentUserProvider currentUserProvider,
+        IUnitOfWork unitOfWork)
     {
         _periodRepository = periodRepository ?? throw new ArgumentNullException(nameof(periodRepository));
         _currentUserProvider = currentUserProvider ?? throw new ArgumentNullException(nameof(currentUserProvider));
+        _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
     }
 
     public async Task<Result> Handle(UpdatePeriodCommand request, CancellationToken cancellationToken)
@@ -52,6 +55,7 @@ public sealed class UpdatePeriodCommandHandler : IRequestHandler<UpdatePeriodCom
             }
 
             await _periodRepository.UpdateAsync(period, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
             return Result.Success();
         }
         catch (ArgumentException argEx)
