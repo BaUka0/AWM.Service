@@ -61,9 +61,7 @@
   "userId": 0,
   "email": "string",
   "roles": ["string"],
-  "refreshToken": "string",
-  "departmentId": 0,
-  "currentAcademicYearId": 0
+  "refreshToken": "string"
 }
 ```
 
@@ -86,9 +84,7 @@
   "userId": 0,
   "email": "string",
   "roles": ["string"],
-  "refreshToken": "string",
-  "departmentId": 0,
-  "currentAcademicYearId": 0
+  "refreshToken": "string"
 }
 ```
 
@@ -1950,6 +1946,38 @@
   "currentAcademicYearName": "2025-2026",
   "studentId": 1,
   "groupCode": "CS-22-1"
+}
+```
+
+---
+
+## 23. Пользователи (Users)
+
+**Базовый путь:** `api/v1/users`
+
+### GET `/me`
+
+Получить полный профиль авторизованного пользователя.
+
+**Возвращаемые данные:**
+```json
+{
+  "userId": 0,
+  "login": "string",
+  "email": "string",
+  "roles": ["string"],
+  "departmentId": 0,
+  "departmentName": "string",
+  "instituteId": 0,
+  "instituteName": "string",
+  "currentAcademicYearId": 0,
+  "currentAcademicYearName": "string",
+  "staffId": 0,
+  "position": "string",
+  "academicDegree": "string",
+  "isSupervisor": true,
+  "studentId": 0,
+  "groupCode": "string"
 }
 ```
 

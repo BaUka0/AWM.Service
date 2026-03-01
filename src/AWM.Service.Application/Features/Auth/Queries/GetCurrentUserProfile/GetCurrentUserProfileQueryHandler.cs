@@ -15,17 +15,20 @@ public sealed class GetCurrentUserProfileQueryHandler
 {
     private readonly IUserRepository _userRepository;
     private readonly IStudentRepository _studentRepository;
+    private readonly IStaffRepository _staffRepository;
     private readonly IAcademicYearRepository _academicYearRepository;
     private readonly IOrganizationLookupRepository _orgLookupRepository;
 
     public GetCurrentUserProfileQueryHandler(
         IUserRepository userRepository,
         IStudentRepository studentRepository,
+        IStaffRepository staffRepository,
         IAcademicYearRepository academicYearRepository,
         IOrganizationLookupRepository orgLookupRepository)
     {
         _userRepository = userRepository;
         _studentRepository = studentRepository;
+        _staffRepository = staffRepository;
         _academicYearRepository = academicYearRepository;
         _orgLookupRepository = orgLookupRepository;
     }
@@ -75,7 +78,42 @@ public sealed class GetCurrentUserProfileQueryHandler
         // 5. Resolve current academic year
         var currentYear = await _academicYearRepository.GetCurrentAsync(user.UniversityId, cancellationToken);
 
-        // 6. Load student profile if user has Student role
+        // 6. Load staff profile if user has a staff-related role
+        int? staffId = null;
+        string? position = null;
+        string? academicDegree = null;
+        bool? isSupervisor = null;
+
+        var staffRoles = new[]
+        {
+            nameof(RoleType.Supervisor),
+            nameof(RoleType.HeadOfDepartment),
+            nameof(RoleType.Secretary),
+            nameof(RoleType.Expert),
+            nameof(RoleType.CommissionMember),
+        };
+        var isStaff = roles.Any(r => staffRoles.Contains(r));
+        if (isStaff)
+        {
+            var staff = await _staffRepository.GetByUserIdAsync(user.Id, cancellationToken);
+            if (staff is not null)
+            {
+                staffId = staff.Id;
+                position = staff.Position;
+                academicDegree = staff.AcademicDegree;
+                isSupervisor = staff.IsSupervisor;
+
+                // Use staff's department as fallback if not resolved from role assignment
+                departmentId ??= staff.DepartmentId;
+                if (departmentId.HasValue && departmentName is null)
+                {
+                    var dept = await _orgLookupRepository.GetDepartmentByIdAsync(departmentId.Value, cancellationToken);
+                    departmentName = dept?.Name;
+                }
+            }
+        }
+
+        // 7. Load student profile if user has Student role
         int? studentId = null;
         string? groupCode = null;
 
@@ -99,6 +137,10 @@ public sealed class GetCurrentUserProfileQueryHandler
             InstituteName = instituteName,
             CurrentAcademicYearId = currentYear?.Id,
             CurrentAcademicYearName = currentYear?.Name,
+            StaffId = staffId,
+            Position = position,
+            AcademicDegree = academicDegree,
+            IsSupervisor = isSupervisor,
             StudentId = studentId,
             GroupCode = groupCode,
         };

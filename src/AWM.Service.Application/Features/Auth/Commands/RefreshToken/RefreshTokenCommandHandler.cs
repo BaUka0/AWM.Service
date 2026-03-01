@@ -15,18 +15,15 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, R
     private readonly IUserRepository _userRepository;
     private readonly IJwtTokenService _jwtTokenService;
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IAcademicYearRepository _academicYearRepository;
 
     public RefreshTokenCommandHandler(
         IUserRepository userRepository,
         IJwtTokenService jwtTokenService,
-        IUnitOfWork unitOfWork,
-        IAcademicYearRepository academicYearRepository)
+        IUnitOfWork unitOfWork)
     {
         _userRepository = userRepository;
         _jwtTokenService = jwtTokenService;
         _unitOfWork = unitOfWork;
-        _academicYearRepository = academicYearRepository;
     }
 
     public async Task<Result<AuthResult>> Handle(RefreshTokenCommand request, CancellationToken cancellationToken)
@@ -64,20 +61,11 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, R
             .Distinct()
             .ToList();
 
-        // 5. Resolve department from the first valid role assignment that has a department context
-        var departmentId = (userWithRoles ?? user).RoleAssignments
-            .Where(ra => ra.IsCurrentlyValid() && ra.DepartmentId.HasValue)
-            .Select(ra => ra.DepartmentId)
-            .FirstOrDefault();
-
-        // 6. Resolve current academic year
-        var currentYear = await _academicYearRepository.GetCurrentAsync(user.UniversityId, cancellationToken);
-
-        // 7. Generate new tokens
+        // 5. Generate new tokens
         var token = _jwtTokenService.GenerateToken(user, roles);
         var newRefreshTokenResult = _jwtTokenService.GenerateRefreshToken();
 
-        // 8. Update user's refresh token and save
+        // 6. Update user's refresh token and save
         user.UpdateRefreshToken(newRefreshTokenResult.Token, newRefreshTokenResult.Expiry);
         await _userRepository.UpdateAsync(user, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
@@ -88,9 +76,7 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, R
             UserId: user.Id,
             Email: user.Email,
             Roles: roles,
-            RefreshToken: newRefreshTokenResult.Token,
-            DepartmentId: departmentId,
-            CurrentAcademicYearId: currentYear?.Id
+            RefreshToken: newRefreshTokenResult.Token
         );
 
         return Result.Success(result);

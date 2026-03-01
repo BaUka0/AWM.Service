@@ -490,6 +490,10 @@
 - InstituteName: string?
 - CurrentAcademicYearId: int?
 - CurrentAcademicYearName: string?
+- StaffId: int?
+- Position: string?
+- AcademicDegree: string?
+- IsSupervisor: bool?
 - StudentId: int?
 - GroupCode: string?
 
@@ -515,8 +519,6 @@
 - Email: string
 - Roles: IEnumerable<string>
 - RefreshToken: string
-- DepartmentId: int?
-- CurrentAcademicYearId: int?
 
 ### NotificationListResponse
 - UnreadCount: int

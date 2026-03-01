@@ -11,6 +11,7 @@ using AWM.Service.Domain.Repositories;
 using AWM.Service.Domain.CommonDomain.Services;
 using KDS.Primitives.FluentResult;
 using MediatR;
+using Microsoft.Extensions.Logging;
 
 public sealed class ApproveInitialPeriodsCommandHandler : IRequestHandler<ApproveInitialPeriodsCommand, Result>
 {
@@ -22,6 +23,7 @@ public sealed class ApproveInitialPeriodsCommandHandler : IRequestHandler<Approv
     private readonly ICurrentUserProvider _currentUserProvider;
     private readonly INotificationService _notificationService;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ILogger<ApproveInitialPeriodsCommandHandler> _logger;
 
     public ApproveInitialPeriodsCommandHandler(
         IPeriodRepository periodRepository,
@@ -31,7 +33,8 @@ public sealed class ApproveInitialPeriodsCommandHandler : IRequestHandler<Approv
         IStudentRepository studentRepository,
         ICurrentUserProvider currentUserProvider,
         INotificationService notificationService,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        ILogger<ApproveInitialPeriodsCommandHandler> logger)
     {
         _periodRepository = periodRepository ?? throw new ArgumentNullException(nameof(periodRepository));
         _academicYearRepository = academicYearRepository ?? throw new ArgumentNullException(nameof(academicYearRepository));
@@ -41,6 +44,7 @@ public sealed class ApproveInitialPeriodsCommandHandler : IRequestHandler<Approv
         _currentUserProvider = currentUserProvider ?? throw new ArgumentNullException(nameof(currentUserProvider));
         _notificationService = notificationService ?? throw new ArgumentNullException(nameof(notificationService));
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     public async Task<Result> Handle(ApproveInitialPeriodsCommand request, CancellationToken cancellationToken)
@@ -48,8 +52,14 @@ public sealed class ApproveInitialPeriodsCommandHandler : IRequestHandler<Approv
         try
         {
             var userId = _currentUserProvider.UserId;
+            _logger.LogInformation("Attempting to ApproveInitialPeriods for Dept={DeptId}, Year={YearId} by User={UserId}",
+                request.DepartmentId, request.AcademicYearId, userId);
+
             if (!userId.HasValue)
+            {
+                _logger.LogWarning("ApproveInitialPeriods failed: User ID is not available.");
                 return Result.Failure(new Error("401", "User ID is not available."));
+            }
 
             var academicYear = await _academicYearRepository.GetByIdAsync(request.AcademicYearId, cancellationToken);
             if (academicYear is null)
@@ -74,6 +84,7 @@ public sealed class ApproveInitialPeriodsCommandHandler : IRequestHandler<Approv
                 }
                 else
                 {
+                    _logger.LogDebug("Creating new period for Stage={Stage} in Dept={DeptId}", requestedPeriod.WorkflowStage, request.DepartmentId);
                     var newPeriod = new Period(
                         request.DepartmentId,
                         request.AcademicYearId,
@@ -84,6 +95,7 @@ public sealed class ApproveInitialPeriodsCommandHandler : IRequestHandler<Approv
                     await _periodRepository.AddAsync(newPeriod, cancellationToken);
                 }
             }
+            _logger.LogInformation("Processed {PeriodCount} periods for Dept={DeptId}", groupedRequestedPeriods.Count, request.DepartmentId);
 
             // 1. Notify Supervisors about Direction Submission
             var directionPeriod = request.Periods.FirstOrDefault(p => p.WorkflowStage == WorkflowStage.DirectionSubmission);
@@ -97,12 +109,17 @@ public sealed class ApproveInitialPeriodsCommandHandler : IRequestHandler<Approv
                     var title = "Начало периода формирования направлений";
                     var body = $"Период формирования направлений и тем утвержден. Сроки: {directionPeriod.StartDate:dd.MM.yyyy} - {directionPeriod.EndDate:dd.MM.yyyy}. Желательно сформировать направления и темы в срок.";
 
+                    _logger.LogInformation("Sending DirectionSubmission notifications to {SupervisorCount} supervisors", supervisorUserIds.Count);
                     await _notificationService.SendToManyAsync(
                         supervisorUserIds,
                         title,
                         userId.Value,
                         body,
                         cancellationToken: cancellationToken);
+                }
+                else
+                {
+                    _logger.LogWarning("No supervisors found for Dept={DeptId} to notify about DirectionSubmission", request.DepartmentId);
                 }
             }
 
@@ -124,12 +141,17 @@ public sealed class ApproveInitialPeriodsCommandHandler : IRequestHandler<Approv
                     var title = "Сроки выбора тем дипломных работ";
                     var body = $"Внимание! Выбор тем дипломных будет проходить в период: {selectionPeriod.StartDate:dd.MM.yyyy} - {selectionPeriod.EndDate:dd.MM.yyyy}. Пожалуйста, осуществите выбор вовремя, иначе тема будет назначена случайным образом.";
 
+                    _logger.LogInformation("Sending TopicSelection notifications to {StudentCount} students", studentUserIds.Count);
                     await _notificationService.SendToManyAsync(
                         studentUserIds,
                         title,
                         userId.Value,
                         body,
                         cancellationToken: cancellationToken);
+                }
+                else
+                {
+                    _logger.LogWarning("No students found for Dept={DeptId} to notify about TopicSelection", request.DepartmentId);
                 }
             }
 
@@ -139,10 +161,12 @@ public sealed class ApproveInitialPeriodsCommandHandler : IRequestHandler<Approv
         }
         catch (ArgumentException argEx)
         {
+            _logger.LogWarning(argEx, "ApproveInitialPeriods validation failed: {Message}", argEx.Message);
             return Result.Failure(new Error("400", argEx.Message));
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "ApproveInitialPeriods failed for Dept={DeptId}", request.DepartmentId);
             return Result.Failure(new Error("500", $"An error occurred while approving the Periods: {ex.Message}"));
         }
     }

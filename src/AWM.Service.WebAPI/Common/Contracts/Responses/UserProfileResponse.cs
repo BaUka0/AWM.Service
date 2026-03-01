@@ -28,6 +28,12 @@ public sealed class UserProfileResponse
     public int? CurrentAcademicYearId { get; init; }
     public string? CurrentAcademicYearName { get; init; }
 
+    // Staff-specific fields (null for non-staff users)
+    public int? StaffId { get; init; }
+    public string? Position { get; init; }
+    public string? AcademicDegree { get; init; }
+    public bool? IsSupervisor { get; init; }
+
     // Student-specific fields (null for non-student users)
     public int? StudentId { get; init; }
     public string? GroupCode { get; init; }

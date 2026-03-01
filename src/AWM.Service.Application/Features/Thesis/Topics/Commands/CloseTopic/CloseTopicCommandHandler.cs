@@ -4,6 +4,7 @@ using AWM.Service.Domain.Common;
 using AWM.Service.Domain.Repositories;
 using KDS.Primitives.FluentResult;
 using MediatR;
+using Microsoft.Extensions.Logging;
 
 /// <summary>
 /// Handler for closing a thesis topic.
@@ -14,19 +15,25 @@ public sealed class CloseTopicCommandHandler : IRequestHandler<CloseTopicCommand
     private readonly ITopicRepository _topicRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICurrentUserProvider _currentUserProvider;
+    private readonly ILogger<CloseTopicCommandHandler> _logger;
 
     public CloseTopicCommandHandler(
         ITopicRepository topicRepository,
         IUnitOfWork unitOfWork,
-        ICurrentUserProvider currentUserProvider)
+        ICurrentUserProvider currentUserProvider,
+        ILogger<CloseTopicCommandHandler> logger)
     {
         _topicRepository = topicRepository ?? throw new ArgumentNullException(nameof(topicRepository));
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
         _currentUserProvider = currentUserProvider ?? throw new ArgumentNullException(nameof(currentUserProvider));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     public async Task<Result> Handle(CloseTopicCommand request, CancellationToken cancellationToken)
     {
+        var userId = _currentUserProvider.UserId;
+        _logger.LogInformation("Attempting to close topic ID={TopicId} by User={UserId}", request.TopicId, userId);
+
         try
         {
             // 1. Find the topic
@@ -34,12 +41,14 @@ public sealed class CloseTopicCommandHandler : IRequestHandler<CloseTopicCommand
 
             if (topic is null)
             {
+                _logger.LogWarning("CloseTopic failed: Topic ID={TopicId} not found.", request.TopicId);
                 return Result.Failure(new Error("404", $"Topic with ID {request.TopicId} not found."));
             }
 
             // 2. Business rule: Cannot close already closed topics
             if (topic.IsClosed)
             {
+                _logger.LogWarning("CloseTopic failed: Topic ID={TopicId} is already closed.", request.TopicId);
                 return Result.Failure(new Error(
                     "409",
                     "This topic is already closed."));
@@ -49,6 +58,7 @@ public sealed class CloseTopicCommandHandler : IRequestHandler<CloseTopicCommand
             // This prevents closing draft topics that haven't been reviewed
             if (!topic.IsApproved)
             {
+                _logger.LogWarning("CloseTopic failed: Topic ID={TopicId} is not approved.", request.TopicId);
                 return Result.Failure(new Error(
                     "409",
                     "Cannot close an unapproved topic. Only approved topics can be closed."));
@@ -72,11 +82,12 @@ public sealed class CloseTopicCommandHandler : IRequestHandler<CloseTopicCommand
             await _topicRepository.UpdateAsync(topic, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
+            _logger.LogInformation("Successfully closed topic ID={TopicId}", request.TopicId);
             return Result.Success();
         }
         catch (Exception ex)
         {
-            // Unexpected errors
+            _logger.LogError(ex, "CloseTopic failed for ID={TopicId}", request.TopicId);
             return Result.Failure(new Error("500", ex.Message));
         }
     }
