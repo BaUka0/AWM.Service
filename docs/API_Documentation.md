@@ -1045,6 +1045,30 @@
 
 **Возвращаемые данные:** `204 NoContent`
 
+### POST `/approve-initial`
+
+Утвердить начальные сроки (создание направлений, тем, выбор тем) разом.
+
+**Параметры пути:** `departmentId` (int)
+
+**Параметры запроса (query):**
+- `academicYearId` (int)
+
+**Входные данные:**
+```json
+{
+  "periods": [
+    {
+      "workflowStage": "DirectionSubmission",
+      "startDate": "2024-01-01T00:00:00Z",
+      "endDate": "2024-01-01T00:00:00Z"
+    }
+  ]
+}
+```
+
+**Возвращаемые данные:** `204 NoContent`
+
 ---
 
 ## 13. Предзащиты (PreDefense)
@@ -1410,6 +1434,20 @@
   "maxStudentsLoad": 0,
   "isSupervisor": true,
   "departmentId": 0
+}
+```
+
+**Возвращаемые данные:** `204 NoContent`
+
+### POST `/approve-supervisors`
+
+Утвердить преподавателей в качестве научных руководителей.
+
+**Входные данные:**
+```json
+{
+  "departmentId": 0,
+  "staffIds": [0]
 }
 ```
 

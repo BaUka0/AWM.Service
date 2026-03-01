@@ -1,5 +1,6 @@
 namespace AWM.Service.WebAPI.Controllers.v1;
 
+using AWM.Service.Application.Features.Edu.Staff.Commands.ApproveSupervisors;
 using AWM.Service.Application.Features.Edu.Staff.Commands.CreateStaff;
 using AWM.Service.Application.Features.Edu.Staff.Commands.UpdateStaff;
 using AWM.Service.Application.Features.Edu.Staff.Queries.GetStaffByDepartment;
@@ -98,6 +99,31 @@ public sealed class StaffController : BaseController
     public async Task<IActionResult> Update(int staffId, [FromBody] UpdateStaffRequest request, CancellationToken cancellationToken = default)
     {
         var command = request.Adapt<UpdateStaffCommand>() with { StaffId = staffId };
+
+        var result = await _sender.Send(command, cancellationToken);
+
+        if (result.IsFailed)
+        {
+            return HandleResultError(result.Error);
+        }
+
+        return NoContent();
+    }
+    /// <summary>
+    /// Approves selected staff members as supervisors in a department.
+    /// </summary>
+    /// <param name="request">Request containing department ID and list of staff IDs to approve.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>No content on success.</returns>
+    [HttpPost("approve-supervisors")]
+    [RequireDepartmentPermission(Permission.Staff_Edit)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> ApproveSupervisors([FromBody] ApproveSupervisorsRequest request, CancellationToken cancellationToken = default)
+    {
+        var command = request.Adapt<ApproveSupervisorsCommand>();
 
         var result = await _sender.Send(command, cancellationToken);
 
