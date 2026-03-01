@@ -52,10 +52,16 @@ public sealed class ApproveInitialPeriodsCommandHandler : IRequestHandler<Approv
             if (academicYear is null)
                 return Result.Failure(new Error("404", $"Academic year with ID {request.AcademicYearId} not found."));
 
-            var existingPeriods = await _periodRepository.GetByDepartmentAsync(request.DepartmentId, request.AcademicYearId, cancellationToken);
+            var existingPeriods = await _periodRepository.GetTrackedByDepartmentAsync(request.DepartmentId, request.AcademicYearId, cancellationToken);
             var activePeriods = existingPeriods.Where(p => !p.IsDeleted).ToList();
 
-            foreach (var requestedPeriod in request.Periods)
+            // Group by WorkflowStage to handle potential duplicates in the request payload
+            var groupedRequestedPeriods = request.Periods
+                .GroupBy(p => p.WorkflowStage)
+                .Select(g => g.First())
+                .ToList();
+
+            foreach (var requestedPeriod in groupedRequestedPeriods)
             {
                 var existing = activePeriods.FirstOrDefault(p => p.WorkflowStage == requestedPeriod.WorkflowStage);
                 if (existing != null)

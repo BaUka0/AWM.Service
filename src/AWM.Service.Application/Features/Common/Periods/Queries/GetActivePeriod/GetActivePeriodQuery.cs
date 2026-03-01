@@ -9,5 +9,5 @@ public sealed record GetActivePeriodQuery : IRequest<Result<PeriodDto?>>
 {
     public int DepartmentId { get; init; }
     public int AcademicYearId { get; init; }
-    public WorkflowStage WorkflowStage { get; init; }
+    public WorkflowStage? WorkflowStage { get; init; }
 }

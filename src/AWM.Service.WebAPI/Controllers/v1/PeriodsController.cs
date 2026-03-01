@@ -77,7 +77,7 @@ public sealed class PeriodsController : BaseController
     public async Task<IActionResult> GetActive(
         int departmentId,
         [FromQuery] int academicYearId,
-        [FromQuery] WorkflowStage stage,
+        [FromQuery] WorkflowStage? stage,
         CancellationToken cancellationToken = default)
     {
         var query = new GetActivePeriodQuery

@@ -32,6 +32,23 @@ public sealed class PeriodRepository : RepositoryBase<Period, int>, IPeriodRepos
     }
 
     /// <inheritdoc />
+    public async Task<Period?> GetActivePeriodAsync(
+        int departmentId,
+        int academicYearId,
+        CancellationToken cancellationToken = default)
+    {
+        var now = DateTime.UtcNow;
+        return await Context.Periods
+            .Where(p => p.DepartmentId == departmentId &&
+                        p.AcademicYearId == academicYearId &&
+                        p.IsActive &&
+                        p.StartDate <= now &&
+                        p.EndDate >= now)
+            .OrderByDescending(p => p.StartDate)
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+
+    /// <inheritdoc />
     public async Task<IReadOnlyList<Period>> GetByDepartmentAsync(
         int departmentId,
         int academicYearId,
@@ -39,6 +56,19 @@ public sealed class PeriodRepository : RepositoryBase<Period, int>, IPeriodRepos
     {
         return await Context.Periods
             .AsNoTracking()
+            .Where(p => p.DepartmentId == departmentId &&
+                        p.AcademicYearId == academicYearId)
+            .OrderBy(p => p.StartDate)
+            .ToListAsync(cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<Period>> GetTrackedByDepartmentAsync(
+        int departmentId,
+        int academicYearId,
+        CancellationToken cancellationToken = default)
+    {
+        return await Context.Periods
             .Where(p => p.DepartmentId == departmentId &&
                         p.AcademicYearId == academicYearId)
             .OrderBy(p => p.StartDate)

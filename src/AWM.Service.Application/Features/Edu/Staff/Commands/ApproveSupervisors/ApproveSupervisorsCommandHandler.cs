@@ -40,26 +40,51 @@ public sealed class ApproveSupervisorsCommandHandler : IRequestHandler<ApproveSu
                 return Result.Failure(new Error("401", "User ID is not available."));
 
             var allStaff = await _staffRepository.GetByDepartmentAsync(request.DepartmentId, cancellationToken);
-            var staffToApprove = allStaff.Where(s => request.StaffIds.Contains(s.Id) && !s.IsDeleted).ToList();
-
-            if (!staffToApprove.Any())
-                return Result.Failure(new Error("404", "No valid staff members found for the provided IDs."));
-
-            var userIds = staffToApprove.Select(s => s.UserId).Distinct().ToList();
-            var users = await _userRepository.GetByIdsAsync(userIds, cancellationToken);
+            var validStaff = allStaff.Where(s => !s.IsDeleted).ToList();
 
             var supervisorRole = await _roleRepository.GetBySystemNameAsync(RoleType.Supervisor.ToString(), cancellationToken);
             if (supervisorRole is null)
                 return Result.Failure(new Error("500", "System role 'Supervisor' not found."));
 
-            foreach (var user in users)
+            // Determine who needs to be added vs removed
+            var staffIdsToApprove = request.StaffIds.ToList();
+            var staffToAdd = validStaff.Where(s => staffIdsToApprove.Contains(s.Id) && !s.IsSupervisor).ToList();
+            var staffToRemove = validStaff.Where(s => !staffIdsToApprove.Contains(s.Id) && s.IsSupervisor).ToList();
+
+            // Process removals
+            foreach (var staff in staffToRemove)
             {
-                var userWithRoles = await _userRepository.GetWithRoleAssignmentsAsync(user.Id, cancellationToken);
+                var userWithRoles = await _userRepository.GetWithRoleAssignmentsAsync(staff.UserId, cancellationToken);
                 if (userWithRoles is not null)
                 {
-                    // Check if already has Supervisor role in this department
+                    var activeRoles = userWithRoles.RoleAssignments.Where(r =>
+                        r.RoleId == supervisorRole.Id &&
+                        r.DepartmentId == request.DepartmentId &&
+                        r.IsCurrentlyValid()).ToList();
+
+                    foreach (var role in activeRoles)
+                    {
+                        role.Revoke(userId.Value);
+                    }
+
+                    if (activeRoles.Any())
+                    {
+                        await _userRepository.UpdateAsync(userWithRoles, cancellationToken);
+                    }
+                }
+
+                staff.SetSupervisorStatus(false, userId.Value);
+                await _staffRepository.UpdateAsync(staff, cancellationToken);
+            }
+
+            // Process additions
+            foreach (var staff in staffToAdd)
+            {
+                var userWithRoles = await _userRepository.GetWithRoleAssignmentsAsync(staff.UserId, cancellationToken);
+                if (userWithRoles is not null)
+                {
                     bool hasRole = userWithRoles.RoleAssignments.Any(r =>
-                        r.Role?.SystemName == RoleType.Supervisor.ToString() &&
+                        r.RoleId == supervisorRole.Id &&
                         r.DepartmentId == request.DepartmentId &&
                         r.IsCurrentlyValid());
 
@@ -69,24 +94,25 @@ public sealed class ApproveSupervisorsCommandHandler : IRequestHandler<ApproveSu
                         await _userRepository.UpdateAsync(userWithRoles, cancellationToken);
                     }
                 }
-            }
 
-            foreach (var staff in staffToApprove)
-            {
                 staff.SetSupervisorStatus(true, userId.Value);
                 await _staffRepository.UpdateAsync(staff, cancellationToken);
             }
 
-            // Send notification
-            await _notificationService.SendToManyAsync(
-                userIds,
-                "Назначение Научным Руководителем", // Appointment as Scientific Advisor
-                userId.Value,
-                "Вы были утверждены в качестве научного руководителя кафедры.", // You have been approved as a supervisor of the department
-                null,
-                "Department",
-                request.DepartmentId,
-                cancellationToken);
+            var newSupervisorUserIds = staffToAdd.Select(s => s.UserId).Distinct().ToList();
+            if (newSupervisorUserIds.Any())
+            {
+                // Send notification only to newly approved supervisors
+                await _notificationService.SendToManyAsync(
+                    newSupervisorUserIds,
+                    "Назначение Научным Руководителем", // Appointment as Scientific Advisor
+                    userId.Value,
+                    "Вы были утверждены в качестве научного руководителя кафедры.", // You have been approved as a supervisor of the department
+                    null,
+                    "Department",
+                    request.DepartmentId,
+                    cancellationToken);
+            }
 
             return Result.Success();
         }

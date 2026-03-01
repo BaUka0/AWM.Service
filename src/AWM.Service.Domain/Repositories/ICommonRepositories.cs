@@ -46,26 +46,43 @@ public interface IPeriodRepository
     /// Gets the active period for a specific workflow stage in a department.
     /// </summary>
     Task<Period?> GetActiveByStageAsync(
-        int departmentId, 
-        int academicYearId, 
-        WorkflowStage stage, 
+        int departmentId,
+        int academicYearId,
+        WorkflowStage stage,
         CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets all periods for a department in an academic year.
     /// </summary>
     Task<IReadOnlyList<Period>> GetByDepartmentAsync(
-        int departmentId, 
-        int academicYearId, 
+        int departmentId,
+        int academicYearId,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets all periods for a department in an academic year, with tracking.
+    /// Used for updates to avoid tracking conflicts.
+    /// </summary>
+    Task<IReadOnlyList<Period>> GetTrackedByDepartmentAsync(
+        int departmentId,
+        int academicYearId,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets any currently active period for the department and year.
+    /// </summary>
+    Task<Period?> GetActivePeriodAsync(
+        int departmentId,
+        int academicYearId,
         CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Checks if a workflow stage is currently open.
     /// </summary>
     Task<bool> IsStageOpenAsync(
-        int departmentId, 
-        int academicYearId, 
-        WorkflowStage stage, 
+        int departmentId,
+        int academicYearId,
+        WorkflowStage stage,
         CancellationToken cancellationToken = default);
 
     Task AddAsync(Period period, CancellationToken cancellationToken = default);

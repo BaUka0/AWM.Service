@@ -18,11 +18,16 @@ public sealed class GetActivePeriodQueryHandler : IRequestHandler<GetActivePerio
     {
         try
         {
-            var period = await _periodRepository.GetActiveByStageAsync(
-                request.DepartmentId,
-                request.AcademicYearId,
-                request.WorkflowStage,
-                cancellationToken);
+            var period = request.WorkflowStage.HasValue
+                ? await _periodRepository.GetActiveByStageAsync(
+                    request.DepartmentId,
+                    request.AcademicYearId,
+                    request.WorkflowStage.Value,
+                    cancellationToken)
+                : await _periodRepository.GetActivePeriodAsync(
+                    request.DepartmentId,
+                    request.AcademicYearId,
+                    cancellationToken);
 
             if (period is null || period.IsDeleted)
                 return Result.Success<PeriodDto?>(null);
