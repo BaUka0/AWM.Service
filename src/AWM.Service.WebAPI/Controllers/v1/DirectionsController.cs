@@ -219,7 +219,7 @@ public sealed class DirectionsController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>No content on success.</returns>
     [HttpPost("{id}/submit")]
-    [RequirePermission(Permission.Directions_Submit)]
+    [RequireDepartmentPermission(Permission.Directions_Submit)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

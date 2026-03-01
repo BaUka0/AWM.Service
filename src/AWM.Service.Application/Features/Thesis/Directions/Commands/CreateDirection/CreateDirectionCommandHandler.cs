@@ -16,6 +16,7 @@ public sealed class CreateDirectionCommandHandler
     private readonly IDirectionRepository _directionRepository;
     private readonly IWorkflowRepository _workflowRepository;
     private readonly IOrganizationLookupRepository _organizationLookupRepository;
+    private readonly IStaffRepository _staffRepository;
     private readonly ICurrentUserProvider _currentUserProvider;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<CreateDirectionCommandHandler> _logger;
@@ -24,6 +25,7 @@ public sealed class CreateDirectionCommandHandler
         IDirectionRepository directionRepository,
         IWorkflowRepository workflowRepository,
         IOrganizationLookupRepository organizationLookupRepository,
+        IStaffRepository staffRepository,
         ICurrentUserProvider currentUserProvider,
         IUnitOfWork unitOfWork,
         ILogger<CreateDirectionCommandHandler> logger)
@@ -31,6 +33,7 @@ public sealed class CreateDirectionCommandHandler
         _directionRepository = directionRepository;
         _workflowRepository = workflowRepository;
         _organizationLookupRepository = organizationLookupRepository;
+        _staffRepository = staffRepository;
         _currentUserProvider = currentUserProvider;
         _unitOfWork = unitOfWork;
         _logger = logger;
@@ -88,7 +91,17 @@ public sealed class CreateDirectionCommandHandler
 
         try
         {
-            var supervisorId = request.SupervisorId > 0 ? request.SupervisorId : currentUserId.Value;
+            var supervisorId = request.SupervisorId;
+            if (supervisorId <= 0)
+            {
+                var staff = await _staffRepository.GetByUserIdAsync(currentUserId.Value, cancellationToken);
+                if (staff is null)
+                {
+                    return Result.Failure<long>(new Error("403", "User does not have an associated staff profile to act as a supervisor."));
+                }
+                supervisorId = staff.Id;
+            }
+
             _logger.LogDebug("Determined SupervisorId: {SupervisorId} (Requested: {RequestedId}, CurrentUser: {CurrentUserId})",
                 supervisorId, request.SupervisorId, currentUserId.Value);
 

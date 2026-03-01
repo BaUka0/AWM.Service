@@ -14,6 +14,7 @@ public sealed class SubmitDirectionCommandHandler
 {
     private readonly IDirectionRepository _directionRepository;
     private readonly IWorkflowRepository _workflowRepository;
+    private readonly IStaffRepository _staffRepository;
     private readonly ICurrentUserProvider _currentUserProvider;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<SubmitDirectionCommandHandler> _logger;
@@ -21,12 +22,14 @@ public sealed class SubmitDirectionCommandHandler
     public SubmitDirectionCommandHandler(
         IDirectionRepository directionRepository,
         IWorkflowRepository workflowRepository,
+        IStaffRepository staffRepository,
         ICurrentUserProvider currentUserProvider,
         IUnitOfWork unitOfWork,
         ILogger<SubmitDirectionCommandHandler> logger)
     {
         _directionRepository = directionRepository;
         _workflowRepository = workflowRepository;
+        _staffRepository = staffRepository;
         _currentUserProvider = currentUserProvider;
         _unitOfWork = unitOfWork;
         _logger = logger;
@@ -67,10 +70,11 @@ public sealed class SubmitDirectionCommandHandler
         }
 
         // Verify user is the supervisor (authorization check)
-        if (direction.SupervisorId != userId.Value)
+        var staff = await _staffRepository.GetByUserIdAsync(userId.Value, cancellationToken);
+        if (staff is null || direction.SupervisorId != staff.Id)
         {
-            _logger.LogWarning("SubmitDirection failed: User={UserId} is not the supervisor for Direction={DirectionId}",
-                userId.Value, request.Id);
+            _logger.LogWarning("SubmitDirection failed: User={UserId} (StaffId={StaffId}) is not the supervisor for Direction={DirectionId}",
+                userId.Value, staff?.Id, request.Id);
             return Result.Failure(new Error(
                 "403",
                 "Only the supervisor who created this direction can submit it."));

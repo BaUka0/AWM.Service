@@ -5,7 +5,7 @@ using FluentValidation;
 /// <summary>
 /// Validator for RequestRevisionCommand.
 /// </summary>
-public sealed class RequestRevisionCommandValidator 
+public sealed class RequestRevisionCommandValidator
     : AbstractValidator<RequestRevisionCommand>
 {
     public RequestRevisionCommandValidator()
@@ -13,10 +13,6 @@ public sealed class RequestRevisionCommandValidator
         RuleFor(x => x.Id)
             .GreaterThan(0)
             .WithMessage("Direction ID must be greater than 0.");
-
-        RuleFor(x => x.RequestedBy)
-            .GreaterThan(0)
-            .WithMessage("RequestedBy user ID must be greater than 0.");
 
         RuleFor(x => x.Comment)
             .NotEmpty()

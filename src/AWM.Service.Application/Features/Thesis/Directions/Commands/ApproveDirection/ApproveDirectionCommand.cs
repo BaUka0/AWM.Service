@@ -13,8 +13,4 @@ public sealed record ApproveDirectionCommand : IRequest<Result>
     /// </summary>
     public long Id { get; init; }
 
-    /// <summary>
-    /// User ID who approves this direction (department head or authorized person).
-    /// </summary>
-    public int ApprovedBy { get; init; }
 }

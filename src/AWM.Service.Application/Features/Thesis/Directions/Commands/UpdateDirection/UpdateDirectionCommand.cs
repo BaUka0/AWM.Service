@@ -33,8 +33,4 @@ public sealed record UpdateDirectionCommand : IRequest<Result>
     /// </summary>
     public string? Description { get; init; }
 
-    /// <summary>
-    /// User ID who modifies this direction.
-    /// </summary>
-    public int ModifiedBy { get; init; }
 }

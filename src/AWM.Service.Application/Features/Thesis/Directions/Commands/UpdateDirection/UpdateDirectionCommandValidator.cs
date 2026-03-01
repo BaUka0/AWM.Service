@@ -5,7 +5,7 @@ using FluentValidation;
 /// <summary>
 /// Validator for UpdateDirectionCommand.
 /// </summary>
-public sealed class UpdateDirectionCommandValidator 
+public sealed class UpdateDirectionCommandValidator
     : AbstractValidator<UpdateDirectionCommand>
 {
     public UpdateDirectionCommandValidator()
@@ -35,8 +35,5 @@ public sealed class UpdateDirectionCommandValidator
             .WithMessage("Description cannot exceed 2000 characters.")
             .When(x => !string.IsNullOrEmpty(x.Description));
 
-        RuleFor(x => x.ModifiedBy)
-            .GreaterThan(0)
-            .WithMessage("ModifiedBy user ID must be greater than 0.");
     }
 }

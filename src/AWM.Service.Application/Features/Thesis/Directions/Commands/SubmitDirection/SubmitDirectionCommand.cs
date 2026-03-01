@@ -13,8 +13,4 @@ public sealed record SubmitDirectionCommand : IRequest<Result>
     /// </summary>
     public long Id { get; init; }
 
-    /// <summary>
-    /// User ID who submits this direction (should be supervisor).
-    /// </summary>
-    public int SubmittedBy { get; init; }
 }
