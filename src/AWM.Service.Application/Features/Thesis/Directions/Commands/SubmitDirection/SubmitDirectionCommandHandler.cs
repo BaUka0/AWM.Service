@@ -1,6 +1,8 @@
 namespace AWM.Service.Application.Features.Thesis.Directions.Commands.SubmitDirection;
 
 using AWM.Service.Domain.Common;
+using AWM.Service.Domain.CommonDomain.Enums;
+using AWM.Service.Domain.CommonDomain.Services;
 using AWM.Service.Domain.Repositories;
 using KDS.Primitives.FluentResult;
 using MediatR;
@@ -16,6 +18,7 @@ public sealed class SubmitDirectionCommandHandler
     private readonly IWorkflowRepository _workflowRepository;
     private readonly IStaffRepository _staffRepository;
     private readonly ICurrentUserProvider _currentUserProvider;
+    private readonly IPeriodValidationService _periodValidationService;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<SubmitDirectionCommandHandler> _logger;
 
@@ -24,6 +27,7 @@ public sealed class SubmitDirectionCommandHandler
         IWorkflowRepository workflowRepository,
         IStaffRepository staffRepository,
         ICurrentUserProvider currentUserProvider,
+        IPeriodValidationService periodValidationService,
         IUnitOfWork unitOfWork,
         ILogger<SubmitDirectionCommandHandler> logger)
     {
@@ -31,6 +35,7 @@ public sealed class SubmitDirectionCommandHandler
         _workflowRepository = workflowRepository;
         _staffRepository = staffRepository;
         _currentUserProvider = currentUserProvider;
+        _periodValidationService = periodValidationService;
         _unitOfWork = unitOfWork;
         _logger = logger;
     }
@@ -61,6 +66,17 @@ public sealed class SubmitDirectionCommandHandler
             return Result.Failure(new Error(
                 "409",
                 $"Direction with ID {request.Id} has been deleted."));
+        }
+
+        // Validate that DirectionSubmission period is open
+        var (isAllowed, errorMessage) = await _periodValidationService
+            .ValidateOperationInPeriodAsync(direction.DepartmentId, direction.AcademicYearId,
+                WorkflowStage.DirectionSubmission, cancellationToken);
+
+        if (!isAllowed)
+        {
+            _logger.LogWarning("SubmitDirection failed: Period closed - {Error}", errorMessage);
+            return Result.Failure(new Error("409", errorMessage!));
         }
 
         if (!userId.HasValue)

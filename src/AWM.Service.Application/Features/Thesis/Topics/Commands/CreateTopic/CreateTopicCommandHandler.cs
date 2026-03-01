@@ -1,6 +1,8 @@
 namespace AWM.Service.Application.Features.Thesis.Topics.Commands.CreateTopic;
 
 using AWM.Service.Domain.Common;
+using AWM.Service.Domain.CommonDomain.Enums;
+using AWM.Service.Domain.CommonDomain.Services;
 using AWM.Service.Domain.Repositories;
 using AWM.Service.Domain.Thesis.Entities;
 using KDS.Primitives.FluentResult;
@@ -14,6 +16,7 @@ public sealed class CreateTopicCommandHandler : IRequestHandler<CreateTopicComma
 {
     private readonly ITopicRepository _topicRepository;
     private readonly IDirectionRepository _directionRepository;
+    private readonly IPeriodValidationService _periodValidationService;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICurrentUserProvider _currentUserProvider;
     private readonly ILogger<CreateTopicCommandHandler> _logger;
@@ -21,12 +24,14 @@ public sealed class CreateTopicCommandHandler : IRequestHandler<CreateTopicComma
     public CreateTopicCommandHandler(
         ITopicRepository topicRepository,
         IDirectionRepository directionRepository,
+        IPeriodValidationService periodValidationService,
         IUnitOfWork unitOfWork,
         ICurrentUserProvider currentUserProvider,
         ILogger<CreateTopicCommandHandler> logger)
     {
         _topicRepository = topicRepository ?? throw new ArgumentNullException(nameof(topicRepository));
         _directionRepository = directionRepository ?? throw new ArgumentNullException(nameof(directionRepository));
+        _periodValidationService = periodValidationService ?? throw new ArgumentNullException(nameof(periodValidationService));
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
         _currentUserProvider = currentUserProvider ?? throw new ArgumentNullException(nameof(currentUserProvider));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -44,6 +49,17 @@ public sealed class CreateTopicCommandHandler : IRequestHandler<CreateTopicComma
             {
                 _logger.LogWarning("CreateTopic failed: Current user ID is not available.");
                 return Result.Failure<long>(new Error("401", "User ID is not available."));
+            }
+
+            // Validate that TopicCreation period is open
+            var (isAllowed, errorMessage) = await _periodValidationService
+                .ValidateOperationInPeriodAsync(request.DepartmentId, request.AcademicYearId,
+                    WorkflowStage.TopicCreation, cancellationToken);
+
+            if (!isAllowed)
+            {
+                _logger.LogWarning("CreateTopic failed: Period closed - {Error}", errorMessage);
+                return Result.Failure<long>(new Error("409", errorMessage!));
             }
 
             // 2. If DirectionId is provided, verify it exists and is approved

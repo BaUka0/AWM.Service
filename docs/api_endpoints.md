@@ -106,6 +106,11 @@
 | PUT | api/v{version:apiVersion}/Topics/{id} | id: long | - | UpdateTopicRequest / body | empty / NoContent (204) |
 | POST | api/v{version:apiVersion}/Topics/{id}/approve | id: long | - | - | empty / NoContent (204) |
 | POST | api/v{version:apiVersion}/Topics/{id}/close | id: long | - | - | empty / NoContent (204) |
+| POST | api/v{version:apiVersion}/Topics/{id}/deactivate | id: long | - | - | empty / NoContent (204) |
+| POST | api/v{version:apiVersion}/Topics/submit-for-approval | - | - | SubmitTopicsForApprovalRequest / body | empty / NoContent (204) |
+| POST | api/v{version:apiVersion}/Topics/bulk-approve | - | - | BulkApproveTopicsRequest / body | empty / NoContent (204) |
+| GET | api/v{version:apiVersion}/Topics/coordination-summary | - | departmentId: int; academicYearId: int | - | TopicCoordinationSummaryResponse / Ok (200) |
+| POST | api/v{version:apiVersion}/Topics/complete-coordination | - | - | CompleteTopicCoordinationRequest / body | empty / NoContent (204) |
 
 ## Request Body Schemas
 
@@ -116,6 +121,13 @@
 ### AddParticipantRequest
 - StudentId: int
 - Role: ParticipantRole
+
+### BulkApproveTopicsRequest
+- TopicIds: IReadOnlyList\<long\>
+
+### CompleteTopicCoordinationRequest
+- DepartmentId: int
+- AcademicYearId: int
 
 ### ApproveInitialPeriodsRequest
 - Periods: IReadOnlyList<PeriodDto>
@@ -263,6 +275,9 @@
 ### SubmitForCheckRequest
 - CheckType: CheckType
 - Comment: string?
+
+### SubmitTopicsForApprovalRequest
+- TopicIds: IReadOnlyList\<long\>
 
 ### SubmitGradeRequest
 - MemberId: int
@@ -695,6 +710,27 @@
 - LastModifiedAt: DateTime?
 - LastModifiedBy: int?
 - Applications: IReadOnlyCollection<TopicApplicationResponse>?
+
+### TopicCoordinationItemResponse
+- TopicId: long
+- TitleRu: string
+- SupervisorId: int
+- MaxParticipants: int
+- AcceptedCount: int
+- PendingCount: int
+- AvailableSpots: int
+- IsApproved: bool
+- IsClosed: bool
+
+### TopicCoordinationSummaryResponse
+- TotalTopics: int
+- ApprovedTopics: int
+- TopicsWithStudents: int
+- TopicsWithoutStudents: int
+- ClosedTopics: int
+- TotalAcceptedApplications: int
+- TotalAvailableSpots: int
+- Topics: IReadOnlyList\<TopicCoordinationItemResponse\>
 
 ### TopicResponse
 - Id: long

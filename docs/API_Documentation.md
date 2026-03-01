@@ -1895,6 +1895,88 @@
 
 **Возвращаемые данные:** `204 NoContent`
 
+### POST `/{id}/deactivate`
+
+Деактивировать тему без привязанных студентов (действие кафедры).
+
+**Параметры пути:** `id` (long)
+
+**Возвращаемые данные:** `204 NoContent`
+
+### POST `/submit-for-approval`
+
+Пакетная подача тем на утверждение (действие руководителя).
+
+**Входные данные:**
+```json
+{
+  "topicIds": [0]
+}
+```
+
+**Возвращаемые данные:** `204 NoContent`
+
+### POST `/bulk-approve`
+
+Пакетное утверждение тем (действие кафедры).
+
+**Входные данные:**
+```json
+{
+  "topicIds": [0]
+}
+```
+
+**Возвращаемые данные:** `204 NoContent`
+
+### GET `/coordination-summary`
+
+Получить сводку по координации тем кафедры: статистику по заявкам, занятые и свободные места.
+
+**Параметры запроса (query):**
+- `departmentId` (int)
+- `academicYearId` (int)
+
+**Возвращаемые данные:**
+```json
+{
+  "totalTopics": 0,
+  "approvedTopics": 0,
+  "topicsWithStudents": 0,
+  "topicsWithoutStudents": 0,
+  "closedTopics": 0,
+  "totalAcceptedApplications": 0,
+  "totalAvailableSpots": 0,
+  "topics": [
+    {
+      "topicId": 0,
+      "titleRu": "string",
+      "supervisorId": 0,
+      "maxParticipants": 0,
+      "acceptedCount": 0,
+      "pendingCount": 0,
+      "availableSpots": 0,
+      "isApproved": true,
+      "isClosed": true
+    }
+  ]
+}
+```
+
+### POST `/complete-coordination`
+
+Завершить координацию тем кафедры: закрывает все открытые темы, отклоняет ожидающие заявки, уведомляет участников.
+
+**Входные данные:**
+```json
+{
+  "departmentId": 0,
+  "academicYearId": 0
+}
+```
+
+**Возвращаемые данные:** `204 NoContent`
+
 ---
 
 ## 22. Типы работ (WorkTypes)
@@ -2007,7 +2089,7 @@
 | Students | 4 | Студенты |
 | StudentWorks | 7 | Работы + участники |
 | TopicApplications | 6 | Заявки на темы |
-| Topics | 7 | Темы + workflow |
+| Topics | 12 | Темы + workflow + координация |
 | WorkTypes | 1 | Словарь типов работ |
 | Users | 1 | Профиль текущего пользователя |
 

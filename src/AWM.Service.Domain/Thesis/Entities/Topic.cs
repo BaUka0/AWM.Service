@@ -22,6 +22,7 @@ public class Topic : AggregateRoot<long>, IAuditable, ISoftDeletable
     public string? Description { get; private set; }
 
     public int MaxParticipants { get; private set; }
+    public bool IsSubmittedForApproval { get; private set; }
     public bool IsApproved { get; private set; }
     public bool IsClosed { get; private set; }
 
@@ -66,6 +67,7 @@ public class Topic : AggregateRoot<long>, IAuditable, ISoftDeletable
         TitleEn = titleEn;
         Description = description;
         MaxParticipants = maxParticipants;
+        IsSubmittedForApproval = false;
         IsApproved = false;
         IsClosed = false;
         CreatedAt = DateTime.UtcNow;
@@ -108,6 +110,19 @@ public class Topic : AggregateRoot<long>, IAuditable, ISoftDeletable
             throw new ArgumentException("Max participants must be between 1 and 5.", nameof(maxParticipants));
 
         MaxParticipants = maxParticipants;
+    }
+
+    /// <summary>
+    /// Marks the topic as submitted for department approval.
+    /// </summary>
+    public void SubmitForApproval()
+    {
+        if (IsSubmittedForApproval)
+            throw new InvalidOperationException("Topic is already submitted for approval.");
+        if (IsApproved)
+            throw new InvalidOperationException("Topic is already approved.");
+
+        IsSubmittedForApproval = true;
     }
 
     /// <summary>

@@ -3,6 +3,7 @@ namespace AWM.Service.Application.Features.Thesis.Applications.Commands.AcceptAp
 using AWM.Service.Application.Features.Thesis.Works.Commands.CreateStudentWork;
 using AWM.Service.Domain.Repositories;
 using AWM.Service.Domain.Common;
+using AWM.Service.Domain.CommonDomain.Services;
 using KDS.Primitives.FluentResult;
 using MediatR;
 using Microsoft.Extensions.Logging;
@@ -18,6 +19,7 @@ public sealed class AcceptApplicationCommandHandler : IRequestHandler<AcceptAppl
     private readonly IMediator _mediator;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICurrentUserProvider _currentUserProvider;
+    private readonly INotificationService _notificationService;
     private readonly ILogger<AcceptApplicationCommandHandler> _logger;
 
     public AcceptApplicationCommandHandler(
@@ -26,6 +28,7 @@ public sealed class AcceptApplicationCommandHandler : IRequestHandler<AcceptAppl
         IMediator mediator,
         IUnitOfWork unitOfWork,
         ICurrentUserProvider currentUserProvider,
+        INotificationService notificationService,
         ILogger<AcceptApplicationCommandHandler> logger)
     {
         _applicationRepository = applicationRepository;
@@ -33,6 +36,7 @@ public sealed class AcceptApplicationCommandHandler : IRequestHandler<AcceptAppl
         _mediator = mediator;
         _unitOfWork = unitOfWork;
         _currentUserProvider = currentUserProvider;
+        _notificationService = notificationService;
         _logger = logger;
     }
 
@@ -148,6 +152,26 @@ public sealed class AcceptApplicationCommandHandler : IRequestHandler<AcceptAppl
             }
 
             await _unitOfWork.CommitTransactionAsync(cancellationToken);
+
+            // Notify student about acceptance
+            await _notificationService.SendAsync(
+                userId: application.StudentId,
+                title: "Заявка принята",
+                createdBy: supervisorUserId,
+                body: $"Ваша заявка на тему «{topic.TitleRu}» была принята.",
+                relatedEntityType: "TopicApplication",
+                relatedEntityId: application.Id,
+                cancellationToken: cancellationToken);
+
+            // Auto-close topic if all slots are filled
+            if (!topic.CanAcceptApplications())
+            {
+                topic.Close();
+                await _topicRepository.UpdateAsync(topic, cancellationToken);
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
+                _logger.LogInformation("Topic ID={TopicId} auto-closed: all slots filled.", topic.Id);
+            }
+
             _logger.LogInformation("Successfully accepted application ID={ApplicationId} and created student work.", request.ApplicationId);
             return Result.Success();
         }

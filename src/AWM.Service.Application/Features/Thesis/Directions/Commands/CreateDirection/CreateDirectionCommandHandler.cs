@@ -1,6 +1,8 @@
 namespace AWM.Service.Application.Features.Thesis.Directions.Commands.CreateDirection;
 
 using AWM.Service.Domain.Common;
+using AWM.Service.Domain.CommonDomain.Enums;
+using AWM.Service.Domain.CommonDomain.Services;
 using AWM.Service.Domain.Repositories;
 using AWM.Service.Domain.Thesis.Entities;
 using KDS.Primitives.FluentResult;
@@ -18,6 +20,7 @@ public sealed class CreateDirectionCommandHandler
     private readonly IOrganizationLookupRepository _organizationLookupRepository;
     private readonly IStaffRepository _staffRepository;
     private readonly ICurrentUserProvider _currentUserProvider;
+    private readonly IPeriodValidationService _periodValidationService;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<CreateDirectionCommandHandler> _logger;
 
@@ -27,6 +30,7 @@ public sealed class CreateDirectionCommandHandler
         IOrganizationLookupRepository organizationLookupRepository,
         IStaffRepository staffRepository,
         ICurrentUserProvider currentUserProvider,
+        IPeriodValidationService periodValidationService,
         IUnitOfWork unitOfWork,
         ILogger<CreateDirectionCommandHandler> logger)
     {
@@ -35,6 +39,7 @@ public sealed class CreateDirectionCommandHandler
         _organizationLookupRepository = organizationLookupRepository;
         _staffRepository = staffRepository;
         _currentUserProvider = currentUserProvider;
+        _periodValidationService = periodValidationService;
         _unitOfWork = unitOfWork;
         _logger = logger;
     }
@@ -63,6 +68,17 @@ public sealed class CreateDirectionCommandHandler
             return Result.Failure<long>(new Error(
                 "404",
                 $"Department with ID {request.DepartmentId} not found."));
+        }
+
+        // Validate that DirectionSubmission period is open
+        var (isAllowed, errorMessage) = await _periodValidationService
+            .ValidateOperationInPeriodAsync(request.DepartmentId, request.AcademicYearId,
+                WorkflowStage.DirectionSubmission, cancellationToken);
+
+        if (!isAllowed)
+        {
+            _logger.LogWarning("CreateDirection failed: Period closed - {Error}", errorMessage);
+            return Result.Failure<long>(new Error("409", errorMessage!));
         }
 
         // Validate work type exists

@@ -2,6 +2,7 @@ namespace AWM.Service.Application.Features.Thesis.Applications.Commands.RejectAp
 
 using AWM.Service.Domain.Repositories;
 using AWM.Service.Domain.Common;
+using AWM.Service.Domain.CommonDomain.Services;
 using KDS.Primitives.FluentResult;
 using MediatR;
 using Microsoft.Extensions.Logging;
@@ -15,6 +16,7 @@ public sealed class RejectApplicationCommandHandler : IRequestHandler<RejectAppl
     private readonly ITopicApplicationRepository _applicationRepository;
     private readonly ITopicRepository _topicRepository;
     private readonly ICurrentUserProvider _currentUserProvider;
+    private readonly INotificationService _notificationService;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<RejectApplicationCommandHandler> _logger;
 
@@ -22,12 +24,14 @@ public sealed class RejectApplicationCommandHandler : IRequestHandler<RejectAppl
         ITopicApplicationRepository applicationRepository,
         ITopicRepository topicRepository,
         ICurrentUserProvider currentUserProvider,
+        INotificationService notificationService,
         IUnitOfWork unitOfWork,
         ILogger<RejectApplicationCommandHandler> logger)
     {
         _applicationRepository = applicationRepository;
         _topicRepository = topicRepository;
         _currentUserProvider = currentUserProvider;
+        _notificationService = notificationService;
         _unitOfWork = unitOfWork;
         _logger = logger;
     }
@@ -101,6 +105,20 @@ public sealed class RejectApplicationCommandHandler : IRequestHandler<RejectAppl
         {
             await _applicationRepository.UpdateAsync(application, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            // Notify student about rejection
+            var body = string.IsNullOrWhiteSpace(request.RejectReason)
+                ? $"Ваша заявка на тему «{topic.TitleRu}» была отклонена."
+                : $"Ваша заявка на тему «{topic.TitleRu}» была отклонена. Причина: {request.RejectReason}";
+
+            await _notificationService.SendAsync(
+                userId: application.StudentId,
+                title: "Заявка отклонена",
+                createdBy: supervisorUserId,
+                body: body,
+                relatedEntityType: "TopicApplication",
+                relatedEntityId: application.Id,
+                cancellationToken: cancellationToken);
 
             _logger.LogInformation("Successfully rejected application ID={ApplicationId} by User={UserId}", request.ApplicationId, supervisorUserId);
             return Result.Success();

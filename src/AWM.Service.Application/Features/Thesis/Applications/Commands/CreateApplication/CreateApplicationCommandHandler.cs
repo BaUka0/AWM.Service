@@ -2,6 +2,8 @@ namespace AWM.Service.Application.Features.Thesis.Applications.Commands.CreateAp
 
 using AWM.Service.Domain.Repositories;
 using AWM.Service.Domain.Common;
+using AWM.Service.Domain.CommonDomain.Enums;
+using AWM.Service.Domain.CommonDomain.Services;
 using AWM.Service.Domain.Thesis.Entities;
 using KDS.Primitives.FluentResult;
 using MediatR;
@@ -16,6 +18,8 @@ public sealed class CreateApplicationCommandHandler : IRequestHandler<CreateAppl
     private readonly ITopicRepository _topicRepository;
     private readonly ITopicApplicationRepository _applicationRepository;
     private readonly ICurrentUserProvider _currentUserProvider;
+    private readonly IPeriodValidationService _periodValidationService;
+    private readonly INotificationService _notificationService;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<CreateApplicationCommandHandler> _logger;
 
@@ -23,12 +27,16 @@ public sealed class CreateApplicationCommandHandler : IRequestHandler<CreateAppl
         ITopicRepository topicRepository,
         ITopicApplicationRepository applicationRepository,
         ICurrentUserProvider currentUserProvider,
+        IPeriodValidationService periodValidationService,
+        INotificationService notificationService,
         IUnitOfWork unitOfWork,
         ILogger<CreateApplicationCommandHandler> logger)
     {
         _topicRepository = topicRepository;
         _applicationRepository = applicationRepository;
         _currentUserProvider = currentUserProvider;
+        _periodValidationService = periodValidationService;
+        _notificationService = notificationService;
         _unitOfWork = unitOfWork;
         _logger = logger;
     }
@@ -68,6 +76,17 @@ public sealed class CreateApplicationCommandHandler : IRequestHandler<CreateAppl
             return Result.Failure<long>(new Error("Topic.NotApproved", "This topic is not yet approved for student applications."));
         }
 
+        // 3a. Validate that TopicSelection period is open
+        var (isAllowed, errorMessage) = await _periodValidationService
+            .ValidateOperationInPeriodAsync(topic.DepartmentId, topic.AcademicYearId,
+                WorkflowStage.TopicSelection, cancellationToken);
+
+        if (!isAllowed)
+        {
+            _logger.LogWarning("CreateApplication failed: Period closed - {Error}", errorMessage);
+            return Result.Failure<long>(new Error("Period.Closed", errorMessage!));
+        }
+
         // 4. Check if topic is closed
         if (topic.IsClosed)
         {
@@ -94,20 +113,18 @@ public sealed class CreateApplicationCommandHandler : IRequestHandler<CreateAppl
             return Result.Failure<long>(new Error("Application.Duplicate", "You have already applied to this topic."));
         }
 
-        // 7. Optional: Check if student already has an accepted application this year
-        // Uncomment if business rule requires only one accepted application per year
-        /*
+        // 7. Check if student already has an accepted application this year
         var hasAccepted = await _applicationRepository.HasAcceptedApplicationAsync(
-            request.StudentId,
+            studentUserId,
             topic.AcademicYearId,
             cancellationToken);
-        
+
         if (hasAccepted)
         {
-            return Result.Failure<long>(new Error("Application.AlreadyAccepted", 
+            _logger.LogWarning("CreateApplication failed: Student={UserId} already has an accepted application for year={Year}", studentUserId, topic.AcademicYearId);
+            return Result.Failure<long>(new Error("Application.AlreadyAccepted",
                 "You already have an accepted application for this academic year."));
         }
-        */
 
         // 8. Create application
         var application = new TopicApplication(
@@ -121,6 +138,16 @@ public sealed class CreateApplicationCommandHandler : IRequestHandler<CreateAppl
         {
             await _applicationRepository.AddAsync(application, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            // Notify supervisor about new application
+            await _notificationService.SendAsync(
+                userId: topic.SupervisorId,
+                title: "Новая заявка на тему",
+                createdBy: studentUserId,
+                body: $"Студент подал заявку на тему «{topic.TitleRu}».",
+                relatedEntityType: "TopicApplication",
+                relatedEntityId: application.Id,
+                cancellationToken: cancellationToken);
 
             _logger.LogInformation("Successfully created application ID={ApplicationId} for Topic ID={TopicId} by Student={UserId}",
                 application.Id, request.TopicId, studentUserId);
