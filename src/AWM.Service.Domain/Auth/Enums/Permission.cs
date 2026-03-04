@@ -74,6 +74,10 @@ public enum Permission
     /// <summary>Submit work for check (Student).</summary>
     QualityChecks_Submit,
 
+    // ========== Experts ==========
+    /// <summary>Manage expert assignments (HeadOfDepartment).</summary>
+    Experts_Manage,
+
     // ========== Reviews ==========
     /// <summary>View reviews.</summary>
     Reviews_View,
@@ -81,6 +85,8 @@ public enum Permission
     Reviews_CreateSupervisor,
     /// <summary>Upload external review.</summary>
     Reviews_UploadExternal,
+    /// <summary>Assign reviewer to student work.</summary>
+    Reviews_Assign,
 
     // ========== Pre-Defense ==========
     /// <summary>View pre-defense schedule.</summary>

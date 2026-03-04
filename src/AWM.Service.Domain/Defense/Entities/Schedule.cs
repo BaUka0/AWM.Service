@@ -11,6 +11,7 @@ public class Schedule : Entity<long>, IAuditable, ISoftDeletable
     public long WorkId { get; private set; }
     public DateTime DefenseDate { get; private set; }
     public string? Location { get; private set; }
+    public bool IsReconciliationStarted { get; private set; }
 
     public DateTime CreatedAt { get; private set; }
     public int CreatedBy { get; private set; }
@@ -39,6 +40,7 @@ public class Schedule : Entity<long>, IAuditable, ISoftDeletable
         CreatedAt = DateTime.UtcNow;
         CreatedBy = createdBy;
         IsDeleted = false;
+        IsReconciliationStarted = false;
     }
 
     /// <summary>
@@ -87,6 +89,19 @@ public class Schedule : Entity<long>, IAuditable, ISoftDeletable
 
         LastModifiedAt = DateTime.UtcNow;
         return grade;
+    }
+
+    /// <summary>
+    /// Starts the grade reconciliation phase (all members can see each other's grades).
+    /// </summary>
+    public void StartReconciliation(int modifiedBy)
+    {
+        if (IsReconciliationStarted)
+            throw new InvalidOperationException("Reconciliation has already been started.");
+
+        IsReconciliationStarted = true;
+        LastModifiedAt = DateTime.UtcNow;
+        LastModifiedBy = modifiedBy;
     }
 
     /// <summary>

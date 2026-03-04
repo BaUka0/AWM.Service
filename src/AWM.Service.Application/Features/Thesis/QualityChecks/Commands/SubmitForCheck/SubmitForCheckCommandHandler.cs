@@ -2,6 +2,7 @@ namespace AWM.Service.Application.Features.Thesis.QualityChecks.Commands.SubmitF
 
 using AWM.Service.Domain.Common;
 using AWM.Service.Domain.Repositories;
+using AWM.Service.Domain.Thesis.Enums;
 using KDS.Primitives.FluentResult;
 using MediatR;
 
@@ -13,15 +14,18 @@ using MediatR;
 public sealed class SubmitForCheckCommandHandler : IRequestHandler<SubmitForCheckCommand, Result<long>>
 {
     private readonly IStudentWorkRepository _workRepository;
+    private readonly IPreDefenseAttemptRepository _attemptRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICurrentUserProvider _currentUserProvider;
 
     public SubmitForCheckCommandHandler(
         IStudentWorkRepository workRepository,
+        IPreDefenseAttemptRepository attemptRepository,
         IUnitOfWork unitOfWork,
         ICurrentUserProvider currentUserProvider)
     {
         _workRepository = workRepository ?? throw new ArgumentNullException(nameof(workRepository));
+        _attemptRepository = attemptRepository ?? throw new ArgumentNullException(nameof(attemptRepository));
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
         _currentUserProvider = currentUserProvider ?? throw new ArgumentNullException(nameof(currentUserProvider));
     }
@@ -41,6 +45,38 @@ public sealed class SubmitForCheckCommandHandler : IRequestHandler<SubmitForChec
             {
                 return Result.Failure<long>(new Error("NotFound.Work",
                     $"StudentWork with ID {request.WorkId} not found."));
+            }
+
+            // Validate that the student has passed pre-defense before submitting for quality checks
+            var attempts = await _attemptRepository.GetByWorkIdAsync(request.WorkId, cancellationToken);
+            if (!attempts.Any(a => a.IsPassed))
+            {
+                return Result.Failure<long>(new Error("BusinessRule.QualityCheck",
+                    "Student must pass pre-defense before submitting for quality checks."));
+            }
+
+            // Validate check sequence: AntiPlagiarism requires NormControl to be passed
+            if (request.CheckType == CheckType.AntiPlagiarism)
+            {
+                if (!work.HasPassedCheck(CheckType.NormControl))
+                {
+                    return Result.Failure<long>(new Error("BusinessRule.QualityCheck",
+                        "NormControl must be passed before submitting for AntiPlagiarism check."));
+                }
+
+                // Rework cycle: if a previous AntiPlagiarism check failed, NormControl must be re-passed
+                // (latest NormControl attempt must be newer than latest failed AntiPlagiarism)
+                var latestFailedPlagiarism = work.GetLatestCheck(CheckType.AntiPlagiarism);
+                var latestNormControl = work.GetLatestCheck(CheckType.NormControl);
+
+                if (latestFailedPlagiarism is not null && !latestFailedPlagiarism.IsPassed
+                    && latestNormControl is not null
+                    && latestNormControl.AttemptNumber <= latestFailedPlagiarism.AttemptNumber
+                    && !latestNormControl.IsPassed)
+                {
+                    return Result.Failure<long>(new Error("BusinessRule.QualityCheck",
+                        "After AntiPlagiarism failure, NormControl must be re-passed before retrying."));
+                }
             }
 
             // Submit = create a "pending" check record (isPassed: false until expert reviews)

@@ -60,7 +60,17 @@ public enum AttachmentType
     /// <summary>
     /// Software/code archive.
     /// </summary>
-    Software
+    Software,
+
+    /// <summary>
+    /// Demo materials for defense.
+    /// </summary>
+    Demo,
+
+    /// <summary>
+    /// Handout materials for defense commission.
+    /// </summary>
+    Handout
 }
 
 /// <summary>

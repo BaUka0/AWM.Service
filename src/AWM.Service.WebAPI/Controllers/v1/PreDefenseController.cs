@@ -1,10 +1,15 @@
 namespace AWM.Service.WebAPI.Controllers.v1;
 
+using AWM.Service.Application.Features.Defense.PreDefense.Commands.DistributeStudentsToCommissions;
 using AWM.Service.Application.Features.Defense.PreDefense.Commands.FinalizePreDefense;
+using AWM.Service.Application.Features.Defense.PreDefense.Commands.GeneratePreDefenseProtocol;
+using AWM.Service.Application.Features.Defense.PreDefense.Commands.GeneratePreDefenseSlots;
 using AWM.Service.Application.Features.Defense.PreDefense.Commands.RecordAttendance;
 using AWM.Service.Application.Features.Defense.PreDefense.Commands.SchedulePreDefense;
+using AWM.Service.Application.Features.Defense.PreDefense.Commands.StartReconciliation;
 using AWM.Service.Application.Features.Defense.PreDefense.Commands.SubmitPreDefenseGrade;
 using AWM.Service.Application.Features.Defense.PreDefense.DTOs;
+using AWM.Service.Application.Features.Defense.PreDefense.Queries.GetFailedPreDefenseStudents;
 using AWM.Service.Application.Features.Defense.PreDefense.Queries.GetPreDefenseAttempts;
 using AWM.Service.Application.Features.Defense.PreDefense.Queries.GetPreDefenseSchedule;
 using AWM.Service.Domain.Auth.Enums;
@@ -67,6 +72,39 @@ public class PreDefenseController : BaseController
     public async Task<IActionResult> GetAttempts(long workId)
     {
         var query = new GetPreDefenseAttemptsQuery { WorkId = workId };
+        var result = await _sender.Send(query);
+
+        if (result.IsFailed)
+            return HandleResultError(result.Error);
+
+        return Ok(result.Value);
+    }
+
+    /// <summary>
+    /// Get students who failed pre-defense and may need retake.
+    /// </summary>
+    /// <param name="departmentId">Department ID</param>
+    /// <param name="academicYearId">Academic year ID</param>
+    /// <param name="preDefenseNumber">Optional pre-defense round filter (1, 2, or 3)</param>
+    /// <returns>List of failed students with attempt details</returns>
+    [HttpGet("failed-students")]
+    [RequireDepartmentPermission(Permission.PreDefense_View)]
+    [ProducesResponseType(typeof(IReadOnlyList<FailedPreDefenseStudentDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> GetFailedStudents(
+        [FromQuery] int departmentId,
+        [FromQuery] int academicYearId,
+        [FromQuery] int? preDefenseNumber = null)
+    {
+        var query = new GetFailedPreDefenseStudentsQuery
+        {
+            DepartmentId = departmentId,
+            AcademicYearId = academicYearId,
+            PreDefenseNumber = preDefenseNumber
+        };
+
         var result = await _sender.Send(query);
 
         if (result.IsFailed)
@@ -179,5 +217,106 @@ public class PreDefenseController : BaseController
             return HandleResultError(result.Error);
 
         return NoContent();
+    }
+
+    /// <summary>
+    /// Start grade reconciliation for a pre-defense schedule (Secretary action).
+    /// After this, all commission members can see each other's grades.
+    /// </summary>
+    /// <param name="scheduleId">Schedule ID</param>
+    /// <returns>No content on success</returns>
+    [HttpPut("schedule/{scheduleId:long}/start-reconciliation")]
+    [RequireDepartmentPermission(Permission.PreDefense_Finalize)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> StartReconciliation(long scheduleId)
+    {
+        var command = new StartReconciliationCommand { ScheduleId = scheduleId };
+
+        var result = await _sender.Send(command);
+
+        if (result.IsFailed)
+            return HandleResultError(result.Error);
+
+        return NoContent();
+    }
+
+    /// <summary>
+    /// Distribute student works across pre-defense commissions (round-robin).
+    /// </summary>
+    /// <param name="request">Distribution parameters</param>
+    /// <returns>Number of works distributed</returns>
+    [HttpPost("distribute")]
+    [RequireDepartmentPermission(Permission.PreDefense_Schedule)]
+    [ProducesResponseType(typeof(int), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> Distribute([FromBody] DistributeStudentsRequest request)
+    {
+        var command = request.Adapt<DistributeStudentsToCommissionsCommand>();
+
+        var result = await _sender.Send(command);
+
+        if (result.IsFailed)
+            return HandleResultError(result.Error);
+
+        return Ok(result.Value);
+    }
+
+    /// <summary>
+    /// Generate time slots for a pre-defense commission on a specific date.
+    /// </summary>
+    /// <param name="request">Slot generation parameters</param>
+    /// <returns>Number of slots generated</returns>
+    [HttpPost("generate-slots")]
+    [RequireDepartmentPermission(Permission.PreDefense_Schedule)]
+    [ProducesResponseType(typeof(int), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> GenerateSlots([FromBody] GeneratePreDefenseSlotsRequest request)
+    {
+        var command = request.Adapt<GeneratePreDefenseSlotsCommand>();
+
+        var result = await _sender.Send(command);
+
+        if (result.IsFailed)
+            return HandleResultError(result.Error);
+
+        return Ok(result.Value);
+    }
+
+    /// <summary>
+    /// Generate a pre-defense session protocol (ведомость) for a commission.
+    /// </summary>
+    /// <param name="request">Protocol generation details</param>
+    /// <returns>Created protocol ID</returns>
+    [HttpPost("protocols")]
+    [RequireDepartmentPermission(Permission.PreDefense_Finalize)]
+    [ProducesResponseType(typeof(long), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> GenerateProtocol([FromBody] GeneratePreDefenseProtocolRequest request)
+    {
+        var command = request.Adapt<GeneratePreDefenseProtocolCommand>();
+
+        var result = await _sender.Send(command);
+
+        if (result.IsFailed)
+            return HandleResultError(result.Error);
+
+        return StatusCode(StatusCodes.Status201Created, result.Value);
     }
 }

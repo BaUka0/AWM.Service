@@ -111,6 +111,22 @@
 | POST | api/v{version:apiVersion}/Topics/bulk-approve | - | - | BulkApproveTopicsRequest / body | empty / NoContent (204) |
 | GET | api/v{version:apiVersion}/Topics/coordination-summary | - | departmentId: int; academicYearId: int | - | TopicCoordinationSummaryResponse / Ok (200) |
 | POST | api/v{version:apiVersion}/Topics/complete-coordination | - | - | CompleteTopicCoordinationRequest / body | empty / NoContent (204) |
+| POST | api/v{version:apiVersion}/departments/{departmentId}/Periods/approve-defense | departmentId: int | academicYearId: int | ApproveDefensePeriodsRequest / body | empty / NoContent (204) |
+| POST | api/v{version:apiVersion}/pre-defense/distribute | - | - | DistributeStudentsRequest / body | empty / Ok (200) |
+| POST | api/v{version:apiVersion}/pre-defense/generate-slots | - | - | GeneratePreDefenseSlotsRequest / body | empty / Ok (200) |
+| PUT | api/v{version:apiVersion}/pre-defense/schedule/{scheduleId:long}/start-reconciliation | scheduleId: long | - | - | empty / NoContent (204) |
+| POST | api/v{version:apiVersion}/pre-defense/protocols | - | - | GeneratePreDefenseProtocolRequest / body | long / CreatedAtAction (201) |
+| GET | api/v{version:apiVersion}/pre-defense/failed-students | - | departmentId: int; academicYearId: int; preDefenseNumber: int? | - | IReadOnlyList<FailedPreDefenseStudentDto> / Ok (200) |
+| POST | api/v{version:apiVersion}/quality-checks/assign-experts | - | - | AssignExpertsRequest / body | empty / Ok (200) |
+| POST | api/v{version:apiVersion}/works/{workId:long}/assign-reviewer | workId: long | - | AssignReviewerToWorkRequest / body | long / CreatedAtAction (201) |
+| PUT | api/v{version:apiVersion}/works/{workId:long}/repository-url | workId: long | - | SetRepositoryUrlRequest / body | empty / NoContent (204) |
+| GET | api/v{version:apiVersion}/works/{workId:long}/assigned-reviewer | workId: long | - | - | AssignedReviewerDto / Ok (200) |
+| GET | api/v{version:apiVersion}/works/review-status | - | departmentId: int; academicYearId: int | - | ReviewStatusByDepartmentDto / Ok (200) |
+| GET | api/v{version:apiVersion}/works/defense-readiness | - | departmentId: int; academicYearId: int | - | DefenseReadinessDto / Ok (200) |
+| GET | api/v{version:apiVersion}/works/admitted-students | - | departmentId: int; academicYearId: int | - | IReadOnlyList<AdmittedStudentDto> / Ok (200) |
+| POST | api/v{version:apiVersion}/works/send-readiness-reminders | - | - | SendReadinessRemindersRequest / body | int / Ok (200) |
+| POST | api/v{version:apiVersion}/defense-schedule/generate-slots | - | - | GenerateDefenseSlotsRequest / body | int / Ok (200) |
+| PUT | api/v{version:apiVersion}/defense-schedule/{scheduleId:long}/start-reconciliation | scheduleId: long | - | - | empty / NoContent (204) |
 
 ## Request Body Schemas
 
@@ -129,12 +145,26 @@
 - DepartmentId: int
 - AcademicYearId: int
 
+### ApproveDefensePeriodsRequest
+- Periods: IReadOnlyList<PeriodDto>
+
 ### ApproveInitialPeriodsRequest
 - Periods: IReadOnlyList<PeriodDto>
 
 ### ApproveSupervisorsRequest
 - DepartmentId: int
 - StaffIds: IReadOnlyList<int>
+
+### AssignExpertsRequest
+- DepartmentId: int
+- Assignments: IReadOnlyList\<ExpertAssignmentItem\>
+
+### ExpertAssignmentItem
+- UserId: int
+- ExpertiseType: ExpertiseType
+
+### AssignReviewerToWorkRequest
+- ReviewerId: int
 
 ### AssignWorkToSlotRequest
 - WorkId: long
@@ -160,6 +190,11 @@
 - CommissionId: int
 - DefenseDate: DateTime
 - Location: string?
+
+### DistributeStudentsRequest
+- DepartmentId: int
+- AcademicYearId: int
+- PreDefenseNumber: int
 
 ### CreateDegreeLevelRequest
 - Name: string
@@ -235,6 +270,26 @@
 - ScheduleId: long
 - CommissionId: int
 
+### GenerateDefenseSlotsRequest
+- CommissionId: int
+- Date: DateTime
+- StartTime: TimeSpan
+- EndTime: TimeSpan
+- SlotDurationMinutes: int
+- Location: string?
+
+### GeneratePreDefenseProtocolRequest
+- CommissionId: int
+- SessionDate: DateTime
+
+### GeneratePreDefenseSlotsRequest
+- CommissionId: int
+- Date: DateTime
+- StartTime: TimeSpan
+- EndTime: TimeSpan
+- SlotDurationMinutes: int
+- Location: string?
+
 ### LoginRequest
 - Login: string
 - Password: string
@@ -271,6 +326,13 @@
 - CommissionId: int
 - DefenseDate: DateTime
 - Location: string?
+
+### SendReadinessRemindersRequest
+- DepartmentId: int
+- AcademicYearId: int
+
+### SetRepositoryUrlRequest
+- RepositoryUrl: string
 
 ### SubmitForCheckRequest
 - CheckType: CheckType
@@ -366,6 +428,20 @@
 - DeletedAt: DateTime?
 - DeletedBy: int?
 
+### AdmittedStudentDto
+- WorkId: long
+- StudentId: int
+- UserId: int
+
+### AssignedReviewerDto
+- ReviewId: long
+- ReviewerId: int
+- FullName: string
+- Position: string?
+- Organization: string?
+- Email: string?
+- IsUploaded: bool
+
 ### AttachmentResponse
 - Id: long
 - WorkId: long
@@ -407,6 +483,21 @@
 - UserId: int
 - RoleInCommission: string
 - CreatedAt: DateTime
+
+### DefenseReadinessDto
+- TotalWorks: int
+- FullyReady: int
+- NotReady: int
+- Items: IReadOnlyList\<StudentReadinessItem\>
+
+### StudentReadinessItem
+- WorkId: long
+- PreDefensePassed: bool
+- NormControlPassed: bool
+- SoftwareCheckPassed: bool
+- AntiPlagiarismPassed: bool
+- HasReview: bool
+- IsFullyReady: bool
 
 ### DefenseSlotResponse
 - Id: long
@@ -484,6 +575,13 @@
 - CriteriaName: string
 - MaxScore: int
 - Weight: decimal
+
+### FailedPreDefenseStudentDto
+- WorkId: long
+- LastAttemptNumber: int
+- LastScore: decimal?
+- CanRetake: bool
+- LastAttemptDate: DateTime
 
 ### GradeResponse
 - Id: long
@@ -607,6 +705,21 @@
 - DocumentPath: string?
 - AssignedExpertId: int?
 - CheckedAt: DateTime
+
+### ReviewStatusByDepartmentDto
+- TotalWorks: int
+- WorksWithReviewer: int
+- WorksWithoutReviewer: int
+- ReviewsUploaded: int
+- ReviewsPending: int
+- Items: IReadOnlyList\<WorkReviewStatusItem\>
+
+### WorkReviewStatusItem
+- WorkId: long
+- ReviewerId: int?
+- ReviewerName: string?
+- HasReviewer: bool
+- IsReviewUploaded: bool
 
 ### ScheduleResponse
 - Id: long

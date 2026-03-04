@@ -1,5 +1,6 @@
 namespace AWM.Service.WebAPI.Controllers.v1;
 
+using AWM.Service.Application.Features.Thesis.QualityChecks.Commands.AssignExperts;
 using AWM.Service.Application.Features.Thesis.QualityChecks.Commands.RecordCheckResult;
 using AWM.Service.Application.Features.Thesis.QualityChecks.Commands.SubmitForCheck;
 using AWM.Service.Application.Features.Thesis.QualityChecks.DTOs;
@@ -131,6 +132,39 @@ public class QualityChecksController : BaseController
     public async Task<IActionResult> RecordResult(long workId, long checkId, [FromBody] RecordCheckResultRequest request)
     {
         var command = request.Adapt<RecordCheckResultCommand>() with { WorkId = workId, CheckId = checkId };
+
+        var result = await _sender.Send(command);
+
+        if (result.IsFailed)
+            return HandleResultError(result.Error);
+
+        return Ok(result.Value);
+    }
+
+    /// <summary>
+    /// Assign experts to quality check types for a department.
+    /// Creates Expert entities linking users to specific expertise types.
+    /// </summary>
+    /// <param name="request">Expert assignment details</param>
+    /// <returns>Number of new experts created</returns>
+    [HttpPost("assign-experts")]
+    [RequireDepartmentPermission(Permission.Experts_Manage)]
+    [ProducesResponseType(typeof(int), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> AssignExperts([FromBody] AssignExpertsRequest request)
+    {
+        var assignments = request.Assignments
+            .Select(a => new ExpertAssignmentDto(a.UserId, a.ExpertiseType))
+            .ToList();
+
+        var command = new AssignExpertsCommand
+        {
+            DepartmentId = request.DepartmentId,
+            Assignments = assignments
+        };
 
         var result = await _sender.Send(command);
 
