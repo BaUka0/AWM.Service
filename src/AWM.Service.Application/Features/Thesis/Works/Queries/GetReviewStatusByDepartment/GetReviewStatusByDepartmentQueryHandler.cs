@@ -39,16 +39,28 @@ public sealed class GetReviewStatusByDepartmentQueryHandler
 
             var items = new List<WorkReviewStatusItem>();
 
+            // Bulk fetch all reviews for works in this department (avoids N+1)
+            var workIds = works.Select(w => w.Id).ToList();
+            var allReviews = await _reviewRepository.GetByWorkIdsAsync(workIds, cancellationToken);
+            var reviewsByWorkId = allReviews.GroupBy(r => r.WorkId)
+                .ToDictionary(g => g.Key, g => g.First());
+
+            // Bulk fetch all relevant reviewers
+            var reviewerIds = reviewsByWorkId.Values
+                .Select(r => r.ReviewerId)
+                .Distinct()
+                .ToList();
+            var allReviewers = await _reviewerRepository.GetByIdsAsync(reviewerIds, cancellationToken);
+            var reviewersById = allReviewers.ToDictionary(r => r.Id);
+
             foreach (var work in works)
             {
-                var reviews = await _reviewRepository.GetByWorkIdAsync(work.Id, cancellationToken);
-                var review = reviews.FirstOrDefault();
+                reviewsByWorkId.TryGetValue(work.Id, out var review);
 
                 string? reviewerName = null;
-                if (review is not null)
+                if (review is not null && reviewersById.TryGetValue(review.ReviewerId, out var reviewer))
                 {
-                    var reviewer = await _reviewerRepository.GetByIdAsync(review.ReviewerId, cancellationToken);
-                    reviewerName = reviewer?.FullName;
+                    reviewerName = reviewer.FullName;
                 }
 
                 items.Add(new WorkReviewStatusItem

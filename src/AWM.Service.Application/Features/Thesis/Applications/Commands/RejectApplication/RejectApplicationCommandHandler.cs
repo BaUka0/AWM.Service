@@ -15,6 +15,7 @@ public sealed class RejectApplicationCommandHandler : IRequestHandler<RejectAppl
 {
     private readonly ITopicApplicationRepository _applicationRepository;
     private readonly ITopicRepository _topicRepository;
+    private readonly IStaffRepository _staffRepository;
     private readonly ICurrentUserProvider _currentUserProvider;
     private readonly INotificationService _notificationService;
     private readonly IUnitOfWork _unitOfWork;
@@ -23,6 +24,7 @@ public sealed class RejectApplicationCommandHandler : IRequestHandler<RejectAppl
     public RejectApplicationCommandHandler(
         ITopicApplicationRepository applicationRepository,
         ITopicRepository topicRepository,
+        IStaffRepository staffRepository,
         ICurrentUserProvider currentUserProvider,
         INotificationService notificationService,
         IUnitOfWork unitOfWork,
@@ -30,6 +32,7 @@ public sealed class RejectApplicationCommandHandler : IRequestHandler<RejectAppl
     {
         _applicationRepository = applicationRepository;
         _topicRepository = topicRepository;
+        _staffRepository = staffRepository;
         _currentUserProvider = currentUserProvider;
         _notificationService = notificationService;
         _unitOfWork = unitOfWork;
@@ -48,6 +51,14 @@ public sealed class RejectApplicationCommandHandler : IRequestHandler<RejectAppl
         }
 
         var supervisorUserId = userId.Value;
+
+        // Resolve current user's StaffId
+        var currentStaff = await _staffRepository.GetByUserIdAsync(supervisorUserId, cancellationToken);
+        if (currentStaff is null)
+        {
+            _logger.LogWarning("RejectApplication failed: User {UserId} does not have an associated staff profile.", supervisorUserId);
+            return Result.Failure(new Error("Authorization.Forbidden", "User does not have an associated staff profile."));
+        }
 
         // 1. Get application with topic (for authorization)
         var application = await _applicationRepository.GetByIdWithTopicAsync(
@@ -76,7 +87,7 @@ public sealed class RejectApplicationCommandHandler : IRequestHandler<RejectAppl
         }
 
         // 4. Check authorization - only the topic's supervisor can reject
-        if (topic.SupervisorId != supervisorUserId)
+        if (topic.SupervisorId != currentStaff.Id)
         {
             _logger.LogWarning("RejectApplication failed: User={UserId} is not the supervisor for Topic={TopicId}", supervisorUserId, topic.Id);
             return Result.Failure(new Error("Authorization.Forbidden", "Only the topic supervisor can reject applications."));

@@ -65,13 +65,13 @@ public sealed class SubmitForCheckCommandHandler : IRequestHandler<SubmitForChec
                 }
 
                 // Rework cycle: if a previous AntiPlagiarism check failed, NormControl must be re-passed
-                // (latest NormControl attempt must be newer than latest failed AntiPlagiarism)
+                // (latest passed NormControl must be newer than latest failed AntiPlagiarism)
                 var latestFailedPlagiarism = work.GetLatestCheck(CheckType.AntiPlagiarism);
                 var latestNormControl = work.GetLatestCheck(CheckType.NormControl);
 
                 if (latestFailedPlagiarism is not null && !latestFailedPlagiarism.IsPassed
                     && latestNormControl is not null
-                    && latestNormControl.AttemptNumber <= latestFailedPlagiarism.AttemptNumber
+                    && latestNormControl.CreatedAt <= latestFailedPlagiarism.CreatedAt
                     && !latestNormControl.IsPassed)
                 {
                     return Result.Failure<long>(new Error("BusinessRule.QualityCheck",

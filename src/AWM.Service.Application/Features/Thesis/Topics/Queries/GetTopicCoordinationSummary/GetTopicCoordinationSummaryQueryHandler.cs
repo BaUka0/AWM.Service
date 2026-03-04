@@ -48,9 +48,15 @@ public sealed class GetTopicCoordinationSummaryQueryHandler
         var approvedCount = 0;
         var closedCount = 0;
 
+        // Bulk fetch all applications for all topics (avoids N+1)
+        var topicIds = topics.Select(t => t.Id).ToList();
+        var allApplications = await _applicationRepository.GetByTopicIdsAsync(topicIds, cancellationToken);
+        var applicationsByTopicId = allApplications.GroupBy(a => a.TopicId)
+            .ToDictionary(g => g.Key, g => g.ToList());
+
         foreach (var topic in topics)
         {
-            var applications = await _applicationRepository.GetByTopicIdAsync(topic.Id, cancellationToken);
+            var applications = applicationsByTopicId.GetValueOrDefault(topic.Id, []);
             var accepted = applications.Count(a => a.Status == ApplicationStatus.Accepted);
             var pending = applications.Count(a => a.Status == ApplicationStatus.Submitted);
             var available = topic.GetAvailableSpots();

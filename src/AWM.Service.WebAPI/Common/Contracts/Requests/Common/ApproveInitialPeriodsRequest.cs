@@ -4,14 +4,14 @@ using System;
 using System.Collections.Generic;
 using AWM.Service.Domain.CommonDomain.Enums;
 
-public class PeriodDto
+public record PeriodDto
 {
-    public WorkflowStage WorkflowStage { get; set; }
-    public DateTime StartDate { get; set; }
-    public DateTime EndDate { get; set; }
+    public WorkflowStage WorkflowStage { get; init; }
+    public DateTime StartDate { get; init; }
+    public DateTime EndDate { get; init; }
 }
 
-public class ApproveInitialPeriodsRequest
+public record ApproveInitialPeriodsRequest
 {
-    public IReadOnlyList<PeriodDto> Periods { get; set; } = new List<PeriodDto>();
+    public IReadOnlyList<PeriodDto> Periods { get; init; } = new List<PeriodDto>();
 }

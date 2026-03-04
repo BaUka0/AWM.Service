@@ -22,6 +22,7 @@ public sealed class PeriodRepository : RepositoryBase<Period, int>, IPeriodRepos
     {
         var now = DateTime.UtcNow;
         return await Context.Periods
+            .AsNoTracking()
             .Where(p => p.DepartmentId == departmentId &&
                         p.AcademicYearId == academicYearId &&
                         p.WorkflowStage == stage &&
@@ -39,6 +40,7 @@ public sealed class PeriodRepository : RepositoryBase<Period, int>, IPeriodRepos
     {
         var now = DateTime.UtcNow;
         return await Context.Periods
+            .AsNoTracking()
             .Where(p => p.DepartmentId == departmentId &&
                         p.AcademicYearId == academicYearId &&
                         p.IsActive &&

@@ -16,6 +16,7 @@ public sealed class CreateTopicCommandHandler : IRequestHandler<CreateTopicComma
 {
     private readonly ITopicRepository _topicRepository;
     private readonly IDirectionRepository _directionRepository;
+    private readonly IStaffRepository _staffRepository;
     private readonly IPeriodValidationService _periodValidationService;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICurrentUserProvider _currentUserProvider;
@@ -24,6 +25,7 @@ public sealed class CreateTopicCommandHandler : IRequestHandler<CreateTopicComma
     public CreateTopicCommandHandler(
         ITopicRepository topicRepository,
         IDirectionRepository directionRepository,
+        IStaffRepository staffRepository,
         IPeriodValidationService periodValidationService,
         IUnitOfWork unitOfWork,
         ICurrentUserProvider currentUserProvider,
@@ -31,6 +33,7 @@ public sealed class CreateTopicCommandHandler : IRequestHandler<CreateTopicComma
     {
         _topicRepository = topicRepository ?? throw new ArgumentNullException(nameof(topicRepository));
         _directionRepository = directionRepository ?? throw new ArgumentNullException(nameof(directionRepository));
+        _staffRepository = staffRepository ?? throw new ArgumentNullException(nameof(staffRepository));
         _periodValidationService = periodValidationService ?? throw new ArgumentNullException(nameof(periodValidationService));
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
         _currentUserProvider = currentUserProvider ?? throw new ArgumentNullException(nameof(currentUserProvider));
@@ -78,7 +81,16 @@ public sealed class CreateTopicCommandHandler : IRequestHandler<CreateTopicComma
                 // For now, we'll skip this checkor you can add state validation if you have state IDs
             }
 
-            var supervisorId = request.SupervisorId > 0 ? request.SupervisorId : currentUserId.Value;
+            var supervisorId = request.SupervisorId;
+            if (supervisorId <= 0)
+            {
+                var staff = await _staffRepository.GetByUserIdAsync(currentUserId.Value, cancellationToken);
+                if (staff is null)
+                {
+                    return Result.Failure<long>(new Error("403", "User does not have an associated staff profile to act as a supervisor."));
+                }
+                supervisorId = staff.Id;
+            }
             _logger.LogDebug("Determined SupervisorId: {SupervisorId} (Requested: {RequestedId}, CurrentUser: {CurrentUserId})",
                 supervisorId, request.SupervisorId, currentUserId.Value);
 

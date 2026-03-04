@@ -21,6 +21,7 @@ public sealed class WorkTypesController : BaseController
 
     public WorkTypesController(ISender sender)
     {
+        ArgumentNullException.ThrowIfNull(sender);
         _sender = sender;
     }
 

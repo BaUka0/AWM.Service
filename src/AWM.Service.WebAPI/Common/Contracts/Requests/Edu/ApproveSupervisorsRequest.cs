@@ -2,8 +2,8 @@ namespace AWM.Service.WebAPI.Common.Contracts.Requests.Edu;
 
 using System.Collections.Generic;
 
-public class ApproveSupervisorsRequest
+public record ApproveSupervisorsRequest
 {
-    public int DepartmentId { get; set; }
-    public IReadOnlyList<int> StaffIds { get; set; } = new List<int>();
+    public int DepartmentId { get; init; }
+    public IReadOnlyList<int> StaffIds { get; init; } = new List<int>();
 }
