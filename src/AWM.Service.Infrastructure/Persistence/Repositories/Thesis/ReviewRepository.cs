@@ -30,4 +30,14 @@ public sealed class ReviewRepository : RepositoryBase<Review, long>, IReviewRepo
             .OrderByDescending(r => r.CreatedAt)
             .ToListAsync(cancellationToken);
     }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<Review>> GetByWorkIdsAsync(IEnumerable<long> workIds, CancellationToken cancellationToken = default)
+    {
+        var ids = workIds.ToList();
+        return await Context.Reviews
+            .AsNoTracking()
+            .Where(r => ids.Contains(r.WorkId))
+            .ToListAsync(cancellationToken);
+    }
 }

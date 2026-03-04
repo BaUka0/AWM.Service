@@ -5,7 +5,7 @@ using FluentValidation;
 /// <summary>
 /// Validator for RejectDirectionCommand.
 /// </summary>
-public sealed class RejectDirectionCommandValidator 
+public sealed class RejectDirectionCommandValidator
     : AbstractValidator<RejectDirectionCommand>
 {
     public RejectDirectionCommandValidator()
@@ -13,10 +13,6 @@ public sealed class RejectDirectionCommandValidator
         RuleFor(x => x.Id)
             .GreaterThan(0)
             .WithMessage("Direction ID must be greater than 0.");
-
-        RuleFor(x => x.RejectedBy)
-            .GreaterThan(0)
-            .WithMessage("RejectedBy user ID must be greater than 0.");
 
         RuleFor(x => x.Comment)
             .MaximumLength(1000)

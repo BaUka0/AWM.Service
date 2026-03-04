@@ -1,7 +1,10 @@
 namespace AWM.Service.WebAPI.Controllers.v1;
 
+using AWM.Service.Application.Features.Common.Periods.Commands.ApproveDefensePeriods;
+using AWM.Service.Application.Features.Common.Periods.Commands.ApproveInitialPeriods;
 using AWM.Service.Application.Features.Common.Periods.Commands.CreatePeriod;
 using AWM.Service.Application.Features.Common.Periods.Commands.UpdatePeriod;
+using AWM.Service.Application.Features.Common.Periods.DTOs;
 using AWM.Service.Application.Features.Common.Periods.Queries.GetActivePeriod;
 using AWM.Service.Application.Features.Common.Periods.Queries.GetPeriodsByDepartment;
 using AWM.Service.Domain.Auth.Enums;
@@ -75,7 +78,7 @@ public sealed class PeriodsController : BaseController
     public async Task<IActionResult> GetActive(
         int departmentId,
         [FromQuery] int academicYearId,
-        [FromQuery] WorkflowStage stage,
+        [FromQuery] WorkflowStage? stage,
         CancellationToken cancellationToken = default)
     {
         var query = new GetActivePeriodQuery
@@ -151,6 +154,78 @@ public sealed class PeriodsController : BaseController
 
         var result = await _sender.Send(command, cancellationToken);
 
+        if (result.IsFailed)
+        {
+            return HandleResultError(result.Error);
+        }
+
+        return NoContent();
+    }
+
+    /// <summary>
+    /// Bulk approve initial periods (DirectionSubmission, TopicCreation, TopicSelection).
+    /// </summary>
+    /// <param name="departmentId">Id of the department.</param>
+    /// <param name="academicYearId">Academic Year Id.</param>
+    /// <param name="request">Request containing periods to approve.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>No content on success.</returns>
+    [HttpPost("approve-initial")]
+    [RequireDepartmentPermission(Permission.Periods_Manage)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> ApproveInitialPeriods(
+        [FromRoute] int departmentId,
+        [FromQuery] int academicYearId,
+        [FromBody] ApproveInitialPeriodsRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var periods = request.Periods.Adapt<IReadOnlyList<PeriodSettingsDto>>();
+
+        var command = new ApproveInitialPeriodsCommand(
+            departmentId,
+            academicYearId,
+            periods);
+
+        var result = await _sender.Send(command, cancellationToken);
+        if (result.IsFailed)
+        {
+            return HandleResultError(result.Error);
+        }
+
+        return NoContent();
+    }
+
+    /// <summary>
+    /// Bulk approve defense periods (PreDefense1, PreDefense2, PreDefense3, FinalDefense).
+    /// </summary>
+    /// <param name="departmentId">Id of the department.</param>
+    /// <param name="academicYearId">Academic Year Id.</param>
+    /// <param name="request">Request containing defense periods to approve.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>No content on success.</returns>
+    [HttpPost("approve-defense")]
+    [RequireDepartmentPermission(Permission.Periods_Manage)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> ApproveDefensePeriods(
+        [FromRoute] int departmentId,
+        [FromQuery] int academicYearId,
+        [FromBody] ApproveDefensePeriodsRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var periods = request.Periods.Adapt<IReadOnlyList<PeriodSettingsDto>>();
+
+        var command = new ApproveDefensePeriodsCommand(
+            departmentId,
+            academicYearId,
+            periods);
+
+        var result = await _sender.Send(command, cancellationToken);
         if (result.IsFailed)
         {
             return HandleResultError(result.Error);

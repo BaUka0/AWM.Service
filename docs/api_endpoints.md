@@ -55,9 +55,10 @@
 | PATCH | api/v{version:apiVersion}/Notifications/read-all | - | - | - | empty / NoContent (204) |
 | GET | api/v{version:apiVersion}/Notifications/unread-count | - | - | - | int / Ok (200) |
 | GET | api/v{version:apiVersion}/departments/{departmentId}/Periods | departmentId: int | academicYearId: int | - | IReadOnlyList<PeriodResponse> / Ok (200) |
-| GET | api/v{version:apiVersion}/departments/{departmentId}/Periods/active | departmentId: int | academicYearId: int; stage: WorkflowStage | - | PeriodResponse / Ok (200) |
+| GET | api/v{version:apiVersion}/departments/{departmentId}/Periods/active | departmentId: int | academicYearId: int; stage: WorkflowStage? | - | PeriodResponse / Ok (200) |
 | POST | api/v{version:apiVersion}/departments/{departmentId}/Periods | departmentId: int | - | CreatePeriodRequest / body | int / CreatedAtAction (201) |
 | PUT | api/v{version:apiVersion}/departments/{departmentId}/Periods/{periodId} | departmentId: int; periodId: int | - | UpdatePeriodRequest / body | empty / NoContent (204) |
+| POST | api/v{version:apiVersion}/departments/{departmentId}/Periods/approve-initial | departmentId: int | academicYearId: int | ApproveInitialPeriodsRequest / body (Upsert) | empty / NoContent (204) |
 | GET | api/v{version:apiVersion}/pre-defense/schedule | - | commissionId: int | - | IReadOnlyList<PreDefenseScheduleDto> / Ok (200) |
 | GET | api/v{version:apiVersion}/pre-defense/works/{workId:long}/attempts | workId: long | - | - | IReadOnlyList<PreDefenseAttemptDto> / Ok (200) |
 | POST | api/v{version:apiVersion}/pre-defense/works/{workId:long}/schedule | workId: long | - | SchedulePreDefenseRequest / body | long / CreatedAtAction (201) |
@@ -74,8 +75,11 @@
 | POST | api/v{version:apiVersion}/works/{workId:long}/Reviews/supervisor | workId: long | - | CreateSupervisorReviewRequest / form | long / Ok (200) |
 | POST | api/v{version:apiVersion}/works/{workId:long}/Reviews/external/{reviewId:long} | workId: long; reviewId: long | - | UploadReviewRequest / form | empty / NoContent (204) |
 | GET | api/v{version:apiVersion}/Staff | - | departmentId: int | - | IReadOnlyList<StaffResponse> / Ok (200) |
+| GET | api/v{version:apiVersion}/Staff/supervisors | - | departmentId: int | - | IReadOnlyList<StaffResponse> / Ok (200) |
 | POST | api/v{version:apiVersion}/Staff | - | - | CreateStaffRequest / body | int / CreatedAtAction (201) |
 | PUT | api/v{version:apiVersion}/Staff/{staffId} | staffId: int | - | UpdateStaffRequest / body | empty / NoContent (204) |
+| PATCH | api/v{version:apiVersion}/Staff/{staffId}/workload | staffId: int | - | UpdateStaffWorkloadRequest / body | empty / NoContent (204) |
+| POST | api/v{version:apiVersion}/Staff/approve-supervisors | - | - | ApproveSupervisorsRequest / body | empty / NoContent (204) |
 | GET | api/v{version:apiVersion}/Students/{studentId} | studentId: int | - | - | StudentResponse / Ok (200) |
 | GET | api/v{version:apiVersion}/Students | - | programId: int | - | IReadOnlyList<StudentResponse> / Ok (200) |
 | POST | api/v{version:apiVersion}/Students | - | - | CreateStudentRequest / body | int / CreatedAtAction (201) |
@@ -94,12 +98,35 @@
 | POST | api/v{version:apiVersion}/applications/{applicationId:long}/reject | applicationId: long | - | RejectApplicationRequest / body | empty / NoContent (204) |
 | DELETE | api/v{version:apiVersion}/applications/{applicationId:long} | applicationId: long | - | - | empty / NoContent (204) |
 | GET | api/v{version:apiVersion}/Topics/{id} | id: long | - | - | TopicDetailResponse / Ok (200) |
-| GET | api/v{version:apiVersion}/Topics/available | - | departmentId: int; academicYearId: int | - | IReadOnlyList<TopicResponse> / Ok (200) |
+| GET | api/v{version:apiVersion}/Topics/available | - | departmentId: int?; academicYearId: int? | - | IReadOnlyList<TopicResponse> / Ok (200) |
+| GET | api/v{version:apiVersion}/Users/me | - | - | - | UserProfileResponse / Ok (200) |
+| GET | api/v{version:apiVersion}/WorkTypes | - | - | - | IReadOnlyList<WorkTypeResponse> / Ok (200) |
 | GET | api/v{version:apiVersion}/Topics/by-direction/{directionId} | directionId: long | - | - | IReadOnlyList<TopicResponse> / Ok (200) |
 | POST | api/v{version:apiVersion}/Topics | - | - | CreateTopicRequest / body | long / CreatedAtAction (201) |
 | PUT | api/v{version:apiVersion}/Topics/{id} | id: long | - | UpdateTopicRequest / body | empty / NoContent (204) |
 | POST | api/v{version:apiVersion}/Topics/{id}/approve | id: long | - | - | empty / NoContent (204) |
 | POST | api/v{version:apiVersion}/Topics/{id}/close | id: long | - | - | empty / NoContent (204) |
+| POST | api/v{version:apiVersion}/Topics/{id}/deactivate | id: long | - | - | empty / NoContent (204) |
+| POST | api/v{version:apiVersion}/Topics/submit-for-approval | - | - | SubmitTopicsForApprovalRequest / body | empty / NoContent (204) |
+| POST | api/v{version:apiVersion}/Topics/bulk-approve | - | - | BulkApproveTopicsRequest / body | empty / NoContent (204) |
+| GET | api/v{version:apiVersion}/Topics/coordination-summary | - | departmentId: int; academicYearId: int | - | TopicCoordinationSummaryResponse / Ok (200) |
+| POST | api/v{version:apiVersion}/Topics/complete-coordination | - | - | CompleteTopicCoordinationRequest / body | empty / NoContent (204) |
+| POST | api/v{version:apiVersion}/departments/{departmentId}/Periods/approve-defense | departmentId: int | academicYearId: int | ApproveDefensePeriodsRequest / body | empty / NoContent (204) |
+| POST | api/v{version:apiVersion}/pre-defense/distribute | - | - | DistributeStudentsRequest / body | empty / Ok (200) |
+| POST | api/v{version:apiVersion}/pre-defense/generate-slots | - | - | GeneratePreDefenseSlotsRequest / body | empty / Ok (200) |
+| PUT | api/v{version:apiVersion}/pre-defense/schedule/{scheduleId:long}/start-reconciliation | scheduleId: long | - | - | empty / NoContent (204) |
+| POST | api/v{version:apiVersion}/pre-defense/protocols | - | - | GeneratePreDefenseProtocolRequest / body | long / CreatedAtAction (201) |
+| GET | api/v{version:apiVersion}/pre-defense/failed-students | - | departmentId: int; academicYearId: int; preDefenseNumber: int? | - | IReadOnlyList<FailedPreDefenseStudentDto> / Ok (200) |
+| POST | api/v{version:apiVersion}/quality-checks/assign-experts | - | - | AssignExpertsRequest / body | empty / Ok (200) |
+| POST | api/v{version:apiVersion}/works/{workId:long}/assign-reviewer | workId: long | - | AssignReviewerToWorkRequest / body | long / CreatedAtAction (201) |
+| PUT | api/v{version:apiVersion}/works/{workId:long}/repository-url | workId: long | - | SetRepositoryUrlRequest / body | empty / NoContent (204) |
+| GET | api/v{version:apiVersion}/works/{workId:long}/assigned-reviewer | workId: long | - | - | AssignedReviewerDto / Ok (200) |
+| GET | api/v{version:apiVersion}/works/review-status | - | departmentId: int; academicYearId: int | - | ReviewStatusByDepartmentDto / Ok (200) |
+| GET | api/v{version:apiVersion}/works/defense-readiness | - | departmentId: int; academicYearId: int | - | DefenseReadinessDto / Ok (200) |
+| GET | api/v{version:apiVersion}/works/admitted-students | - | departmentId: int; academicYearId: int | - | IReadOnlyList<AdmittedStudentDto> / Ok (200) |
+| POST | api/v{version:apiVersion}/works/send-readiness-reminders | - | - | SendReadinessRemindersRequest / body | int / Ok (200) |
+| POST | api/v{version:apiVersion}/defense-schedule/generate-slots | - | - | GenerateDefenseSlotsRequest / body | int / Ok (200) |
+| PUT | api/v{version:apiVersion}/defense-schedule/{scheduleId:long}/start-reconciliation | scheduleId: long | - | - | empty / NoContent (204) |
 
 ## Request Body Schemas
 
@@ -110,6 +137,34 @@
 ### AddParticipantRequest
 - StudentId: int
 - Role: ParticipantRole
+
+### BulkApproveTopicsRequest
+- TopicIds: IReadOnlyList\<long\>
+
+### CompleteTopicCoordinationRequest
+- DepartmentId: int
+- AcademicYearId: int
+
+### ApproveDefensePeriodsRequest
+- Periods: IReadOnlyList<PeriodDto>
+
+### ApproveInitialPeriodsRequest
+- Periods: IReadOnlyList<PeriodDto>
+
+### ApproveSupervisorsRequest
+- DepartmentId: int
+- StaffIds: IReadOnlyList<int>
+
+### AssignExpertsRequest
+- DepartmentId: int
+- Assignments: IReadOnlyList\<ExpertAssignmentItem\>
+
+### ExpertAssignmentItem
+- UserId: int
+- ExpertiseType: ExpertiseType
+
+### AssignReviewerToWorkRequest
+- ReviewerId: int
 
 ### AssignWorkToSlotRequest
 - WorkId: long
@@ -135,6 +190,11 @@
 - CommissionId: int
 - DefenseDate: DateTime
 - Location: string?
+
+### DistributeStudentsRequest
+- DepartmentId: int
+- AcademicYearId: int
+- PreDefenseNumber: int
 
 ### CreateDegreeLevelRequest
 - Name: string
@@ -210,6 +270,26 @@
 - ScheduleId: long
 - CommissionId: int
 
+### GenerateDefenseSlotsRequest
+- CommissionId: int
+- Date: DateTime
+- StartTime: TimeSpan
+- EndTime: TimeSpan
+- SlotDurationMinutes: int
+- Location: string?
+
+### GeneratePreDefenseProtocolRequest
+- CommissionId: int
+- SessionDate: DateTime
+
+### GeneratePreDefenseSlotsRequest
+- CommissionId: int
+- Date: DateTime
+- StartTime: TimeSpan
+- EndTime: TimeSpan
+- SlotDurationMinutes: int
+- Location: string?
+
 ### LoginRequest
 - Login: string
 - Password: string
@@ -247,9 +327,19 @@
 - DefenseDate: DateTime
 - Location: string?
 
+### SendReadinessRemindersRequest
+- DepartmentId: int
+- AcademicYearId: int
+
+### SetRepositoryUrlRequest
+- RepositoryUrl: string
+
 ### SubmitForCheckRequest
 - CheckType: CheckType
 - Comment: string?
+
+### SubmitTopicsForApprovalRequest
+- TopicIds: IReadOnlyList\<long\>
 
 ### SubmitGradeRequest
 - MemberId: int
@@ -299,6 +389,9 @@
 - IsSupervisor: bool?
 - DepartmentId: int?
 
+### UpdateStaffWorkloadRequest
+- MaxStudentsLoad: int
+
 ### UpdateStudentRequest
 - ProgramId: int?
 - GroupCode: string?
@@ -334,6 +427,20 @@
 - IsDeleted: bool
 - DeletedAt: DateTime?
 - DeletedBy: int?
+
+### AdmittedStudentDto
+- WorkId: long
+- StudentId: int
+- UserId: int
+
+### AssignedReviewerDto
+- ReviewId: long
+- ReviewerId: int
+- FullName: string
+- Position: string?
+- Organization: string?
+- Email: string?
+- IsUploaded: bool
 
 ### AttachmentResponse
 - Id: long
@@ -376,6 +483,21 @@
 - UserId: int
 - RoleInCommission: string
 - CreatedAt: DateTime
+
+### DefenseReadinessDto
+- TotalWorks: int
+- FullyReady: int
+- NotReady: int
+- Items: IReadOnlyList\<StudentReadinessItem\>
+
+### StudentReadinessItem
+- WorkId: long
+- PreDefensePassed: bool
+- NormControlPassed: bool
+- SoftwareCheckPassed: bool
+- AntiPlagiarismPassed: bool
+- HasReview: bool
+- IsFullyReady: bool
 
 ### DefenseSlotResponse
 - Id: long
@@ -454,6 +576,13 @@
 - MaxScore: int
 - Weight: decimal
 
+### FailedPreDefenseStudentDto
+- WorkId: long
+- LastAttemptNumber: int
+- LastScore: decimal?
+- CanRetake: bool
+- LastAttemptDate: DateTime
+
 ### GradeResponse
 - Id: long
 - ScheduleId: long
@@ -462,6 +591,29 @@
 - Score: int
 - Comment: string?
 - GradedAt: DateTime
+
+### UserProfileResponse
+- UserId: int
+- Login: string
+- Email: string
+- Roles: IReadOnlyList<string>
+- DepartmentId: int?
+- DepartmentName: string?
+- InstituteId: int?
+- InstituteName: string?
+- CurrentAcademicYearId: int?
+- CurrentAcademicYearName: string?
+- StaffId: int?
+- Position: string?
+- AcademicDegree: string?
+- IsSupervisor: bool?
+- StudentId: int?
+- GroupCode: string?
+
+### WorkTypeResponse
+- Id: int
+- Name: string
+- DegreeLevelId: int?
 
 ### InstituteResponse
 - Id: int
@@ -553,6 +705,21 @@
 - DocumentPath: string?
 - AssignedExpertId: int?
 - CheckedAt: DateTime
+
+### ReviewStatusByDepartmentDto
+- TotalWorks: int
+- WorksWithReviewer: int
+- WorksWithoutReviewer: int
+- ReviewsUploaded: int
+- ReviewsPending: int
+- Items: IReadOnlyList\<WorkReviewStatusItem\>
+
+### WorkReviewStatusItem
+- WorkId: long
+- ReviewerId: int?
+- ReviewerName: string?
+- HasReviewer: bool
+- IsReviewUploaded: bool
 
 ### ScheduleResponse
 - Id: long
@@ -656,6 +823,27 @@
 - LastModifiedAt: DateTime?
 - LastModifiedBy: int?
 - Applications: IReadOnlyCollection<TopicApplicationResponse>?
+
+### TopicCoordinationItemResponse
+- TopicId: long
+- TitleRu: string
+- SupervisorId: int
+- MaxParticipants: int
+- AcceptedCount: int
+- PendingCount: int
+- AvailableSpots: int
+- IsApproved: bool
+- IsClosed: bool
+
+### TopicCoordinationSummaryResponse
+- TotalTopics: int
+- ApprovedTopics: int
+- TopicsWithStudents: int
+- TopicsWithoutStudents: int
+- ClosedTopics: int
+- TotalAcceptedApplications: int
+- TotalAvailableSpots: int
+- Topics: IReadOnlyList\<TopicCoordinationItemResponse\>
 
 ### TopicResponse
 - Id: long

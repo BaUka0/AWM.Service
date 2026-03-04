@@ -88,6 +88,11 @@ public interface ITopicApplicationRepository
     Task<IReadOnlyList<TopicApplication>> GetByTopicIdAsync(long topicId, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Gets all applications for multiple topics in a single query (bulk operation to avoid N+1).
+    /// </summary>
+    Task<IReadOnlyList<TopicApplication>> GetByTopicIdsAsync(IEnumerable<long> topicIds, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Gets all applications by a student (for student's "My Applications" page).
     /// </summary>
     Task<IReadOnlyList<TopicApplication>> GetByStudentIdAsync(int studentId, CancellationToken cancellationToken = default);

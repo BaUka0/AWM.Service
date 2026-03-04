@@ -34,6 +34,10 @@ public class ScheduleConfiguration : SoftDeletableEntityConfiguration<Schedule, 
         builder.Property(e => e.Location)
             .HasMaxLength(255);
 
+        builder.Property(e => e.IsReconciliationStarted)
+            .IsRequired()
+            .HasDefaultValue(false);
+
         // Foreign keys
         builder.HasOne<Commission>()
             .WithMany()

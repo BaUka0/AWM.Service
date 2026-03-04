@@ -32,6 +32,8 @@
 19. [Дипломные работы (StudentWorks)](#19-дипломные-работы-studentworks)
 20. [Заявки на темы (TopicApplications)](#20-заявки-на-темы-topicapplications)
 21. [Темы дипломных работ (Topics)](#21-темы-дипломных-работ-topics)
+22. [Типы работ (WorkTypes)](#22-типы-работ-worktypes)
+23. [Пользователи (Users)](#23-пользователи-users)
 
 ---
 
@@ -999,7 +1001,7 @@
 
 **Параметры запроса (query):**
 - `academicYearId` (int)
-- `stage` (string, optional)
+- `stage` (string, optional) — если передан, вернуть период именно для этого этапа. Если не передан, вернуть любой текущий активный период.
 
 **Возвращаемые данные:** `PeriodResponse`
 
@@ -1034,6 +1036,36 @@
   "startDate": "2024-01-01T00:00:00Z",
   "endDate": "2024-01-01T00:00:00Z",
   "isActive": true
+}
+```
+
+**Возвращаемые данные:** `204 NoContent`
+
+### POST `/approve-initial`
+
+Утвердить начальные сроки (создание направлений, тем, выбор тем) разом. Использует логику **upsert** (обновляет существующие этапы или создает новые).
+
+**Описание:**
+- Метод безопасен для повторного вызова.
+- Если для указанного `workflowStage` период уже существует — будут обновлены даты `startDate`/`endDate`.
+- Если не существует — будет создан новый период.
+- Дубликаты этапов в теле запроса игнорируются (берется первый встреченный).
+
+**Параметры пути:** `departmentId` (int)
+
+**Параметры запроса (query):**
+- `academicYearId` (int)
+
+**Входные данные:**
+```json
+{
+  "periods": [
+    {
+      "workflowStage": "DirectionSubmission",
+      "startDate": "2024-01-01T00:00:00Z",
+      "endDate": "2024-01-01T00:00:00Z"
+    }
+  ]
 }
 ```
 
@@ -1372,6 +1404,15 @@
 ]
 ```
 
+### GET `/supervisors`
+
+Получить список утвержденных научных руководителей кафедры.
+
+**Параметры запроса (query):**
+- `departmentId` (int)
+
+**Возвращаемые данные:** `IReadOnlyList<StaffResponse>` (см. схему StaffResponse)
+
 ### POST `/`
 
 Создать преподавателя.
@@ -1404,6 +1445,40 @@
   "maxStudentsLoad": 0,
   "isSupervisor": true,
   "departmentId": 0
+}
+```
+
+**Возвращаемые данные:** `204 NoContent`
+
+### PATCH `/{staffId}/workload`
+
+Обновить только лимит нагрузки (количество студентов) преподавателя.
+
+**Параметры пути:** `staffId` (int)
+
+**Входные данные:**
+```json
+{
+  "maxStudentsLoad": 0
+}
+```
+
+**Возвращаемые данные:** `204 NoContent`
+
+### POST `/approve-supervisors`
+
+Утвердить преподавателей в качестве научных руководителей (полная замена состава кафедры).
+
+**Описание:**
+Заменяет весь список научных руководителей кафедры.
+- Для `staffIds` в списке назначается роль "Supervisor".
+- У остальных преподавателей этой кафедры, не вошедших в список, данная роль снимается.
+
+**Входные данные:**
+```json
+{
+  "departmentId": 0,
+  "staffIds": [0]
 }
 ```
 
@@ -1726,11 +1801,11 @@
 
 ### GET `/available`
 
-Получить доступные темы.
+Получить доступные темы. Если параметры не указаны, данные подставляются автоматически из контекста текущего пользователя (JWT).
 
 **Параметры запроса (query):**
-- `departmentId` (int)
-- `academicYearId` (int)
+- `departmentId` (int, optional) - ID кафедры. Если не указан, берется из текущей роли пользователя.
+- `academicYearId` (int, optional) - ID учебного года. Если не указан, берется текущий активный год университета.
 
 **Возвращаемые данные:**
 ```json
@@ -1820,6 +1895,174 @@
 
 **Возвращаемые данные:** `204 NoContent`
 
+### POST `/{id}/deactivate`
+
+Деактивировать тему без привязанных студентов (действие кафедры).
+
+**Параметры пути:** `id` (long)
+
+**Возвращаемые данные:** `204 NoContent`
+
+### POST `/submit-for-approval`
+
+Пакетная подача тем на утверждение (действие руководителя).
+
+**Входные данные:**
+```json
+{
+  "topicIds": [0]
+}
+```
+
+**Возвращаемые данные:** `204 NoContent`
+
+### POST `/bulk-approve`
+
+Пакетное утверждение тем (действие кафедры).
+
+**Входные данные:**
+```json
+{
+  "topicIds": [0]
+}
+```
+
+**Возвращаемые данные:** `204 NoContent`
+
+### GET `/coordination-summary`
+
+Получить сводку по координации тем кафедры: статистику по заявкам, занятые и свободные места.
+
+**Параметры запроса (query):**
+- `departmentId` (int)
+- `academicYearId` (int)
+
+**Возвращаемые данные:**
+```json
+{
+  "totalTopics": 0,
+  "approvedTopics": 0,
+  "topicsWithStudents": 0,
+  "topicsWithoutStudents": 0,
+  "closedTopics": 0,
+  "totalAcceptedApplications": 0,
+  "totalAvailableSpots": 0,
+  "topics": [
+    {
+      "topicId": 0,
+      "titleRu": "string",
+      "supervisorId": 0,
+      "maxParticipants": 0,
+      "acceptedCount": 0,
+      "pendingCount": 0,
+      "availableSpots": 0,
+      "isApproved": true,
+      "isClosed": true
+    }
+  ]
+}
+```
+
+### POST `/complete-coordination`
+
+Завершить координацию тем кафедры: закрывает все открытые темы, отклоняет ожидающие заявки, уведомляет участников.
+
+**Входные данные:**
+```json
+{
+  "departmentId": 0,
+  "academicYearId": 0
+}
+```
+
+**Возвращаемые данные:** `204 NoContent`
+
+---
+
+## 22. Типы работ (WorkTypes)
+
+**Базовый путь:** `api/v1/WorkTypes`
+
+### GET `/`
+
+Получить список всех типов работ (дипломная, магистерская и т.д.). Используется для маппинга ID на названия на фронтенде.
+
+**Возвращаемые данные:**
+```json
+[
+  {
+    "id": 1,
+    "name": "CourseWork",
+    "degreeLevelId": null
+  },
+  {
+    "id": 2,
+    "name": "DiplomaWork",
+    "degreeLevelId": 1
+  }
+]
+```
+
+---
+
+## 23. Пользователи (Users)
+
+**Базовый путь:** `api/v1/Users`
+
+### GET `/me`
+
+Получить профиль текущего пользователя со всеми привязками (кафедра, год, группа).
+
+**Возвращаемые данные:**
+```json
+{
+  "userId": 9,
+  "login": "student1",
+  "email": "student1@test.edu",
+  "roles": ["Student"],
+  "departmentId": 1,
+  "departmentName": "Компьютерные науки",
+  "instituteId": 1,
+  "instituteName": "Институт информационных технологий",
+  "currentAcademicYearId": 1,
+  "currentAcademicYearName": "2025-2026",
+  "studentId": 1,
+  "groupCode": "CS-22-1"
+}
+```
+
+---
+
+## 23. Пользователи (Users)
+
+**Базовый путь:** `api/v1/users`
+
+### GET `/me`
+
+Получить полный профиль авторизованного пользователя.
+
+**Возвращаемые данные:**
+```json
+{
+  "userId": 0,
+  "login": "string",
+  "email": "string",
+  "roles": ["string"],
+  "departmentId": 0,
+  "departmentName": "string",
+  "instituteId": 0,
+  "instituteName": "string",
+  "currentAcademicYearId": 0,
+  "currentAcademicYearName": "string",
+  "staffId": 0,
+  "position": "string",
+  "academicDegree": "string",
+  "isSupervisor": true,
+  "studentId": 0,
+  "groupCode": "string"
+}
+```
+
 ---
 
 ## Сводная таблица всех endpoints
@@ -1842,13 +2085,15 @@
 | Protocols | 2 | Протоколы |
 | QualityChecks | 4 | Контроль качества |
 | Reviews | 3 | Рецензии |
-| Staff | 3 | Преподаватели |
+| Staff | 4 | Преподаватели |
 | Students | 4 | Студенты |
 | StudentWorks | 7 | Работы + участники |
 | TopicApplications | 6 | Заявки на темы |
-| Topics | 7 | Темы + workflow |
+| Topics | 12 | Темы + workflow + координация |
+| WorkTypes | 1 | Словарь типов работ |
+| Users | 1 | Профиль текущего пользователя |
 
-**Итого: ~105 API endpoints**
+**Итого: ~108 API endpoints**
 
 ---
 

@@ -1,6 +1,8 @@
 namespace AWM.Service.Application.Features.Defense.PreDefense.Commands.SchedulePreDefense;
 
 using AWM.Service.Domain.Common;
+using AWM.Service.Domain.CommonDomain.Enums;
+using AWM.Service.Domain.CommonDomain.Services;
 using AWM.Service.Domain.Defense.Entities;
 using AWM.Service.Domain.Defense.Enums;
 using AWM.Service.Domain.Repositories;
@@ -16,6 +18,7 @@ public sealed class SchedulePreDefenseCommandHandler : IRequestHandler<ScheduleP
     private readonly IScheduleRepository _scheduleRepository;
     private readonly IPreDefenseAttemptRepository _attemptRepository;
     private readonly ICommissionRepository _commissionRepository;
+    private readonly IPeriodValidationService _periodValidationService;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICurrentUserProvider _currentUserProvider;
 
@@ -23,12 +26,14 @@ public sealed class SchedulePreDefenseCommandHandler : IRequestHandler<ScheduleP
         IScheduleRepository scheduleRepository,
         IPreDefenseAttemptRepository attemptRepository,
         ICommissionRepository commissionRepository,
+        IPeriodValidationService periodValidationService,
         IUnitOfWork unitOfWork,
         ICurrentUserProvider currentUserProvider)
     {
         _scheduleRepository = scheduleRepository ?? throw new ArgumentNullException(nameof(scheduleRepository));
         _attemptRepository = attemptRepository ?? throw new ArgumentNullException(nameof(attemptRepository));
         _commissionRepository = commissionRepository ?? throw new ArgumentNullException(nameof(commissionRepository));
+        _periodValidationService = periodValidationService ?? throw new ArgumentNullException(nameof(periodValidationService));
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
         _currentUserProvider = currentUserProvider ?? throw new ArgumentNullException(nameof(currentUserProvider));
     }
@@ -50,6 +55,20 @@ public sealed class SchedulePreDefenseCommandHandler : IRequestHandler<ScheduleP
             if (commission.CommissionType != CommissionType.PreDefense)
                 return Result.Failure<long>(new Error("BusinessRule.Commission",
                     "The specified commission is not a PreDefense commission."));
+
+            // Validate that the appropriate pre-defense period is open
+            var stage = (commission.PreDefenseNumber ?? 1) switch
+            {
+                1 => WorkflowStage.PreDefense1,
+                2 => WorkflowStage.PreDefense2,
+                3 => WorkflowStage.PreDefense3,
+                _ => WorkflowStage.PreDefense1
+            };
+
+            var (isAllowed, errorMessage) = await _periodValidationService.ValidateOperationInPeriodAsync(
+                commission.DepartmentId, commission.AcademicYearId, stage, cancellationToken);
+            if (!isAllowed)
+                return Result.Failure<long>(new Error("400", errorMessage!));
 
             // Determine attempt number from existing attempts
             var existingAttempts = await _attemptRepository.GetByWorkIdAsync(request.WorkId, cancellationToken);

@@ -50,6 +50,9 @@ public class StudentWorkConfiguration : SoftDeletableEntityConfiguration<Student
             .IsRequired()
             .HasDefaultValue(false);
 
+        builder.Property(e => e.RepositoryUrl)
+            .HasMaxLength(500);
+
         // Foreign keys
         builder.HasOne<Topic>()
             .WithMany()

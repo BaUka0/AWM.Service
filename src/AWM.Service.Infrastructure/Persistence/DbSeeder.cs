@@ -341,87 +341,84 @@ public static class DbSeeder
             await db.SaveChangesAsync();
         }
 
+        var workTypeCourse = await db.WorkTypes.FirstAsync(w => w.Name == "CourseWork");
         var workTypeDiploma = await db.WorkTypes.FirstAsync(w => w.Name == "DiplomaWork");
         var workTypeMaster = await db.WorkTypes.FirstAsync(w => w.Name == "MasterThesis");
+
+        // Helper function to create states and transitions for a specific work type
+        async Task SeedWorkflowForWorkType(ApplicationDbContext context, int workTypeId)
+        {
+            // States
+            var states = new[]
+            {
+                new State(workTypeId, DirectionStates.Draft, userAdmin.Id, "Черновик направления"),
+                new State(workTypeId, DirectionStates.Submitted, userAdmin.Id, "На рассмотрении"),
+                new State(workTypeId, DirectionStates.Approved, userAdmin.Id, "Одобрено"),
+                new State(workTypeId, DirectionStates.Rejected, userAdmin.Id, "Отклонено"),
+                new State(workTypeId, DirectionStates.RequiresRevision, userAdmin.Id, "Требует доработки"),
+
+                new State(workTypeId, WorkStates.Draft, userAdmin.Id, "Черновик работы"),
+                new State(workTypeId, WorkStates.OnReview, userAdmin.Id, "На проверке у руководителя"),
+                new State(workTypeId, WorkStates.NormControl, userAdmin.Id, "Нормоконтроль"),
+                new State(workTypeId, WorkStates.SoftwareCheck, userAdmin.Id, "Проверка ПО"),
+                new State(workTypeId, WorkStates.AntiPlagiarism, userAdmin.Id, "Антиплагиат"),
+                new State(workTypeId, WorkStates.PreDefense1, userAdmin.Id, "Предзащита 1"),
+                new State(workTypeId, WorkStates.PreDefense2, userAdmin.Id, "Предзащита 2"),
+                new State(workTypeId, WorkStates.PreDefense3, userAdmin.Id, "Предзащита 3"),
+                new State(workTypeId, WorkStates.ReadyForDefense, userAdmin.Id, "Готов к защите"),
+                new State(workTypeId, WorkStates.Defended, userAdmin.Id, "Защищён", isFinal: true),
+                new State(workTypeId, WorkStates.Cancelled, userAdmin.Id, "Отменён", isFinal: true)
+            };
+
+            context.States.AddRange(states);
+            await context.SaveChangesAsync();
+
+            var stateDirDraft = await context.States.FirstAsync(s => s.WorkTypeId == workTypeId && s.SystemName == DirectionStates.Draft);
+            var stateDirSubmitted = await context.States.FirstAsync(s => s.WorkTypeId == workTypeId && s.SystemName == DirectionStates.Submitted);
+            var stateDirApproved = await context.States.FirstAsync(s => s.WorkTypeId == workTypeId && s.SystemName == DirectionStates.Approved);
+            var stateDirRejected = await context.States.FirstAsync(s => s.WorkTypeId == workTypeId && s.SystemName == DirectionStates.Rejected);
+            var stateDirRevision = await context.States.FirstAsync(s => s.WorkTypeId == workTypeId && s.SystemName == DirectionStates.RequiresRevision);
+
+            var stateWorkDraft = await context.States.FirstAsync(s => s.WorkTypeId == workTypeId && s.SystemName == WorkStates.Draft);
+            var stateWorkOnReview = await context.States.FirstAsync(s => s.WorkTypeId == workTypeId && s.SystemName == WorkStates.OnReview);
+            var stateWorkNormControl = await context.States.FirstAsync(s => s.WorkTypeId == workTypeId && s.SystemName == WorkStates.NormControl);
+            var stateWorkSoftwareCheck = await context.States.FirstAsync(s => s.WorkTypeId == workTypeId && s.SystemName == WorkStates.SoftwareCheck);
+            var stateWorkAntiPlagiarism = await context.States.FirstAsync(s => s.WorkTypeId == workTypeId && s.SystemName == WorkStates.AntiPlagiarism);
+            var stateWorkPreDefense1 = await context.States.FirstAsync(s => s.WorkTypeId == workTypeId && s.SystemName == WorkStates.PreDefense1);
+            var stateWorkReadyForDefense = await context.States.FirstAsync(s => s.WorkTypeId == workTypeId && s.SystemName == WorkStates.ReadyForDefense);
+            var stateWorkDefended = await context.States.FirstAsync(s => s.WorkTypeId == workTypeId && s.SystemName == WorkStates.Defended);
+
+            context.Transitions.AddRange(
+                Transition.Manual(stateDirDraft.Id, stateDirSubmitted.Id, roleSupervisor.Id, userAdmin.Id),
+                Transition.Manual(stateDirSubmitted.Id, stateDirApproved.Id, roleHeadDept.Id, userAdmin.Id),
+                Transition.Manual(stateDirSubmitted.Id, stateDirRejected.Id, roleHeadDept.Id, userAdmin.Id),
+                Transition.Manual(stateDirSubmitted.Id, stateDirRevision.Id, roleHeadDept.Id, userAdmin.Id),
+                Transition.Manual(stateDirRevision.Id, stateDirSubmitted.Id, roleSupervisor.Id, userAdmin.Id),
+
+                Transition.Manual(stateWorkDraft.Id, stateWorkOnReview.Id, roleStudent.Id, userAdmin.Id),
+                Transition.Manual(stateWorkOnReview.Id, stateWorkNormControl.Id, roleSupervisor.Id, userAdmin.Id),
+                Transition.Manual(stateWorkNormControl.Id, stateWorkSoftwareCheck.Id, roleExpert.Id, userAdmin.Id),
+                Transition.Manual(stateWorkSoftwareCheck.Id, stateWorkAntiPlagiarism.Id, roleExpert.Id, userAdmin.Id),
+                Transition.Automatic(stateWorkAntiPlagiarism.Id, stateWorkPreDefense1.Id, userAdmin.Id),
+                Transition.Manual(stateWorkPreDefense1.Id, stateWorkReadyForDefense.Id, roleHeadDept.Id, userAdmin.Id),
+                Transition.Manual(stateWorkReadyForDefense.Id, stateWorkDefended.Id, roleCommission.Id, userAdmin.Id)
+            );
+            await context.SaveChangesAsync();
+        }
 
         // =======================================================
         // 14. WF: States (Direction + StudentWork workflows)
         // =======================================================
         if (!await db.States.AnyAsync())
         {
-            // Direction workflow states
-            db.States.AddRange(
-                new State(workTypeDiploma.Id, DirectionStates.Draft, userAdmin.Id, "Черновик направления"),
-                new State(workTypeDiploma.Id, DirectionStates.Submitted, userAdmin.Id, "На рассмотрении"),
-                new State(workTypeDiploma.Id, DirectionStates.Approved, userAdmin.Id, "Одобрено"),
-                new State(workTypeDiploma.Id, DirectionStates.Rejected, userAdmin.Id, "Отклонено"),
-                new State(workTypeDiploma.Id, DirectionStates.RequiresRevision, userAdmin.Id, "Требует доработки"),
-
-                // StudentWork workflow states
-                new State(workTypeDiploma.Id, WorkStates.Draft, userAdmin.Id, "Черновик работы"),
-                new State(workTypeDiploma.Id, WorkStates.OnReview, userAdmin.Id, "На проверке у руководителя"),
-                new State(workTypeDiploma.Id, WorkStates.NormControl, userAdmin.Id, "Нормоконтроль"),
-                new State(workTypeDiploma.Id, WorkStates.SoftwareCheck, userAdmin.Id, "Проверка ПО"),
-                new State(workTypeDiploma.Id, WorkStates.AntiPlagiarism, userAdmin.Id, "Антиплагиат"),
-                new State(workTypeDiploma.Id, WorkStates.PreDefense1, userAdmin.Id, "Предзащита 1"),
-                new State(workTypeDiploma.Id, WorkStates.PreDefense2, userAdmin.Id, "Предзащита 2"),
-                new State(workTypeDiploma.Id, WorkStates.PreDefense3, userAdmin.Id, "Предзащита 3"),
-                new State(workTypeDiploma.Id, WorkStates.ReadyForDefense, userAdmin.Id, "Готов к защите"),
-                new State(workTypeDiploma.Id, WorkStates.Defended, userAdmin.Id, "Защищён", isFinal: true),
-                new State(workTypeDiploma.Id, WorkStates.Cancelled, userAdmin.Id, "Отменён", isFinal: true)
-            );
-            await db.SaveChangesAsync();
+            await SeedWorkflowForWorkType(db, workTypeCourse.Id);
+            await SeedWorkflowForWorkType(db, workTypeDiploma.Id);
+            await SeedWorkflowForWorkType(db, workTypeMaster.Id);
         }
 
-        var stateDirDraft = await db.States.FirstAsync(s => s.SystemName == DirectionStates.Draft);
-        var stateDirSubmitted = await db.States.FirstAsync(s => s.SystemName == DirectionStates.Submitted);
-        var stateDirApproved = await db.States.FirstAsync(s => s.SystemName == DirectionStates.Approved);
-        var stateDirRejected = await db.States.FirstAsync(s => s.SystemName == DirectionStates.Rejected);
-        var stateDirRevision = await db.States.FirstAsync(s => s.SystemName == DirectionStates.RequiresRevision);
-
-        var stateWorkDraft = await db.States.FirstAsync(s => s.SystemName == WorkStates.Draft);
-        var stateWorkOnReview = await db.States.FirstAsync(s => s.SystemName == WorkStates.OnReview);
-        var stateWorkNormControl = await db.States.FirstAsync(s => s.SystemName == WorkStates.NormControl);
-        var stateWorkSoftwareCheck = await db.States.FirstAsync(s => s.SystemName == WorkStates.SoftwareCheck);
-        var stateWorkAntiPlagiarism = await db.States.FirstAsync(s => s.SystemName == WorkStates.AntiPlagiarism);
-        var stateWorkPreDefense1 = await db.States.FirstAsync(s => s.SystemName == WorkStates.PreDefense1);
-        var stateWorkReadyForDefense = await db.States.FirstAsync(s => s.SystemName == WorkStates.ReadyForDefense);
-        var stateWorkDefended = await db.States.FirstAsync(s => s.SystemName == WorkStates.Defended);
-
-        // =======================================================
-        // 15. WF: Transitions (Direction workflow)
-        // =======================================================
-        if (!await db.Transitions.AnyAsync())
-        {
-            db.Transitions.AddRange(
-                // Direction workflow: Draft → Submitted (Supervisor)
-                Transition.Manual(stateDirDraft.Id, stateDirSubmitted.Id, roleSupervisor.Id, userAdmin.Id),
-                // Submitted → Approved (HeadOfDepartment)
-                Transition.Manual(stateDirSubmitted.Id, stateDirApproved.Id, roleHeadDept.Id, userAdmin.Id),
-                // Submitted → Rejected (HeadOfDepartment)
-                Transition.Manual(stateDirSubmitted.Id, stateDirRejected.Id, roleHeadDept.Id, userAdmin.Id),
-                // Submitted → RequiresRevision (HeadOfDepartment)
-                Transition.Manual(stateDirSubmitted.Id, stateDirRevision.Id, roleHeadDept.Id, userAdmin.Id),
-                // RequiresRevision → Submitted (Supervisor, resubmit)
-                Transition.Manual(stateDirRevision.Id, stateDirSubmitted.Id, roleSupervisor.Id, userAdmin.Id),
-
-                // StudentWork workflow: Draft → OnReview (Student)
-                Transition.Manual(stateWorkDraft.Id, stateWorkOnReview.Id, roleStudent.Id, userAdmin.Id),
-                // OnReview → NormControl (Supervisor)
-                Transition.Manual(stateWorkOnReview.Id, stateWorkNormControl.Id, roleSupervisor.Id, userAdmin.Id),
-                // NormControl → SoftwareCheck (Expert)
-                Transition.Manual(stateWorkNormControl.Id, stateWorkSoftwareCheck.Id, roleExpert.Id, userAdmin.Id),
-                // SoftwareCheck → AntiPlagiarism (Expert)
-                Transition.Manual(stateWorkSoftwareCheck.Id, stateWorkAntiPlagiarism.Id, roleExpert.Id, userAdmin.Id),
-                // AntiPlagiarism → PreDefense1 (automatic)
-                Transition.Automatic(stateWorkAntiPlagiarism.Id, stateWorkPreDefense1.Id, userAdmin.Id),
-                // PreDefense1 → ReadyForDefense (HeadOfDepartment)
-                Transition.Manual(stateWorkPreDefense1.Id, stateWorkReadyForDefense.Id, roleHeadDept.Id, userAdmin.Id),
-                // ReadyForDefense → Defended (Commission)
-                Transition.Manual(stateWorkReadyForDefense.Id, stateWorkDefended.Id, roleCommission.Id, userAdmin.Id)
-            );
-            await db.SaveChangesAsync();
-        }
+        var stateDirDraft = await db.States.FirstAsync(s => s.WorkTypeId == workTypeDiploma.Id && s.SystemName == DirectionStates.Draft);
+        var stateDirApproved = await db.States.FirstAsync(s => s.WorkTypeId == workTypeDiploma.Id && s.SystemName == DirectionStates.Approved);
+        var stateWorkDraft = await db.States.FirstAsync(s => s.WorkTypeId == workTypeDiploma.Id && s.SystemName == WorkStates.Draft);
 
         // =======================================================
         // 16. THESIS: Directions (1 Draft, 1 Approved)

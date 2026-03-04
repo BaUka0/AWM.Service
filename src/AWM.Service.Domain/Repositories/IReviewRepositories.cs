@@ -42,6 +42,11 @@ public interface IReviewRepository
     Task<IReadOnlyList<Review>> GetByWorkIdAsync(long workId, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Gets reviews for multiple works in a single query (bulk operation to avoid N+1).
+    /// </summary>
+    Task<IReadOnlyList<Review>> GetByWorkIdsAsync(IEnumerable<long> workIds, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Gets all reviews by a reviewer.
     /// </summary>
     Task<IReadOnlyList<Review>> GetByReviewerAsync(int reviewerId, CancellationToken cancellationToken = default);

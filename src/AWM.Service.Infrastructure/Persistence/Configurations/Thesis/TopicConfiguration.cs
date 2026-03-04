@@ -70,6 +70,10 @@ public class TopicConfiguration : SoftDeletableEntityConfiguration<Topic, long>
             .IsRequired()
             .HasDefaultValue(false);
 
+        builder.Property(e => e.IsSubmittedForApproval)
+            .IsRequired()
+            .HasDefaultValue(false);
+
         builder.Property(e => e.IsClosed)
             .IsRequired()
             .HasDefaultValue(false);

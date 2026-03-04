@@ -17,6 +17,7 @@ public class StudentWork : AggregateRoot<long>, IAuditable, ISoftDeletable
 
     public string? FinalGrade { get; private set; }
     public bool IsDefended { get; private set; }
+    public string? RepositoryUrl { get; private set; }
     public DateTime CreatedAt { get; private set; }
     public int CreatedBy { get; private set; }
     public DateTime? LastModifiedAt { get; private set; }
@@ -253,6 +254,16 @@ public class StudentWork : AggregateRoot<long>, IAuditable, ISoftDeletable
             .OrderByDescending(c => c.AttemptNumber)
             .FirstOrDefault();
     }
+    /// <summary>
+    /// Sets the repository URL for software check (e.g. GitHub link).
+    /// </summary>
+    public void SetRepositoryUrl(string repositoryUrl, int modifiedBy)
+    {
+        RepositoryUrl = repositoryUrl ?? throw new ArgumentNullException(nameof(repositoryUrl));
+        LastModifiedBy = modifiedBy;
+        LastModifiedAt = DateTime.UtcNow;
+    }
+
     /// <summary>
     /// Soft deletes the work.
     /// </summary>

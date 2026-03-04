@@ -21,3 +21,8 @@ public sealed record TopicApplicationReceivedEvent(long TopicId, long Applicatio
 /// Event raised when a topic is closed (no more applications accepted).
 /// </summary>
 public sealed record TopicClosedEvent(long TopicId) : DomainEventBase;
+
+/// <summary>
+/// Event raised when topics are submitted for department approval.
+/// </summary>
+public sealed record TopicsSubmittedForApprovalEvent(IReadOnlyList<long> TopicIds, int SupervisorId) : DomainEventBase;

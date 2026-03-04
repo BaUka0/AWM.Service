@@ -23,6 +23,11 @@ public interface IReviewerRepository
     /// </summary>
     Task<IReadOnlyList<Reviewer>> SearchAsync(string searchTerm, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Gets multiple reviewers by their IDs in a single query (bulk operation to avoid N+1).
+    /// </summary>
+    Task<IReadOnlyList<Reviewer>> GetByIdsAsync(IEnumerable<int> ids, CancellationToken cancellationToken = default);
+
     Task AddAsync(Reviewer reviewer, CancellationToken cancellationToken = default);
     Task UpdateAsync(Reviewer reviewer, CancellationToken cancellationToken = default);
 }
@@ -41,8 +46,8 @@ public interface IExpertRepository
     /// Gets active experts by department and expertise type.
     /// </summary>
     Task<IReadOnlyList<Expert>> GetByDepartmentAndTypeAsync(
-        int departmentId, 
-        ExpertiseType expertiseType, 
+        int departmentId,
+        ExpertiseType expertiseType,
         CancellationToken cancellationToken = default);
 
     /// <summary>

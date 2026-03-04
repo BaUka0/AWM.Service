@@ -14,11 +14,6 @@ public sealed record RejectDirectionCommand : IRequest<Result>
     public long Id { get; init; }
 
     /// <summary>
-    /// User ID who rejects this direction (department head or authorized person).
-    /// </summary>
-    public int RejectedBy { get; init; }
-
-    /// <summary>
     /// Rejection reason/comment (optional).
     /// </summary>
     public string? Comment { get; init; }

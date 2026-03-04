@@ -42,6 +42,15 @@ public sealed class TopicApplicationRepository : RepositoryBase<TopicApplication
     }
 
     /// <inheritdoc />
+    public async Task<IReadOnlyList<TopicApplication>> GetByTopicIdsAsync(IEnumerable<long> topicIds, CancellationToken cancellationToken = default)
+    {
+        var ids = topicIds.ToList();
+        return await Context.TopicApplications
+            .AsNoTracking()
+            .Where(a => ids.Contains(a.TopicId))
+            .ToListAsync(cancellationToken);
+    }
+    /// <inheritdoc />
     public async Task<IReadOnlyList<TopicApplication>> GetByStudentIdAsync(int studentId, CancellationToken cancellationToken = default)
     {
         return await Context.TopicApplications

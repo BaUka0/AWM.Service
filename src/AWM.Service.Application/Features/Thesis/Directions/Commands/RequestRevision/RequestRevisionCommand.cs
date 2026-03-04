@@ -14,11 +14,6 @@ public sealed record RequestRevisionCommand : IRequest<Result>
     public long Id { get; init; }
 
     /// <summary>
-    /// User ID who requests revision (department head or authorized person).
-    /// </summary>
-    public int RequestedBy { get; init; }
-
-    /// <summary>
     /// Revision request comment (required - supervisor needs to know what to fix).
     /// </summary>
     public string Comment { get; init; } = string.Empty;

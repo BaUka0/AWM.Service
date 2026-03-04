@@ -4,6 +4,7 @@ using AWM.Service.Domain.Common;
 using AWM.Service.Domain.Repositories;
 using KDS.Primitives.FluentResult;
 using MediatR;
+using Microsoft.Extensions.Logging;
 
 /// <summary>
 /// Handler for rejecting a direction.
@@ -14,27 +15,37 @@ public sealed class RejectDirectionCommandHandler
     private readonly IDirectionRepository _directionRepository;
     private readonly IWorkflowRepository _workflowRepository;
     private readonly ICurrentUserProvider _currentUserProvider;
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly ILogger<RejectDirectionCommandHandler> _logger;
 
     public RejectDirectionCommandHandler(
         IDirectionRepository directionRepository,
         IWorkflowRepository workflowRepository,
-        ICurrentUserProvider currentUserProvider)
+        ICurrentUserProvider currentUserProvider,
+        IUnitOfWork unitOfWork,
+        ILogger<RejectDirectionCommandHandler> logger)
     {
         _directionRepository = directionRepository;
         _workflowRepository = workflowRepository;
         _currentUserProvider = currentUserProvider;
+        _unitOfWork = unitOfWork;
+        _logger = logger;
     }
 
     public async Task<Result> Handle(
         RejectDirectionCommand request,
         CancellationToken cancellationToken)
     {
-        // Get existing direction
+        var userId = _currentUserProvider.UserId;
+        _logger.LogInformation("Attempting to reject direction ID={DirectionId} by User={UserId}", request.Id, userId);
+
+        // Get existing direction (tracked)
         var direction = await _directionRepository
             .GetByIdAsync(request.Id, cancellationToken);
 
         if (direction is null)
         {
+            _logger.LogWarning("RejectDirection failed: Direction ID={DirectionId} not found.", request.Id);
             return Result.Failure(new Error(
                 "404",
                 $"Direction with ID {request.Id} not found."));
@@ -43,6 +54,7 @@ public sealed class RejectDirectionCommandHandler
         // Check if soft-deleted
         if (direction.IsDeleted)
         {
+            _logger.LogWarning("RejectDirection failed: Direction ID={DirectionId} is deleted.", request.Id);
             return Result.Failure(new Error(
                 "409",
                 $"Direction with ID {request.Id} has been deleted."));
@@ -54,6 +66,7 @@ public sealed class RejectDirectionCommandHandler
 
         if (submittedState is null)
         {
+            _logger.LogError("RejectDirection failed: Submitted state not found for WorkType ID={WorkTypeId}", direction.WorkTypeId);
             return Result.Failure(new Error(
                 "404",
                 "Submitted state not found for this work type."));
@@ -62,6 +75,8 @@ public sealed class RejectDirectionCommandHandler
         // Verify direction is in submitted state
         if (direction.CurrentStateId != submittedState.Id)
         {
+            _logger.LogWarning("RejectDirection failed: Direction ID={DirectionId} is in state {StateId}, not Submitted.",
+                request.Id, direction.CurrentStateId);
             return Result.Failure(new Error(
                 "409",
                 "Only submitted directions can be rejected. Current state does not allow rejection."));
@@ -73,14 +88,15 @@ public sealed class RejectDirectionCommandHandler
 
         if (rejectedState is null)
         {
+            _logger.LogError("RejectDirection failed: Rejected state not found for WorkType ID={WorkTypeId}", direction.WorkTypeId);
             return Result.Failure(new Error(
                 "404",
                 "Rejected state not found for this work type."));
         }
 
-        var userId = _currentUserProvider.UserId;
         if (!userId.HasValue)
         {
+            _logger.LogWarning("RejectDirection failed: User ID is not available.");
             return Result.Failure(new Error("401", "User ID is not available."));
         }
 
@@ -91,12 +107,14 @@ public sealed class RejectDirectionCommandHandler
 
             // Save changes
             await _directionRepository.UpdateAsync(direction, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
 
+            _logger.LogInformation("Successfully rejected direction ID={DirectionId} by User={UserId}", request.Id, userId);
             return Result.Success();
         }
         catch (Exception ex)
         {
-            // Unexpected errors
+            _logger.LogError(ex, "RejectDirection failed for ID={DirectionId}", request.Id);
             return Result.Failure(new Error("500", ex.Message));
         }
     }

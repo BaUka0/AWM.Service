@@ -1,8 +1,11 @@
 namespace AWM.Service.WebAPI.Controllers.v1;
 
+using AWM.Service.Application.Features.Edu.Staff.Commands.ApproveSupervisors;
 using AWM.Service.Application.Features.Edu.Staff.Commands.CreateStaff;
 using AWM.Service.Application.Features.Edu.Staff.Commands.UpdateStaff;
+using AWM.Service.Application.Features.Edu.Staff.Commands.UpdateStaffWorkload;
 using AWM.Service.Application.Features.Edu.Staff.Queries.GetStaffByDepartment;
+using AWM.Service.Application.Features.Edu.Staff.Queries.GetSupervisors;
 using AWM.Service.Domain.Auth.Enums;
 using AWM.Service.WebAPI.Authorization;
 using AWM.Service.WebAPI.Common.Contracts.Requests.Edu;
@@ -107,5 +110,86 @@ public sealed class StaffController : BaseController
         }
 
         return NoContent();
+    }
+
+    /// <summary>
+    /// Updates only the maximum students load for a staff member.
+    /// </summary>
+    /// <param name="staffId">Staff ID</param>
+    /// <param name="request">Request containing the new max students load</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>No content on success</returns>
+    [HttpPatch("{staffId}/workload")]
+    [RequireDepartmentPermission(Permission.Staff_Edit)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> UpdateWorkload(int staffId, [FromBody] UpdateStaffWorkloadRequest request, CancellationToken cancellationToken = default)
+    {
+        var command = new UpdateStaffWorkloadCommand(staffId, request.MaxStudentsLoad);
+
+        var result = await _sender.Send(command, cancellationToken);
+
+        if (result.IsFailed)
+        {
+            return HandleResultError(result.Error);
+        }
+
+        return NoContent();
+    }
+    /// <summary>
+    /// Approves selected staff members as supervisors in a department.
+    /// </summary>
+    /// <param name="request">Request containing department ID and list of staff IDs to approve.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>No content on success.</returns>
+    [HttpPost("approve-supervisors")]
+    [RequireDepartmentPermission(Permission.Staff_Edit)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> ApproveSupervisors([FromBody] ApproveSupervisorsRequest request, CancellationToken cancellationToken = default)
+    {
+        var command = request.Adapt<ApproveSupervisorsCommand>();
+
+        var result = await _sender.Send(command, cancellationToken);
+
+        if (result.IsFailed)
+        {
+            return HandleResultError(result.Error);
+        }
+
+        return NoContent();
+    }
+
+    /// <summary>
+    /// Get supervisors for a department.
+    /// </summary>
+    /// <param name="departmentId">Department ID</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>List of approved supervisors in the department</returns>
+    [HttpGet("supervisors")]
+    [RequireDepartmentPermission(Permission.Staff_View)]
+    [ProducesResponseType(typeof(IReadOnlyList<StaffResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> GetSupervisors([FromQuery] int departmentId, CancellationToken cancellationToken = default)
+    {
+        var query = new GetSupervisorsQuery
+        {
+            DepartmentId = departmentId
+        };
+
+        var result = await _sender.Send(query, cancellationToken);
+
+        if (result.IsFailed)
+        {
+            return HandleResultError(result.Error);
+        }
+
+        var response = result.Value.Adapt<IReadOnlyList<StaffResponse>>();
+
+        return Ok(response);
     }
 }

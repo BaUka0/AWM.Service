@@ -7,6 +7,7 @@ using AWM.Service.Domain.Wf.Services;
 using AWM.Service.Application.Features.Workflow.Services;
 using AWM.Service.Domain.CommonDomain.Services;
 using AWM.Service.Application.Common.Services;
+using AWM.Service.Application.Features.Common.Notifications.Services;
 
 namespace AWM.Service.Application;
 
@@ -28,6 +29,7 @@ public static class DependencyInjection
 
         services.AddScoped<IStateMachine, WorkflowService>();
         services.AddScoped<IPeriodValidationService, PeriodValidationService>();
+        services.AddScoped<INotificationService, NotificationService>();
 
         return services;
     }

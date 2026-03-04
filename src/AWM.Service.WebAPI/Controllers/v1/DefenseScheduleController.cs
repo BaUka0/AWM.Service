@@ -1,5 +1,7 @@
 namespace AWM.Service.WebAPI.Controllers.v1;
 
+using AWM.Service.Application.Features.Defense.Evaluation.Commands.GenerateDefenseSlots;
+using AWM.Service.Application.Features.Defense.PreDefense.Commands.StartReconciliation;
 using AWM.Service.Application.Features.Defense.Schedule.Commands.AssignWorkToSlot;
 using AWM.Service.Application.Features.Defense.Schedule.Commands.CreateDefenseSchedule;
 using AWM.Service.Application.Features.Defense.Schedule.Commands.UpdateDefenseSchedule;
@@ -149,6 +151,59 @@ public class DefenseScheduleController : BaseController
     {
         var command = request.Adapt<AssignWorkToSlotCommand>() with { ScheduleId = scheduleId };
 
+        var result = await _sender.Send(command);
+
+        if (result.IsFailed)
+            return HandleResultError(result.Error);
+
+        return NoContent();
+    }
+
+    /// <summary>
+    /// Generate timed defense slots for a GAK commission.
+    /// </summary>
+    [HttpPost("generate-slots")]
+    [RequireDepartmentPermission(Permission.Defense_Schedule)]
+    [ProducesResponseType(typeof(int), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> GenerateDefenseSlots(
+        [FromBody] GenerateDefenseSlotsRequest request)
+    {
+        var command = new GenerateDefenseSlotsCommand
+        {
+            CommissionId = request.CommissionId,
+            Date = request.Date,
+            StartTime = request.StartTime,
+            EndTime = request.EndTime,
+            SlotDurationMinutes = request.SlotDurationMinutes,
+            Location = request.Location
+        };
+
+        var result = await _sender.Send(command);
+
+        if (result.IsFailed)
+            return HandleResultError(result.Error);
+
+        return Ok(result.Value);
+    }
+
+    /// <summary>
+    /// Start reconciliation for a defense schedule (members see each other's grades).
+    /// </summary>
+    [HttpPut("{scheduleId:long}/start-reconciliation")]
+    [RequireDepartmentPermission(Permission.Defense_Grade)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> StartReconciliation(long scheduleId)
+    {
+        var command = new StartReconciliationCommand { ScheduleId = scheduleId };
         var result = await _sender.Send(command);
 
         if (result.IsFailed)
