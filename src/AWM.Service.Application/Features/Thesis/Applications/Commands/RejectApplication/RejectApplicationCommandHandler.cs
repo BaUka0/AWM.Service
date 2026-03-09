@@ -16,6 +16,7 @@ public sealed class RejectApplicationCommandHandler : IRequestHandler<RejectAppl
     private readonly ITopicApplicationRepository _applicationRepository;
     private readonly ITopicRepository _topicRepository;
     private readonly IStaffRepository _staffRepository;
+    private readonly IStudentRepository _studentRepository;
     private readonly ICurrentUserProvider _currentUserProvider;
     private readonly INotificationService _notificationService;
     private readonly IUnitOfWork _unitOfWork;
@@ -25,6 +26,7 @@ public sealed class RejectApplicationCommandHandler : IRequestHandler<RejectAppl
         ITopicApplicationRepository applicationRepository,
         ITopicRepository topicRepository,
         IStaffRepository staffRepository,
+        IStudentRepository studentRepository,
         ICurrentUserProvider currentUserProvider,
         INotificationService notificationService,
         IUnitOfWork unitOfWork,
@@ -33,6 +35,7 @@ public sealed class RejectApplicationCommandHandler : IRequestHandler<RejectAppl
         _applicationRepository = applicationRepository;
         _topicRepository = topicRepository;
         _staffRepository = staffRepository;
+        _studentRepository = studentRepository;
         _currentUserProvider = currentUserProvider;
         _notificationService = notificationService;
         _unitOfWork = unitOfWork;
@@ -122,14 +125,24 @@ public sealed class RejectApplicationCommandHandler : IRequestHandler<RejectAppl
                 ? $"Ваша заявка на тему «{topic.TitleRu}» была отклонена."
                 : $"Ваша заявка на тему «{topic.TitleRu}» была отклонена. Причина: {request.RejectReason}";
 
-            await _notificationService.SendAsync(
-                userId: application.StudentId,
-                title: "Заявка отклонена",
-                createdBy: supervisorUserId,
-                body: body,
-                relatedEntityType: "TopicApplication",
-                relatedEntityId: application.Id,
-                cancellationToken: cancellationToken);
+            // Notify student about rejection.
+            // application.StudentId is Student.Id — must resolve Student to get Auth.Users.Id for notification.
+            var studentProfile = await _studentRepository.GetByIdAsync(application.StudentId, cancellationToken);
+            if (studentProfile is not null)
+            {
+                await _notificationService.SendAsync(
+                    userId: studentProfile.UserId,
+                    title: "Заявка отклонена",
+                    createdBy: supervisorUserId,
+                    body: body,
+                    relatedEntityType: "TopicApplication",
+                    relatedEntityId: application.Id,
+                    cancellationToken: cancellationToken);
+            }
+            else
+            {
+                _logger.LogWarning("RejectApplication: Student not found for StudentId={StudentId}, student notification skipped.", application.StudentId);
+            }
 
             _logger.LogInformation("Successfully rejected application ID={ApplicationId} by User={UserId}", request.ApplicationId, supervisorUserId);
             return Result.Success();

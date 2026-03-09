@@ -14,11 +14,16 @@ public sealed class GetMyWorkQueryHandler
     : IRequestHandler<GetMyWorkQuery, Result<IReadOnlyList<StudentWorkDto>>>
 {
     private readonly IStudentWorkRepository _workRepository;
+    private readonly IStudentRepository _studentRepository;
     private readonly ICurrentUserProvider _currentUserProvider;
 
-    public GetMyWorkQueryHandler(IStudentWorkRepository workRepository, ICurrentUserProvider currentUserProvider)
+    public GetMyWorkQueryHandler(
+        IStudentWorkRepository workRepository,
+        IStudentRepository studentRepository,
+        ICurrentUserProvider currentUserProvider)
     {
         _workRepository = workRepository;
+        _studentRepository = studentRepository;
         _currentUserProvider = currentUserProvider;
     }
 
@@ -32,7 +37,17 @@ public sealed class GetMyWorkQueryHandler
                 new Error("Authorization.Unauthorized", "User identity could not be determined."));
         }
 
-        var works = await _workRepository.GetByStudentAsync(_currentUserProvider.UserId.Value, cancellationToken);
+        var userId = _currentUserProvider.UserId.Value;
+
+        // Resolve student profile — GetByStudentAsync expects Student.Id (FK to Edu.Students), not Auth.Users.Id
+        var student = await _studentRepository.GetByUserIdAsync(userId, cancellationToken);
+        if (student is null)
+        {
+            return Result.Failure<IReadOnlyList<StudentWorkDto>>(
+                new Error("Authorization.Forbidden", "User does not have a student profile."));
+        }
+
+        var works = await _workRepository.GetByStudentAsync(student.Id, cancellationToken);
 
         var dtos = works
             .Select(StudentWorkDto.FromEntity)

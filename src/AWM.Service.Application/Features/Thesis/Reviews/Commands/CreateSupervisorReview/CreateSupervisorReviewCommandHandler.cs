@@ -14,6 +14,7 @@ public sealed class CreateSupervisorReviewCommandHandler : IRequestHandler<Creat
     private readonly IStudentWorkRepository _workRepository;
     private readonly ISupervisorReviewRepository _reviewRepository;
     private readonly IAttachmentService _attachmentService;
+    private readonly IStaffRepository _staffRepository;
     private readonly ICurrentUserProvider _currentUserProvider;
     private readonly IUnitOfWork _unitOfWork;
 
@@ -21,12 +22,14 @@ public sealed class CreateSupervisorReviewCommandHandler : IRequestHandler<Creat
         IStudentWorkRepository workRepository,
         ISupervisorReviewRepository reviewRepository,
         IAttachmentService attachmentService,
+        IStaffRepository staffRepository,
         ICurrentUserProvider currentUserProvider,
         IUnitOfWork unitOfWork)
     {
         _workRepository = workRepository ?? throw new ArgumentNullException(nameof(workRepository));
         _reviewRepository = reviewRepository ?? throw new ArgumentNullException(nameof(reviewRepository));
         _attachmentService = attachmentService ?? throw new ArgumentNullException(nameof(attachmentService));
+        _staffRepository = staffRepository ?? throw new ArgumentNullException(nameof(staffRepository));
         _currentUserProvider = currentUserProvider ?? throw new ArgumentNullException(nameof(currentUserProvider));
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
     }
@@ -36,6 +39,11 @@ public sealed class CreateSupervisorReviewCommandHandler : IRequestHandler<Creat
         var userId = _currentUserProvider.UserId;
         if (!userId.HasValue)
             return Result.Failure<long>(new Error("401", "User is not authenticated."));
+
+        // Resolve staff profile — SupervisorReview.SupervisorId is Staff.Id (FK to Edu.Staff), not Auth.Users.Id
+        var currentStaff = await _staffRepository.GetByUserIdAsync(userId.Value, cancellationToken);
+        if (currentStaff is null)
+            return Result.Failure<long>(new Error("403", "User does not have a staff profile."));
 
         var work = await _workRepository.GetByIdAsync(request.WorkId, cancellationToken);
         if (work is null)
@@ -84,13 +92,10 @@ public sealed class CreateSupervisorReviewCommandHandler : IRequestHandler<Creat
         }
         else
         {
-            // The supervisor logic: in real system we would verify that userId is actually the supervisor
-            // Assuming for now userId = supervisorId or it's implicitly trusted via permission
-            var supervisorId = userId.Value; // Ideally retrieved from work/topic details
-
+            // supervisorId is Staff.Id (FK to Edu.Staff), correctly resolved from user's staff profile
             var review = new SupervisorReview(
                 work.Id,
-                supervisorId,
+                currentStaff.Id,
                 request.ReviewText,
                 userId.Value,
                 storagePath);

@@ -17,6 +17,8 @@ public sealed class CreateApplicationCommandHandler : IRequestHandler<CreateAppl
 {
     private readonly ITopicRepository _topicRepository;
     private readonly ITopicApplicationRepository _applicationRepository;
+    private readonly IStudentRepository _studentRepository;
+    private readonly IStaffRepository _staffRepository;
     private readonly ICurrentUserProvider _currentUserProvider;
     private readonly IPeriodValidationService _periodValidationService;
     private readonly INotificationService _notificationService;
@@ -26,6 +28,8 @@ public sealed class CreateApplicationCommandHandler : IRequestHandler<CreateAppl
     public CreateApplicationCommandHandler(
         ITopicRepository topicRepository,
         ITopicApplicationRepository applicationRepository,
+        IStudentRepository studentRepository,
+        IStaffRepository staffRepository,
         ICurrentUserProvider currentUserProvider,
         IPeriodValidationService periodValidationService,
         INotificationService notificationService,
@@ -34,6 +38,8 @@ public sealed class CreateApplicationCommandHandler : IRequestHandler<CreateAppl
     {
         _topicRepository = topicRepository;
         _applicationRepository = applicationRepository;
+        _studentRepository = studentRepository;
+        _staffRepository = staffRepository;
         _currentUserProvider = currentUserProvider;
         _periodValidationService = periodValidationService;
         _notificationService = notificationService;
@@ -52,7 +58,15 @@ public sealed class CreateApplicationCommandHandler : IRequestHandler<CreateAppl
             return Result.Failure<long>(new Error("Authorization.Unauthorized", "User identity could not be determined."));
         }
 
-        var studentUserId = userId.Value;
+        // Resolve student profile — one user can have multiple roles (student + staff)
+        var student = await _studentRepository.GetByUserIdAsync(userId.Value, cancellationToken);
+        if (student is null)
+        {
+            _logger.LogWarning("CreateApplication failed: User {UserId} does not have a student profile.", userId.Value);
+            return Result.Failure<long>(new Error("Authorization.Forbidden", "User does not have a student profile."));
+        }
+
+        var studentId = student.Id; // Student.Id (FK to Edu.Students), NOT Auth.Users.Id
 
         // 1. Get topic
         var topic = await _topicRepository.GetByIdAsync(request.TopicId, cancellationToken);
@@ -103,33 +117,33 @@ public sealed class CreateApplicationCommandHandler : IRequestHandler<CreateAppl
 
         // 6. Check if student already applied to this topic
         var hasApplied = await _applicationRepository.HasStudentAppliedToTopicAsync(
-            studentUserId,
+            studentId,
             request.TopicId,
             cancellationToken);
 
         if (hasApplied)
         {
-            _logger.LogWarning("CreateApplication failed: Student={UserId} already applied to Topic={TopicId}", studentUserId, request.TopicId);
+            _logger.LogWarning("CreateApplication failed: Student={StudentId} (UserId={UserId}) already applied to Topic={TopicId}", studentId, userId.Value, request.TopicId);
             return Result.Failure<long>(new Error("Application.Duplicate", "You have already applied to this topic."));
         }
 
         // 7. Check if student already has an accepted application this year
         var hasAccepted = await _applicationRepository.HasAcceptedApplicationAsync(
-            studentUserId,
+            studentId,
             topic.AcademicYearId,
             cancellationToken);
 
         if (hasAccepted)
         {
-            _logger.LogWarning("CreateApplication failed: Student={UserId} already has an accepted application for year={Year}", studentUserId, topic.AcademicYearId);
+            _logger.LogWarning("CreateApplication failed: Student={StudentId} (UserId={UserId}) already has an accepted application for year={Year}", studentId, userId.Value, topic.AcademicYearId);
             return Result.Failure<long>(new Error("Application.AlreadyAccepted",
                 "You already have an accepted application for this academic year."));
         }
 
-        // 8. Create application
+        // 8. Create application — studentId is Student.Id (FK to Edu.Students), not Auth.Users.Id
         var application = new TopicApplication(
             topicId: request.TopicId,
-            studentId: studentUserId,
+            studentId: studentId,
             motivationLetter: request.MotivationLetter
         );
 
@@ -139,23 +153,32 @@ public sealed class CreateApplicationCommandHandler : IRequestHandler<CreateAppl
             await _applicationRepository.AddAsync(application, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-            // Notify supervisor about new application
-            await _notificationService.SendAsync(
-                userId: topic.SupervisorId,
-                title: "Новая заявка на тему",
-                createdBy: studentUserId,
-                body: $"Студент подал заявку на тему «{topic.TitleRu}».",
-                relatedEntityType: "TopicApplication",
-                relatedEntityId: application.Id,
-                cancellationToken: cancellationToken);
+            // Notify supervisor about new application.
+            // topic.SupervisorId is Staff.Id — must resolve staff to get Auth.Users.Id for notification.
+            var supervisorStaff = await _staffRepository.GetByIdAsync(topic.SupervisorId, cancellationToken);
+            if (supervisorStaff is not null)
+            {
+                await _notificationService.SendAsync(
+                    userId: supervisorStaff.UserId,
+                    title: "Новая заявка на тему",
+                    createdBy: userId.Value,
+                    body: $"Студент подал заявку на тему «{topic.TitleRu}».",
+                    relatedEntityType: "TopicApplication",
+                    relatedEntityId: application.Id,
+                    cancellationToken: cancellationToken);
+            }
+            else
+            {
+                _logger.LogWarning("CreateApplication: Staff not found for StaffId={StaffId}, supervisor notification skipped.", topic.SupervisorId);
+            }
 
-            _logger.LogInformation("Successfully created application ID={ApplicationId} for Topic ID={TopicId} by Student={UserId}",
-                application.Id, request.TopicId, studentUserId);
+            _logger.LogInformation("Successfully created application ID={ApplicationId} for Topic ID={TopicId} by Student={StudentId} (UserId={UserId})",
+                application.Id, request.TopicId, studentId, userId.Value);
             return Result.Success(application.Id);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "CreateApplication failed for Topic={TopicId} by Student={UserId}", request.TopicId, studentUserId);
+            _logger.LogError(ex, "CreateApplication failed for Topic={TopicId} by Student={StudentId} (UserId={UserId})", request.TopicId, studentId, userId.Value);
             return Result.Failure<long>(new Error("Database.Error", $"Failed to create application: {ex.Message}"));
         }
     }

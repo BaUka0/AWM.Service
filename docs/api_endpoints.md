@@ -131,55 +131,69 @@
 ## Request Body Schemas
 
 ### AddCommissionMemberRequest
+
 - UserId: int
 - RoleInCommission: RoleInCommission
 
 ### AddParticipantRequest
+
 - StudentId: int
 - Role: ParticipantRole
 
 ### BulkApproveTopicsRequest
+
 - TopicIds: IReadOnlyList\<long\>
 
 ### CompleteTopicCoordinationRequest
+
 - DepartmentId: int
 - AcademicYearId: int
 
 ### ApproveDefensePeriodsRequest
+
 - Periods: IReadOnlyList<PeriodDto>
 
 ### ApproveInitialPeriodsRequest
+
 - Periods: IReadOnlyList<PeriodDto>
 
 ### ApproveSupervisorsRequest
+
 - DepartmentId: int
 - StaffIds: IReadOnlyList<int>
 
 ### AssignExpertsRequest
+
 - DepartmentId: int
 - Assignments: IReadOnlyList\<ExpertAssignmentItem\>
 
 ### ExpertAssignmentItem
+
 - UserId: int
 - ExpertiseType: ExpertiseType
 
 ### AssignReviewerToWorkRequest
+
 - ReviewerId: int
 
 ### AssignWorkToSlotRequest
+
 - WorkId: long
 
 ### CreateAcademicProgramRequest
+
 - DepartmentId: int
 - DegreeLevelId: int
 - Code: string?
 - Name: string
 
 ### CreateApplicationRequest
+
 - TopicId: long
 - MotivationLetter: string?
 
 ### CreateCommissionRequest
+
 - DepartmentId: int
 - AcademicYearId: int
 - CommissionType: CommissionType
@@ -187,25 +201,30 @@
 - PreDefenseNumber: int?
 
 ### CreateDefenseScheduleRequest
+
 - CommissionId: int
 - DefenseDate: DateTime
 - Location: string?
 
 ### DistributeStudentsRequest
+
 - DepartmentId: int
 - AcademicYearId: int
 - PreDefenseNumber: int
 
 ### CreateDegreeLevelRequest
+
 - Name: string
 - DurationYears: int
 
 ### CreateDepartmentRequest
+
 - InstituteId: int
 - Name: string
 - Code: string?
 
 ### CreateDirectionRequest
+
 - DepartmentId: int
 - SupervisorId: int
 - AcademicYearId: int
@@ -216,10 +235,12 @@
 - Description: string?
 
 ### CreateInstituteRequest
+
 - UniversityId: int
 - Name: string
 
 ### CreatePeriodRequest
+
 - DepartmentId: int
 - AcademicYearId: int
 - WorkflowStage: WorkflowStage
@@ -227,6 +248,7 @@
 - EndDate: DateTime
 
 ### CreateStaffRequest
+
 - UserId: int
 - DepartmentId: int
 - Position: string?
@@ -235,6 +257,7 @@
 - MaxStudentsLoad: int
 
 ### CreateStudentRequest
+
 - UserId: int
 - ProgramId: int
 - AdmissionYear: int
@@ -242,15 +265,19 @@
 - GroupCode: string?
 
 ### CreateStudentWorkRequest
-- TopicId: long?
+
+- TopicId: long? (required — standalone works not supported)
 - AcademicYearId: int
 - DepartmentId: int
+- StudentId: int (**required** — Edu.Students.Id, NOT Auth.Users.Id)
 
 ### CreateSupervisorReviewRequest
+
 - ReviewText: string
 - File: IFormFile?
 
 ### CreateTopicRequest
+
 - DepartmentId: int
 - SupervisorId: int
 - AcademicYearId: int
@@ -263,14 +290,17 @@
 - MaxParticipants: int
 
 ### FinalizePreDefenseRequest
+
 - AverageScore: decimal
 - IsPassed: bool
 
 ### GenerateProtocolRequest
+
 - ScheduleId: long
 - CommissionId: int
 
 ### GenerateDefenseSlotsRequest
+
 - CommissionId: int
 - Date: DateTime
 - StartTime: TimeSpan
@@ -279,10 +309,12 @@
 - Location: string?
 
 ### GeneratePreDefenseProtocolRequest
+
 - CommissionId: int
 - SessionDate: DateTime
 
 ### GeneratePreDefenseSlotsRequest
+
 - CommissionId: int
 - Date: DateTime
 - StartTime: TimeSpan
@@ -291,98 +323,121 @@
 - Location: string?
 
 ### LoginRequest
+
 - Login: string
 - Password: string
 
 ### RefreshTokenRequest
+
 - RefreshToken: string
 
 ### RecordAttendanceRequest
+
 - AttendanceStatus: AttendanceStatus
 - IsExcused: bool
 
 ### RecordCheckResultRequest
+
 - IsPassed: bool
 - ResultValue: decimal?
 - Comment: string?
 - DocumentPath: string?
 
 ### RegisterRequest
+
 - Login: string
 - Email: string
 - Password: string
 - UniversityId: int
 
 ### RejectApplicationRequest
+
 - RejectReason: string
 
 ### RejectDirectionRequest
+
 - Comment: string?
 
 ### RequestRevisionRequest
+
 - Comment: string
 
 ### SchedulePreDefenseRequest
+
 - CommissionId: int
 - DefenseDate: DateTime
 - Location: string?
 
 ### SendReadinessRemindersRequest
+
 - DepartmentId: int
 - AcademicYearId: int
 
 ### SetRepositoryUrlRequest
+
 - RepositoryUrl: string
 
 ### SubmitForCheckRequest
+
 - CheckType: CheckType
 - Comment: string?
 
 ### SubmitTopicsForApprovalRequest
+
 - TopicIds: IReadOnlyList\<long\>
 
 ### SubmitGradeRequest
+
 - MemberId: int
 - CriteriaId: int
 - Score: int
 - Comment: string?
 
 ### SubmitPreDefenseGradeRequest
+
 - MemberId: int
 - CriteriaId: int
 - Score: int
 - Comment: string?
 
 ### UpdateAcademicProgramRequest
+
 - Code: string?
 - Name: string
 
 ### UpdateCommissionRequest
+
 - Name: string
 
 ### UpdateDefenseScheduleRequest
+
 - DefenseDate: DateTime?
 - Location: string?
 
 ### UpdateDepartmentRequest
+
 - Name: string
 - Code: string?
 
 ### UpdateDirectionRequest
+
 - TitleRu: string
 - TitleKz: string?
 - TitleEn: string?
 - Description: string?
 
 ### UpdateInstituteRequest
+
 - Name: string
 
 ### UpdatePeriodRequest
+
 - StartDate: DateTime?
 - EndDate: DateTime?
 - IsActive: bool?
 
 ### UpdateStaffRequest
+
 - Position: string?
 - AcademicDegree: string?
 - MaxStudentsLoad: int?
@@ -390,14 +445,17 @@
 - DepartmentId: int?
 
 ### UpdateStaffWorkloadRequest
+
 - MaxStudentsLoad: int
 
 ### UpdateStudentRequest
+
 - ProgramId: int?
 - GroupCode: string?
 - CurrentCourse: int?
 
 ### UpdateTopicRequest
+
 - TitleRu: string
 - TitleKz: string?
 - TitleEn: string?
@@ -405,16 +463,19 @@
 - MaxParticipants: int
 
 ### UploadAttachmentRequest
+
 - AttachmentType: AttachmentType
 - File: IFormFile
 
 ### UploadReviewRequest
+
 - ReviewText: string?
 - File: IFormFile?
 
 ## Response Schemas
 
 ### AcademicProgramResponse
+
 - Id: int
 - DepartmentId: int
 - DegreeLevelId: int
@@ -429,11 +490,13 @@
 - DeletedBy: int?
 
 ### AdmittedStudentDto
+
 - WorkId: long
 - StudentId: int
 - UserId: int
 
 ### AssignedReviewerDto
+
 - ReviewId: long
 - ReviewerId: int
 - FullName: string
@@ -443,6 +506,7 @@
 - IsUploaded: bool
 
 ### AttachmentResponse
+
 - Id: long
 - WorkId: long
 - StateId: int?
@@ -455,6 +519,7 @@
 - LastModifiedBy: int?
 
 ### CommissionDetailDto
+
 - Id: int
 - DepartmentId: int
 - AcademicYearId: int
@@ -468,6 +533,7 @@
 - Members: IReadOnlyCollection<CommissionMemberDto>
 
 ### CommissionDto
+
 - Id: int
 - DepartmentId: int
 - AcademicYearId: int
@@ -478,6 +544,7 @@
 - CreatedAt: DateTime
 
 ### CommissionMemberDto
+
 - Id: int
 - CommissionId: int
 - UserId: int
@@ -485,12 +552,14 @@
 - CreatedAt: DateTime
 
 ### DefenseReadinessDto
+
 - TotalWorks: int
 - FullyReady: int
 - NotReady: int
 - Items: IReadOnlyList\<StudentReadinessItem\>
 
 ### StudentReadinessItem
+
 - WorkId: long
 - PreDefensePassed: bool
 - NormControlPassed: bool
@@ -500,6 +569,7 @@
 - IsFullyReady: bool
 
 ### DefenseSlotResponse
+
 - Id: long
 - CommissionId: int
 - WorkId: long
@@ -510,6 +580,7 @@
 - CreatedAt: DateTime
 
 ### DegreeLevelResponse
+
 - Id: int
 - Name: string
 - DurationYears: int
@@ -519,6 +590,7 @@
 - LastModifiedBy: int?
 
 ### DepartmentResponse
+
 - Id: int
 - InstituteId: int
 - Name: string
@@ -529,6 +601,7 @@
 - LastModifiedBy: int?
 
 ### DirectionDetailResponse
+
 - Id: long
 - DepartmentId: int
 - SupervisorId: int
@@ -553,6 +626,7 @@
 - TopicsCount: int
 
 ### DirectionResponse
+
 - Id: long
 - DepartmentId: int
 - SupervisorId: int
@@ -569,6 +643,7 @@
 - IsDeleted: bool
 
 ### EvaluationCriteriaResponse
+
 - Id: int
 - WorkTypeId: int
 - DepartmentId: int?
@@ -577,6 +652,7 @@
 - Weight: decimal
 
 ### FailedPreDefenseStudentDto
+
 - WorkId: long
 - LastAttemptNumber: int
 - LastScore: decimal?
@@ -584,6 +660,7 @@
 - LastAttemptDate: DateTime
 
 ### GradeResponse
+
 - Id: long
 - ScheduleId: long
 - MemberId: int
@@ -593,6 +670,7 @@
 - GradedAt: DateTime
 
 ### UserProfileResponse
+
 - UserId: int
 - Login: string
 - Email: string
@@ -611,11 +689,13 @@
 - GroupCode: string?
 
 ### WorkTypeResponse
+
 - Id: int
 - Name: string
 - DegreeLevelId: int?
 
 ### InstituteResponse
+
 - Id: int
 - UniversityId: int
 - Name: string
@@ -626,6 +706,7 @@
 - Departments: IReadOnlyCollection<DepartmentResponse>?
 
 ### LoginResponse
+
 - Token: string
 - Login: string
 - UserId: int
@@ -634,10 +715,12 @@
 - RefreshToken: string
 
 ### NotificationListResponse
+
 - UnreadCount: int
 - Items: IReadOnlyList<NotificationResponse>
 
 ### NotificationResponse
+
 - Id: long
 - UserId: int
 - TemplateId: int?
@@ -652,6 +735,7 @@
 - LastModifiedBy: int?
 
 ### PeriodResponse
+
 - Id: int
 - DepartmentId: int
 - AcademicYearId: int
@@ -662,6 +746,7 @@
 - IsCurrentlyOpen: bool
 
 ### PreDefenseAttemptDto
+
 - Id: long
 - WorkId: long
 - PreDefenseNumber: int
@@ -674,6 +759,7 @@
 - CreatedAt: DateTime
 
 ### PreDefenseScheduleDto
+
 - Id: long
 - CommissionId: int
 - WorkId: long
@@ -684,6 +770,7 @@
 - CreatedAt: DateTime
 
 ### ProtocolResponse
+
 - Id: long
 - ScheduleId: long
 - CommissionId: int
@@ -695,6 +782,7 @@
 - CreatedAt: DateTime
 
 ### QualityCheckDto
+
 - Id: long
 - WorkId: long
 - CheckType: string
@@ -707,6 +795,7 @@
 - CheckedAt: DateTime
 
 ### ReviewStatusByDepartmentDto
+
 - TotalWorks: int
 - WorksWithReviewer: int
 - WorksWithoutReviewer: int
@@ -715,6 +804,7 @@
 - Items: IReadOnlyList\<WorkReviewStatusItem\>
 
 ### WorkReviewStatusItem
+
 - WorkId: long
 - ReviewerId: int?
 - ReviewerName: string?
@@ -722,6 +812,7 @@
 - IsReviewUploaded: bool
 
 ### ScheduleResponse
+
 - Id: long
 - CommissionId: int
 - WorkId: long
@@ -732,6 +823,7 @@
 - CreatedAt: DateTime
 
 ### StaffResponse
+
 - Id: int
 - UserId: int
 - FullName: string?
@@ -743,6 +835,7 @@
 - MaxStudentsLoad: int
 
 ### StudentResponse
+
 - Id: int
 - UserId: int
 - FullName: string?
@@ -755,6 +848,7 @@
 - Status: string
 
 ### StudentWorkDetailResponse
+
 - Id: long
 - TopicId: long?
 - AcademicYearId: int
@@ -769,6 +863,7 @@
 - Participants: IReadOnlyList<WorkParticipantResponse>
 
 ### SupervisorReviewResponse
+
 - Id: long
 - WorkId: long
 - SupervisorId: int
@@ -780,6 +875,7 @@
 - LastModifiedBy: int?
 
 ### StudentWorkResponse
+
 - Id: long
 - TopicId: long?
 - AcademicYearId: int
@@ -790,6 +886,7 @@
 - CreatedAt: DateTime
 
 ### TopicApplicationResponse
+
 - Id: long
 - TopicId: long
 - StudentId: int
@@ -803,6 +900,7 @@
 - ReviewComment: string?
 
 ### TopicDetailResponse
+
 - Id: long
 - DirectionId: long?
 - DepartmentId: int
@@ -825,6 +923,7 @@
 - Applications: IReadOnlyCollection<TopicApplicationResponse>?
 
 ### TopicCoordinationItemResponse
+
 - TopicId: long
 - TitleRu: string
 - SupervisorId: int
@@ -836,6 +935,7 @@
 - IsClosed: bool
 
 ### TopicCoordinationSummaryResponse
+
 - TotalTopics: int
 - ApprovedTopics: int
 - TopicsWithStudents: int
@@ -846,6 +946,7 @@
 - Topics: IReadOnlyList\<TopicCoordinationItemResponse\>
 
 ### TopicResponse
+
 - Id: long
 - DirectionId: long?
 - DepartmentId: int
@@ -863,6 +964,7 @@
 - CreatedAt: DateTime
 
 ### ReviewResponse
+
 - Id: long
 - WorkId: long
 - ReviewerId: int
@@ -875,6 +977,7 @@
 - LastModifiedBy: int?
 
 ### WorkParticipantResponse
+
 - Id: long
 - StudentId: int
 - Role: string
@@ -882,5 +985,6 @@
 - JoinedAt: DateTime
 
 ### WorkReviewsResponse
+
 - SupervisorReview: SupervisorReviewResponse?
 - Reviews: IReadOnlyList<ReviewResponse>

@@ -15,13 +15,16 @@ public sealed class GetApplicationsByStudentQueryHandler
     : IRequestHandler<GetApplicationsByStudentQuery, Result<IReadOnlyList<TopicApplicationDto>>>
 {
     private readonly ITopicApplicationRepository _applicationRepository;
+    private readonly IStudentRepository _studentRepository;
     private readonly ICurrentUserProvider _currentUserProvider;
 
     public GetApplicationsByStudentQueryHandler(
         ITopicApplicationRepository applicationRepository,
+        IStudentRepository studentRepository,
         ICurrentUserProvider currentUserProvider)
     {
         _applicationRepository = applicationRepository;
+        _studentRepository = studentRepository;
         _currentUserProvider = currentUserProvider;
     }
 
@@ -36,6 +39,14 @@ public sealed class GetApplicationsByStudentQueryHandler
 
         var userId = _currentUserProvider.UserId.Value;
 
+        // Resolve student profile — GetByStudentIdAsync expects Student.Id (FK), not Auth.Users.Id
+        var student = await _studentRepository.GetByUserIdAsync(userId, cancellationToken);
+        if (student is null)
+        {
+            return Result.Failure<IReadOnlyList<TopicApplicationDto>>(
+                new Error("Authorization.Forbidden", "User does not have a student profile."));
+        }
+
         // 1. Get applications
         IReadOnlyList<Domain.Thesis.Entities.TopicApplication> applications;
 
@@ -43,7 +54,7 @@ public sealed class GetApplicationsByStudentQueryHandler
         {
             // Get applications for specific academic year
             applications = await _applicationRepository.GetByStudentIdAndYearAsync(
-                userId,
+                student.Id,
                 request.AcademicYearId.Value,
                 cancellationToken);
         }
@@ -51,7 +62,7 @@ public sealed class GetApplicationsByStudentQueryHandler
         {
             // Get all applications
             applications = await _applicationRepository.GetByStudentIdAsync(
-                userId,
+                student.Id,
                 cancellationToken);
         }
 

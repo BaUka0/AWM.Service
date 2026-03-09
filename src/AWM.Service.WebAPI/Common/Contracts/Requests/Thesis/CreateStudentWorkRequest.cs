@@ -22,5 +22,12 @@ public sealed record CreateStudentWorkRequest
     /// </summary>
     /// <example>1</example>
     public int DepartmentId { get; init; }
+
+    /// <summary>
+    /// ID of the student who will be the leader/primary participant.
+    /// Must be Edu.Students.Id (not Auth.Users.Id).
+    /// </summary>
+    /// <example>7</example>
+    public int StudentId { get; init; }
 }
 

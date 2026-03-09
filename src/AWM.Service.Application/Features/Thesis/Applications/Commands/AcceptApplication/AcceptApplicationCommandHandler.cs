@@ -16,6 +16,8 @@ public sealed class AcceptApplicationCommandHandler : IRequestHandler<AcceptAppl
 {
     private readonly ITopicApplicationRepository _applicationRepository;
     private readonly ITopicRepository _topicRepository;
+    private readonly IStaffRepository _staffRepository;
+    private readonly IStudentRepository _studentRepository;
     private readonly IMediator _mediator;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICurrentUserProvider _currentUserProvider;
@@ -25,6 +27,8 @@ public sealed class AcceptApplicationCommandHandler : IRequestHandler<AcceptAppl
     public AcceptApplicationCommandHandler(
         ITopicApplicationRepository applicationRepository,
         ITopicRepository topicRepository,
+        IStaffRepository staffRepository,
+        IStudentRepository studentRepository,
         IMediator mediator,
         IUnitOfWork unitOfWork,
         ICurrentUserProvider currentUserProvider,
@@ -33,6 +37,8 @@ public sealed class AcceptApplicationCommandHandler : IRequestHandler<AcceptAppl
     {
         _applicationRepository = applicationRepository;
         _topicRepository = topicRepository;
+        _staffRepository = staffRepository;
+        _studentRepository = studentRepository;
         _mediator = mediator;
         _unitOfWork = unitOfWork;
         _currentUserProvider = currentUserProvider;
@@ -51,7 +57,13 @@ public sealed class AcceptApplicationCommandHandler : IRequestHandler<AcceptAppl
             return Result.Failure(new Error("Authorization.Unauthorized", "User identity could not be determined."));
         }
 
-        var supervisorUserId = userId.Value;
+        // Resolve staff profile — one user may also be a student; we need Staff.Id for topic authorization
+        var currentStaff = await _staffRepository.GetByUserIdAsync(userId.Value, cancellationToken);
+        if (currentStaff is null)
+        {
+            _logger.LogWarning("AcceptApplication failed: User {UserId} does not have a staff profile.", userId.Value);
+            return Result.Failure(new Error("Authorization.Forbidden", "User does not have a staff profile."));
+        }
 
         // 1. Get application with topic (for authorization)
         var application = await _applicationRepository.GetByIdWithTopicAsync(
@@ -80,9 +92,10 @@ public sealed class AcceptApplicationCommandHandler : IRequestHandler<AcceptAppl
         }
 
         // 4. Check authorization - only the topic's supervisor can accept
-        if (topic.SupervisorId != supervisorUserId)
+        // topic.SupervisorId is Staff.Id — compare with Staff.Id, not with Auth.Users.Id
+        if (topic.SupervisorId != currentStaff.Id)
         {
-            _logger.LogWarning("AcceptApplication failed: User={UserId} is not the supervisor for Topic={TopicId}", supervisorUserId, topic.Id);
+            _logger.LogWarning("AcceptApplication failed: User={UserId} (StaffId={StaffId}) is not the supervisor for Topic={TopicId}", userId.Value, currentStaff.Id, topic.Id);
             return Result.Failure(new Error("Authorization.Forbidden", "Only the topic supervisor can accept applications."));
         }
 
@@ -115,7 +128,7 @@ public sealed class AcceptApplicationCommandHandler : IRequestHandler<AcceptAppl
         // 7. Accept the application (domain method)
         try
         {
-            application.Accept(supervisorUserId);
+            application.Accept(currentStaff.Id);
         }
         catch (InvalidOperationException ex)
         {
@@ -153,15 +166,24 @@ public sealed class AcceptApplicationCommandHandler : IRequestHandler<AcceptAppl
 
             await _unitOfWork.CommitTransactionAsync(cancellationToken);
 
-            // Notify student about acceptance
-            await _notificationService.SendAsync(
-                userId: application.StudentId,
-                title: "Заявка принята",
-                createdBy: supervisorUserId,
-                body: $"Ваша заявка на тему «{topic.TitleRu}» была принята.",
-                relatedEntityType: "TopicApplication",
-                relatedEntityId: application.Id,
-                cancellationToken: cancellationToken);
+            // Notify student about acceptance.
+            // application.StudentId is Student.Id — must resolve Student to get Auth.Users.Id for notification.
+            var studentProfile = await _studentRepository.GetByIdAsync(application.StudentId, cancellationToken);
+            if (studentProfile is not null)
+            {
+                await _notificationService.SendAsync(
+                    userId: studentProfile.UserId,
+                    title: "Заявка принята",
+                    createdBy: userId.Value,
+                    body: $"Ваша заявка на тему «{topic.TitleRu}» была принята.",
+                    relatedEntityType: "TopicApplication",
+                    relatedEntityId: application.Id,
+                    cancellationToken: cancellationToken);
+            }
+            else
+            {
+                _logger.LogWarning("AcceptApplication: Student not found for StudentId={StudentId}, student notification skipped.", application.StudentId);
+            }
 
             // Auto-close topic if all slots are filled
             if (!topic.CanAcceptApplications())

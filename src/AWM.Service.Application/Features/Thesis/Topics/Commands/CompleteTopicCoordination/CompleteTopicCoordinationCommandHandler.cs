@@ -17,6 +17,8 @@ public sealed class CompleteTopicCoordinationCommandHandler
 {
     private readonly ITopicRepository _topicRepository;
     private readonly ITopicApplicationRepository _applicationRepository;
+    private readonly IStaffRepository _staffRepository;
+    private readonly IStudentRepository _studentRepository;
     private readonly INotificationService _notificationService;
     private readonly ICurrentUserProvider _currentUserProvider;
     private readonly IUnitOfWork _unitOfWork;
@@ -25,6 +27,8 @@ public sealed class CompleteTopicCoordinationCommandHandler
     public CompleteTopicCoordinationCommandHandler(
         ITopicRepository topicRepository,
         ITopicApplicationRepository applicationRepository,
+        IStaffRepository staffRepository,
+        IStudentRepository studentRepository,
         INotificationService notificationService,
         ICurrentUserProvider currentUserProvider,
         IUnitOfWork unitOfWork,
@@ -32,6 +36,8 @@ public sealed class CompleteTopicCoordinationCommandHandler
     {
         _topicRepository = topicRepository;
         _applicationRepository = applicationRepository;
+        _staffRepository = staffRepository;
+        _studentRepository = studentRepository;
         _notificationService = notificationService;
         _currentUserProvider = currentUserProvider;
         _unitOfWork = unitOfWork;
@@ -59,14 +65,22 @@ public sealed class CompleteTopicCoordinationCommandHandler
             return Result.Failure(new Error("404", "No topics found for this department and academic year."));
         }
 
-        var supervisorIds = new HashSet<int>();
-        var notifiedStudents = new HashSet<int>();
+        // Collect Auth.Users.Id sets for notifications.
+        // Supervisors: topic.SupervisorId is Staff.Id — resolve to UserId.
+        // Students: app.StudentId is Student.Id — resolve to UserId.
+        var supervisorUserIds = new HashSet<int>();
+        var notifiedStudentUserIds = new HashSet<int>();
 
         foreach (var topic in topics)
         {
             if (topic.IsDeleted) continue;
 
-            supervisorIds.Add(topic.SupervisorId);
+            // Resolve supervisor UserId for notification
+            var supervisorStaff = await _staffRepository.GetByIdAsync(topic.SupervisorId, cancellationToken);
+            if (supervisorStaff is not null)
+                supervisorUserIds.Add(supervisorStaff.UserId);
+            else
+                _logger.LogWarning("CompleteTopicCoordination: Staff not found for StaffId={StaffId}, supervisor notification will be skipped.", topic.SupervisorId);
 
             // Close all open topics
             if (!topic.IsClosed)
@@ -81,20 +95,27 @@ public sealed class CompleteTopicCoordinationCommandHandler
             {
                 if (app.Status == ApplicationStatus.Submitted)
                 {
+                    // ReviewedBy: use JWT userId (admin audit, not a domain Staff FK)
                     app.Reject(userId.Value, "Этап согласования тем завершён.");
                     await _applicationRepository.UpdateAsync(app, cancellationToken);
-                    notifiedStudents.Add(app.StudentId);
+
+                    // Resolve student UserId for notification
+                    var studentProfile = await _studentRepository.GetByIdAsync(app.StudentId, cancellationToken);
+                    if (studentProfile is not null)
+                        notifiedStudentUserIds.Add(studentProfile.UserId);
+                    else
+                        _logger.LogWarning("CompleteTopicCoordination: Student not found for StudentId={StudentId}, student notification will be skipped.", app.StudentId);
                 }
             }
         }
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        // Notify supervisors
-        if (supervisorIds.Count > 0)
+        // Notify supervisors (by Auth.Users.Id)
+        if (supervisorUserIds.Count > 0)
         {
             await _notificationService.SendToManyAsync(
-                userIds: supervisorIds,
+                userIds: supervisorUserIds,
                 title: "Согласование тем завершено",
                 createdBy: userId.Value,
                 body: "Этап согласования тем завершён. Все темы закрыты для приёма заявок.",
@@ -103,11 +124,11 @@ public sealed class CompleteTopicCoordinationCommandHandler
                 cancellationToken: cancellationToken);
         }
 
-        // Notify students whose pending applications were rejected
-        if (notifiedStudents.Count > 0)
+        // Notify students whose pending applications were rejected (by Auth.Users.Id)
+        if (notifiedStudentUserIds.Count > 0)
         {
             await _notificationService.SendToManyAsync(
-                userIds: notifiedStudents,
+                userIds: notifiedStudentUserIds,
                 title: "Заявка отклонена",
                 createdBy: userId.Value,
                 body: "Ваша заявка была отклонена в связи с завершением этапа согласования тем.",
@@ -116,7 +137,7 @@ public sealed class CompleteTopicCoordinationCommandHandler
 
         _logger.LogInformation(
             "Topic coordination completed for Dept={DeptId}. Closed {TopicCount} topics, rejected {StudentCount} pending apps.",
-            request.DepartmentId, topics.Count, notifiedStudents.Count);
+            request.DepartmentId, topics.Count, notifiedStudentUserIds.Count);
 
         return Result.Success();
     }

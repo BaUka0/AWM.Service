@@ -16,6 +16,7 @@ public sealed class CreateStudentWorkCommandHandler : IRequestHandler<CreateStud
     private readonly IStudentWorkRepository _workRepository;
     private readonly ITopicRepository _topicRepository;
     private readonly IWorkflowRepository _workflowRepository;
+    private readonly IStudentRepository _studentRepository;
     private readonly ICurrentUserProvider _currentUserProvider;
     private readonly IUnitOfWork _unitOfWork;
 
@@ -23,12 +24,14 @@ public sealed class CreateStudentWorkCommandHandler : IRequestHandler<CreateStud
         IStudentWorkRepository workRepository,
         ITopicRepository topicRepository,
         IWorkflowRepository workflowRepository,
+        IStudentRepository studentRepository,
         ICurrentUserProvider currentUserProvider,
         IUnitOfWork unitOfWork)
     {
         _workRepository = workRepository;
         _topicRepository = topicRepository;
         _workflowRepository = workflowRepository;
+        _studentRepository = studentRepository;
         _currentUserProvider = currentUserProvider;
         _unitOfWork = unitOfWork;
     }
@@ -68,9 +71,20 @@ public sealed class CreateStudentWorkCommandHandler : IRequestHandler<CreateStud
             createdBy: _currentUserProvider.UserId.Value,
             topicId: request.TopicId);
 
-        // 4. Add the student as Leader
-        var studentId = request.StudentId > 0 ? request.StudentId : _currentUserProvider.UserId.Value;
-        work.AddParticipant(studentId, ParticipantRole.Leader);
+        // 4. Add the student as Leader.
+        // request.StudentId must be a Student.Id (FK to Edu.Students), not Auth.Users.Id.
+        // The dangerous fallback to userId.Value is intentionally removed — callers MUST supply Student.Id.
+        if (request.StudentId <= 0)
+            return Result.Failure<long>(new Error("Validation.StudentRequired",
+                "A valid StudentId (Edu.Students.Id) is required to create a student work."));
+
+        // Verify the student exists
+        var student = await _studentRepository.GetByIdAsync(request.StudentId, cancellationToken);
+        if (student is null)
+            return Result.Failure<long>(new Error("NotFound.Student",
+                $"Student with ID {request.StudentId} not found."));
+
+        work.AddParticipant(request.StudentId, ParticipantRole.Leader);
 
         // 5. Persist
         await _workRepository.AddAsync(work, cancellationToken);

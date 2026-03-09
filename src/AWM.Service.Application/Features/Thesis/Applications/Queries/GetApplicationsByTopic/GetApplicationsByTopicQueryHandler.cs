@@ -17,15 +17,18 @@ public sealed class GetApplicationsByTopicQueryHandler
 {
     private readonly ITopicApplicationRepository _applicationRepository;
     private readonly ITopicRepository _topicRepository;
+    private readonly IStaffRepository _staffRepository;
     private readonly ICurrentUserProvider _currentUserProvider;
 
     public GetApplicationsByTopicQueryHandler(
         ITopicApplicationRepository applicationRepository,
         ITopicRepository topicRepository,
+        IStaffRepository staffRepository,
         ICurrentUserProvider currentUserProvider)
     {
         _applicationRepository = applicationRepository;
         _topicRepository = topicRepository;
+        _staffRepository = staffRepository;
         _currentUserProvider = currentUserProvider;
     }
 
@@ -38,6 +41,16 @@ public sealed class GetApplicationsByTopicQueryHandler
             return Result.Failure<IReadOnlyList<TopicApplicationDto>>(new Error("Authorization.Unauthorized", "User identity could not be determined."));
         }
 
+        var userId = _currentUserProvider.UserId.Value;
+
+        // Resolve staff profile — topic.SupervisorId is Staff.Id, not Auth.Users.Id
+        var currentStaff = await _staffRepository.GetByUserIdAsync(userId, cancellationToken);
+        if (currentStaff is null)
+        {
+            return Result.Failure<IReadOnlyList<TopicApplicationDto>>(
+                new Error("Authorization.Forbidden", "User does not have a staff profile."));
+        }
+
         // 1. Get topic for authorization check
         var topic = await _topicRepository.GetByIdAsync(request.TopicId, cancellationToken);
         if (topic is null)
@@ -47,8 +60,8 @@ public sealed class GetApplicationsByTopicQueryHandler
         }
 
         // 2. Check authorization - only supervisor of the topic can view applications
-        // Note: In a real system, you might also allow admins/department heads
-        if (topic.SupervisorId != _currentUserProvider.UserId.Value)
+        // Compare Staff.Id with Staff.Id (topic.SupervisorId is a FK to Edu.Staff)
+        if (topic.SupervisorId != currentStaff.Id)
         {
             return Result.Failure<IReadOnlyList<TopicApplicationDto>>(
                 new Error("Authorization.Forbidden", "You can only view applications for your own topics."));

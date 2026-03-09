@@ -13,17 +13,20 @@ using Microsoft.Extensions.Logging;
 public sealed class WithdrawApplicationCommandHandler : IRequestHandler<WithdrawApplicationCommand, Result>
 {
     private readonly ITopicApplicationRepository _applicationRepository;
+    private readonly IStudentRepository _studentRepository;
     private readonly ICurrentUserProvider _currentUserProvider;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<WithdrawApplicationCommandHandler> _logger;
 
     public WithdrawApplicationCommandHandler(
         ITopicApplicationRepository applicationRepository,
+        IStudentRepository studentRepository,
         ICurrentUserProvider currentUserProvider,
         IUnitOfWork unitOfWork,
         ILogger<WithdrawApplicationCommandHandler> logger)
     {
         _applicationRepository = applicationRepository;
+        _studentRepository = studentRepository;
         _currentUserProvider = currentUserProvider;
         _unitOfWork = unitOfWork;
         _logger = logger;
@@ -40,7 +43,13 @@ public sealed class WithdrawApplicationCommandHandler : IRequestHandler<Withdraw
             return Result.Failure(new Error("Authorization.Unauthorized", "User identity could not be determined."));
         }
 
-        var studentUserId = userId.Value;
+        // Resolve student profile — application.StudentId is Student.Id, not Auth.Users.Id
+        var student = await _studentRepository.GetByUserIdAsync(userId.Value, cancellationToken);
+        if (student is null)
+        {
+            _logger.LogWarning("WithdrawApplication failed: User {UserId} does not have a student profile.", userId.Value);
+            return Result.Failure(new Error("Authorization.Forbidden", "User does not have a student profile."));
+        }
 
         // 1. Get application
         var application = await _applicationRepository.GetByIdAsync(
@@ -61,9 +70,10 @@ public sealed class WithdrawApplicationCommandHandler : IRequestHandler<Withdraw
         }
 
         // 3. Check authorization - only the student who created the application can withdraw it
-        if (application.StudentId != studentUserId)
+        // application.StudentId is Student.Id (FK to Edu.Students), compare with Student.Id
+        if (application.StudentId != student.Id)
         {
-            _logger.LogWarning("WithdrawApplication failed: User={UserId} is not the owner of Application={ApplicationId}", studentUserId, request.ApplicationId);
+            _logger.LogWarning("WithdrawApplication failed: User={UserId} (StudentId={StudentId}) is not the owner of Application={ApplicationId}", userId.Value, student.Id, request.ApplicationId);
             return Result.Failure(new Error("Authorization.Forbidden", "You can only withdraw your own applications."));
         }
 
@@ -78,7 +88,8 @@ public sealed class WithdrawApplicationCommandHandler : IRequestHandler<Withdraw
         */
 
         // 5. Withdraw the application (soft delete)
-        application.Delete(studentUserId);
+        // deletedBy uses Auth.Users.Id (audit field, not a domain FK)
+        application.Delete(userId.Value);
 
         // 6. Update application
         try
@@ -86,7 +97,7 @@ public sealed class WithdrawApplicationCommandHandler : IRequestHandler<Withdraw
             await _applicationRepository.UpdateAsync(application, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-            _logger.LogInformation("Successfully withdrawn application ID={ApplicationId} by User={UserId}", request.ApplicationId, studentUserId);
+            _logger.LogInformation("Successfully withdrawn application ID={ApplicationId} by User={UserId}", request.ApplicationId, userId.Value);
             return Result.Success();
         }
         catch (Exception ex)
