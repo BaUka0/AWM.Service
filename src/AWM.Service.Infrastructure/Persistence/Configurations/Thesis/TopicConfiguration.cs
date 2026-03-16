@@ -59,7 +59,13 @@ public class TopicConfiguration : SoftDeletableEntityConfiguration<Topic, long>
         builder.Property(e => e.TitleKz)
             .HasMaxLength(500);
 
-        builder.Property(e => e.Description)
+        builder.Property(e => e.DescriptionRu)
+            .HasColumnType("nvarchar(max)");
+
+        builder.Property(e => e.DescriptionKz)
+            .HasColumnType("nvarchar(max)");
+
+        builder.Property(e => e.DescriptionEn)
             .HasColumnType("nvarchar(max)");
 
         builder.Property(e => e.MaxParticipants)

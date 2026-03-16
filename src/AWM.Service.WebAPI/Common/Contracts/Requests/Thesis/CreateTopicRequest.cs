@@ -54,10 +54,22 @@ public sealed record CreateTopicRequest
     public string? TitleEn { get; init; }
 
     /// <summary>
-    /// Topic description (optional).
+    /// Topic description in Russian (optional).
     /// </summary>
     /// <example>Система для автоматизации процесса управления дипломными работами студентов</example>
-    public string? Description { get; init; }
+    public string? DescriptionRu { get; init; }
+
+    /// <summary>
+    /// Topic description in Kazakh (optional).
+    /// </summary>
+    /// <example>Студенттердің дипломдық жұмыстарын басқару үдерісін автоматтандыруға арналған жүйе</example>
+    public string? DescriptionKz { get; init; }
+
+    /// <summary>
+    /// Topic description in English (optional).
+    /// </summary>
+    /// <example>System for automating thesis work management processes for students</example>
+    public string? DescriptionEn { get; init; }
 
     /// <summary>
     /// Maximum number of participants (1-5 for team works). Default: 1.

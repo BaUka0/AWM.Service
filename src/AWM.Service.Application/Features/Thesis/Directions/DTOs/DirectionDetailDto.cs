@@ -14,7 +14,9 @@ public sealed class DirectionDetailDto
     public string TitleRu { get; init; } = string.Empty;
     public string? TitleKz { get; init; }
     public string? TitleEn { get; init; }
-    public string? Description { get; init; }
+    public string? DescriptionRu { get; init; }
+    public string? DescriptionKz { get; init; }
+    public string? DescriptionEn { get; init; }
 
     public int CurrentStateId { get; init; }
     public DateTime? SubmittedAt { get; init; }

@@ -94,7 +94,9 @@ public sealed class UpdateDirectionCommandHandler
                 titleRu: request.TitleRu,
                 titleKz: request.TitleKz,
                 titleEn: request.TitleEn,
-                description: request.Description);
+                descriptionRu: request.DescriptionRu,
+                descriptionKz: request.DescriptionKz,
+                descriptionEn: request.DescriptionEn);
 
             // Update audit fields manually (since domain method doesn't handle LastModifiedBy)
             // Note: If Direction has SetLastModified method, use it instead

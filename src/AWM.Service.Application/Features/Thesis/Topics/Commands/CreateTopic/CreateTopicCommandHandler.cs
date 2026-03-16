@@ -104,7 +104,9 @@ public sealed class CreateTopicCommandHandler : IRequestHandler<CreateTopicComma
                 directionId: request.DirectionId,
                 titleKz: request.TitleKz,
                 titleEn: request.TitleEn,
-                description: request.Description,
+                descriptionRu: request.DescriptionRu,
+                descriptionKz: request.DescriptionKz,
+                descriptionEn: request.DescriptionEn,
                 maxParticipants: request.MaxParticipants);
 
             // 4. Add to repository

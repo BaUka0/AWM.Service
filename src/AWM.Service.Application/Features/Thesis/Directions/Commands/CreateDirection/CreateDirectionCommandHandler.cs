@@ -131,7 +131,9 @@ public sealed class CreateDirectionCommandHandler
                 draftStateId: draftState.Id,
                 titleKz: request.TitleKz,
                 titleEn: request.TitleEn,
-                description: request.Description);
+                descriptionRu: request.DescriptionRu,
+                descriptionKz: request.DescriptionKz,
+                descriptionEn: request.DescriptionEn);
 
             // Save to repository
             await _directionRepository.AddAsync(direction, cancellationToken);

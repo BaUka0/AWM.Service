@@ -5,7 +5,9 @@ namespace AWM.Service.WebAPI.Common.Contracts.Responses.Thesis;
 /// </summary>
 public sealed record DirectionDetailResponse : DirectionResponse
 {
-    public string? Description { get; init; }
+    public string? DescriptionRu { get; init; }
+    public string? DescriptionKz { get; init; }
+    public string? DescriptionEn { get; init; }
 
     public string? ReviewComment { get; init; }
 

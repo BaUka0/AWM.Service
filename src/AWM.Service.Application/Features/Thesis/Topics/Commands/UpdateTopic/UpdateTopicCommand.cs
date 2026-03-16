@@ -30,9 +30,19 @@ public sealed record UpdateTopicCommand : IRequest<Result>
     public string? TitleEn { get; init; }
 
     /// <summary>
-    /// Updated topic description (optional).
+    /// Updated topic description in Russian (optional).
     /// </summary>
-    public string? Description { get; init; }
+    public string? DescriptionRu { get; init; }
+
+    /// <summary>
+    /// Updated topic description in Kazakh (optional).
+    /// </summary>
+    public string? DescriptionKz { get; init; }
+
+    /// <summary>
+    /// Updated topic description in English (optional).
+    /// </summary>
+    public string? DescriptionEn { get; init; }
 
     /// <summary>
     /// Updated maximum number of participants (1-5).

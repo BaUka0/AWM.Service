@@ -60,10 +60,22 @@ public sealed record TopicDetailResponse
     public string? TitleKz { get; init; }
 
     /// <summary>
-    /// Topic description.
+    /// Topic description in Russian.
     /// </summary>
     /// <example>Система для автоматизации процесса управления дипломными работами студентов</example>
-    public string? Description { get; init; }
+    public string? DescriptionRu { get; init; }
+
+    /// <summary>
+    /// Topic description in Kazakh.
+    /// </summary>
+    /// <example>Студенттердің дипломдық жұмыстарын басқару үдерісін автоматтандыруға арналған жүйе</example>
+    public string? DescriptionKz { get; init; }
+
+    /// <summary>
+    /// Topic description in English.
+    /// </summary>
+    /// <example>System for automating thesis work management processes for students</example>
+    public string? DescriptionEn { get; init; }
 
     /// <summary>
     /// Maximum number of participants.

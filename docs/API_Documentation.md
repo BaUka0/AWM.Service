@@ -690,7 +690,9 @@
   "reviewedBy": 0,
   "createdAt": "2024-01-01T00:00:00Z",
   "isDeleted": true,
-  "description": "string",
+  "descriptionRu": "string",
+  "descriptionKz": "string",
+  "descriptionEn": "string",
   "reviewComment": "string",
   "createdBy": 0,
   "lastModifiedAt": "2024-01-01T00:00:00Z",
@@ -716,7 +718,9 @@
   "titleRu": "string",
   "titleKz": "string",
   "titleEn": "string",
-  "description": "string"
+  "descriptionRu": "string",
+  "descriptionKz": "string",
+  "descriptionEn": "string"
 }
 ```
 
@@ -735,7 +739,9 @@
   "titleRu": "string",
   "titleKz": "string",
   "titleEn": "string",
-  "description": "string"
+  "descriptionRu": "string",
+  "descriptionKz": "string",
+  "descriptionEn": "string"
 }
 ```
 
@@ -1885,7 +1891,9 @@
   "titleRu": "string",
   "titleEn": "string",
   "titleKz": "string",
-  "description": "string",
+  "descriptionRu": "string",
+  "descriptionKz": "string",
+  "descriptionEn": "string",
   "maxParticipants": 0,
   "availableSpots": 0,
   "isApproved": true,
@@ -1956,7 +1964,9 @@
   "titleRu": "string",
   "titleKz": "string",
   "titleEn": "string",
-  "description": "string",
+  "descriptionRu": "string",
+  "descriptionKz": "string",
+  "descriptionEn": "string",
   "maxParticipants": 1
 }
 ```
@@ -1976,7 +1986,9 @@
   "titleRu": "string",
   "titleKz": "string",
   "titleEn": "string",
-  "description": "string",
+  "descriptionRu": "string",
+  "descriptionKz": "string",
+  "descriptionEn": "string",
   "maxParticipants": 0
 }
 ```

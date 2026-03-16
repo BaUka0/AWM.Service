@@ -85,7 +85,9 @@ public sealed class UpdateTopicCommandHandler : IRequestHandler<UpdateTopicComma
                 request.TitleRu,
                 request.TitleKz,
                 request.TitleEn,
-                request.Description);
+                request.DescriptionRu,
+                request.DescriptionKz,
+                request.DescriptionEn);
 
             // 7. Update max participants
             topic.UpdateMaxParticipants(request.MaxParticipants);

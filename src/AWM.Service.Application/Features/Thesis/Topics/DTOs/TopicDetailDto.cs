@@ -15,7 +15,9 @@ public sealed record TopicDetailDto
     public string TitleRu { get; init; } = null!;
     public string? TitleEn { get; init; }
     public string? TitleKz { get; init; }
-    public string? Description { get; init; }
+    public string? DescriptionRu { get; init; }
+    public string? DescriptionKz { get; init; }
+    public string? DescriptionEn { get; init; }
     
     public int MaxParticipants { get; init; }
     public int AvailableSpots { get; init; }

@@ -46,10 +46,20 @@ public sealed class CreateTopicCommandValidator : AbstractValidator<CreateTopicC
             .WithMessage("English title must not exceed 500 characters.")
             .When(x => !string.IsNullOrWhiteSpace(x.TitleEn));
 
-        RuleFor(x => x.Description)
+        RuleFor(x => x.DescriptionRu)
             .MaximumLength(2000)
-            .WithMessage("Description must not exceed 2000 characters.")
-            .When(x => !string.IsNullOrWhiteSpace(x.Description));
+            .WithMessage("Russian description must not exceed 2000 characters.")
+            .When(x => !string.IsNullOrWhiteSpace(x.DescriptionRu));
+
+        RuleFor(x => x.DescriptionKz)
+            .MaximumLength(2000)
+            .WithMessage("Kazakh description must not exceed 2000 characters.")
+            .When(x => !string.IsNullOrWhiteSpace(x.DescriptionKz));
+
+        RuleFor(x => x.DescriptionEn)
+            .MaximumLength(2000)
+            .WithMessage("English description must not exceed 2000 characters.")
+            .When(x => !string.IsNullOrWhiteSpace(x.DescriptionEn));
 
         RuleFor(x => x.MaxParticipants)
             .InclusiveBetween(1, 5)

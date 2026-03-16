@@ -24,10 +24,22 @@ public sealed record UpdateTopicRequest
     public string? TitleEn { get; init; }
 
     /// <summary>
-    /// Updated topic description (optional).
+    /// Updated topic description in Russian (optional).
     /// </summary>
     /// <example>Обновлённое описание системы с новыми функциями</example>
-    public string? Description { get; init; }
+    public string? DescriptionRu { get; init; }
+
+    /// <summary>
+    /// Updated topic description in Kazakh (optional).
+    /// </summary>
+    /// <example>Жаңа мүмкіндіктері бар жүйенің жаңартылған сипаттамасы</example>
+    public string? DescriptionKz { get; init; }
+
+    /// <summary>
+    /// Updated topic description in English (optional).
+    /// </summary>
+    /// <example>Updated system description with new features</example>
+    public string? DescriptionEn { get; init; }
 
     /// <summary>
     /// Updated maximum number of participants (1-5).

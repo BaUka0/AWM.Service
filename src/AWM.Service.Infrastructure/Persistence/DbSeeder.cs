@@ -432,7 +432,7 @@ public static class DbSeeder
                 stateDirDraft.Id,
                 titleKz: "Мәліметтерді өңдеуде жасанды интеллект",
                 titleEn: "Artificial Intelligence in Data Processing",
-                description: "Исследование применения методов ИИ для анализа и обработки больших данных");
+                descriptionRu: "Исследование применения методов ИИ для анализа и обработки больших данных");
 
             // Direction that went through workflow → Approved
             var dirApproved = new Direction(
@@ -441,7 +441,7 @@ public static class DbSeeder
                 stateDirApproved.Id,
                 titleKz: "Микросервистерді қолдана отырып web-қосымшаларды әзірлеу",
                 titleEn: "Web Application Development Using Microservices",
-                description: "Проектирование и разработка масштабируемых web-систем на основе микросервисной архитектуры");
+                descriptionRu: "Проектирование и разработка масштабируемых web-систем на основе микросервисной архитектуры");
 
             db.Directions.AddRange(dirDraft, dirApproved);
             await db.SaveChangesAsync();
@@ -460,7 +460,7 @@ public static class DbSeeder
                 directionApproved.Id,
                 titleKz: "Collaborative filtering негізінде ұсыныс жүйесін әзірлеу",
                 titleEn: "Recommendation System Development Based on Collaborative Filtering",
-                description: "Реализация и исследование алгоритмов коллаборативной фильтрации",
+                descriptionRu: "Реализация и исследование алгоритмов коллаборативной фильтрации",
                 maxParticipants: 1);
             topicIndividual.Approve(); // Approve for student selection
 
@@ -470,7 +470,7 @@ public static class DbSeeder
                 directionApproved.Id,
                 titleKz: "Дипломдық жұмыстарды басқару платформасын әзірлеу",
                 titleEn: "Academic Work Management Platform Development",
-                description: "Командный проект по разработке системы AWM",
+                descriptionRu: "Командный проект по разработке системы AWM",
                 maxParticipants: 3);
             topicTeam.Approve();
 

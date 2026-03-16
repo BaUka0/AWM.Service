@@ -30,10 +30,20 @@ public sealed class UpdateDirectionCommandValidator
             .WithMessage("English title cannot exceed 500 characters.")
             .When(x => !string.IsNullOrEmpty(x.TitleEn));
 
-        RuleFor(x => x.Description)
+        RuleFor(x => x.DescriptionRu)
             .MaximumLength(2000)
-            .WithMessage("Description cannot exceed 2000 characters.")
-            .When(x => !string.IsNullOrEmpty(x.Description));
+            .WithMessage("Russian description cannot exceed 2000 characters.")
+            .When(x => !string.IsNullOrEmpty(x.DescriptionRu));
+
+        RuleFor(x => x.DescriptionKz)
+            .MaximumLength(2000)
+            .WithMessage("Kazakh description cannot exceed 2000 characters.")
+            .When(x => !string.IsNullOrEmpty(x.DescriptionKz));
+
+        RuleFor(x => x.DescriptionEn)
+            .MaximumLength(2000)
+            .WithMessage("English description cannot exceed 2000 characters.")
+            .When(x => !string.IsNullOrEmpty(x.DescriptionEn));
 
     }
 }

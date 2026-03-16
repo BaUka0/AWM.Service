@@ -19,7 +19,9 @@ public class Topic : AggregateRoot<long>, IAuditable, ISoftDeletable
     public string TitleRu { get; private set; } = null!;
     public string? TitleEn { get; private set; }
     public string? TitleKz { get; private set; }
-    public string? Description { get; private set; }
+    public string? DescriptionRu { get; private set; }
+    public string? DescriptionKz { get; private set; }
+    public string? DescriptionEn { get; private set; }
 
     public int MaxParticipants { get; private set; }
     public bool IsSubmittedForApproval { get; private set; }
@@ -49,7 +51,9 @@ public class Topic : AggregateRoot<long>, IAuditable, ISoftDeletable
         long? directionId = null,
         string? titleKz = null,
         string? titleEn = null,
-        string? description = null,
+        string? descriptionRu = null,
+        string? descriptionKz = null,
+        string? descriptionEn = null,
         int maxParticipants = 1)
     {
         if (string.IsNullOrWhiteSpace(titleRu))
@@ -65,7 +69,9 @@ public class Topic : AggregateRoot<long>, IAuditable, ISoftDeletable
         TitleRu = titleRu;
         TitleKz = titleKz;
         TitleEn = titleEn;
-        Description = description;
+        DescriptionRu = descriptionRu;
+        DescriptionKz = descriptionKz;
+        DescriptionEn = descriptionEn;
         MaxParticipants = maxParticipants;
         IsSubmittedForApproval = false;
         IsApproved = false;
@@ -90,7 +96,13 @@ public class Topic : AggregateRoot<long>, IAuditable, ISoftDeletable
     /// <summary>
     /// Updates topic content.
     /// </summary>
-    public void UpdateContent(string titleRu, string? titleKz, string? titleEn, string? description)
+    public void UpdateContent(
+        string titleRu,
+        string? titleKz,
+        string? titleEn,
+        string? descriptionRu,
+        string? descriptionKz,
+        string? descriptionEn)
     {
         if (string.IsNullOrWhiteSpace(titleRu))
             throw new ArgumentException("Russian title is required.", nameof(titleRu));
@@ -98,7 +110,9 @@ public class Topic : AggregateRoot<long>, IAuditable, ISoftDeletable
         TitleRu = titleRu;
         TitleKz = titleKz;
         TitleEn = titleEn;
-        Description = description;
+        DescriptionRu = descriptionRu;
+        DescriptionKz = descriptionKz;
+        DescriptionEn = descriptionEn;
     }
 
     /// <summary>

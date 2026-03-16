@@ -232,7 +232,9 @@
 - TitleRu: string
 - TitleKz: string?
 - TitleEn: string?
-- Description: string?
+- DescriptionRu: string?
+- DescriptionKz: string?
+- DescriptionEn: string?
 
 ### CreateInstituteRequest
 
@@ -286,7 +288,9 @@
 - TitleRu: string
 - TitleKz: string?
 - TitleEn: string?
-- Description: string?
+- DescriptionRu: string?
+- DescriptionKz: string?
+- DescriptionEn: string?
 - MaxParticipants: int
 
 ### FinalizePreDefenseRequest
@@ -424,7 +428,9 @@
 - TitleRu: string
 - TitleKz: string?
 - TitleEn: string?
-- Description: string?
+- DescriptionRu: string?
+- DescriptionKz: string?
+- DescriptionEn: string?
 
 ### UpdateInstituteRequest
 
@@ -459,7 +465,9 @@
 - TitleRu: string
 - TitleKz: string?
 - TitleEn: string?
-- Description: string?
+- DescriptionRu: string?
+- DescriptionKz: string?
+- DescriptionEn: string?
 - MaxParticipants: int
 
 ### UploadAttachmentRequest
@@ -616,7 +624,9 @@
 - ReviewedBy: int?
 - CreatedAt: DateTime
 - IsDeleted: bool
-- Description: string?
+- DescriptionRu: string?
+- DescriptionKz: string?
+- DescriptionEn: string?
 - ReviewComment: string?
 - CreatedBy: int
 - LastModifiedAt: DateTime?
@@ -910,7 +920,9 @@
 - TitleRu: string
 - TitleEn: string?
 - TitleKz: string?
-- Description: string?
+- DescriptionRu: string?
+- DescriptionKz: string?
+- DescriptionEn: string?
 - MaxParticipants: int
 - AvailableSpots: int
 - IsApproved: bool

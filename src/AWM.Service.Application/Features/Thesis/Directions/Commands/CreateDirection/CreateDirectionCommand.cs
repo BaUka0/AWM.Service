@@ -44,7 +44,17 @@ public sealed record CreateDirectionCommand : IRequest<Result<long>>
     public string? TitleEn { get; init; }
 
     /// <summary>
-    /// Direction description (optional).
+    /// Direction description in Russian (optional).
     /// </summary>
-    public string? Description { get; init; }
+    public string? DescriptionRu { get; init; }
+
+    /// <summary>
+    /// Direction description in Kazakh (optional).
+    /// </summary>
+    public string? DescriptionKz { get; init; }
+
+    /// <summary>
+    /// Direction description in English (optional).
+    /// </summary>
+    public string? DescriptionEn { get; init; }
 }

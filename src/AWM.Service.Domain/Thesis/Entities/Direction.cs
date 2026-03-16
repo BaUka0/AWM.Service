@@ -19,7 +19,9 @@ public class Direction : AggregateRoot<long>, IAuditable, ISoftDeletable
     public string TitleRu { get; private set; } = null!;
     public string? TitleEn { get; private set; }
     public string? TitleKz { get; private set; }
-    public string? Description { get; private set; }
+    public string? DescriptionRu { get; private set; }
+    public string? DescriptionKz { get; private set; }
+    public string? DescriptionEn { get; private set; }
 
     public int CurrentStateId { get; private set; }
     public DateTime? SubmittedAt { get; private set; }
@@ -50,7 +52,9 @@ public class Direction : AggregateRoot<long>, IAuditable, ISoftDeletable
         int draftStateId,
         string? titleKz = null,
         string? titleEn = null,
-        string? description = null)
+        string? descriptionRu = null,
+        string? descriptionKz = null,
+        string? descriptionEn = null)
     {
         if (string.IsNullOrWhiteSpace(titleRu))
             throw new ArgumentException("Russian title is required.", nameof(titleRu));
@@ -62,7 +66,9 @@ public class Direction : AggregateRoot<long>, IAuditable, ISoftDeletable
         TitleRu = titleRu;
         TitleKz = titleKz;
         TitleEn = titleEn;
-        Description = description;
+        DescriptionRu = descriptionRu;
+        DescriptionKz = descriptionKz;
+        DescriptionEn = descriptionEn;
         CurrentStateId = draftStateId;
         CreatedAt = DateTime.UtcNow;
         CreatedBy = supervisorId;
@@ -84,7 +90,13 @@ public class Direction : AggregateRoot<long>, IAuditable, ISoftDeletable
     /// <summary>
     /// Updates direction content (only in draft state).
     /// </summary>
-    public void UpdateContent(string titleRu, string? titleKz, string? titleEn, string? description)
+    public void UpdateContent(
+        string titleRu,
+        string? titleKz,
+        string? titleEn,
+        string? descriptionRu,
+        string? descriptionKz,
+        string? descriptionEn)
     {
         if (string.IsNullOrWhiteSpace(titleRu))
             throw new ArgumentException("Russian title is required.", nameof(titleRu));
@@ -92,7 +104,9 @@ public class Direction : AggregateRoot<long>, IAuditable, ISoftDeletable
         TitleRu = titleRu;
         TitleKz = titleKz;
         TitleEn = titleEn;
-        Description = description;
+        DescriptionRu = descriptionRu;
+        DescriptionKz = descriptionKz;
+        DescriptionEn = descriptionEn;
     }
 
     /// <summary>

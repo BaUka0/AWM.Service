@@ -44,10 +44,10 @@
 
 The project follows **Clean Architecture** to ensure separation of concerns and testability:
 
-1.  **Domain**: Core entities, value objects, and business rules.
-2.  **Application**: Application logic, interfaces, DTOs, and command/query handlers.
-3.  **Infrastructure**: External concerns like Persistence (EF Core), Identity, and File Services.
-4.  **WebAPI**: Entry point, Controllers, Middleware, and API configuration.
+1. **Domain**: Core entities, value objects, and business rules.
+2. **Application**: Application logic, interfaces, DTOs, and command/query handlers.
+3. **Infrastructure**: External concerns like Persistence (EF Core), Identity, and File Services.
+4. **WebAPI**: Entry point, Controllers, Middleware, and API configuration.
 
 ## 🚀 Getting Started
 
@@ -60,23 +60,29 @@ The project follows **Clean Architecture** to ensure separation of concerns and 
 ### Installation & Run
 
 1. Clone the repository:
+
    ```bash
    git clone https://github.com/your-username/AWM.Service.git
    ```
+
 2. Navigate to the WebAPI directory:
+
    ```bash
    cd src/AWM.Service.WebAPI
    ```
+
 3. Update `appsettings.json` with your connection string.
 4. Run the application:
+
    ```bash
    dotnet run
    ```
+
 5. Open Swagger at: `https://localhost:[PORT]/swagger`
 
 ## 🛣️ API Documentation
 
-Detailed endpoint documentation can be found in our [Endpoint Table](endpoint_table.md).
+Detailed endpoint documentation can be found in our [API documentation](API_documentation.md).
 
 ### Main Controllers
 
