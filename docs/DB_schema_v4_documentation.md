@@ -167,7 +167,7 @@
 #### **`Directions` (Направления ДП/ДР) NEW v4**
 
 - **Назначение:** НР создает направления перед темами (Этап 3 воркфлоу).
-- Содержат описания на трёх языках (`TitleRu`, `TitleEn`, `TitleKz`).
+- Содержат описания на трёх языках (`TitleRu`, `TitleEn`, `TitleKz` и `DescriptionRu`, `DescriptionEn`, `DescriptionKz`).
 - Имеют workflow: Draft → Submitted → Approved/Rejected/RequiresRevision.
 - **Temporal Table:** Все изменения автоматически фиксируются в `DirectionsHistory`.
 - **Связи:**
@@ -179,7 +179,7 @@
 #### **`Topics` (Банк тем) MODIFIED v4**
 
 - Темы, предлагаемые преподавателями.
-- Содержат описания на трёх языках (`TitleRu`, `TitleEn`, `TitleKz`).
+- Содержат описания на трёх языках (`TitleRu`, `TitleEn`, `TitleKz` и `DescriptionRu`, `DescriptionEn`, `DescriptionKz`).
 - **NEW v4:** Привязка к направлению (`DirectionId`).
 - **NEW v4:** Поддержка командных работ (`MaxParticipants` от 1 до 5).
 - Имеют флаг `IsApproved` (прошли ли валидацию на кафедре).
@@ -444,7 +444,7 @@ INNER JOIN [Thesis].[Directions] d ON
 -- 1. НР создает направление
 INSERT INTO [Thesis].[Directions] 
     ([DepartmentId], [SupervisorId], [AcademicYearId], [WorkTypeId],
-     [TitleRu], [TitleKz], [Description], [CurrentStateId])
+     [TitleRu], [TitleKz], [DescriptionRu], [CurrentStateId])
 VALUES 
     (1, 10, 1, 2, 
      'Искусственный интеллект в образовании',

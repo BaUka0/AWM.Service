@@ -322,7 +322,9 @@ Table Thesis.Directions {
   TitleRu nvarchar(500) [not null]
   TitleEn nvarchar(500)
   TitleKz nvarchar(500)
-  Description nvarchar(max)
+  DescriptionRu nvarchar(max)
+  DescriptionKz nvarchar(max)
+  DescriptionEn nvarchar(max)
   CurrentStateId int [not null, ref: > Wf.States.Id]
   SubmittedAt datetime2
   ReviewedAt datetime2
@@ -349,7 +351,9 @@ Table Thesis.Topics {
   TitleRu nvarchar(500) [not null]
   TitleEn nvarchar(500)
   TitleKz nvarchar(500)
-  Description nvarchar(max)
+  DescriptionRu nvarchar(max)
+  DescriptionKz nvarchar(max)
+  DescriptionEn nvarchar(max)
   MaxParticipants int [default: 1]
   IsApproved bit [default: 0]
   IsClosed bit [default: 0]

@@ -271,7 +271,9 @@ CREATE TABLE [Thesis].[Directions] (
     [TitleRu] NVARCHAR(500) NOT NULL,
     [TitleEn] NVARCHAR(500),
     [TitleKz] NVARCHAR(500),
-    [Description] NVARCHAR(MAX),
+    [DescriptionRu] NVARCHAR(MAX),
+    [DescriptionKz] NVARCHAR(MAX),
+    [DescriptionEn] NVARCHAR(MAX),
     
     [CurrentStateId] INT NOT NULL, -- DirectionDraft, DirectionSubmitted, DirectionApproved, etc.
     [SubmittedAt] DATETIME2,
@@ -303,7 +305,9 @@ CREATE TABLE [Thesis].[Topics] (
     [TitleRu] NVARCHAR(500) NOT NULL,
     [TitleEn] NVARCHAR(500),
     [TitleKz] NVARCHAR(500), -- NEW v4
-    [Description] NVARCHAR(MAX),
+    [DescriptionRu] NVARCHAR(MAX),
+    [DescriptionKz] NVARCHAR(MAX),
+    [DescriptionEn] NVARCHAR(MAX),
     [MaxParticipants] INT DEFAULT 1, -- NEW v4: 1-5 participants
     [IsApproved] BIT DEFAULT 0,
     
