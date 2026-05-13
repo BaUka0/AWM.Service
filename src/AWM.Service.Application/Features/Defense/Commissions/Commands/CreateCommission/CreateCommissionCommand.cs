@@ -32,4 +32,11 @@ public sealed record CreateCommissionCommand : IRequest<Result<int>>
     /// Pre-defense round number (1, 2, or 3). Required for PreDefense type, null for GAK.
     /// </summary>
     public int? PreDefenseNumber { get; init; }
+
+    /// <summary>
+    /// Initial members to add to the commission.
+    /// </summary>
+    public IReadOnlyList<CreateCommissionMemberCommand> Members { get; init; } = new List<CreateCommissionMemberCommand>();
 }
+
+public record CreateCommissionMemberCommand(int UserId, RoleInCommission Role);
