@@ -93,4 +93,62 @@ public sealed class DegreeLevelsController : BaseController
             new { name = request.Name },
             result.Value);
     }
+
+    /// <summary>
+    /// Update an existing degree level.
+    /// </summary>
+    /// <param name="id">Degree level ID.</param>
+    /// <param name="request">Updated degree level data.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>No content on success.</returns>
+    [HttpPut("{id}")]
+    [RequirePermission(Permission.DegreeLevels_Create)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> UpdateDegreeLevel(
+        [FromRoute] int id,
+        [FromBody] UpdateDegreeLevelRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var command = request.Adapt<AWM.Service.Application.Features.Edu.DegreeLevels.Commands.UpdateDegreeLevel.UpdateDegreeLevelCommand>() with { Id = id };
+
+        var result = await _sender.Send(command, cancellationToken);
+
+        if (result.IsFailed)
+        {
+            return HandleResultError(result.Error);
+        }
+
+        return NoContent();
+    }
+
+    /// <summary>
+    /// Soft delete a degree level.
+    /// </summary>
+    /// <param name="id">Degree level ID.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>No content on success.</returns>
+    [HttpDelete("{id}")]
+    [RequirePermission(Permission.DegreeLevels_Create)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> DeleteDegreeLevel(
+        [FromRoute] int id,
+        CancellationToken cancellationToken = default)
+    {
+        var command = new AWM.Service.Application.Features.Edu.DegreeLevels.Commands.DeleteDegreeLevel.DeleteDegreeLevelCommand { Id = id };
+
+        var result = await _sender.Send(command, cancellationToken);
+
+        if (result.IsFailed)
+        {
+            return HandleResultError(result.Error);
+        }
+
+        return NoContent();
+    }
 }

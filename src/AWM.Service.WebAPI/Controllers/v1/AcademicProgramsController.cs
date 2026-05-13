@@ -131,4 +131,32 @@ public sealed class AcademicProgramsController : BaseController
 
         return NoContent();
     }
+
+    /// <summary>
+    /// Soft delete an academic program.
+    /// </summary>
+    /// <param name="id">Academic program ID.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>No content on success.</returns>
+    [HttpDelete("{id}")]
+    [RequirePermission(Permission.AcademicPrograms_Edit)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> DeleteAcademicProgram(
+        [FromRoute] int id,
+        CancellationToken cancellationToken = default)
+    {
+        var command = new AWM.Service.Application.Features.Edu.AcademicPrograms.Commands.DeleteAcademicProgram.DeleteAcademicProgramCommand { Id = id };
+
+        var result = await _sender.Send(command, cancellationToken);
+
+        if (result.IsFailed)
+        {
+            return HandleResultError(result.Error);
+        }
+
+        return NoContent();
+    }
 }

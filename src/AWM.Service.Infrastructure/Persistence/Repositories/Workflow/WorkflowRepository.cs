@@ -45,6 +45,21 @@ public sealed class WorkflowRepository : IWorkflowRepository
             .ToListAsync(cancellationToken);
     }
 
+    /// <inheritdoc />
+    public async Task AddWorkTypeAsync(WorkType workType, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(workType);
+        await _context.WorkTypes.AddAsync(workType, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public Task UpdateWorkTypeAsync(WorkType workType, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(workType);
+        _context.WorkTypes.Update(workType);
+        return Task.CompletedTask;
+    }
+
     #endregion
 
     #region State

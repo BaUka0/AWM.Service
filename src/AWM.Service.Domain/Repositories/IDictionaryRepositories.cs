@@ -69,6 +69,7 @@ public interface IDegreeLevelRepository
     Task<IReadOnlyList<DegreeLevel>> GetAllAsync(CancellationToken cancellationToken = default);
 
     Task AddAsync(DegreeLevel degreeLevel, CancellationToken cancellationToken = default);
+    Task UpdateAsync(DegreeLevel degreeLevel, CancellationToken cancellationToken = default);
 }
 
 /// <summary>

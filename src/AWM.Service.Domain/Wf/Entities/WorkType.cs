@@ -39,6 +39,21 @@ public class WorkType : Entity<int>, IAuditable, ISoftDeletable
     }
 
     /// <summary>
+    /// Updates the work type.
+    /// </summary>
+    public void Update(string name, int? degreeLevelId, int modifiedBy)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            throw new ArgumentException("Work type name is required.", nameof(name));
+
+        Name = name;
+        DegreeLevelId = degreeLevelId;
+        
+        LastModifiedAt = DateTime.UtcNow;
+        LastModifiedBy = modifiedBy;
+    }
+
+    /// <summary>
     /// Soft deletes the work type.
     /// </summary>
     public void Delete(int deletedBy)
