@@ -60,6 +60,16 @@ public sealed record TopicResponse
     public string? TitleKz { get; init; }
 
     /// <summary>
+    /// Unified localized title object.
+    /// </summary>
+    public AWM.Service.WebAPI.Common.Contracts.Responses.Common.LocalizedTextResponse Title => new() 
+    { 
+        Ru = TitleRu, 
+        Kk = TitleKz, 
+        En = TitleEn 
+    };
+
+    /// <summary>
     /// Maximum number of participants.
     /// </summary>
     /// <example>1</example>

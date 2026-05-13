@@ -43,5 +43,15 @@ public enum RoleType
     /// <summary>
     /// Vice-Rector for Academic Affairs - has access to all statistics.
     /// </summary>
-    ViceRector
+    ViceRector,
+
+    /// <summary>
+    /// Reviewer role - evaluates student works.
+    /// </summary>
+    Reviewer,
+
+    /// <summary>
+    /// Chairman role - heads the commission.
+    /// </summary>
+    Chairman
 }

@@ -42,8 +42,21 @@ public class GlobalExceptionHandler : IExceptionHandler
             Status = statusCode,
             Title = title,
             Detail = detail,
-            Instance = httpContext.Request.Path
+            Instance = httpContext.Request.Path,
+            Extensions = 
+            {
+                ["traceId"] = httpContext.TraceIdentifier,
+                ["code"] = statusCode == StatusCodes.Status400BadRequest ? "ValidationError" : "InternalError"
+            }
         };
+
+        if (exception is ValidationException ve)
+        {
+            problemDetails.Extensions["validationErrors"] = ve.Errors.Select(e => new { 
+                field = e.PropertyName, 
+                message = e.ErrorMessage 
+            });
+        }
 
         await httpContext.Response.WriteAsJsonAsync(problemDetails, cancellationToken);
 

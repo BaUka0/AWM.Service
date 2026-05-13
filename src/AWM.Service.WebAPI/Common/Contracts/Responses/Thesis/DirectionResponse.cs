@@ -15,6 +15,13 @@ public record DirectionResponse
     public string? TitleKz { get; init; }
     public string? TitleEn { get; init; }
 
+    public AWM.Service.WebAPI.Common.Contracts.Responses.Common.LocalizedTextResponse Title => new() 
+    { 
+        Ru = TitleRu, 
+        Kk = TitleKz, 
+        En = TitleEn 
+    };
+
     public int CurrentStateId { get; init; }
     public DateTime? SubmittedAt { get; init; }
     public DateTime? ReviewedAt { get; init; }
