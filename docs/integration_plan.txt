@@ -1,0 +1,77 @@
+# Дорожная карта интеграции AWM.Service + AWMService.Frontend
+
+## Цель
+Интегрировать backend `AWM.Service` и frontend `AWMService.Frontend` не одним большим рефакторингом, а последовательными вертикальными срезами: от инфраструктуры и авторизации до дипломного workflow, проверок, предзащиты, защиты и административных справочников.
+
+Полный рабочий план с детальными этапами сохранен в `AWM.Service/docs/modular_integration_plan.txt`.
+
+## Проекты в scope
+- Backend: `AWM.Service`
+- Frontend: `AWMService.Frontend`
+- Активные frontend-приложения: `apps/student`, `apps/universal`, `apps/department`, `apps/admin`
+- `apps/legacy` не интегрируется в первом проходе; использовать только как справочный материал при необходимости.
+
+## Основные принципы
+1. Contract first: перед подключением страницы фиксировать JSON contract и fallback для старых полей.
+2. No fake state: убирать `mock`, `initialData`, `localStorage`, `Math.random`, `alert` из активных приложений по мере подключения API.
+3. UI-friendly DTO: если UI показывает имя, статус, название или счетчик, backend должен возвращать это в response, а не заставлять frontend делать N+1 запросы.
+4. Context first: все приложения стартуют с `GET /api/v1/Users/me` и используют роли, `departmentId`, `studentId`, `staffId`, `currentAcademicYearId` из backend.
+5. Вертикальные срезы: не переходить к следующему workflow-этапу, пока текущий не работает от базы данных до браузера.
+
+## Краткие фазы
+
+### Фаза 1. Инфраструктурный мост
+- Разрешить CORS для активных Vite ports `3001-3004`.
+- Добавить `VITE_API_BASE_URL`.
+- Создать общий API client в `@awm/shared`.
+- Добавить auth storage, interceptors, refresh-token flow, React Query provider.
+- Нормализовать ошибки backend до стабильного `ProblemDetails + code`.
+- Согласовать локализацию `{ ru, kk, en }`.
+
+### Фаза 2. Авторизация и роли
+- Подключить реальный login/refresh.
+- Заменить fake `RoleContext` на backend-driven `AuthProvider`.
+- Согласовать frontend роли с backend `RoleType`.
+- Зафиксировать, что `Reviewer` либо становится отдельной backend ролью, либо явно моделируется через staff assignment.
+
+### Фаза 3. Административная и организационная база
+- Подключить admin users/roles к backend.
+- Подключить institutes, departments, degree levels, academic programs, work types.
+- Подключить staff/supervisors и workload.
+- Подключить initial/defense periods.
+
+### Фаза 4. Темы, направления и заявки
+- Подключить directions supervisor/department flows.
+- Обогатить topics DTO.
+- Подключить выбор темы студентом.
+- Подключить заявки, accept/reject, withdrawal.
+- Подключить кафедральную координацию и финализацию тем.
+
+### Фаза 5. Работа студента и файлы
+- Добавить агрегированный progress endpoint для студентской работы.
+- Подключить `works/my`, `works/my-progress`.
+- Подключить attachments upload/download/delete.
+- Заменить статичные timeline/materials на backend данные.
+
+### Фаза 6. Проверки и отзывы
+- Подключить нормоконтроль, software check, антиплагиат.
+- Подключить expert assignment и pending checks.
+- Подключить supervisor review и external reviewer flow.
+- Убрать фиктивные проценты, статусы и локальные замечания.
+
+### Фаза 7. Комиссии, предзащита и защита
+- Подключить commissions CRUD и members.
+- Подключить pre-defense schedule, attempts, attendance, grades, protocols.
+- Подключить final defense schedule, criteria, grades, finalization, protocol generation/download.
+- Подключить secretary/chairman/commission member role flows.
+
+### Фаза 8. Уведомления и стабилизация
+- Подключить notifications во всех активных apps.
+- Убрать оставшиеся mocks.
+- Запустить backend/frontend build и smoke tests по ключевым сценариям.
+
+## Минимальная проверка готовности
+- `dotnet build AWM.Service/AWM.Service.slnx`
+- `pnpm --dir AWMService.Frontend build`
+- `pnpm --dir AWMService.Frontend lint`
+- Smoke: login, `/Users/me`, topic selection, application accept/reject, coordination finalize, upload/download, quality check, pre-defense, defense grading, notifications read.
