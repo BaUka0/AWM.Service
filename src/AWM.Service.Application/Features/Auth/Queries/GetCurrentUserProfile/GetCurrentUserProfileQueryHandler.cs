@@ -128,6 +128,7 @@ public sealed class GetCurrentUserProfileQueryHandler
         var profile = new UserProfileDto
         {
             UserId = user.Id,
+            UniversityId = user.UniversityId,
             Login = user.Login,
             Email = user.Email,
             Roles = roles,
