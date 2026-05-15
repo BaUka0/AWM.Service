@@ -3,6 +3,7 @@ namespace AWM.Service.WebAPI.Controllers.v1;
 using AWM.Service.Application.Features.Defense.Commissions.Commands.AddCommissionMember;
 using AWM.Service.Application.Features.Defense.Commissions.Commands.CreateCommission;
 using AWM.Service.Application.Features.Defense.Commissions.Commands.RemoveCommissionMember;
+using AWM.Service.Application.Features.Defense.Commissions.Commands.DeleteCommission;
 using AWM.Service.Application.Features.Defense.Commissions.Commands.UpdateCommission;
 using AWM.Service.Application.Features.Defense.Commissions.DTOs;
 using AWM.Service.Application.Features.Defense.Commissions.Queries.GetCommissionById;
@@ -175,6 +176,27 @@ public class CommissionsController : BaseController
             MemberId = memberId
         };
 
+        var result = await _sender.Send(command);
+
+        if (result.IsFailed)
+            return HandleResultError(result.Error);
+
+        return NoContent();
+    }
+
+    /// <summary>
+    /// Delete a commission.
+    /// </summary>
+    /// <param name="id">Commission ID</param>
+    /// <returns>No content on success</returns>
+    [HttpDelete("{id:int}")]
+    [RequireDepartmentPermission(Permission.Commissions_Manage)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var command = new DeleteCommissionCommand { CommissionId = id };
         var result = await _sender.Send(command);
 
         if (result.IsFailed)

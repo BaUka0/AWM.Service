@@ -2,6 +2,7 @@ namespace AWM.Service.Application.Features.Thesis.Directions.Commands.UpdateDire
 
 using AWM.Service.Domain.Common;
 using AWM.Service.Domain.Repositories;
+using AWM.Service.Domain.Wf.Entities;
 using KDS.Primitives.FluentResult;
 using MediatR;
 using Microsoft.Extensions.Logging;
@@ -60,9 +61,11 @@ public sealed class UpdateDirectionCommandHandler
                 $"Direction with ID {request.Id} has been deleted."));
         }
 
-        // Verify direction is in draft state (only draft directions can be edited)
+        // Verify direction is in a supervisor-editable state.
         var draftState = await _workflowRepository
-            .GetStateBySystemNameAsync(direction.WorkTypeId, "Draft", cancellationToken);
+            .GetStateBySystemNameAsync(direction.WorkTypeId, DirectionStates.Draft, cancellationToken);
+        var revisionState = await _workflowRepository
+            .GetStateBySystemNameAsync(direction.WorkTypeId, DirectionStates.RequiresRevision, cancellationToken);
 
         if (draftState is null)
         {
@@ -72,13 +75,13 @@ public sealed class UpdateDirectionCommandHandler
                 "Draft state not found for this work type."));
         }
 
-        if (direction.CurrentStateId != draftState.Id)
+        if (direction.CurrentStateId != draftState.Id && direction.CurrentStateId != revisionState?.Id)
         {
-            _logger.LogWarning("UpdateDirection failed: Direction ID={DirectionId} is in state {StateId}, not Draft.",
+            _logger.LogWarning("UpdateDirection failed: Direction ID={DirectionId} is in state {StateId}, not Draft/Revision.",
                 request.Id, direction.CurrentStateId);
             return Result.Failure(new Error(
                 "409",
-                "Only draft directions can be edited. Current state does not allow modifications."));
+                "Only draft or revision directions can be edited. Current state does not allow modifications."));
         }
 
         if (!userId.HasValue)

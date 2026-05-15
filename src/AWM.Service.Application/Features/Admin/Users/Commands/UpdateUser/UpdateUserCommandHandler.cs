@@ -1,0 +1,79 @@
+namespace AWM.Service.Application.Features.Admin.Users.Commands.UpdateUser;
+
+using AWM.Service.Domain.Common;
+using AWM.Service.Domain.Repositories;
+using KDS.Primitives.FluentResult;
+using MediatR;
+
+/// <summary>
+/// Handler for UpdateUserCommand.
+/// Updates user email and manages role assignments (revokes old ones, adds new one).
+/// </summary>
+public sealed class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand, Result>
+{
+    private readonly IUserRepository _userRepository;
+    private readonly IRoleRepository _roleRepository;
+    private readonly ICurrentUserProvider _currentUserProvider;
+    private readonly IUnitOfWork _unitOfWork;
+
+    public UpdateUserCommandHandler(
+        IUserRepository userRepository,
+        IRoleRepository roleRepository,
+        ICurrentUserProvider currentUserProvider,
+        IUnitOfWork unitOfWork)
+    {
+        _userRepository = userRepository;
+        _roleRepository = roleRepository;
+        _currentUserProvider = currentUserProvider;
+        _unitOfWork = unitOfWork;
+    }
+
+    public async Task<Result> Handle(UpdateUserCommand request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            // 1. Load user with assignments
+            var user = await _userRepository.GetWithRoleAssignmentsAsync(request.UserId, cancellationToken);
+            if (user is null)
+                return Result.Failure(new Error("NotFound.User", "Пользователь не найден."));
+
+            // 2. Update email
+            user.UpdateEmail(request.Email);
+
+            // 3. Update role assignment
+            // For simplicity in this admin tool, we revoke current valid assignments and add the new one
+            var adminId = _currentUserProvider.UserId ?? 0;
+            
+            var validAssignments = user.RoleAssignments.Where(ra => ra.IsCurrentlyValid()).ToList();
+            foreach (var assignment in validAssignments)
+            {
+                assignment.Revoke(adminId);
+            }
+
+            // 4. Validate and assign new role
+            var role = await _roleRepository.GetByIdAsync(request.RoleId, cancellationToken);
+            if (role is null)
+                return Result.Failure(new Error("NotFound.Role", "Указанная роль не найдена."));
+
+            user.AssignRole(
+                roleId: request.RoleId,
+                departmentId: request.DepartmentId,
+                instituteId: request.InstituteId,
+                assignedBy: adminId);
+
+            // 5. Persist
+            await _userRepository.UpdateAsync(user, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            return Result.Success();
+        }
+        catch (ArgumentException argEx)
+        {
+            return Result.Failure(new Error("400", argEx.Message));
+        }
+        catch (Exception ex)
+        {
+            return Result.Failure(new Error("500", $"Ошибка при обновлении пользователя: {ex.Message}"));
+        }
+    }
+}

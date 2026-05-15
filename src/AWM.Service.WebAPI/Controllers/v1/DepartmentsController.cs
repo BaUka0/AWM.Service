@@ -29,6 +29,37 @@ public sealed class DepartmentsController : BaseController
     }
 
     /// <summary>
+    /// Get all departments for a specific university.
+    /// </summary>
+    /// <param name="universityId">University ID</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>List of departments</returns>
+    [HttpGet]
+    [Route("~/api/v{version:apiVersion}/departments")]
+    [RequirePermission(Permission.Departments_View)]
+    [ProducesResponseType(typeof(IReadOnlyList<DepartmentResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> GetAll([FromQuery] int universityId, CancellationToken cancellationToken = default)
+    {
+        var query = new Application.Features.Org.Departments.Queries.GetAllDepartments.GetAllDepartmentsQuery
+        {
+            UniversityId = universityId
+        };
+
+        var result = await _sender.Send(query, cancellationToken);
+
+        if (result.IsFailed)
+        {
+            return HandleResultError(result.Error);
+        }
+
+        var response = result.Value.Adapt<IReadOnlyList<DepartmentResponse>>();
+
+        return Ok(response);
+    }
+
+    /// <summary>
     /// Get all departments for a specific institute.
     /// </summary>
     /// <param name="instituteId">Institute ID</param>

@@ -5,6 +5,7 @@ using AWM.Service.Domain.CommonDomain.Enums;
 using AWM.Service.Domain.CommonDomain.Services;
 using AWM.Service.Domain.Repositories;
 using AWM.Service.Domain.Thesis.Entities;
+using AWM.Service.Domain.Wf.Entities;
 using KDS.Primitives.FluentResult;
 using MediatR;
 using Microsoft.Extensions.Logging;
@@ -95,7 +96,7 @@ public sealed class CreateDirectionCommandHandler
 
         // Get initial "Draft" state for this work type
         var draftState = await _workflowRepository
-            .GetStateBySystemNameAsync(request.WorkTypeId, "Draft", cancellationToken);
+            .GetStateBySystemNameAsync(request.WorkTypeId, DirectionStates.Draft, cancellationToken);
 
         if (draftState is null)
         {

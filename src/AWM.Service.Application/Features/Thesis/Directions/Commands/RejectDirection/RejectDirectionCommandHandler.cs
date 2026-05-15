@@ -2,6 +2,7 @@ namespace AWM.Service.Application.Features.Thesis.Directions.Commands.RejectDire
 
 using AWM.Service.Domain.Common;
 using AWM.Service.Domain.Repositories;
+using AWM.Service.Domain.Wf.Entities;
 using KDS.Primitives.FluentResult;
 using MediatR;
 using Microsoft.Extensions.Logging;
@@ -62,7 +63,7 @@ public sealed class RejectDirectionCommandHandler
 
         // Get Submitted state to verify current state
         var submittedState = await _workflowRepository
-            .GetStateBySystemNameAsync(direction.WorkTypeId, "Submitted", cancellationToken);
+            .GetStateBySystemNameAsync(direction.WorkTypeId, DirectionStates.Submitted, cancellationToken);
 
         if (submittedState is null)
         {
@@ -84,7 +85,7 @@ public sealed class RejectDirectionCommandHandler
 
         // Get Rejected state
         var rejectedState = await _workflowRepository
-            .GetStateBySystemNameAsync(direction.WorkTypeId, "Rejected", cancellationToken);
+            .GetStateBySystemNameAsync(direction.WorkTypeId, DirectionStates.Rejected, cancellationToken);
 
         if (rejectedState is null)
         {

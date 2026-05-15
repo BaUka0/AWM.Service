@@ -1,0 +1,937 @@
+version=1
+
+# This file caches language service data to improve the performance of C# Dev Kit.
+# It is not intended for manual editing. It can safely be deleted and will be
+# regenerated automatically. For more information, see https://aka.ms/lscache
+#
+# To control where cache files are stored, use the following VS Code setting:
+#   "dotnet.projectsystem.cacheInProjectFolder": true
+
+[project]
+language=C#
+primary
+lastDtbSucceeded
+
+[properties]
+AssemblyName=AWM.Service.Application
+CommandLineArgsForDesignTimeEvaluation=-langversion:12.0 -define:TRACE
+CompilerGeneratedFilesOutputPath=
+MaxSupportedLangVersion=12.0
+ProjectAssetsFile=<PATH>obj/project.assets.json
+RootNamespace=AWM.Service.Application
+RunAnalyzers=
+RunAnalyzersDuringLiveAnalysis=
+SolutionPath=*Undefined*
+TargetFrameworkIdentifier=.NETCoreApp
+TargetPath=<PATH>bin/Debug/net8.0/AWM.Service.Application.dll
+TargetRefPath=<PATH>obj/Debug/net8.0/ref/AWM.Service.Application.dll
+TemporaryDependencyNodeTargetIdentifier=net8.0
+
+[commandLineArguments]
+/noconfig
+/unsafe-
+/checked-
+/nowarn:1701,1702,1701,1702
+/fullpaths
+/nostdlib+
+/errorreport:prompt
+/warn:8
+/define:TRACE;DEBUG;NET;NET8_0;NETCOREAPP;NET5_0_OR_GREATER;NET6_0_OR_GREATER;NET7_0_OR_GREATER;NET8_0_OR_GREATER;NETCOREAPP1_0_OR_GREATER;NETCOREAPP1_1_OR_GREATER;NETCOREAPP2_0_OR_GREATER;NETCOREAPP2_1_OR_GREATER;NETCOREAPP2_2_OR_GREATER;NETCOREAPP3_0_OR_GREATER;NETCOREAPP3_1_OR_GREATER
+/highentropyva+
+/nullable:enable
+/debug+
+/debug:portable
+/filealign:512
+/optimize-
+/out:obj\Debug\net8.0\AWM.Service.Application.dll
+/refout:obj\Debug\net8.0\refint\AWM.Service.Application.dll
+/target:library
+/warnaserror-
+/utf8output
+/deterministic+
+/langversion:12.0
+/warnaserror+:NU1605,SYSLIB0011
+
+[sourceFiles]
+Authorization/
+ PermissionService.cs
+ UserContext.cs
+Common/Behaviors/
+ LoggingBehavior.cs
+ PerformanceBehavior.cs
+ ValidationBehavior.cs
+Common/Services/
+ NotificationService.cs
+ PeriodValidationService.cs
+ WorkflowService.cs
+DependencyInjection.cs
+Features/Admin/Roles/
+ DTOs/AdminRoleDto.cs
+ Queries/GetAllRoles/
+  GetAllRolesQuery.cs
+  GetAllRolesQueryHandler.cs
+Features/Admin/Users/Commands/CreateUser/
+ CreateUserCommand.cs
+ CreateUserCommandHandler.cs
+ CreateUserCommandValidator.cs
+Features/Admin/Users/Commands/ToggleUserStatus/
+ ToggleUserStatusCommand.cs
+ ToggleUserStatusCommandHandler.cs
+Features/Admin/Users/Commands/UpdateUser/
+ UpdateUserCommand.cs
+ UpdateUserCommandHandler.cs
+ UpdateUserCommandValidator.cs
+Features/Admin/Users/
+ DTOs/AdminUserDto.cs
+ Queries/GetAllUsers/
+  GetAllUsersQuery.cs
+  GetAllUsersQueryHandler.cs
+ Queries/GetUserById/
+  GetUserByIdQuery.cs
+  GetUserByIdQueryHandler.cs
+Features/Auth/Commands/Login/
+ LoginCommand.cs
+ LoginCommandHandler.cs
+ LoginCommandValidator.cs
+Features/Auth/Commands/RefreshToken/
+ RefreshTokenCommand.cs
+ RefreshTokenCommandHandler.cs
+ RefreshTokenCommandValidator.cs
+Features/Auth/Commands/Register/
+ RegisterUserCommand.cs
+ RegisterUserCommandHandler.cs
+ RegisterUserCommandValidator.cs
+Features/Auth/DTOs/
+ AuthResult.cs
+ UserProfileDto.cs
+Features/Auth/Queries/GetCurrentUserProfile/
+ GetCurrentUserProfileQuery.cs
+ GetCurrentUserProfileQueryHandler.cs
+Features/Common/Notifications/Commands/MarkAllAsRead/
+ MarkAllAsReadCommand.cs
+ MarkAllAsReadCommandHandler.cs
+Features/Common/Notifications/Commands/MarkAsRead/
+ MarkAsReadCommand.cs
+ MarkAsReadCommandHandler.cs
+Features/Common/Notifications/Commands/SendReadinessReminders/
+ SendReadinessRemindersCommand.cs
+ SendReadinessRemindersCommandHandler.cs
+Features/Common/Notifications/
+ DTOs/NotificationDto.cs
+ Queries/GetMyNotifications/
+  GetMyNotificationsQuery.cs
+  GetMyNotificationsQueryHandler.cs
+Features/Common/Periods/Commands/ApproveDefensePeriods/
+ ApproveDefensePeriodsCommand.cs
+ ApproveDefensePeriodsCommandHandler.cs
+Features/Common/Periods/Commands/ApproveInitialPeriods/
+ ApproveInitialPeriodsCommand.cs
+ ApproveInitialPeriodsCommandHandler.cs
+ ApproveInitialPeriodsCommandValidator.cs
+Features/Common/Periods/Commands/CreatePeriod/
+ CreatePeriodCommand.cs
+ CreatePeriodCommandHandler.cs
+ CreatePeriodCommandValidator.cs
+Features/Common/Periods/Commands/UpdatePeriod/
+ UpdatePeriodCommand.cs
+ UpdatePeriodCommandHandler.cs
+ UpdatePeriodCommandValidator.cs
+Features/Common/Periods/
+ DTOs/PeriodDto.cs
+ Queries/GetActivePeriod/
+  GetActivePeriodQuery.cs
+  GetActivePeriodQueryHandler.cs
+ Queries/GetPeriodsByDepartment/
+  GetPeriodsByDepartmentQuery.cs
+  GetPeriodsByDepartmentQueryHandler.cs
+Features/Defense/Commissions/Commands/AddCommissionMember/
+ AddCommissionMemberCommand.cs
+ AddCommissionMemberCommandHandler.cs
+ AddCommissionMemberCommandValidator.cs
+Features/Defense/Commissions/Commands/CreateCommission/
+ CreateCommissionCommand.cs
+ CreateCommissionCommandHandler.cs
+ CreateCommissionCommandValidator.cs
+Features/Defense/Commissions/Commands/DeleteCommission/
+ DeleteCommissionCommand.cs
+ DeleteCommissionCommandHandler.cs
+Features/Defense/Commissions/Commands/RemoveCommissionMember/
+ RemoveCommissionMemberCommand.cs
+ RemoveCommissionMemberCommandHandler.cs
+ RemoveCommissionMemberCommandValidator.cs
+Features/Defense/Commissions/Commands/UpdateCommission/
+ UpdateCommissionCommand.cs
+ UpdateCommissionCommandHandler.cs
+ UpdateCommissionCommandValidator.cs
+Features/Defense/Commissions/DTOs/
+ CommissionDetailDto.cs
+ CommissionDto.cs
+ CommissionMemberDto.cs
+Features/Defense/Commissions/Queries/GetCommissionById/
+ GetCommissionByIdQuery.cs
+ GetCommissionByIdQueryHandler.cs
+Features/Defense/Commissions/Queries/GetCommissionsByDepartment/
+ GetCommissionsByDepartmentQuery.cs
+ GetCommissionsByDepartmentQueryHandler.cs
+Features/Defense/Evaluation/Commands/FinalizeDefense/
+ FinalizeDefenseCommand.cs
+ FinalizeDefenseCommandHandler.cs
+ FinalizeDefenseCommandValidator.cs
+Features/Defense/Evaluation/Commands/GenerateDefenseSlots/
+ GenerateDefenseSlotsCommand.cs
+ GenerateDefenseSlotsCommandHandler.cs
+Features/Defense/Evaluation/Commands/GenerateProtocol/
+ GenerateProtocolCommand.cs
+ GenerateProtocolCommandHandler.cs
+ GenerateProtocolCommandValidator.cs
+Features/Defense/Evaluation/Commands/SubmitGrade/
+ SubmitGradeCommand.cs
+ SubmitGradeCommandHandler.cs
+ SubmitGradeCommandValidator.cs
+Features/Defense/Evaluation/DTOs/
+ EvaluationCriteriaDto.cs
+ GradeDto.cs
+ ProtocolDto.cs
+Features/Defense/Evaluation/Queries/GetEvaluationCriteria/
+ GetEvaluationCriteriaQuery.cs
+ GetEvaluationCriteriaQueryHandler.cs
+Features/Defense/Evaluation/Queries/GetGradesByWork/
+ GetGradesByWorkQuery.cs
+ GetGradesByWorkQueryHandler.cs
+Features/Defense/Evaluation/Queries/GetProtocol/
+ GetProtocolQuery.cs
+ GetProtocolQueryHandler.cs
+Features/Defense/PreDefense/Commands/DistributeStudentsToCommissions/
+ DistributeStudentsToCommissionsCommand.cs
+ DistributeStudentsToCommissionsCommandHandler.cs
+Features/Defense/PreDefense/Commands/FinalizePreDefense/
+ FinalizePreDefenseCommand.cs
+ FinalizePreDefenseCommandHandler.cs
+ FinalizePreDefenseCommandValidator.cs
+Features/Defense/PreDefense/Commands/GeneratePreDefenseProtocol/
+ GeneratePreDefenseProtocolCommand.cs
+ GeneratePreDefenseProtocolCommandHandler.cs
+Features/Defense/PreDefense/Commands/GeneratePreDefenseSlots/
+ GeneratePreDefenseSlotsCommand.cs
+ GeneratePreDefenseSlotsCommandHandler.cs
+Features/Defense/PreDefense/Commands/RecordAttendance/
+ RecordAttendanceCommand.cs
+ RecordAttendanceCommandHandler.cs
+ RecordAttendanceCommandValidator.cs
+Features/Defense/PreDefense/Commands/SchedulePreDefense/
+ SchedulePreDefenseCommand.cs
+ SchedulePreDefenseCommandHandler.cs
+ SchedulePreDefenseCommandValidator.cs
+Features/Defense/PreDefense/Commands/StartReconciliation/
+ StartReconciliationCommand.cs
+ StartReconciliationCommandHandler.cs
+Features/Defense/PreDefense/Commands/SubmitPreDefenseGrade/
+ SubmitPreDefenseGradeCommand.cs
+ SubmitPreDefenseGradeCommandHandler.cs
+ SubmitPreDefenseGradeCommandValidator.cs
+Features/Defense/PreDefense/DTOs/
+ PreDefenseAttemptDto.cs
+ PreDefenseScheduleDto.cs
+Features/Defense/PreDefense/Queries/GetFailedPreDefenseStudents/
+ GetFailedPreDefenseStudentsQuery.cs
+ GetFailedPreDefenseStudentsQueryHandler.cs
+Features/Defense/PreDefense/Queries/GetPreDefenseAttempts/
+ GetPreDefenseAttemptsQuery.cs
+ GetPreDefenseAttemptsQueryHandler.cs
+Features/Defense/PreDefense/Queries/GetPreDefenseSchedule/
+ GetPreDefenseScheduleQuery.cs
+ GetPreDefenseScheduleQueryHandler.cs
+Features/Defense/Schedule/Commands/AssignWorkToSlot/
+ AssignWorkToSlotCommand.cs
+ AssignWorkToSlotCommandHandler.cs
+ AssignWorkToSlotCommandValidator.cs
+Features/Defense/Schedule/Commands/CreateDefenseSchedule/
+ CreateDefenseScheduleCommand.cs
+ CreateDefenseScheduleCommandHandler.cs
+ CreateDefenseScheduleCommandValidator.cs
+Features/Defense/Schedule/Commands/UpdateDefenseSchedule/
+ UpdateDefenseScheduleCommand.cs
+ UpdateDefenseScheduleCommandHandler.cs
+ UpdateDefenseScheduleCommandValidator.cs
+Features/Defense/Schedule/DTOs/
+ DefenseSlotDto.cs
+ ScheduleDto.cs
+Features/Defense/Schedule/Queries/GetDefenseSchedule/
+ GetDefenseScheduleQuery.cs
+ GetDefenseScheduleQueryHandler.cs
+Features/Defense/Schedule/Queries/GetDefenseSlotById/
+ GetDefenseSlotByIdQuery.cs
+ GetDefenseSlotByIdQueryHandler.cs
+Features/Edu/AcademicPrograms/Commands/CreateAcademicProgram/
+ CreateAcademicProgramCommand.cs
+ CreateAcademicProgramCommandHandler.cs
+ CreateAcademicProgramCommandValidator.cs
+Features/Edu/AcademicPrograms/Commands/DeleteAcademicProgram/
+ DeleteAcademicProgramCommand.cs
+ DeleteAcademicProgramCommandHandler.cs
+Features/Edu/AcademicPrograms/Commands/UpdateAcademicProgram/
+ UpdateAcademicProgramCommand.cs
+ UpdateAcademicProgramCommandHandler.cs
+ UpdateAcademicProgramCommandValidator.cs
+Features/Edu/AcademicPrograms/
+ DTOs/AcademicProgramDto.cs
+ Queries/GetAcademicPrograms/
+  GetAcademicProgramsQuery.cs
+  GetAcademicProgramsQueryHandler.cs
+Features/Edu/DegreeLevels/Commands/CreateDegreeLevel/
+ CreateDegreeLevelCommand.cs
+ CreateDegreeLevelCommandHandler.cs
+ CreateDegreeLevelCommandValidator.cs
+Features/Edu/DegreeLevels/Commands/DeleteDegreeLevel/
+ DeleteDegreeLevelCommand.cs
+ DeleteDegreeLevelCommandHandler.cs
+Features/Edu/DegreeLevels/Commands/UpdateDegreeLevel/
+ UpdateDegreeLevelCommand.cs
+ UpdateDegreeLevelCommandHandler.cs
+Features/Edu/DegreeLevels/
+ DTOs/DegreeLevelDto.cs
+ Queries/GetDegreeLevels/
+  GetDegreeLevelsQuery.cs
+  GetDegreeLevelsQueryHandler.cs
+Features/Edu/Staff/Commands/ApproveSupervisors/
+ ApproveSupervisorsCommand.cs
+ ApproveSupervisorsCommandHandler.cs
+ ApproveSupervisorsCommandValidator.cs
+Features/Edu/Staff/Commands/CreateStaff/
+ CreateStaffCommand.cs
+ CreateStaffCommandHandler.cs
+ CreateStaffCommandValidator.cs
+Features/Edu/Staff/Commands/UpdateStaff/
+ UpdateStaffCommand.cs
+ UpdateStaffCommandHandler.cs
+ UpdateStaffCommandValidator.cs
+Features/Edu/Staff/Commands/UpdateStaffWorkload/
+ UpdateStaffWorkloadCommand.cs
+ UpdateStaffWorkloadCommandHandler.cs
+ UpdateStaffWorkloadCommandValidator.cs
+Features/Edu/Staff/
+ DTOs/StaffDto.cs
+ Queries/GetStaffByDepartment/
+  GetStaffByDepartmentQuery.cs
+  GetStaffByDepartmentQueryHandler.cs
+ Queries/GetSupervisors/
+  GetSupervisorsQuery.cs
+  GetSupervisorsQueryHandler.cs
+Features/Edu/Students/Commands/CreateStudent/
+ CreateStudentCommand.cs
+ CreateStudentCommandHandler.cs
+ CreateStudentCommandValidator.cs
+Features/Edu/Students/Commands/UpdateStudent/
+ UpdateStudentCommand.cs
+ UpdateStudentCommandHandler.cs
+ UpdateStudentCommandValidator.cs
+Features/Edu/Students/
+ DTOs/StudentDto.cs
+ Queries/GetStudentById/
+  GetStudentByIdQuery.cs
+  GetStudentByIdQueryHandler.cs
+ Queries/GetStudentsByProgram/
+  GetStudentsByProgramQuery.cs
+  GetStudentsByProgramQueryHandler.cs
+Features/Org/Departments/Commands/CreateDepartment/
+ CreateDepartmentCommand.cs
+ CreateDepartmentCommandHandler.cs
+ CreateDepartmentCommandValidator.cs
+Features/Org/Departments/Commands/DeleteDepartment/
+ DeleteDepartmentCommand.cs
+ DeleteDepartmentCommandHandler.cs
+ DeleteDepartmentCommandValidator.cs
+Features/Org/Departments/Commands/UpdateDepartment/
+ UpdateDepartmentCommand.cs
+ UpdateDepartmentCommandHandler.cs
+ UpdateDepartmentCommandValidator.cs
+Features/Org/Departments/
+ DTOs/DepartmentDto.cs
+ Queries/GetAllDepartments/
+  GetAllDepartmentsQuery.cs
+  GetAllDepartmentsQueryHandler.cs
+ Queries/GetDepartmentsByInstitute/
+  GetDepartmentsByInstituteQuery.cs
+  GetDepartmentsByInstituteQueryhandler.cs
+Features/Org/Institutes/Commands/CreateInstitute/
+ CreateInstituteCommand.cs
+ CreateInstituteCommandHandler.cs
+ CreateInstituteCommandValidator.cs
+Features/Org/Institutes/Commands/DeleteInstitute/
+ DeleteInstituteCommand.cs
+ DeleteInstituteCommandHandler.cs
+ DeleteInstituteCommandValidator.cs
+Features/Org/Institutes/Commands/UpdateInstitute/
+ UpdateInstituteCommand.cs
+ UpdateInstituteCommandHandler.cs
+ UpdateInstituteCommandValidator.cs
+Features/Org/Institutes/
+ DTOs/InstituteDto.cs
+ Queries/GetAllInstitutes/
+  GetAllInstitutesQuery.cs
+  GetAllInstitutesQueryHandler.cs
+ Queries/GetInstituteById/
+  GetInstituteByIdQuery.cs
+  GetInstituteByIdQueryHandler.cs
+Features/Thesis/Applications/Commands/AcceptApplication/
+ AcceptApplicationCommand.cs
+ AcceptApplicationCommandHandler.cs
+Features/Thesis/Applications/Commands/CreateApplication/
+ CreateApplicationCommand.cs
+ CreateApplicationCommandHandler.cs
+ CreateApplicationCommandValidator.cs
+Features/Thesis/Applications/Commands/RejectApplication/
+ RejectApplicationCommand.cs
+ RejectApplicationCommandHandler.cs
+ RejectApplicationCommandValidator.cs
+Features/Thesis/Applications/Commands/WithdrawApplication/
+ WithdrawApplicationCommand.cs
+ WithdrawApplicationCommandHandler.cs
+Features/Thesis/Applications/
+ DTOs/TopicApplicationDto.cs
+ Queries/GetApplicationsByStudent/
+  GetApplicationsByStudentQuery.cs
+  GetApplicationsByStudentQueryHandler.cs
+ Queries/GetApplicationsByTopic/
+  GetApplicationsByTopicQuery.cs
+  GetApplicationsByTopicQueryHandler.cs
+Features/Thesis/Attachments/Commands/DeleteAttachment/
+ DeleteAttachmentCommand.cs
+ DeleteAttachmentCommandHandler.cs
+Features/Thesis/Attachments/Commands/UploadAttachment/
+ UploadAttachmentCommand.cs
+ UploadAttachmentCommandHandler.cs
+ UploadAttachmentCommandValidator.cs
+Features/Thesis/Attachments/
+ DTOs/AttachmentDto.cs
+ Queries/GetAttachmentById/
+  GetAttachmentByIdQuery.cs
+  GetAttachmentByIdQueryHandler.cs
+ Queries/GetAttachmentsByWork/
+  GetAttachmentsByWorkQuery.cs
+  GetAttachmentsByWorkQueryHandler.cs
+Features/Thesis/Directions/Commands/ApproveDirection/
+ ApproveDirectionCommand.cs
+ ApproveDirectionCommandHandler.cs
+Features/Thesis/Directions/Commands/CreateDirection/
+ CreateDirectionCommand.cs
+ CreateDirectionCommandHandler.cs
+ CreateDirectionCommandValidator.cs
+Features/Thesis/Directions/Commands/RejectDirection/
+ RejectDirectionCommand.cs
+ RejectDirectionCommandHandler.cs
+ RejectDirectionCommandValidator.cs
+Features/Thesis/Directions/Commands/RequestRevision/
+ RequestRevisionCommand.cs
+ RequestRevisionCommandHandler.cs
+ RequestRevisionCommandValidator.cs
+Features/Thesis/Directions/Commands/SubmitDirection/
+ SubmitDirectionCommand.cs
+ SubmitDirectionCommandHandler.cs
+ SubmitDirectionCommandValidator.cs
+Features/Thesis/Directions/Commands/UpdateDirection/
+ UpdateDirectionCommand.cs
+ UpdateDirectionCommandHandler.cs
+ UpdateDirectionCommandValidator.cs
+Features/Thesis/Directions/DTOs/
+ DirectionDetailDto.cs
+ DirectionDto.cs
+Features/Thesis/Directions/
+ EventHandlers/DirectionStatusChangedNotificationHandler.cs
+ Queries/GetDirectionById/
+  GetDirectionByIdQuery.cs
+  GetDirectionByIdQueryHandler.cs
+ Queries/GetDirectionsByDepartment/
+  GetDirectionsByDepartmentQuery.cs
+  GetDirectionsByDepartmentQueryHandler.cs
+ Queries/GetDirectionsBySupervisor/
+  GetDirectionsBySupervisorQuery.cs
+  GetDirectionsBySupervisorQueryHandler.cs
+Features/Thesis/QualityChecks/Commands/AssignExperts/
+ AssignExpertsCommand.cs
+ AssignExpertsCommandHandler.cs
+Features/Thesis/QualityChecks/Commands/RecordCheckResult/
+ RecordCheckResultCommand.cs
+ RecordCheckResultCommandHandler.cs
+ RecordCheckResultCommandValidator.cs
+Features/Thesis/QualityChecks/Commands/SubmitForCheck/
+ SubmitForCheckCommand.cs
+ SubmitForCheckCommandHandler.cs
+ SubmitForCheckCommandValidator.cs
+Features/Thesis/QualityChecks/
+ DTOs/QualityCheckDto.cs
+ Queries/GetChecksByWork/
+  GetChecksByWorkQuery.cs
+  GetChecksByWorkQueryHandler.cs
+ Queries/GetPendingChecks/
+  GetPendingChecksQuery.cs
+  GetPendingChecksQueryHandler.cs
+Features/Thesis/Reviews/Commands/CreateSupervisorReview/
+ CreateSupervisorReviewCommand.cs
+ CreateSupervisorReviewCommandHandler.cs
+ CreateSupervisorReviewCommandValidator.cs
+Features/Thesis/Reviews/Commands/UploadReview/
+ UploadReviewCommand.cs
+ UploadReviewCommandHandler.cs
+ UploadReviewCommandValidator.cs
+Features/Thesis/Reviews/DTOs/
+ ReviewDto.cs
+ SupervisorReviewDto.cs
+ WorkReviewsDto.cs
+Features/Thesis/Reviews/Queries/GetReviewsByWork/
+ GetReviewsByWorkQuery.cs
+ GetReviewsByWorkQueryHandler.cs
+Features/Thesis/Topics/Commands/ApproveTopic/
+ ApproveTopicCommand.cs
+ ApproveTopicCommandHandler.cs
+Features/Thesis/Topics/Commands/BulkApproveTopics/
+ BulkApproveTopicsCommand.cs
+ BulkApproveTopicsCommandHandler.cs
+Features/Thesis/Topics/Commands/CloseTopic/
+ CloseTopicCommand.cs
+ CloseTopicCommandHandler.cs
+ CloseTopicCommandValidator.cs
+Features/Thesis/Topics/Commands/CompleteTopicCoordination/
+ CompleteTopicCoordinationCommand.cs
+ CompleteTopicCoordinationCommandHandler.cs
+Features/Thesis/Topics/Commands/CreateTopic/
+ CreateTopicCommand.cs
+ CreateTopicCommandHandler.cs
+ CreateTopicCommandValidator.cs
+Features/Thesis/Topics/Commands/DeactivateTopic/
+ DeactivateTopicCommand.cs
+ DeactivateTopicCommandHandler.cs
+Features/Thesis/Topics/Commands/SubmitTopicsForApproval/
+ SubmitTopicsForApprovalCommand.cs
+ SubmitTopicsForApprovalCommandHandler.cs
+Features/Thesis/Topics/Commands/UpdateTopic/
+ UpdateTopicCommand.cs
+ UpdateTopicCommandHandler.cs
+ UpdateTopicCommandValidator.cs
+Features/Thesis/Topics/DTOs/
+ TopicDetailDto.cs
+ TopicDto.cs
+Features/Thesis/Topics/
+ EventHandlers/TopicApprovedNotificationHandler.cs
+ Queries/GetAvailableTopics/
+  GetAvailableTopicsQuery.cs
+  GetAvailableTopicsQueryHandler.cs
+ Queries/GetTopicById/
+  GetTopicByIdQuery.cs
+  GetTopicByIdQueryHandler.cs
+ Queries/GetTopicCoordinationSummary/
+  GetTopicCoordinationSummaryQuery.cs
+  GetTopicCoordinationSummaryQueryHandler.cs
+  TopicCoordinationSummaryDto.cs
+ Queries/GetTopicsByDirection/
+  GetTopicsByDirectionQuery.cs
+  GetTopicsByDirectionQueryHandler.cs
+Features/Thesis/Works/Commands/AddParticipant/
+ AddParticipantCommand.cs
+ AddParticipantCommandHandler.cs
+ AddParticipantCommandValidator.cs
+Features/Thesis/Works/Commands/AssignReviewerToWork/
+ AssignReviewerToWorkCommand.cs
+ AssignReviewerToWorkCommandHandler.cs
+Features/Thesis/Works/Commands/CreateStudentWork/
+ CreateStudentWorkCommand.cs
+ CreateStudentWorkCommandHandler.cs
+ CreateStudentWorkCommandValidator.cs
+Features/Thesis/Works/Commands/RemoveParticipant/
+ RemoveParticipantCommand.cs
+ RemoveParticipantCommandHandler.cs
+Features/Thesis/Works/Commands/SetRepositoryUrl/
+ SetRepositoryUrlCommand.cs
+ SetRepositoryUrlCommandHandler.cs
+Features/Thesis/Works/DTOs/
+ StudentWorkDetailDto.cs
+ StudentWorkDto.cs
+ WorkParticipantDto.cs
+Features/Thesis/Works/Queries/GetAdmittedStudents/
+ GetAdmittedStudentsQuery.cs
+ GetAdmittedStudentsQueryHandler.cs
+Features/Thesis/Works/Queries/GetAssignedReviewer/
+ GetAssignedReviewerQuery.cs
+ GetAssignedReviewerQueryHandler.cs
+Features/Thesis/Works/Queries/GetDefenseReadiness/
+ GetDefenseReadinessQuery.cs
+ GetDefenseReadinessQueryHandler.cs
+Features/Thesis/Works/Queries/GetMyWork/
+ GetMyWorkQuery.cs
+ GetMyWorkQueryHandler.cs
+Features/Thesis/Works/Queries/GetReviewStatusByDepartment/
+ GetReviewStatusByDepartmentQuery.cs
+ GetReviewStatusByDepartmentQueryHandler.cs
+Features/Thesis/Works/Queries/GetStudentWorkById/
+ GetStudentWorkByIdQuery.cs
+ GetStudentWorkByIdQueryHandler.cs
+Features/Thesis/Works/Queries/GetStudentWorksByDepartment/
+ GetStudentWorksByDepartmentQuery.cs
+ GetStudentWorksByDepartmentQueryHandler.cs
+Features/Thesis/Works/Queries/GetStudentWorksBySupervisor/
+ GetStudentWorksBySupervisorQuery.cs
+ GetStudentWorksBySupervisorQueryHandler.cs
+Features/Workflow/Commands/CreateWorkType/
+ CreateWorkTypeCommand.cs
+ CreateWorkTypeCommandHandler.cs
+Features/Workflow/Commands/DeleteWorkType/
+ DeleteWorkTypeCommand.cs
+ DeleteWorkTypeCommandHandler.cs
+Features/Workflow/Commands/TransitionState/
+ TransitionStateCommand.cs
+ TransitionStateCommandHandler.cs
+ TransitionStateCommandValidator.cs
+Features/Workflow/Commands/UpdateWorkType/
+ UpdateWorkTypeCommand.cs
+ UpdateWorkTypeCommandHandler.cs
+Features/Workflow/DTOs/
+ StateDto.cs
+ TransitionDto.cs
+ WorkTypeDto.cs
+Features/Workflow/Queries/GetAllWorkTypes/
+ GetAllWorkTypesQuery.cs
+ GetAllWorkTypesQueryHandler.cs
+Features/Workflow/Queries/GetAvailableTransitions/
+ GetAvailableTransitionsQuery.cs
+ GetAvailableTransitionsQueryHandler.cs
+obj/Debug/net8.0/
+ .NETCoreApp,Version=v8.0.AssemblyAttributes.cs
+ AWM.Service.Application.AssemblyInfo.cs
+ AWM.Service.Application.GlobalUsings.g.cs
+
+[metadataReferences]
+../AWM.Service.Domain/obj/Debug/net8.0/ref/AWM.Service.Domain.dll
+<DOTNET>/packs/Microsoft.AspNetCore.App.Ref/8.0.24/ref/net8.0/
+ Microsoft.AspNetCore.Antiforgery.dll
+ Microsoft.AspNetCore.Authentication.Abstractions.dll
+ Microsoft.AspNetCore.Authentication.BearerToken.dll
+ Microsoft.AspNetCore.Authentication.Cookies.dll
+ Microsoft.AspNetCore.Authentication.Core.dll
+ Microsoft.AspNetCore.Authentication.dll
+ Microsoft.AspNetCore.Authentication.OAuth.dll
+ Microsoft.AspNetCore.Authorization.dll
+ Microsoft.AspNetCore.Authorization.Policy.dll
+ Microsoft.AspNetCore.Components.Authorization.dll
+ Microsoft.AspNetCore.Components.dll
+ Microsoft.AspNetCore.Components.Endpoints.dll
+ Microsoft.AspNetCore.Components.Forms.dll
+ Microsoft.AspNetCore.Components.Server.dll
+ Microsoft.AspNetCore.Components.Web.dll
+ Microsoft.AspNetCore.Connections.Abstractions.dll
+ Microsoft.AspNetCore.CookiePolicy.dll
+ Microsoft.AspNetCore.Cors.dll
+ Microsoft.AspNetCore.Cryptography.Internal.dll
+ Microsoft.AspNetCore.Cryptography.KeyDerivation.dll
+ Microsoft.AspNetCore.DataProtection.Abstractions.dll
+ Microsoft.AspNetCore.DataProtection.dll
+ Microsoft.AspNetCore.DataProtection.Extensions.dll
+ Microsoft.AspNetCore.Diagnostics.Abstractions.dll
+ Microsoft.AspNetCore.Diagnostics.dll
+ Microsoft.AspNetCore.Diagnostics.HealthChecks.dll
+ Microsoft.AspNetCore.dll
+ Microsoft.AspNetCore.HostFiltering.dll
+ Microsoft.AspNetCore.Hosting.Abstractions.dll
+ Microsoft.AspNetCore.Hosting.dll
+ Microsoft.AspNetCore.Hosting.Server.Abstractions.dll
+ Microsoft.AspNetCore.Html.Abstractions.dll
+ Microsoft.AspNetCore.Http.Abstractions.dll
+ Microsoft.AspNetCore.Http.Connections.Common.dll
+ Microsoft.AspNetCore.Http.Connections.dll
+ Microsoft.AspNetCore.Http.dll
+ Microsoft.AspNetCore.Http.Extensions.dll
+ Microsoft.AspNetCore.Http.Features.dll
+ Microsoft.AspNetCore.Http.Results.dll
+ Microsoft.AspNetCore.HttpLogging.dll
+ Microsoft.AspNetCore.HttpOverrides.dll
+ Microsoft.AspNetCore.HttpsPolicy.dll
+ Microsoft.AspNetCore.Identity.dll
+ Microsoft.AspNetCore.Localization.dll
+ Microsoft.AspNetCore.Localization.Routing.dll
+ Microsoft.AspNetCore.Metadata.dll
+ Microsoft.AspNetCore.Mvc.Abstractions.dll
+ Microsoft.AspNetCore.Mvc.ApiExplorer.dll
+ Microsoft.AspNetCore.Mvc.Core.dll
+ Microsoft.AspNetCore.Mvc.Cors.dll
+ Microsoft.AspNetCore.Mvc.DataAnnotations.dll
+ Microsoft.AspNetCore.Mvc.dll
+ Microsoft.AspNetCore.Mvc.Formatters.Json.dll
+ Microsoft.AspNetCore.Mvc.Formatters.Xml.dll
+ Microsoft.AspNetCore.Mvc.Localization.dll
+ Microsoft.AspNetCore.Mvc.Razor.dll
+ Microsoft.AspNetCore.Mvc.RazorPages.dll
+ Microsoft.AspNetCore.Mvc.TagHelpers.dll
+ Microsoft.AspNetCore.Mvc.ViewFeatures.dll
+ Microsoft.AspNetCore.OutputCaching.dll
+ Microsoft.AspNetCore.RateLimiting.dll
+ Microsoft.AspNetCore.Razor.dll
+ Microsoft.AspNetCore.Razor.Runtime.dll
+ Microsoft.AspNetCore.RequestDecompression.dll
+ Microsoft.AspNetCore.ResponseCaching.Abstractions.dll
+ Microsoft.AspNetCore.ResponseCaching.dll
+ Microsoft.AspNetCore.ResponseCompression.dll
+ Microsoft.AspNetCore.Rewrite.dll
+ Microsoft.AspNetCore.Routing.Abstractions.dll
+ Microsoft.AspNetCore.Routing.dll
+ Microsoft.AspNetCore.Server.HttpSys.dll
+ Microsoft.AspNetCore.Server.IIS.dll
+ Microsoft.AspNetCore.Server.IISIntegration.dll
+ Microsoft.AspNetCore.Server.Kestrel.Core.dll
+ Microsoft.AspNetCore.Server.Kestrel.dll
+ Microsoft.AspNetCore.Server.Kestrel.Transport.NamedPipes.dll
+ Microsoft.AspNetCore.Server.Kestrel.Transport.Quic.dll
+ Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets.dll
+ Microsoft.AspNetCore.Session.dll
+ Microsoft.AspNetCore.SignalR.Common.dll
+ Microsoft.AspNetCore.SignalR.Core.dll
+ Microsoft.AspNetCore.SignalR.dll
+ Microsoft.AspNetCore.SignalR.Protocols.Json.dll
+ Microsoft.AspNetCore.StaticFiles.dll
+ Microsoft.AspNetCore.WebSockets.dll
+ Microsoft.AspNetCore.WebUtilities.dll
+ Microsoft.Extensions.Caching.Abstractions.dll
+ Microsoft.Extensions.Caching.Memory.dll
+ Microsoft.Extensions.Configuration.Abstractions.dll
+ Microsoft.Extensions.Configuration.Binder.dll
+ Microsoft.Extensions.Configuration.CommandLine.dll
+ Microsoft.Extensions.Configuration.dll
+ Microsoft.Extensions.Configuration.EnvironmentVariables.dll
+ Microsoft.Extensions.Configuration.FileExtensions.dll
+ Microsoft.Extensions.Configuration.Ini.dll
+ Microsoft.Extensions.Configuration.Json.dll
+ Microsoft.Extensions.Configuration.KeyPerFile.dll
+ Microsoft.Extensions.Configuration.UserSecrets.dll
+ Microsoft.Extensions.Configuration.Xml.dll
+ Microsoft.Extensions.DependencyInjection.Abstractions.dll
+ Microsoft.Extensions.DependencyInjection.dll
+ Microsoft.Extensions.Diagnostics.Abstractions.dll
+ Microsoft.Extensions.Diagnostics.dll
+ Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions.dll
+ Microsoft.Extensions.Diagnostics.HealthChecks.dll
+ Microsoft.Extensions.Features.dll
+ Microsoft.Extensions.FileProviders.Abstractions.dll
+ Microsoft.Extensions.FileProviders.Composite.dll
+ Microsoft.Extensions.FileProviders.Embedded.dll
+ Microsoft.Extensions.FileProviders.Physical.dll
+ Microsoft.Extensions.FileSystemGlobbing.dll
+ Microsoft.Extensions.Hosting.Abstractions.dll
+ Microsoft.Extensions.Hosting.dll
+ Microsoft.Extensions.Http.dll
+ Microsoft.Extensions.Identity.Core.dll
+ Microsoft.Extensions.Identity.Stores.dll
+ Microsoft.Extensions.Localization.Abstractions.dll
+ Microsoft.Extensions.Localization.dll
+ Microsoft.Extensions.Logging.Abstractions.dll
+ Microsoft.Extensions.Logging.Configuration.dll
+ Microsoft.Extensions.Logging.Console.dll
+ Microsoft.Extensions.Logging.Debug.dll
+ Microsoft.Extensions.Logging.dll
+ Microsoft.Extensions.Logging.EventLog.dll
+ Microsoft.Extensions.Logging.EventSource.dll
+ Microsoft.Extensions.Logging.TraceSource.dll
+ Microsoft.Extensions.ObjectPool.dll
+ Microsoft.Extensions.Options.ConfigurationExtensions.dll
+ Microsoft.Extensions.Options.DataAnnotations.dll
+ Microsoft.Extensions.Options.dll
+ Microsoft.Extensions.Primitives.dll
+ Microsoft.Extensions.WebEncoders.dll
+ Microsoft.JSInterop.dll
+ Microsoft.Net.Http.Headers.dll
+ System.Diagnostics.EventLog.dll
+ System.IO.Pipelines.dll
+ System.Security.Cryptography.Xml.dll
+ System.Threading.RateLimiting.dll
+<DOTNET>/packs/Microsoft.NETCore.App.Ref/8.0.24/ref/net8.0/
+ Microsoft.CSharp.dll
+ Microsoft.VisualBasic.Core.dll
+ Microsoft.VisualBasic.dll
+ Microsoft.Win32.Primitives.dll
+ Microsoft.Win32.Registry.dll
+ mscorlib.dll
+ netstandard.dll
+ System.AppContext.dll
+ System.Buffers.dll
+ System.Collections.Concurrent.dll
+ System.Collections.dll
+ System.Collections.Immutable.dll
+ System.Collections.NonGeneric.dll
+ System.Collections.Specialized.dll
+ System.ComponentModel.Annotations.dll
+ System.ComponentModel.DataAnnotations.dll
+ System.ComponentModel.dll
+ System.ComponentModel.EventBasedAsync.dll
+ System.ComponentModel.Primitives.dll
+ System.ComponentModel.TypeConverter.dll
+ System.Configuration.dll
+ System.Console.dll
+ System.Core.dll
+ System.Data.Common.dll
+ System.Data.DataSetExtensions.dll
+ System.Data.dll
+ System.Diagnostics.Contracts.dll
+ System.Diagnostics.Debug.dll
+ System.Diagnostics.DiagnosticSource.dll
+ System.Diagnostics.FileVersionInfo.dll
+ System.Diagnostics.Process.dll
+ System.Diagnostics.StackTrace.dll
+ System.Diagnostics.TextWriterTraceListener.dll
+ System.Diagnostics.Tools.dll
+ System.Diagnostics.TraceSource.dll
+ System.Diagnostics.Tracing.dll
+ System.dll
+ System.Drawing.dll
+ System.Drawing.Primitives.dll
+ System.Dynamic.Runtime.dll
+ System.Formats.Asn1.dll
+ System.Formats.Tar.dll
+ System.Globalization.Calendars.dll
+ System.Globalization.dll
+ System.Globalization.Extensions.dll
+ System.IO.Compression.Brotli.dll
+ System.IO.Compression.dll
+ System.IO.Compression.FileSystem.dll
+ System.IO.Compression.ZipFile.dll
+ System.IO.dll
+ System.IO.FileSystem.AccessControl.dll
+ System.IO.FileSystem.dll
+ System.IO.FileSystem.DriveInfo.dll
+ System.IO.FileSystem.Primitives.dll
+ System.IO.FileSystem.Watcher.dll
+ System.IO.IsolatedStorage.dll
+ System.IO.MemoryMappedFiles.dll
+ System.IO.Pipes.AccessControl.dll
+ System.IO.Pipes.dll
+ System.IO.UnmanagedMemoryStream.dll
+ System.Linq.dll
+ System.Linq.Expressions.dll
+ System.Linq.Parallel.dll
+ System.Linq.Queryable.dll
+ System.Memory.dll
+ System.Net.dll
+ System.Net.Http.dll
+ System.Net.Http.Json.dll
+ System.Net.HttpListener.dll
+ System.Net.Mail.dll
+ System.Net.NameResolution.dll
+ System.Net.NetworkInformation.dll
+ System.Net.Ping.dll
+ System.Net.Primitives.dll
+ System.Net.Quic.dll
+ System.Net.Requests.dll
+ System.Net.Security.dll
+ System.Net.ServicePoint.dll
+ System.Net.Sockets.dll
+ System.Net.WebClient.dll
+ System.Net.WebHeaderCollection.dll
+ System.Net.WebProxy.dll
+ System.Net.WebSockets.Client.dll
+ System.Net.WebSockets.dll
+ System.Numerics.dll
+ System.Numerics.Vectors.dll
+ System.ObjectModel.dll
+ System.Reflection.DispatchProxy.dll
+ System.Reflection.dll
+ System.Reflection.Emit.dll
+ System.Reflection.Emit.ILGeneration.dll
+ System.Reflection.Emit.Lightweight.dll
+ System.Reflection.Extensions.dll
+ System.Reflection.Metadata.dll
+ System.Reflection.Primitives.dll
+ System.Reflection.TypeExtensions.dll
+ System.Resources.Reader.dll
+ System.Resources.ResourceManager.dll
+ System.Resources.Writer.dll
+ System.Runtime.CompilerServices.Unsafe.dll
+ System.Runtime.CompilerServices.VisualC.dll
+ System.Runtime.dll
+ System.Runtime.Extensions.dll
+ System.Runtime.Handles.dll
+ System.Runtime.InteropServices.dll
+ System.Runtime.InteropServices.JavaScript.dll
+ System.Runtime.InteropServices.RuntimeInformation.dll
+ System.Runtime.Intrinsics.dll
+ System.Runtime.Loader.dll
+ System.Runtime.Numerics.dll
+ System.Runtime.Serialization.dll
+ System.Runtime.Serialization.Formatters.dll
+ System.Runtime.Serialization.Json.dll
+ System.Runtime.Serialization.Primitives.dll
+ System.Runtime.Serialization.Xml.dll
+ System.Security.AccessControl.dll
+ System.Security.Claims.dll
+ System.Security.Cryptography.Algorithms.dll
+ System.Security.Cryptography.Cng.dll
+ System.Security.Cryptography.Csp.dll
+ System.Security.Cryptography.dll
+ System.Security.Cryptography.Encoding.dll
+ System.Security.Cryptography.OpenSsl.dll
+ System.Security.Cryptography.Primitives.dll
+ System.Security.Cryptography.X509Certificates.dll
+ System.Security.dll
+ System.Security.Principal.dll
+ System.Security.Principal.Windows.dll
+ System.Security.SecureString.dll
+ System.ServiceModel.Web.dll
+ System.ServiceProcess.dll
+ System.Text.Encoding.CodePages.dll
+ System.Text.Encoding.dll
+ System.Text.Encoding.Extensions.dll
+ System.Text.Encodings.Web.dll
+ System.Text.Json.dll
+ System.Text.RegularExpressions.dll
+ System.Threading.Channels.dll
+ System.Threading.dll
+ System.Threading.Overlapped.dll
+ System.Threading.Tasks.Dataflow.dll
+ System.Threading.Tasks.dll
+ System.Threading.Tasks.Extensions.dll
+ System.Threading.Tasks.Parallel.dll
+ System.Threading.Thread.dll
+ System.Threading.ThreadPool.dll
+ System.Threading.Timer.dll
+ System.Transactions.dll
+ System.Transactions.Local.dll
+ System.ValueTuple.dll
+ System.Web.dll
+ System.Web.HttpUtility.dll
+ System.Windows.dll
+ System.Xml.dll
+ System.Xml.Linq.dll
+ System.Xml.ReaderWriter.dll
+ System.Xml.Serialization.dll
+ System.Xml.XDocument.dll
+ System.Xml.XmlDocument.dll
+ System.Xml.XmlSerializer.dll
+ System.Xml.XPath.dll
+ System.Xml.XPath.XDocument.dll
+ WindowsBase.dll
+<NUGET>/
+ bcrypt.net-next/4.0.3/lib/net6.0/BCrypt.Net-Next.dll
+ fluentvalidation.dependencyinjectionextensions/12.1.1/lib/net8.0/FluentValidation.DependencyInjectionExtensions.dll
+ fluentvalidation/12.1.1/lib/net8.0/FluentValidation.dll
+ kds.primitives.abstraction/1.0.0/lib/net6.0/KDS.Primitives.Abstraction.dll
+ kds.primitives.fluentresult/1.0.0/lib/net6.0/KDS.Primitives.FluentResult.dll
+ mediatr.contracts/2.0.1/lib/netstandard2.0/MediatR.Contracts.dll
+ mediatr/12.4.1/lib/net6.0/MediatR.dll
+
+[analyzerReferences]
+<DOTNET>/packs/Microsoft.AspNetCore.App.Ref/8.0.24/analyzers/dotnet/cs/
+ Microsoft.AspNetCore.App.Analyzers.dll
+ Microsoft.AspNetCore.App.CodeFixes.dll
+ Microsoft.AspNetCore.Components.Analyzers.dll
+<DOTNET>/packs/Microsoft.AspNetCore.App.Ref/8.0.24/analyzers/dotnet/roslyn4.4/cs/
+ Microsoft.Extensions.Logging.Generators.dll
+ Microsoft.Extensions.Options.SourceGeneration.dll
+<DOTNET>/packs/Microsoft.NETCore.App.Ref/8.0.24/analyzers/dotnet/cs/
+ Microsoft.Interop.ComInterfaceGenerator.dll
+ Microsoft.Interop.JavaScript.JSImportGenerator.dll
+ Microsoft.Interop.LibraryImportGenerator.dll
+ Microsoft.Interop.SourceGeneration.dll
+ System.Text.Json.SourceGeneration.dll
+ System.Text.RegularExpressions.Generator.dll
+<DOTNET>/sdk/10.0.103/Sdks/Microsoft.NET.Sdk/analyzers/
+ Microsoft.CodeAnalysis.CSharp.NetAnalyzers.dll
+ Microsoft.CodeAnalysis.NetAnalyzers.dll
+
+[analyzerConfigFiles]
+<DOTNET>/sdk/10.0.103/Sdks/Microsoft.NET.Sdk/analyzers/build/config/analysislevel_8_default.globalconfig
+obj/Debug/net8.0/AWM.Service.Application.GeneratedMSBuildEditorConfig.editorconfig

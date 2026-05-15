@@ -39,4 +39,12 @@ public sealed class DegreeLevelRepository : IDegreeLevelRepository
         ArgumentNullException.ThrowIfNull(degreeLevel);
         await _context.DegreeLevels.AddAsync(degreeLevel, cancellationToken);
     }
+
+    /// <inheritdoc />
+    public Task UpdateAsync(DegreeLevel degreeLevel, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(degreeLevel);
+        _context.DegreeLevels.Update(degreeLevel);
+        return Task.CompletedTask;
+    }
 }

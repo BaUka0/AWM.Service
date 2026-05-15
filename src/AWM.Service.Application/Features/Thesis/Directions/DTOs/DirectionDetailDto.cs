@@ -19,6 +19,8 @@ public sealed class DirectionDetailDto
     public string? DescriptionEn { get; init; }
 
     public int CurrentStateId { get; init; }
+    public string? CurrentStateName { get; init; }
+    public string? CurrentStateDisplayName { get; init; }
     public DateTime? SubmittedAt { get; init; }
     public DateTime? ReviewedAt { get; init; }
     public int? ReviewedBy { get; init; }

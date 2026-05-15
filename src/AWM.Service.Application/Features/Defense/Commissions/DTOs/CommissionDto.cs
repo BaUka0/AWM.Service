@@ -41,6 +41,16 @@ public sealed record CommissionDto
     public int MemberCount { get; init; }
 
     /// <summary>
+    /// Name of the commission chairman.
+    /// </summary>
+    public string? ChairmanName { get; init; }
+    
+    /// <summary>
+    /// Name of the commission secretary.
+    /// </summary>
+    public string? SecretaryName { get; init; }
+
+    /// <summary>
     /// Date and time when the commission was created.
     /// </summary>
     public DateTime CreatedAt { get; init; }

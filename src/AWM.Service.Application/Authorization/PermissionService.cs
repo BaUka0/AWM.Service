@@ -209,6 +209,28 @@ public class PermissionService : IPermissionService
             Permission.Notifications_View,
             Permission.Notifications_MarkRead
         },
+        [nameof(RoleType.Reviewer)] = new()
+        {
+            Permission.Reviews_View,
+            Permission.Reviews_UploadExternal,
+            Permission.Works_View,
+            Permission.Attachments_Download,
+            Permission.Notifications_View,
+            Permission.Notifications_MarkRead
+        },
+        [nameof(RoleType.Chairman)] = new()
+        {
+            Permission.PreDefense_View,
+            Permission.PreDefense_Finalize,
+            Permission.Defense_View,
+            Permission.Defense_Finalize,
+            Permission.Commissions_View,
+            Permission.Works_View,
+            Permission.Reviews_View,
+            Permission.Attachments_Download,
+            Permission.Notifications_View,
+            Permission.Notifications_MarkRead
+        },
         [nameof(RoleType.Admin)] = new(Enum.GetValues<Permission>())
     };
 

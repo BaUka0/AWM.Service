@@ -1,4 +1,4 @@
-﻿using KDS.Primitives.FluentResult;
+using KDS.Primitives.FluentResult;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -8,25 +8,27 @@ namespace AWM.Service.WebAPI.Controllers
     {
         protected IActionResult HandleResultError(Error error)
         {
-            return error.Code switch
+            var code = error.Code;
+            int statusCode = StatusCodes.Status500InternalServerError;
+
+            if (code == "400" || code.StartsWith("Validation")) statusCode = StatusCodes.Status400BadRequest;
+            else if (code == "401" || code.StartsWith("Unauthorized")) statusCode = StatusCodes.Status401Unauthorized;
+            else if (code == "403" || code.StartsWith("Forbidden")) statusCode = StatusCodes.Status403Forbidden;
+            else if (code == "404" || code.StartsWith("NotFound")) statusCode = StatusCodes.Status404NotFound;
+            else if (code == "409" || code.StartsWith("Conflict") || code.StartsWith("BusinessRule")) statusCode = StatusCodes.Status409Conflict;
+
+            var problemDetails = new Microsoft.AspNetCore.Mvc.ProblemDetails
             {
-                "400" => BadRequest(new { error.Code, error.Message }),
-                var code when code.StartsWith("Validation") => BadRequest(new { error.Code, error.Message }),
-
-                "401" => Unauthorized(new { error.Code, error.Message }),
-                var code when code.StartsWith("Unauthorized") => Unauthorized(new { error.Code, error.Message }),
-
-                "403" => Forbid(),
-                var code when code.StartsWith("Forbidden") => Forbid(),
-
-                "404" => NotFound(new { error.Code, error.Message }),
-                var code when code.StartsWith("NotFound") => NotFound(new { error.Code, error.Message }),
-
-                "409" => Conflict(new { error.Code, error.Message }),
-                var code when code.StartsWith("Conflict") || code.StartsWith("BusinessRule") => Conflict(new { error.Code, error.Message }),
-
-                _ => StatusCode(StatusCodes.Status500InternalServerError, new { error.Code, error.Message })
+                Status = statusCode,
+                Title = error.Code,
+                Detail = error.Message,
+                Instance = HttpContext.Request.Path
             };
+            
+            problemDetails.Extensions["traceId"] = HttpContext.TraceIdentifier;
+            problemDetails.Extensions["code"] = error.Code;
+
+            return new ObjectResult(problemDetails) { StatusCode = statusCode };
         }
     }
 }

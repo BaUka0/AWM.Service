@@ -25,6 +25,16 @@ public interface IWorkflowRepository
     /// </summary>
     Task<IReadOnlyList<WorkType>> GetWorkTypesByDegreeLevelAsync(int degreeLevelId, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Adds a new work type.
+    /// </summary>
+    Task AddWorkTypeAsync(WorkType workType, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Updates an existing work type.
+    /// </summary>
+    Task UpdateWorkTypeAsync(WorkType workType, CancellationToken cancellationToken = default);
+
     #endregion
 
     #region State

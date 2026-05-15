@@ -36,4 +36,15 @@ public sealed record CreateCommissionRequest
     /// </summary>
     /// <example>1</example>
     public int? PreDefenseNumber { get; init; }
+
+    /// <summary>
+    /// Initial members to add to the commission.
+    /// </summary>
+    public IReadOnlyList<CreateCommissionMemberRequest> Members { get; init; } = new List<CreateCommissionMemberRequest>();
+}
+
+public record CreateCommissionMemberRequest
+{
+    public int UserId { get; init; }
+    public RoleInCommission Role { get; init; }
 }
