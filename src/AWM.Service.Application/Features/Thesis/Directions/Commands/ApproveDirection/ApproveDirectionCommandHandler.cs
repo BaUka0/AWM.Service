@@ -2,6 +2,7 @@ namespace AWM.Service.Application.Features.Thesis.Directions.Commands.ApproveDir
 
 using AWM.Service.Domain.Common;
 using AWM.Service.Domain.Repositories;
+using AWM.Service.Domain.Wf.Entities;
 using KDS.Primitives.FluentResult;
 using MediatR;
 using Microsoft.Extensions.Logging;
@@ -62,7 +63,7 @@ public sealed class ApproveDirectionCommandHandler
 
         // Get Submitted state to verify current state
         var submittedState = await _workflowRepository
-            .GetStateBySystemNameAsync(direction.WorkTypeId, "Submitted", cancellationToken);
+            .GetStateBySystemNameAsync(direction.WorkTypeId, DirectionStates.Submitted, cancellationToken);
 
         if (submittedState is null)
         {
@@ -84,7 +85,7 @@ public sealed class ApproveDirectionCommandHandler
 
         // Get Approved state
         var approvedState = await _workflowRepository
-            .GetStateBySystemNameAsync(direction.WorkTypeId, "Approved", cancellationToken);
+            .GetStateBySystemNameAsync(direction.WorkTypeId, DirectionStates.Approved, cancellationToken);
 
         if (approvedState is null)
         {

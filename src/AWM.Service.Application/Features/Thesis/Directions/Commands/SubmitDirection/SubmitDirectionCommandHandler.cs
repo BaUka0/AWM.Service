@@ -4,6 +4,7 @@ using AWM.Service.Domain.Common;
 using AWM.Service.Domain.CommonDomain.Enums;
 using AWM.Service.Domain.CommonDomain.Services;
 using AWM.Service.Domain.Repositories;
+using AWM.Service.Domain.Wf.Entities;
 using KDS.Primitives.FluentResult;
 using MediatR;
 using Microsoft.Extensions.Logging;
@@ -95,9 +96,11 @@ public sealed class SubmitDirectionCommandHandler
                 "403",
                 "Only the supervisor who created this direction can submit it."));
         }
-        // Get Draft state to verify current state
+        // Get supervisor-submittable states to verify current state
         var draftState = await _workflowRepository
-            .GetStateBySystemNameAsync(direction.WorkTypeId, "Draft", cancellationToken);
+            .GetStateBySystemNameAsync(direction.WorkTypeId, DirectionStates.Draft, cancellationToken);
+        var revisionState = await _workflowRepository
+            .GetStateBySystemNameAsync(direction.WorkTypeId, DirectionStates.RequiresRevision, cancellationToken);
 
         if (draftState is null)
         {
@@ -107,19 +110,19 @@ public sealed class SubmitDirectionCommandHandler
                 "Draft state not found for this work type."));
         }
 
-        // Verify direction is in draft state
-        if (direction.CurrentStateId != draftState.Id)
+        // Verify direction is in draft or revision state
+        if (direction.CurrentStateId != draftState.Id && direction.CurrentStateId != revisionState?.Id)
         {
-            _logger.LogWarning("SubmitDirection failed: Direction ID={DirectionId} is in state {StateId}, not Draft.",
+            _logger.LogWarning("SubmitDirection failed: Direction ID={DirectionId} is in state {StateId}, not Draft/Revision.",
                 request.Id, direction.CurrentStateId);
             return Result.Failure(new Error(
                 "409",
-                "Only draft directions can be submitted. Current state does not allow submission."));
+                "Only draft or revision directions can be submitted. Current state does not allow submission."));
         }
 
         // Get Submitted state
         var submittedState = await _workflowRepository
-            .GetStateBySystemNameAsync(direction.WorkTypeId, "Submitted", cancellationToken);
+            .GetStateBySystemNameAsync(direction.WorkTypeId, DirectionStates.Submitted, cancellationToken);
 
         if (submittedState is null)
         {

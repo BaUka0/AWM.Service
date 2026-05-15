@@ -12,11 +12,14 @@ public sealed class GetDirectionByIdQueryHandler
     : IRequestHandler<GetDirectionByIdQuery, Result<DirectionDetailDto>>
 {
     private readonly IDirectionRepository _directionRepository;
+    private readonly IWorkflowRepository _workflowRepository;
 
     public GetDirectionByIdQueryHandler(
-        IDirectionRepository directionRepository)
+        IDirectionRepository directionRepository,
+        IWorkflowRepository workflowRepository)
     {
         _directionRepository = directionRepository;
+        _workflowRepository = workflowRepository;
     }
 
     public async Task<Result<DirectionDetailDto>> Handle(
@@ -45,6 +48,7 @@ public sealed class GetDirectionByIdQueryHandler
             }
 
             // Map to detailed DTO
+            var currentState = await _workflowRepository.GetStateByIdAsync(direction.CurrentStateId, cancellationToken);
             var result = new DirectionDetailDto
             {
                 Id = direction.Id,
@@ -59,6 +63,8 @@ public sealed class GetDirectionByIdQueryHandler
                 DescriptionKz = direction.DescriptionKz,
                 DescriptionEn = direction.DescriptionEn,
                 CurrentStateId = direction.CurrentStateId,
+                CurrentStateName = currentState?.SystemName,
+                CurrentStateDisplayName = currentState?.DisplayName,
                 SubmittedAt = direction.SubmittedAt,
                 ReviewedAt = direction.ReviewedAt,
                 ReviewedBy = direction.ReviewedBy,
