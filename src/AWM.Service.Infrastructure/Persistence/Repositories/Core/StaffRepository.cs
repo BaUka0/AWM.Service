@@ -20,6 +20,16 @@ public sealed class StaffRepository : RepositoryBase<Staff, int>, IStaffReposito
     }
 
     /// <inheritdoc />
+    public async Task<IReadOnlyList<Staff>> GetByIdsAsync(IEnumerable<int> ids, CancellationToken cancellationToken = default)
+    {
+        var distinctIds = ids.Distinct().ToList();
+        return await Context.Staff
+            .AsNoTracking()
+            .Where(s => distinctIds.Contains(s.Id) && !s.IsDeleted)
+            .ToListAsync(cancellationToken);
+    }
+
+    /// <inheritdoc />
     public async Task<IReadOnlyList<Staff>> GetByDepartmentAsync(int departmentId, CancellationToken cancellationToken = default)
     {
         return await Context.Staff

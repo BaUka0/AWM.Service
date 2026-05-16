@@ -80,17 +80,30 @@ public sealed class GetAvailableTopicsQueryHandler
                 academicYearId.Value,
                 cancellationToken);
 
-            var dtos = new List<TopicDto>();
-            foreach (var topic in topics)
-            {
-                dtos.Add(await TopicDtoFactory.CreateAsync(
-                    topic,
-                    _directionRepository,
-                    _staffRepository,
-                    _userRepository,
-                    _workflowRepository,
-                    cancellationToken));
-            }
+            // Bulk fetch dependencies to prevent N+1 queries
+            var directionIds = topics.Where(t => t.DirectionId.HasValue).Select(t => t.DirectionId!.Value).Distinct();
+            var supervisorIds = topics.Select(t => t.SupervisorId).Distinct();
+            var workTypeIds = topics.Select(t => t.WorkTypeId).Distinct();
+
+            var directions = await _directionRepository.GetByIdsAsync(directionIds, cancellationToken);
+            var staff = await _staffRepository.GetByIdsAsync(supervisorIds, cancellationToken);
+            var workTypes = await _workflowRepository.GetWorkTypesByIdsAsync(workTypeIds, cancellationToken);
+
+            var userIds = staff.Select(s => s.UserId).Distinct();
+            var users = await _userRepository.GetByIdsAsync(userIds, cancellationToken);
+
+            var directionDict = directions.ToDictionary(d => d.Id);
+            var staffDict = staff.ToDictionary(s => s.Id);
+            var userDict = users.ToDictionary(u => u.Id);
+            var workTypeDict = workTypes.ToDictionary(w => w.Id);
+
+            var dtos = topics.Select(topic => TopicDtoFactory.Create(
+                topic,
+                topic.DirectionId.HasValue && directionDict.TryGetValue(topic.DirectionId.Value, out var dir) ? dir : null,
+                staffDict.TryGetValue(topic.SupervisorId, out var supervisor) ? supervisor : null,
+                supervisor != null && userDict.TryGetValue(supervisor.UserId, out var user) ? user : null,
+                workTypeDict.TryGetValue(topic.WorkTypeId, out var wt) ? wt : null
+            )).ToList();
 
             return Result.Success<IReadOnlyList<TopicDto>>(dtos);
         }

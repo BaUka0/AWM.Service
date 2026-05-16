@@ -26,6 +26,17 @@ public sealed class DirectionRepository : IDirectionRepository
     }
 
     /// <inheritdoc />
+    public async Task<IReadOnlyList<Direction>> GetByIdsAsync(IEnumerable<long> ids, CancellationToken cancellationToken = default)
+    {
+        var distinctIds = ids.Distinct().ToList();
+        return await _context.Directions
+            .AsNoTracking()
+            .Include(d => d.Topics.Where(t => !t.IsDeleted))
+            .Where(d => distinctIds.Contains(d.Id) && !d.IsDeleted)
+            .ToListAsync(cancellationToken);
+    }
+
+    /// <inheritdoc />
     public async Task<IReadOnlyList<Direction>> GetByDepartmentAsync(
         int departmentId, 
         int academicYearId, 

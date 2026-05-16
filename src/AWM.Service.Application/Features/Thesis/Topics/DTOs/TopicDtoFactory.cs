@@ -1,24 +1,22 @@
 namespace AWM.Service.Application.Features.Thesis.Topics.DTOs;
 
+using AWM.Service.Domain.Auth.Entities;
+using AWM.Service.Domain.Edu.Entities;
 using AWM.Service.Domain.Repositories;
 using AWM.Service.Domain.Thesis.Entities;
 using AWM.Service.Domain.Thesis.Enums;
+using AWM.Service.Domain.Wf.Entities;
 
 internal static class TopicDtoFactory
 {
-    public static async Task<TopicDto> CreateAsync(
+    public static TopicDto Create(
         Topic topic,
-        IDirectionRepository directionRepository,
-        IStaffRepository staffRepository,
-        IUserRepository userRepository,
-        IWorkflowRepository workflowRepository,
-        CancellationToken cancellationToken)
+        Direction? direction,
+        Staff? supervisorStaff,
+        User? supervisorUser,
+        WorkType? workType)
     {
-        var direction = topic.DirectionId.HasValue
-            ? await directionRepository.GetByIdAsync(topic.DirectionId.Value, cancellationToken)
-            : null;
-        var supervisorName = await GetStaffDisplayNameAsync(topic.SupervisorId, staffRepository, userRepository, cancellationToken);
-        var workType = await workflowRepository.GetWorkTypeByIdAsync(topic.WorkTypeId, cancellationToken);
+        var supervisorName = supervisorUser?.Login ?? supervisorUser?.Email ?? supervisorStaff?.Position;
         var applications = topic.Applications.Where(a => !a.IsDeleted).ToList();
 
         return new TopicDto
@@ -51,6 +49,24 @@ internal static class TopicDtoFactory
             IsTeamTopic = topic.IsTeamTopic,
             CreatedAt = topic.CreatedAt
         };
+    }
+
+    public static async Task<TopicDto> CreateAsync(
+        Topic topic,
+        IDirectionRepository directionRepository,
+        IStaffRepository staffRepository,
+        IUserRepository userRepository,
+        IWorkflowRepository workflowRepository,
+        CancellationToken cancellationToken)
+    {
+        var direction = topic.DirectionId.HasValue
+            ? await directionRepository.GetByIdAsync(topic.DirectionId.Value, cancellationToken)
+            : null;
+        var staff = await staffRepository.GetByIdAsync(topic.SupervisorId, cancellationToken);
+        var user = staff is null ? null : await userRepository.GetByIdAsync(staff.UserId, cancellationToken);
+        var workType = await workflowRepository.GetWorkTypeByIdAsync(topic.WorkTypeId, cancellationToken);
+
+        return Create(topic, direction, staff, user, workType);
     }
 
     public static async Task<TopicDetailDto> CreateDetailAsync(
@@ -128,21 +144,5 @@ internal static class TopicDtoFactory
             LastModifiedBy = topic.LastModifiedBy,
             Applications = applications
         };
-    }
-
-    private static async Task<string?> GetStaffDisplayNameAsync(
-        int staffId,
-        IStaffRepository staffRepository,
-        IUserRepository userRepository,
-        CancellationToken cancellationToken)
-    {
-        var staff = await staffRepository.GetByIdAsync(staffId, cancellationToken);
-        if (staff is null)
-        {
-            return null;
-        }
-
-        var user = await userRepository.GetByIdAsync(staff.UserId, cancellationToken);
-        return user?.Login ?? user?.Email ?? staff.Position;
     }
 }
