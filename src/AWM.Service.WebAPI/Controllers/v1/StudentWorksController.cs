@@ -15,6 +15,8 @@ using AWM.Service.Application.Features.Thesis.Works.Queries.GetMyWorkProgress;
 using AWM.Service.Application.Features.Thesis.Works.Queries.GetReviewStatusByDepartment;
 using AWM.Service.Application.Features.Thesis.Works.Queries.GetStudentWorkById;
 using AWM.Service.Application.Features.Thesis.Works.Queries.GetStudentWorksByDepartment;
+using AWM.Service.Application.Features.Thesis.Works.Queries.GetMySupervisedWorks;
+using AWM.Service.Application.Features.Thesis.Works.Queries.GetStudentDefenseStep;
 using AWM.Service.Application.Features.Thesis.Works.Queries.GetStudentWorksBySupervisor;
 using AWM.Service.Domain.Auth.Enums;
 using AWM.Service.Domain.Common;
@@ -66,6 +68,28 @@ public class StudentWorksController : BaseController
         return result.IsSuccess
             ? Ok(result.Value.Adapt<IReadOnlyList<StudentWorkResponse>>())
             : HandleResultError(result.Error);
+    }
+
+    /// <summary>
+    /// Get the current supervisor's supervised works ("My Students").
+    /// </summary>
+    [HttpGet("my-supervised")]
+    [RequirePermission(Permission.Works_ViewSupervised)]
+    [ProducesResponseType(typeof(IReadOnlyList<SupervisedWorkResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> GetMySupervisedWorks(
+        [FromQuery] int? academicYearId,
+        CancellationToken cancellationToken = default)
+    {
+        var query = new GetMySupervisedWorksQuery { AcademicYearId = academicYearId };
+        var result = await _sender.Send(query, cancellationToken);
+
+        if (result.IsFailed)
+            return HandleResultError(result.Error);
+
+        return Ok(result.Value.Adapt<IReadOnlyList<SupervisedWorkResponse>>());
     }
 
     /// <summary>
@@ -147,6 +171,31 @@ public class StudentWorksController : BaseController
 
         var response = result.Value.Adapt<IReadOnlyList<StudentWorkResponse>>();
         return Ok(response);
+    }
+
+    /// <summary>
+    /// Get the current student's defense step data (pre-defense or final defense schedule, commission, attempts, results).
+    /// </summary>
+    [HttpGet("my-defense-step")]
+    [RequirePermission(Permission.Works_ViewOwn)]
+    [ProducesResponseType(typeof(StudentDefenseStepResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> GetMyDefenseStep(
+        [FromQuery] long? workId,
+        CancellationToken cancellationToken = default)
+    {
+        var query = new GetStudentDefenseStepQuery { WorkId = workId };
+        var result = await _sender.Send(query, cancellationToken);
+
+        if (result.IsFailed)
+            return HandleResultError(result.Error);
+
+        if (result.Value is null)
+            return Ok(null);
+
+        return Ok(result.Value.Adapt<StudentDefenseStepResponse>());
     }
 
     /// <summary>
