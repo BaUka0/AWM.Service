@@ -36,7 +36,7 @@ public class QualityChecksController : BaseController
     /// <param name="workId">StudentWork ID</param>
     /// <returns>List of quality check records ordered by type and attempt</returns>
     [HttpGet("by-work/{workId:long}")]
-    [RequireDepartmentPermission(Permission.QualityChecks_View)]
+    [RequireDepartmentPermission(Permission.QualityChecks_ViewOwn)]
     [ProducesResponseType(typeof(IReadOnlyList<QualityCheckDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]

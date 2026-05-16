@@ -309,7 +309,7 @@
 
 ---
 
-## Этап 19. Quality Checks
+## Этап 19. Quality Checks ✅ DONE
 **Тема проблемы:** нормоконтроль, software check и антиплагиат показывают фиктивные статусы/проценты.
 
 **Файлы и их проблемы:**
@@ -323,6 +323,16 @@
 - Expert dashboards получают pending checks.
 - Result recording переводит UI state через backend.
 - Убрать фиктивные проценты и локальные статусы.
+
+**Реализация:**
+- Created `packages/shared/src/api/qualityCheckQueries.js` with hooks: `useQualityChecks`, `useSubmitForCheck`, `usePendingChecks`
+- Exported quality check hooks in `packages/shared/src/api/index.js`
+- Refactored `ReviewStepPage` to use real quality check data from `useQualityChecks` and submit via `useSubmitForCheck`
+- Refactored `AntiplagiarismPage` to use real API for status, originality, comments from quality checks
+- Refactored `NormocontrolPage` to use `usePendingChecks` with department/academic year from user context
+- Added `QualityChecks_ViewOwn` permission to `Permission.cs` and Student role in `PermissionService.cs`
+- Updated `QualityChecksController.GetByWork` to use `QualityChecks_ViewOwn` permission
+- Rebuilt backend and frontend successfully
 
 ---
 

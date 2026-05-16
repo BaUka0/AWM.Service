@@ -69,6 +69,8 @@ public enum Permission
     // ========== Quality Checks ==========
     /// <summary>View quality checks.</summary>
     QualityChecks_View,
+    /// <summary>View own quality checks (Student).</summary>
+    QualityChecks_ViewOwn,
     /// <summary>Perform quality check (Expert).</summary>
     QualityChecks_Perform,
     /// <summary>Submit work for check (Student).</summary>
