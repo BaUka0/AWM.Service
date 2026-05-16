@@ -37,11 +37,17 @@ public sealed record TopicCoordinationItemDto
 {
     public long TopicId { get; init; }
     public string TitleRu { get; init; } = null!;
+    public string? TitleKz { get; init; }
+    public string? TitleEn { get; init; }
+    public string? SupervisorName { get; init; }
     public int SupervisorId { get; init; }
     public int MaxParticipants { get; init; }
+    public int ApplicationsCount { get; init; }
     public int AcceptedCount { get; init; }
     public int PendingCount { get; init; }
+    public int RejectedCount { get; init; }
     public int AvailableSpots { get; init; }
+    public string? LastRejectionReason { get; init; }
     public bool IsApproved { get; init; }
     public bool IsClosed { get; init; }
 }

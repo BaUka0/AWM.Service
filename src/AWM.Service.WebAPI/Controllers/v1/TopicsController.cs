@@ -12,6 +12,7 @@ using AWM.Service.Application.Features.Thesis.Topics.Queries.GetAvailableTopics;
 using AWM.Service.Application.Features.Thesis.Topics.Queries.GetTopicById;
 using AWM.Service.Application.Features.Thesis.Topics.Queries.GetTopicCoordinationSummary;
 using AWM.Service.Application.Features.Thesis.Topics.Queries.GetTopicsByDirection;
+using AWM.Service.Application.Features.Thesis.Topics.Queries.GetTopicsBySupervisor;
 using AWM.Service.WebAPI.Common.Contracts.Requests.Thesis;
 using AWM.Service.WebAPI.Common.Contracts.Responses.Thesis;
 using AWM.Service.Domain.Auth.Enums;
@@ -133,6 +134,41 @@ public sealed class TopicsController : BaseController
     public async Task<IActionResult> GetByDirection(long directionId, CancellationToken cancellationToken = default)
     {
         var query = new GetTopicsByDirectionQuery { DirectionId = directionId };
+        var result = await _sender.Send(query, cancellationToken);
+
+        if (result.IsFailed)
+        {
+            return HandleResultError(result.Error);
+        }
+
+        var response = result.Value.Adapt<IReadOnlyList<TopicResponse>>();
+
+        return Ok(response);
+    }
+
+    /// <summary>
+    /// Get topics created by a supervisor in an academic year.
+    /// </summary>
+    /// <param name="supervisorId">Supervisor staff ID</param>
+    /// <param name="academicYearId">Academic year ID</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>List of supervisor topics</returns>
+    [HttpGet("by-supervisor")]
+    [RequirePermission(Permission.Topics_View)]
+    [ProducesResponseType(typeof(IReadOnlyList<TopicResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> GetBySupervisor(
+        [FromQuery] int supervisorId,
+        [FromQuery] int academicYearId,
+        CancellationToken cancellationToken = default)
+    {
+        var query = new GetTopicsBySupervisorQuery
+        {
+            SupervisorId = supervisorId,
+            AcademicYearId = academicYearId
+        };
+
         var result = await _sender.Send(query, cancellationToken);
 
         if (result.IsFailed)

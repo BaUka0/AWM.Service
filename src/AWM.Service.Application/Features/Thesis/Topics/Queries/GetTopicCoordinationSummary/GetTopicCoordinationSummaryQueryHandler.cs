@@ -15,17 +15,23 @@ public sealed class GetTopicCoordinationSummaryQueryHandler
 {
     private readonly ITopicRepository _topicRepository;
     private readonly ITopicApplicationRepository _applicationRepository;
+    private readonly IStaffRepository _staffRepository;
+    private readonly IUserRepository _userRepository;
     private readonly ICurrentUserProvider _currentUserProvider;
     private readonly ILogger<GetTopicCoordinationSummaryQueryHandler> _logger;
 
     public GetTopicCoordinationSummaryQueryHandler(
         ITopicRepository topicRepository,
         ITopicApplicationRepository applicationRepository,
+        IStaffRepository staffRepository,
+        IUserRepository userRepository,
         ICurrentUserProvider currentUserProvider,
         ILogger<GetTopicCoordinationSummaryQueryHandler> logger)
     {
         _topicRepository = topicRepository;
         _applicationRepository = applicationRepository;
+        _staffRepository = staffRepository;
+        _userRepository = userRepository;
         _currentUserProvider = currentUserProvider;
         _logger = logger;
     }
@@ -59,17 +65,32 @@ public sealed class GetTopicCoordinationSummaryQueryHandler
             var applications = applicationsByTopicId.GetValueOrDefault(topic.Id, []);
             var accepted = applications.Count(a => a.Status == ApplicationStatus.Accepted);
             var pending = applications.Count(a => a.Status == ApplicationStatus.Submitted);
+            var rejected = applications.Count(a => a.Status == ApplicationStatus.Rejected);
             var available = topic.GetAvailableSpots();
+            var supervisor = await _staffRepository.GetByIdAsync(topic.SupervisorId, cancellationToken);
+            var supervisorUser = supervisor is null
+                ? null
+                : await _userRepository.GetByIdAsync(supervisor.UserId, cancellationToken);
 
             topicItems.Add(new TopicCoordinationItemDto
             {
                 TopicId = topic.Id,
                 TitleRu = topic.TitleRu,
+                TitleKz = topic.TitleKz,
+                TitleEn = topic.TitleEn,
                 SupervisorId = topic.SupervisorId,
+                SupervisorName = supervisorUser?.Login ?? supervisorUser?.Email ?? supervisor?.Position,
                 MaxParticipants = topic.MaxParticipants,
+                ApplicationsCount = applications.Count,
                 AcceptedCount = accepted,
                 PendingCount = pending,
+                RejectedCount = rejected,
                 AvailableSpots = available,
+                LastRejectionReason = applications
+                    .Where(a => a.Status == ApplicationStatus.Rejected && !string.IsNullOrWhiteSpace(a.ReviewComment))
+                    .OrderByDescending(a => a.ReviewedAt ?? a.AppliedAt)
+                    .Select(a => a.ReviewComment)
+                    .FirstOrDefault(),
                 IsApproved = topic.IsApproved,
                 IsClosed = topic.IsClosed
             });

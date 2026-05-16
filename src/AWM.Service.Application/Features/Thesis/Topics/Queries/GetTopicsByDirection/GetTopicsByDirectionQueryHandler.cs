@@ -12,10 +12,20 @@ public sealed class GetTopicsByDirectionQueryHandler
     : IRequestHandler<GetTopicsByDirectionQuery, Result<IReadOnlyList<TopicDto>>>
 {
     private readonly IDirectionRepository _directionRepository;
+    private readonly IStaffRepository _staffRepository;
+    private readonly IUserRepository _userRepository;
+    private readonly IWorkflowRepository _workflowRepository;
 
-    public GetTopicsByDirectionQueryHandler(IDirectionRepository directionRepository)
+    public GetTopicsByDirectionQueryHandler(
+        IDirectionRepository directionRepository,
+        IStaffRepository staffRepository,
+        IUserRepository userRepository,
+        IWorkflowRepository workflowRepository)
     {
         _directionRepository = directionRepository ?? throw new ArgumentNullException(nameof(directionRepository));
+        _staffRepository = staffRepository ?? throw new ArgumentNullException(nameof(staffRepository));
+        _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
+        _workflowRepository = workflowRepository ?? throw new ArgumentNullException(nameof(workflowRepository));
     }
 
     public async Task<Result<IReadOnlyList<TopicDto>>> Handle(
@@ -33,29 +43,17 @@ public sealed class GetTopicsByDirectionQueryHandler
                     new Error("NotFound.Direction", $"Direction with ID {request.DirectionId} not found."));
             }
 
-            // 2. Map topics to DTOs
-            var dtos = direction.Topics
-                .Where(t => !t.IsDeleted)
-                .OrderByDescending(t => t.CreatedAt)
-                .Select(t => new TopicDto
-                {
-                    Id = t.Id,
-                    DirectionId = t.DirectionId,
-                    DepartmentId = t.DepartmentId,
-                    SupervisorId = t.SupervisorId,
-                    AcademicYearId = t.AcademicYearId,
-                    WorkTypeId = t.WorkTypeId,
-                    TitleRu = t.TitleRu,
-                    TitleEn = t.TitleEn,
-                    TitleKz = t.TitleKz,
-                    MaxParticipants = t.MaxParticipants,
-                    AvailableSpots = t.GetAvailableSpots(),
-                    IsApproved = t.IsApproved,
-                    IsClosed = t.IsClosed,
-                    IsTeamTopic = t.IsTeamTopic,
-                    CreatedAt = t.CreatedAt
-                })
-                .ToList();
+            var dtos = new List<TopicDto>();
+            foreach (var topic in direction.Topics.Where(t => !t.IsDeleted).OrderByDescending(t => t.CreatedAt))
+            {
+                dtos.Add(await TopicDtoFactory.CreateAsync(
+                    topic,
+                    _directionRepository,
+                    _staffRepository,
+                    _userRepository,
+                    _workflowRepository,
+                    cancellationToken));
+            }
 
             return Result.Success<IReadOnlyList<TopicDto>>(dtos);
         }

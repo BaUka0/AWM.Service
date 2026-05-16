@@ -18,9 +18,18 @@ public sealed record TopicDetailDto
     public string? DescriptionRu { get; init; }
     public string? DescriptionKz { get; init; }
     public string? DescriptionEn { get; init; }
+    public string? DirectionTitleRu { get; init; }
+    public string? DirectionTitleKz { get; init; }
+    public string? DirectionTitleEn { get; init; }
+    public string? SupervisorName { get; init; }
+    public string? WorkTypeName { get; init; }
     
     public int MaxParticipants { get; init; }
     public int AvailableSpots { get; init; }
+    public int AcceptedApplicationsCount { get; init; }
+    public int PendingApplicationsCount { get; init; }
+    public int ApplicationsCount { get; init; }
+    public bool IsSubmittedForApproval { get; init; }
     public bool IsApproved { get; init; }
     public bool IsClosed { get; init; }
     public bool IsTeamTopic { get; init; }
@@ -42,7 +51,11 @@ public sealed record TopicDetailDto
 public sealed record TopicApplicationDto
 {
     public long Id { get; init; }
+    public long TopicId { get; init; }
     public int StudentId { get; init; }
+    public string? StudentName { get; init; }
+    public string? StudentGroupCode { get; init; }
+    public string? MotivationLetter { get; init; }
     public string Status { get; init; } = null!;
     public DateTime AppliedAt { get; init; }
     public DateTime? ReviewedAt { get; init; }

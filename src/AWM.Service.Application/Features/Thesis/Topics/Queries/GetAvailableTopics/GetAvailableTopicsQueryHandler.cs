@@ -14,16 +14,25 @@ public sealed class GetAvailableTopicsQueryHandler
     : IRequestHandler<GetAvailableTopicsQuery, Result<IReadOnlyList<TopicDto>>>
 {
     private readonly ITopicRepository _topicRepository;
+    private readonly IDirectionRepository _directionRepository;
     private readonly IUserRepository _userRepository;
+    private readonly IStaffRepository _staffRepository;
+    private readonly IWorkflowRepository _workflowRepository;
     private readonly IAcademicYearRepository _academicYearRepository;
 
     public GetAvailableTopicsQueryHandler(
         ITopicRepository topicRepository,
+        IDirectionRepository directionRepository,
         IUserRepository userRepository,
+        IStaffRepository staffRepository,
+        IWorkflowRepository workflowRepository,
         IAcademicYearRepository academicYearRepository)
     {
         _topicRepository = topicRepository ?? throw new ArgumentNullException(nameof(topicRepository));
+        _directionRepository = directionRepository ?? throw new ArgumentNullException(nameof(directionRepository));
         _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
+        _staffRepository = staffRepository ?? throw new ArgumentNullException(nameof(staffRepository));
+        _workflowRepository = workflowRepository ?? throw new ArgumentNullException(nameof(workflowRepository));
         _academicYearRepository = academicYearRepository ?? throw new ArgumentNullException(nameof(academicYearRepository));
     }
 
@@ -71,25 +80,17 @@ public sealed class GetAvailableTopicsQueryHandler
                 academicYearId.Value,
                 cancellationToken);
 
-            // Map to DTOs
-            var dtos = topics.Select(t => new TopicDto
+            var dtos = new List<TopicDto>();
+            foreach (var topic in topics)
             {
-                Id = t.Id,
-                DirectionId = t.DirectionId,
-                DepartmentId = t.DepartmentId,
-                SupervisorId = t.SupervisorId,
-                AcademicYearId = t.AcademicYearId,
-                WorkTypeId = t.WorkTypeId,
-                TitleRu = t.TitleRu,
-                TitleEn = t.TitleEn,
-                TitleKz = t.TitleKz,
-                MaxParticipants = t.MaxParticipants,
-                AvailableSpots = t.GetAvailableSpots(),
-                IsApproved = t.IsApproved,
-                IsClosed = t.IsClosed,
-                IsTeamTopic = t.IsTeamTopic,
-                CreatedAt = t.CreatedAt
-            }).ToList();
+                dtos.Add(await TopicDtoFactory.CreateAsync(
+                    topic,
+                    _directionRepository,
+                    _staffRepository,
+                    _userRepository,
+                    _workflowRepository,
+                    cancellationToken));
+            }
 
             return Result.Success<IReadOnlyList<TopicDto>>(dtos);
         }

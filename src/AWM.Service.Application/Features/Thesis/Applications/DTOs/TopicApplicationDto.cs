@@ -22,6 +22,8 @@ public sealed record TopicApplicationDto
     /// Student ID.
     /// </summary>
     public int StudentId { get; init; }
+    public string? StudentName { get; init; }
+    public string? StudentGroupCode { get; init; }
 
     /// <summary>
     /// Optional motivation letter.
@@ -57,6 +59,20 @@ public sealed record TopicApplicationDto
     /// Review comment (rejection reason or acceptance note).
     /// </summary>
     public string? ReviewComment { get; init; }
+
+    public string? TopicTitleRu { get; init; }
+    public string? TopicTitleKz { get; init; }
+    public string? TopicTitleEn { get; init; }
+    public long? DirectionId { get; init; }
+    public string? DirectionTitleRu { get; init; }
+    public string? DirectionTitleKz { get; init; }
+    public string? DirectionTitleEn { get; init; }
+    public int SupervisorId { get; init; }
+    public string? SupervisorName { get; init; }
+    public int? WorkTypeId { get; init; }
+    public string? WorkTypeName { get; init; }
+    public int? TopicMaxParticipants { get; init; }
+    public int? TopicAvailableSpots { get; init; }
 
     /// <summary>
     /// Indicates if application is pending review.

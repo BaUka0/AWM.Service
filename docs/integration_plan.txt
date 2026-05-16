@@ -34,13 +34,13 @@
 - Согласовать frontend роли с backend `RoleType`.
 - Зафиксировать, что `Reviewer` либо становится отдельной backend ролью, либо явно моделируется через staff assignment.
 
-### Фаза 3. Административная и организационная база
+### Фаза 3. Административная и организационная база [DONE]
 - Подключить admin users/roles к backend.
 - Подключить institutes, departments, degree levels, academic programs, work types.
 - Подключить staff/supervisors и workload.
 - Подключить initial/defense periods.
 
-### Фаза 4. Темы, направления и заявки
+### Фаза 4. Темы, направления и заявки [DONE]
 - Подключить directions supervisor/department flows.
 - Обогатить topics DTO.
 - Подключить выбор темы студентом.
