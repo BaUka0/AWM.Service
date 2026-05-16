@@ -27,6 +27,17 @@ public sealed class WorkflowRepository : IWorkflowRepository
     }
 
     /// <inheritdoc />
+    public async Task<IReadOnlyList<WorkType>> GetWorkTypesByIdsAsync(IEnumerable<int> ids, CancellationToken cancellationToken = default)
+    {
+        var distinctIds = ids.Distinct().ToList();
+        return await _context.WorkTypes
+            .AsNoTracking()
+            .Include(w => w.States.Where(s => !s.IsDeleted))
+            .Where(w => distinctIds.Contains(w.Id) && !w.IsDeleted)
+            .ToListAsync(cancellationToken);
+    }
+
+    /// <inheritdoc />
     public async Task<IReadOnlyList<WorkType>> GetAllWorkTypesAsync(CancellationToken cancellationToken = default)
     {
         return await _context.WorkTypes

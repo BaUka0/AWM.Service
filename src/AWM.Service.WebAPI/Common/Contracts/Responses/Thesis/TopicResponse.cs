@@ -69,6 +69,31 @@ public sealed record TopicResponse
         En = TitleEn 
     };
 
+    public string? DescriptionRu { get; init; }
+    public string? DescriptionKz { get; init; }
+    public string? DescriptionEn { get; init; }
+
+    public AWM.Service.WebAPI.Common.Contracts.Responses.Common.LocalizedTextResponse Description => new()
+    {
+        Ru = DescriptionRu ?? string.Empty,
+        Kk = DescriptionKz,
+        En = DescriptionEn
+    };
+
+    public string? DirectionTitleRu { get; init; }
+    public string? DirectionTitleKz { get; init; }
+    public string? DirectionTitleEn { get; init; }
+
+    public AWM.Service.WebAPI.Common.Contracts.Responses.Common.LocalizedTextResponse DirectionTitle => new()
+    {
+        Ru = DirectionTitleRu ?? string.Empty,
+        Kk = DirectionTitleKz,
+        En = DirectionTitleEn
+    };
+
+    public string? SupervisorName { get; init; }
+    public string? WorkTypeName { get; init; }
+
     /// <summary>
     /// Maximum number of participants.
     /// </summary>
@@ -80,6 +105,11 @@ public sealed record TopicResponse
     /// </summary>
     /// <example>1</example>
     public int AvailableSpots { get; init; }
+
+    public int AcceptedApplicationsCount { get; init; }
+    public int PendingApplicationsCount { get; init; }
+    public int ApplicationsCount { get; init; }
+    public bool IsSubmittedForApproval { get; init; }
 
     /// <summary>
     /// Whether the topic is approved by department.

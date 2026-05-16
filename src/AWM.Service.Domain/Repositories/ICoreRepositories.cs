@@ -61,6 +61,7 @@ public interface IStudentRepository
 public interface IStaffRepository
 {
     Task<Staff?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<Staff>> GetByIdsAsync(IEnumerable<int> ids, CancellationToken cancellationToken = default);
     Task<Staff?> GetByUserIdAsync(int userId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Staff>> GetByDepartmentAsync(int departmentId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Staff>> GetSupervisorsWithCapacityAsync(int departmentId, CancellationToken cancellationToken = default);

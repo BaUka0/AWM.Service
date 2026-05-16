@@ -15,16 +15,31 @@ public sealed class GetApplicationsByStudentQueryHandler
     : IRequestHandler<GetApplicationsByStudentQuery, Result<IReadOnlyList<TopicApplicationDto>>>
 {
     private readonly ITopicApplicationRepository _applicationRepository;
+    private readonly ITopicRepository _topicRepository;
     private readonly IStudentRepository _studentRepository;
+    private readonly IStaffRepository _staffRepository;
+    private readonly IUserRepository _userRepository;
+    private readonly IDirectionRepository _directionRepository;
+    private readonly IWorkflowRepository _workflowRepository;
     private readonly ICurrentUserProvider _currentUserProvider;
 
     public GetApplicationsByStudentQueryHandler(
         ITopicApplicationRepository applicationRepository,
+        ITopicRepository topicRepository,
         IStudentRepository studentRepository,
+        IStaffRepository staffRepository,
+        IUserRepository userRepository,
+        IDirectionRepository directionRepository,
+        IWorkflowRepository workflowRepository,
         ICurrentUserProvider currentUserProvider)
     {
         _applicationRepository = applicationRepository;
+        _topicRepository = topicRepository;
         _studentRepository = studentRepository;
+        _staffRepository = staffRepository;
+        _userRepository = userRepository;
+        _directionRepository = directionRepository;
+        _workflowRepository = workflowRepository;
         _currentUserProvider = currentUserProvider;
     }
 
@@ -66,10 +81,25 @@ public sealed class GetApplicationsByStudentQueryHandler
                 cancellationToken);
         }
 
-        // 3. Map to DTOs
-        var dtos = applications
-            .Select(TopicApplicationDto.FromEntity)
-            .ToList();
+        var dtos = new List<TopicApplicationDto>();
+        foreach (var application in applications.Where(a => !a.IsDeleted))
+        {
+            var topic = await _topicRepository.GetByIdAsync(application.TopicId, cancellationToken);
+            if (topic is null)
+            {
+                continue;
+            }
+
+            dtos.Add(await TopicApplicationDtoFactory.CreateAsync(
+                application,
+                topic,
+                _studentRepository,
+                _staffRepository,
+                _userRepository,
+                _directionRepository,
+                _workflowRepository,
+                cancellationToken));
+        }
 
         return Result.Success<IReadOnlyList<TopicApplicationDto>>(dtos);
     }

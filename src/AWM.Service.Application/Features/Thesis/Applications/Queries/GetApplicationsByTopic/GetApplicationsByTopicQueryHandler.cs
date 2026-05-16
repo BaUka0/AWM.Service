@@ -18,17 +18,29 @@ public sealed class GetApplicationsByTopicQueryHandler
     private readonly ITopicApplicationRepository _applicationRepository;
     private readonly ITopicRepository _topicRepository;
     private readonly IStaffRepository _staffRepository;
+    private readonly IStudentRepository _studentRepository;
+    private readonly IUserRepository _userRepository;
+    private readonly IDirectionRepository _directionRepository;
+    private readonly IWorkflowRepository _workflowRepository;
     private readonly ICurrentUserProvider _currentUserProvider;
 
     public GetApplicationsByTopicQueryHandler(
         ITopicApplicationRepository applicationRepository,
         ITopicRepository topicRepository,
         IStaffRepository staffRepository,
+        IStudentRepository studentRepository,
+        IUserRepository userRepository,
+        IDirectionRepository directionRepository,
+        IWorkflowRepository workflowRepository,
         ICurrentUserProvider currentUserProvider)
     {
         _applicationRepository = applicationRepository;
         _topicRepository = topicRepository;
         _staffRepository = staffRepository;
+        _studentRepository = studentRepository;
+        _userRepository = userRepository;
+        _directionRepository = directionRepository;
+        _workflowRepository = workflowRepository;
         _currentUserProvider = currentUserProvider;
     }
 
@@ -81,10 +93,19 @@ public sealed class GetApplicationsByTopicQueryHandler
                 .ToList();
         }
 
-        // 5. Map to DTOs
-        var dtos = applications
-            .Select(TopicApplicationDto.FromEntity)
-            .ToList();
+        var dtos = new List<TopicApplicationDto>();
+        foreach (var application in applications.Where(a => !a.IsDeleted))
+        {
+            dtos.Add(await TopicApplicationDtoFactory.CreateAsync(
+                application,
+                topic,
+                _studentRepository,
+                _staffRepository,
+                _userRepository,
+                _directionRepository,
+                _workflowRepository,
+                cancellationToken));
+        }
 
         return Result.Success<IReadOnlyList<TopicApplicationDto>>(dtos);
     }

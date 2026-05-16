@@ -16,6 +16,11 @@ public interface IWorkflowRepository
     Task<WorkType?> GetWorkTypeByIdAsync(int id, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Gets work types by their IDs.
+    /// </summary>
+    Task<IReadOnlyList<WorkType>> GetWorkTypesByIdsAsync(IEnumerable<int> ids, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Gets all work types (for dropdown selection).
     /// </summary>
     Task<IReadOnlyList<WorkType>> GetAllWorkTypesAsync(CancellationToken cancellationToken = default);

@@ -8,6 +8,7 @@ using AWM.Service.Domain.Thesis.Entities;
 public interface IDirectionRepository
 {
     Task<Direction?> GetByIdAsync(long id, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<Direction>> GetByIdsAsync(IEnumerable<long> ids, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Direction>> GetByDepartmentAsync(int departmentId, int academicYearId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Direction>> GetBySupervisorAsync(int supervisorId, int academicYearId, CancellationToken cancellationToken = default);
     Task AddAsync(Direction direction, CancellationToken cancellationToken = default);

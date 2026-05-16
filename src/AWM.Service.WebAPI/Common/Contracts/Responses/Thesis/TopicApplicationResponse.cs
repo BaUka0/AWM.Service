@@ -22,6 +22,8 @@ public sealed record TopicApplicationResponse
     /// </summary>
     /// <example>100</example>
     public int StudentId { get; init; }
+    public string? StudentName { get; init; }
+    public string? StudentGroupCode { get; init; }
 
     /// <summary>
     /// Optional motivation letter.
@@ -39,6 +41,11 @@ public sealed record TopicApplicationResponse
     /// </summary>
     /// <example>Submitted</example>
     public string Status { get; init; } = null!;
+
+    /// <summary>
+    /// Application status as backend enum text, kept for clients that prefer an explicit display-safe field.
+    /// </summary>
+    public string? StatusText { get; init; }
 
     /// <summary>
     /// Whether the application is pending review.
@@ -66,4 +73,34 @@ public sealed record TopicApplicationResponse
     /// Review comment (rejection reason or acceptance note).
     /// </summary>
     public string? ReviewComment { get; init; }
+
+    public string? TopicTitleRu { get; init; }
+    public string? TopicTitleKz { get; init; }
+    public string? TopicTitleEn { get; init; }
+
+    public AWM.Service.WebAPI.Common.Contracts.Responses.Common.LocalizedTextResponse TopicTitle => new()
+    {
+        Ru = TopicTitleRu ?? string.Empty,
+        Kk = TopicTitleKz,
+        En = TopicTitleEn
+    };
+
+    public long? DirectionId { get; init; }
+    public string? DirectionTitleRu { get; init; }
+    public string? DirectionTitleKz { get; init; }
+    public string? DirectionTitleEn { get; init; }
+
+    public AWM.Service.WebAPI.Common.Contracts.Responses.Common.LocalizedTextResponse DirectionTitle => new()
+    {
+        Ru = DirectionTitleRu ?? string.Empty,
+        Kk = DirectionTitleKz,
+        En = DirectionTitleEn
+    };
+
+    public int SupervisorId { get; init; }
+    public string? SupervisorName { get; init; }
+    public int? WorkTypeId { get; init; }
+    public string? WorkTypeName { get; init; }
+    public int? TopicMaxParticipants { get; init; }
+    public int? TopicAvailableSpots { get; init; }
 }
