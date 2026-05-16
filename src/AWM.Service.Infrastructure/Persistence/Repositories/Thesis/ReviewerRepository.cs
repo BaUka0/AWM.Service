@@ -47,4 +47,13 @@ public sealed class ReviewerRepository : RepositoryBase<Reviewer, int>, IReviewe
             .Where(r => idList.Contains(r.Id))
             .ToListAsync(cancellationToken);
     }
+
+    /// <inheritdoc />
+    public async Task<Reviewer?> GetByUserIdAsync(int userId, CancellationToken cancellationToken = default)
+    {
+        return await Context.Reviewers
+            .AsNoTracking()
+            .Where(r => r.UserId == userId && r.IsActive && !r.IsDeleted)
+            .FirstOrDefaultAsync(cancellationToken);
+    }
 }

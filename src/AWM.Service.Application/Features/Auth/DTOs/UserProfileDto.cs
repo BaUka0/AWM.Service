@@ -35,6 +35,9 @@ public sealed class UserProfileDto
     public string? AcademicDegree { get; init; }
     public bool? IsSupervisor { get; init; }
 
+    // Reviewer-specific fields (null for non-reviewer users)
+    public int? ReviewerId { get; init; }
+
     // Student-specific fields (null for non-student users)
     public int? StudentId { get; init; }
     public string? GroupCode { get; init; }

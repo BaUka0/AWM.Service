@@ -83,6 +83,8 @@ public enum Permission
     // ========== Reviews ==========
     /// <summary>View reviews.</summary>
     Reviews_View,
+    /// <summary>View own reviewer assignments (Reviewer).</summary>
+    Reviews_ViewOwn,
     /// <summary>Create supervisor review.</summary>
     Reviews_CreateSupervisor,
     /// <summary>Upload external review.</summary>

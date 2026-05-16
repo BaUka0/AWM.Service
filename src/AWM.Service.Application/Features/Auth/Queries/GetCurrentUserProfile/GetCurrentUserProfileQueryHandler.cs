@@ -16,6 +16,7 @@ public sealed class GetCurrentUserProfileQueryHandler
     private readonly IUserRepository _userRepository;
     private readonly IStudentRepository _studentRepository;
     private readonly IStaffRepository _staffRepository;
+    private readonly IReviewerRepository _reviewerRepository;
     private readonly IAcademicYearRepository _academicYearRepository;
     private readonly IOrganizationLookupRepository _orgLookupRepository;
 
@@ -23,12 +24,14 @@ public sealed class GetCurrentUserProfileQueryHandler
         IUserRepository userRepository,
         IStudentRepository studentRepository,
         IStaffRepository staffRepository,
+        IReviewerRepository reviewerRepository,
         IAcademicYearRepository academicYearRepository,
         IOrganizationLookupRepository orgLookupRepository)
     {
         _userRepository = userRepository;
         _studentRepository = studentRepository;
         _staffRepository = staffRepository;
+        _reviewerRepository = reviewerRepository;
         _academicYearRepository = academicYearRepository;
         _orgLookupRepository = orgLookupRepository;
     }
@@ -113,7 +116,17 @@ public sealed class GetCurrentUserProfileQueryHandler
             }
         }
 
-        // 7. Load student profile if user has Student role
+        // 7. Load reviewer profile if user has Reviewer role
+        int? reviewerId = null;
+
+        var isReviewer = roles.Contains(nameof(RoleType.Reviewer));
+        if (isReviewer)
+        {
+            var reviewer = await _reviewerRepository.GetByUserIdAsync(user.Id, cancellationToken);
+            reviewerId = reviewer?.Id;
+        }
+
+        // 8. Load student profile if user has Student role
         int? studentId = null;
         string? groupCode = null;
 
@@ -142,6 +155,7 @@ public sealed class GetCurrentUserProfileQueryHandler
             Position = position,
             AcademicDegree = academicDegree,
             IsSupervisor = isSupervisor,
+            ReviewerId = reviewerId,
             StudentId = studentId,
             GroupCode = groupCode,
         };

@@ -28,6 +28,11 @@ public interface IReviewerRepository
     /// </summary>
     Task<IReadOnlyList<Reviewer>> GetByIdsAsync(IEnumerable<int> ids, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Gets a reviewer by linked system user ID.
+    /// </summary>
+    Task<Reviewer?> GetByUserIdAsync(int userId, CancellationToken cancellationToken = default);
+
     Task AddAsync(Reviewer reviewer, CancellationToken cancellationToken = default);
     Task UpdateAsync(Reviewer reviewer, CancellationToken cancellationToken = default);
 }

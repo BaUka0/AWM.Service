@@ -2,6 +2,7 @@ namespace AWM.Service.WebAPI.Controllers.v1;
 
 using AWM.Service.Application.Features.Thesis.Reviews.Commands.CreateSupervisorReview;
 using AWM.Service.Application.Features.Thesis.Reviews.Commands.UploadReview;
+using AWM.Service.Application.Features.Thesis.Reviews.Queries.GetMyReviewerAssignments;
 using AWM.Service.Application.Features.Thesis.Reviews.Queries.GetReviewsByWork;
 using AWM.Service.Domain.Auth.Enums;
 using AWM.Service.WebAPI.Authorization;
@@ -25,6 +26,26 @@ public sealed class ReviewsController : BaseController
     public ReviewsController(ISender sender)
     {
         _sender = sender;
+    }
+
+    /// <summary>
+    /// Get assignments for the current reviewer ("My Reviews").
+    /// </summary>
+    [HttpGet("my-assignments")]
+    [RequirePermission(Permission.Reviews_ViewOwn)]
+    [ProducesResponseType(typeof(IReadOnlyList<ReviewerAssignmentResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> GetMyAssignments(CancellationToken cancellationToken = default)
+    {
+        var query = new GetMyReviewerAssignmentsQuery();
+        var result = await _sender.Send(query, cancellationToken);
+
+        if (result.IsFailed)
+            return HandleResultError(result.Error);
+
+        return Ok(result.Value.Adapt<IReadOnlyList<ReviewerAssignmentResponse>>());
     }
 
     /// <summary>

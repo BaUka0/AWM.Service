@@ -14,6 +14,7 @@ public class Reviewer : AggregateRoot<int>, IAuditable, ISoftDeletable
     public string? Email { get; private set; }
     public string? Phone { get; private set; }
     public bool IsActive { get; private set; }
+    public int? UserId { get; private set; }
 
     public DateTime CreatedAt { get; private set; }
     public int CreatedBy { get; private set; }
@@ -83,6 +84,15 @@ public class Reviewer : AggregateRoot<int>, IAuditable, ISoftDeletable
     public void Activate()
     {
         IsActive = true;
+        LastModifiedAt = DateTime.UtcNow;
+    }
+
+    /// <summary>
+    /// Links the reviewer to a system user account.
+    /// </summary>
+    public void SetUserId(int? userId)
+    {
+        UserId = userId;
         LastModifiedAt = DateTime.UtcNow;
     }
 
