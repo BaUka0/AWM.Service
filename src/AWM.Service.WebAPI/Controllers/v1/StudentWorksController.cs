@@ -11,6 +11,7 @@ using AWM.Service.Application.Features.Thesis.Works.Queries.GetAssignedReviewer;
 using AWM.Service.Application.Features.Thesis.Works.Queries.GetAdmittedStudents;
 using AWM.Service.Application.Features.Thesis.Works.Queries.GetDefenseReadiness;
 using AWM.Service.Application.Features.Thesis.Works.Queries.GetMyWork;
+using AWM.Service.Application.Features.Thesis.Works.Queries.GetMyWorkProgress;
 using AWM.Service.Application.Features.Thesis.Works.Queries.GetReviewStatusByDepartment;
 using AWM.Service.Application.Features.Thesis.Works.Queries.GetStudentWorkById;
 using AWM.Service.Application.Features.Thesis.Works.Queries.GetStudentWorksByDepartment;
@@ -145,6 +146,33 @@ public class StudentWorksController : BaseController
             return HandleResultError(result.Error);
 
         var response = result.Value.Adapt<IReadOnlyList<StudentWorkResponse>>();
+        return Ok(response);
+    }
+
+    /// <summary>
+    /// Get the current student's work progress with full details.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Student work progress or null if no work exists</returns>
+    [HttpGet("my-progress")]
+    [RequirePermission(Permission.Works_ViewOwn)]
+    [ProducesResponseType(typeof(StudentWorkProgressResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> GetMyWorkProgress(CancellationToken cancellationToken = default)
+    {
+        var query = new GetMyWorkProgressQuery();
+
+        var result = await _sender.Send(query, cancellationToken);
+
+        if (result.IsFailed)
+            return HandleResultError(result.Error);
+
+        if (result.Value is null)
+            return Ok(null);
+
+        var response = result.Value.Adapt<StudentWorkProgressResponse>();
         return Ok(response);
     }
 

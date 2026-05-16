@@ -265,7 +265,7 @@
 
 ---
 
-## Этап 17. Student Work
+## Этап 17. Student Work ✅ DONE
 **Тема проблемы:** студентская карточка работы и workflow timeline сейчас статичны.
 
 **Файлы и их проблемы:**
@@ -277,6 +277,10 @@
 - Добавить `StudentWorkProgressResponse` или `GET /works/my-progress`.
 - Включить topic, participants, attachments, checks, current stage, next actions.
 - Заменить статичные materials/timeline на backend данные.
+
+**Реализовано:**
+- Backend: `StudentWorkProgressDto`, `GetMyWorkProgressQuery` + Handler, `StudentWorkProgressResponse`, endpoint `GET /works/my-progress`
+- Frontend: `workQueries.js` (useMyWorkProgress), `MyWorkPage.jsx` переписан на динамические данные
 
 ---
 
