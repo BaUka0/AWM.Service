@@ -284,7 +284,7 @@
 
 ---
 
-## Этап 18. Attachments
+## Этап 18. Attachments ✅ DONE
 **Тема проблемы:** загрузка файлов имитируется на frontend, download не привязан к API.
 
 **Файлы и их проблемы:**
@@ -297,6 +297,15 @@
 - Реализовать download blob.
 - Реализовать delete attachment.
 - UI должен показывать реальные версии, размер, дату, автора и состояние загрузки.
+
+**Реализовано:**
+- Backend: `AttachmentsController` уже имел все endpoints (GET/POST/DELETE + download)
+- Frontend: `attachmentQueries.js` (useAttachments, useUploadAttachment, useDeleteAttachment, useCurrentWorkId, downloadAttachment)
+- `UploadModal.jsx` — добавлены isUploading/uploadError пропсы
+- `SubmissionCard.jsx` — добавлены isUploading/uploadError пропсы
+- `DefenseStepPage.jsx` — использует useUploadAttachment + useCurrentWorkId
+- `ReviewStepPage.jsx` — использует useAttachments + useUploadAttachment + useCurrentWorkId
+- `index.js` — экспорт attachmentQueries
 
 ---
 
