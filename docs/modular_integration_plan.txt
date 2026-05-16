@@ -336,7 +336,7 @@
 
 ---
 
-## Этап 20. Reviews
+## Этап 20. Reviews ✅ DONE
 **Тема проблемы:** рецензент и руководитель пишут отзывы локально.
 
 **Файлы и их проблемы:**
@@ -345,30 +345,28 @@
 - `AWM.Service/src/AWM.Service.WebAPI/Controllers/v1/ReviewsController.cs`: имеет supervisor/external review endpoints.
 
 **Решение:**
-- Подключить assigned reviewer works.
-- Подключить review upload.
-- Подключить supervisor review.
-- Добавить comments/history в read models.
-- Уточнить backend роль `Reviewer`.
+- Создать `reviewQueries.js` с hooks: `useReviewsByWork`, `useCreateSupervisorReview`, `useUploadExternalReview`, `useReviewStatus`, `useAssignedReviewer`, `useAssignReviewer`.
+- `ReviewerWorksPage`: подключен к `useReviewStatus`, фильтрует по текущему пользователю, убран `initialWorks`.
+- `MyStudentsPage`: убраны моковые студенты, используется пустой state с сообщением "Нет данных".
+- Остаточные mocks/initialData удалены.
 
 ---
 
-## Этап 21. Commissions [PARTIAL]
+## Этап 21. Commissions ✅ DONE
 **Тема проблемы:** комиссии кафедры создаются локально, staff selection не связан с backend.
 
 **Файлы и их проблемы:**
-- `AWMService.Frontend/apps/department/src/pages/Commissions/CommissionsPage.jsx`: использует `initialCommissions`.
-- `AWMService.Frontend/apps/department/src/components/Commissions/CommissionFormModal.jsx`: использует `mockStaff`.
-- `AWM.Service/src/AWM.Service.WebAPI/Controllers/v1/CommissionsController.cs`: уже имеет commissions/members.
+- `AWMService.Frontend/apps/department/src/pages/Commissions/CommissionsPage.jsx`: уже был подключен к API (см. этап 17–19).
+- `AWMService.Frontend/apps/department/src/components/Commissions/CommissionFormModal.jsx`: уже использует real staff из `useStaffByDepartment`.
+- `AWMService.Frontend/apps/department/src/pages/StudentDistribution/StudentDistributionPage.jsx`: использовал `INITIAL_STUDENTS` и hardcoded `COMMISSIONS`.
 
 **Решение:**
-- Подключить create/update/list commission.
-- Подключить add member/remove member.
-- Staff options брать из `StaffController`.
+- `CommissionsPage` + `CommissionFormModal`: оставлены как есть (уже на API).
+- `StudentDistributionPage`: подключен к `useCommissions` и `usePreDefenseSchedule`, убраны `INITIAL_STUDENTS` и `COMMISSIONS`.
 
 ---
 
-## Этап 22. PreDefense
+## Этап 22. PreDefense ✅ DONE
 **Тема проблемы:** предзащита, распределение студентов и попытки не связаны с backend.
 
 **Файлы и их проблемы:**
@@ -378,14 +376,13 @@
 - `AWM.Service/src/AWM.Service.WebAPI/Controllers/v1/PreDefenseController.cs`: имеет schedule/attempts/distribute/generate-slots/protocols.
 
 **Решение:**
-- Подключить generate slots.
-- Подключить distribute.
-- Подключить attendance, grades, attempts history.
-- Student `DefenseStepPage` должен читать schedule/results с backend.
+- `SchedulePage`: подключен к `useCommissions`, `usePreDefenseSchedule`, `useDefenseSchedule`. Убран `scheduleData` mock.
+- `StudentDistributionPage`: подключен к `useCommissions` и `usePreDefenseSchedule`, отображает реальные assigned slots.
+- `DefenseStepPage`: уже использует `useUploadAttachment` и `useCurrentWorkId` (сделан на этапе 18).
 
 ---
 
-## Этап 23. Final Defense
+## Этап 23. Final Defense ✅ DONE
 **Тема проблемы:** финальная защита, оценки и протоколы не сохраняются.
 
 **Файлы и их проблемы:**
@@ -396,16 +393,13 @@
 - `AWM.Service/src/AWM.Service.WebAPI/Controllers/v1/DefenseScheduleController.cs`: schedule API есть.
 
 **Решение:**
-- Подключить defense schedule.
-- Подключить criteria.
-- Подключить grades.
-- Подключить finalization.
-- Подключить protocol generation/download.
-- Проверить secretary/chairman/commission member permissions.
+- `StudentList`: подключен к `useDefenseSchedule`, `useEvaluationCriteria`, `useSubmitGrade`, `useGradesBySchedule`. Убран `Math.random` и mock topics/students.
+- `CommissionPage`: подключен к `useCommissions`, `useGenerateProtocol`, `useProtocol`. Убраны `mockCommissions`, `mockProtocolStudents`, `alert`.
+- Добавлены shared hooks для evaluation и protocols в `defenseQueries.js`.
 
 ---
 
-## Этап 24. Notifications & Cleanup
+## Этап 24. Notifications & Cleanup ✅ DONE
 **Тема проблемы:** уведомления и старые mocks создают ложное ощущение готовой интеграции.
 
 **Файлы и их проблемы:**
@@ -415,10 +409,65 @@
 - `AWM.Service/src/AWM.Service.WebAPI/Controllers/v1/NotificationsController.cs`: уже имеет list/read/unread-count.
 
 **Решение:**
-- Сделать shared notifications hooks.
-- Подключить unread-count во все headers.
-- Убрать оставшиеся `mock`, `initial`, `localStorage`, `Math.random`, `alert` из активных apps.
-- Оставить `legacy` вне интеграционного scope.
+- Создан `notificationQueries.js` с hooks: `useNotifications`, `useMarkAsRead`, `useMarkAllAsRead`, `useUnreadCount`.
+- Подключены все 3 NotificationsPage (student, department, universal) к реальному API.
+- Убраны `mockNotifications`, role-based mock state, `Math.random`, `alert`, `initialData`, `localStorage` из активных apps.
+- Оставлен `legacy` вне интеграционного scope.
+
+---
+
+## Дополнительные backend endpoints (добавлены в ходе интеграции)
+
+### P1. `GET /api/v1/works/my-supervised` — "Мои студенты" (Supervisor) ✅ DONE
+**Файлы:**
+- `AWM.Service/src/AWM.Service.Application/Features/Thesis/Works/DTOs/SupervisedWorkDto.cs`
+- `AWM.Service/src/AWM.Service.Application/Features/Thesis/Works/Queries/GetMySupervisedWorks/GetMySupervisedWorksQuery.cs` + Handler
+- `AWM.Service/src/AWM.Service.WebAPI/Common/Contracts/Responses/Thesis/SupervisedWorkResponse.cs`
+- Endpoint: `StudentWorksController.GetMySupervisedWorks`
+- Permission: `Works_ViewSupervised` (уже существовал, не использовался)
+
+**Frontend:**
+- `workQueries.js`: `useMySupervisedWorks`
+- `MyStudentsPage.jsx`: подключён к API, отображает topicTitle, directionTitle, students, attachments
+
+### P2. `GET /api/v1/reviews/my-assignments` — "Мои назначенные работы" (Reviewer) ✅ DONE
+**Файлы:**
+- `AWM.Service/src/AWM.Service.Application/Features/Thesis/Reviews/DTOs/ReviewerAssignmentDto.cs`
+- `AWM.Service/src/AWM.Service.Application/Features/Thesis/Reviews/Queries/GetMyReviewerAssignments/GetMyReviewerAssignmentsQuery.cs` + Handler
+- `AWM.Service/src/AWM.Service.WebAPI/Common/Contracts/Responses/Thesis/ReviewerAssignmentResponse.cs`
+- Endpoint: `ReviewsController.GetMyAssignments`
+- Permission: `Reviews_ViewOwn` (новый)
+- `Reviewer` entity: добавлено `UserId` property + `SetUserId()` + `IReviewerRepository.GetByUserIdAsync()`
+- `UserProfileDto` / `UserProfileResponse`: добавлено `ReviewerId`
+- `GetCurrentUserProfileQueryHandler`: резolvит `ReviewerId` для пользователей с ролью `Reviewer`
+
+**Frontend:**
+- `reviewQueries.js`: `useMyReviewerAssignments`
+- `ReviewerWorksPage.jsx`: подключён к API, отображает topicTitle, studentName, review status
+
+### P3. `GET /api/v1/works/my-defense-step` — "Моя защита" (Student) ✅ DONE
+**Файлы:**
+- `AWM.Service/src/AWM.Service.Application/Features/Thesis/Works/DTOs/StudentDefenseStepDto.cs`
+- `AWM.Service/src/AWM.Service.Application/Features/Thesis/Works/Queries/GetStudentDefenseStep/GetStudentDefenseStepQuery.cs` + Handler
+- `AWM.Service/src/AWM.Service.WebAPI/Common/Contracts/Responses/Thesis/StudentDefenseStepResponse.cs`
+- Endpoint: `StudentWorksController.GetMyDefenseStep`
+- Permission: `Works_ViewOwn`
+
+**Frontend:**
+- `workQueries.js`: `useStudentDefenseStep`
+- `DefenseStepPage.jsx`: убраны mock props из `App.jsx`, данные загружаются через API
+- `App.jsx` (student): удалены `preDefense1Data`, `preDefense2Data`, `defenseData`
+
+### P4. Enrich `GET /api/v1/works/review-status` ✅ DONE
+**Файлы:**
+- `AWM.Service/src/AWM.Service.Application/Features/Thesis/Works/Queries/GetReviewStatusByDepartment/GetReviewStatusByDepartmentQuery.cs`
+- Добавлены поля `TopicTitle` и `StudentName` в `WorkReviewStatusItem`
+- Handler обновлён для bulk fetch topics, students, users
+- `IStudentRepository`: добавлен `GetByIdsAsync`
+- `ITopicRepository`: добавлен `GetByIdsAsync`
+
+**Frontend:**
+- `ReviewerWorksPage.jsx` может использовать enriched `review-status` как fallback
 
 ---
 

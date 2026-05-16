@@ -47,28 +47,34 @@
 - Подключить заявки, accept/reject, withdrawal.
 - Подключить кафедральную координацию и финализацию тем.
 
-### Фаза 5. Работа студента и файлы
-- Добавить агрегированный progress endpoint для студентской работы.
+### Фаза 5. Работа студента и файлы [DONE]
+- Добавить агрегированный progress endpoint для студенческой работы.
 - Подключить `works/my`, `works/my-progress`.
 - Подключить attachments upload/download/delete.
 - Заменить статичные timeline/materials на backend данные.
 
-### Фаза 6. Проверки и отзывы
+### Фаза 6. Проверки и отзывы [DONE]
 - Подключить нормоконтроль, software check, антиплагиат.
 - Подключить expert assignment и pending checks.
 - Подключить supervisor review и external reviewer flow.
 - Убрать фиктивные проценты, статусы и локальные замечания.
 
-### Фаза 7. Комиссии, предзащита и защита
+### Фаза 7. Комиссии, предзащита и защита [DONE]
 - Подключить commissions CRUD и members.
 - Подключить pre-defense schedule, attempts, attendance, grades, protocols.
 - Подключить final defense schedule, criteria, grades, finalization, protocol generation/download.
 - Подключить secretary/chairman/commission member role flows.
 
-### Фаза 8. Уведомления и стабилизация
+### Фаза 8. Уведомления и стабилизация [DONE]
 - Подключить notifications во всех активных apps.
 - Убрать оставшиеся mocks.
 - Запустить backend/frontend build и smoke tests по ключевым сценариям.
+
+### Дополнительно: backend endpoints для reviewer / supervisor / student defense step [DONE]
+- `GET /api/v1/works/my-supervised` — supervisor видит своих студентов (topic, direction, attachments).
+- `GET /api/v1/reviews/my-assignments` — reviewer видит назначенные работы (topic, student, status).
+- `GET /api/v1/works/my-defense-step` — student видит schedule, commission, attempts, results.
+- Enrich `GET /api/v1/works/review-status` — добавлены `TopicTitle` и `StudentName`.
 
 ## Минимальная проверка готовности
 - `dotnet build AWM.Service/AWM.Service.slnx`
