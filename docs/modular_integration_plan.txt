@@ -265,7 +265,7 @@
 
 ---
 
-## Этап 17. Student Work
+## Этап 17. Student Work ✅ DONE
 **Тема проблемы:** студентская карточка работы и workflow timeline сейчас статичны.
 
 **Файлы и их проблемы:**
@@ -278,9 +278,13 @@
 - Включить topic, participants, attachments, checks, current stage, next actions.
 - Заменить статичные materials/timeline на backend данные.
 
+**Реализовано:**
+- Backend: `StudentWorkProgressDto`, `GetMyWorkProgressQuery` + Handler, `StudentWorkProgressResponse`, endpoint `GET /works/my-progress`
+- Frontend: `workQueries.js` (useMyWorkProgress), `MyWorkPage.jsx` переписан на динамические данные
+
 ---
 
-## Этап 18. Attachments
+## Этап 18. Attachments ✅ DONE
 **Тема проблемы:** загрузка файлов имитируется на frontend, download не привязан к API.
 
 **Файлы и их проблемы:**
@@ -294,9 +298,18 @@
 - Реализовать delete attachment.
 - UI должен показывать реальные версии, размер, дату, автора и состояние загрузки.
 
+**Реализовано:**
+- Backend: `AttachmentsController` уже имел все endpoints (GET/POST/DELETE + download)
+- Frontend: `attachmentQueries.js` (useAttachments, useUploadAttachment, useDeleteAttachment, useCurrentWorkId, downloadAttachment)
+- `UploadModal.jsx` — добавлены isUploading/uploadError пропсы
+- `SubmissionCard.jsx` — добавлены isUploading/uploadError пропсы
+- `DefenseStepPage.jsx` — использует useUploadAttachment + useCurrentWorkId
+- `ReviewStepPage.jsx` — использует useAttachments + useUploadAttachment + useCurrentWorkId
+- `index.js` — экспорт attachmentQueries
+
 ---
 
-## Этап 19. Quality Checks
+## Этап 19. Quality Checks ✅ DONE
 **Тема проблемы:** нормоконтроль, software check и антиплагиат показывают фиктивные статусы/проценты.
 
 **Файлы и их проблемы:**
@@ -310,6 +323,16 @@
 - Expert dashboards получают pending checks.
 - Result recording переводит UI state через backend.
 - Убрать фиктивные проценты и локальные статусы.
+
+**Реализация:**
+- Created `packages/shared/src/api/qualityCheckQueries.js` with hooks: `useQualityChecks`, `useSubmitForCheck`, `usePendingChecks`
+- Exported quality check hooks in `packages/shared/src/api/index.js`
+- Refactored `ReviewStepPage` to use real quality check data from `useQualityChecks` and submit via `useSubmitForCheck`
+- Refactored `AntiplagiarismPage` to use real API for status, originality, comments from quality checks
+- Refactored `NormocontrolPage` to use `usePendingChecks` with department/academic year from user context
+- Added `QualityChecks_ViewOwn` permission to `Permission.cs` and Student role in `PermissionService.cs`
+- Updated `QualityChecksController.GetByWork` to use `QualityChecks_ViewOwn` permission
+- Rebuilt backend and frontend successfully
 
 ---
 

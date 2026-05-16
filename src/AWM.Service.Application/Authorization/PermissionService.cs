@@ -35,6 +35,7 @@ public class PermissionService : IPermissionService
             Permission.Applications_Withdraw,
             Permission.Works_ViewOwn,
             Permission.Works_EditOwn,
+            Permission.QualityChecks_ViewOwn,
             Permission.QualityChecks_Submit,
             Permission.Attachments_Upload,
             Permission.Attachments_Download,
