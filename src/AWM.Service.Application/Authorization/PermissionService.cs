@@ -213,6 +213,7 @@ public class PermissionService : IPermissionService
         [nameof(RoleType.Reviewer)] = new()
         {
             Permission.Reviews_View,
+            Permission.Reviews_ViewOwn,
             Permission.Reviews_UploadExternal,
             Permission.Works_View,
             Permission.Attachments_Download,
