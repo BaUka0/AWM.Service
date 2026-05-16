@@ -11,17 +11,26 @@ public sealed class GetReviewStatusByDepartmentQueryHandler
     private readonly IStudentWorkRepository _workRepository;
     private readonly IReviewRepository _reviewRepository;
     private readonly IReviewerRepository _reviewerRepository;
+    private readonly ITopicRepository _topicRepository;
+    private readonly IStudentRepository _studentRepository;
+    private readonly IUserRepository _userRepository;
     private readonly ICurrentUserProvider _currentUserProvider;
 
     public GetReviewStatusByDepartmentQueryHandler(
         IStudentWorkRepository workRepository,
         IReviewRepository reviewRepository,
         IReviewerRepository reviewerRepository,
+        ITopicRepository topicRepository,
+        IStudentRepository studentRepository,
+        IUserRepository userRepository,
         ICurrentUserProvider currentUserProvider)
     {
         _workRepository = workRepository ?? throw new ArgumentNullException(nameof(workRepository));
         _reviewRepository = reviewRepository ?? throw new ArgumentNullException(nameof(reviewRepository));
         _reviewerRepository = reviewerRepository ?? throw new ArgumentNullException(nameof(reviewerRepository));
+        _topicRepository = topicRepository ?? throw new ArgumentNullException(nameof(topicRepository));
+        _studentRepository = studentRepository ?? throw new ArgumentNullException(nameof(studentRepository));
+        _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
         _currentUserProvider = currentUserProvider ?? throw new ArgumentNullException(nameof(currentUserProvider));
     }
 
@@ -53,6 +62,24 @@ public sealed class GetReviewStatusByDepartmentQueryHandler
             var allReviewers = await _reviewerRepository.GetByIdsAsync(reviewerIds, cancellationToken);
             var reviewersById = allReviewers.ToDictionary(r => r.Id);
 
+            // Bulk fetch topics
+            var topicIds = works.Where(w => w.TopicId.HasValue).Select(w => w.TopicId!.Value).Distinct().ToList();
+            var allTopics = await _topicRepository.GetByIdsAsync(topicIds, cancellationToken);
+            var topicsById = allTopics.ToDictionary(t => t.Id);
+
+            // Bulk fetch participants / students
+            var participantStudentIds = works
+                .SelectMany(w => w.Participants.Where(p => p.IsLeader).Select(p => p.StudentId))
+                .Distinct()
+                .ToList();
+            var allStudents = await _studentRepository.GetByIdsAsync(participantStudentIds, cancellationToken);
+            var studentsById = allStudents.ToDictionary(s => s.Id);
+
+            // Bulk fetch users for student names
+            var userIds = allStudents.Select(s => s.UserId).Distinct().ToList();
+            var allUsers = await _userRepository.GetByIdsAsync(userIds, cancellationToken);
+            var usersById = allUsers.ToDictionary(u => u.Id);
+
             foreach (var work in works)
             {
                 reviewsByWorkId.TryGetValue(work.Id, out var review);
@@ -63,9 +90,27 @@ public sealed class GetReviewStatusByDepartmentQueryHandler
                     reviewerName = reviewer.FullName;
                 }
 
+                string? topicTitle = null;
+                if (work.TopicId.HasValue && topicsById.TryGetValue(work.TopicId.Value, out var topic))
+                {
+                    topicTitle = topic.TitleRu;
+                }
+
+                string? studentName = null;
+                var leader = work.Participants.FirstOrDefault(p => p.IsLeader);
+                if (leader is not null && studentsById.TryGetValue(leader.StudentId, out var student))
+                {
+                    if (usersById.TryGetValue(student.UserId, out var studentUser))
+                    {
+                        studentName = studentUser.Login ?? studentUser.Email;
+                    }
+                }
+
                 items.Add(new WorkReviewStatusItem
                 {
                     WorkId = work.Id,
+                    TopicTitle = topicTitle,
+                    StudentName = studentName,
                     ReviewerId = review?.ReviewerId,
                     ReviewerName = reviewerName,
                     HasReviewer = review is not null,

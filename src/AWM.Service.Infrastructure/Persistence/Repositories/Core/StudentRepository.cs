@@ -20,6 +20,16 @@ public sealed class StudentRepository : RepositoryBase<Student, int>, IStudentRe
     }
 
     /// <inheritdoc />
+    public async Task<IReadOnlyList<Student>> GetByIdsAsync(IEnumerable<int> ids, CancellationToken cancellationToken = default)
+    {
+        var idList = ids.ToList();
+        return await Context.Students
+            .AsNoTracking()
+            .Where(s => idList.Contains(s.Id))
+            .ToListAsync(cancellationToken);
+    }
+
+    /// <inheritdoc />
     public async Task<IReadOnlyList<Student>> GetByProgramAsync(int programId, CancellationToken cancellationToken = default)
     {
         return await Context.Students

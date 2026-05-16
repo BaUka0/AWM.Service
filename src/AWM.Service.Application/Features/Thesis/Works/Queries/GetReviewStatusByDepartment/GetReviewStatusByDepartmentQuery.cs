@@ -22,6 +22,8 @@ public sealed record ReviewStatusByDepartmentDto
 public sealed record WorkReviewStatusItem
 {
     public long WorkId { get; init; }
+    public string? TopicTitle { get; init; }
+    public string? StudentName { get; init; }
     public int? ReviewerId { get; init; }
     public string? ReviewerName { get; init; }
     public bool HasReviewer { get; init; }
