@@ -1,5 +1,6 @@
 using AWM.Service.Domain.Thesis.Service;
 using AWM.Service.Domain.Repositories;
+using AWM.Service.Domain.Auth.RbacPlus.Repositories;
 using AWM.Service.Infrastructure.FileStorage;
 using AWM.Service.Infrastructure.Persistence;
 using AWM.Service.Infrastructure.Persistence.Interceptors;
@@ -7,6 +8,7 @@ using AWM.Service.Infrastructure.Persistence.Repositories.Common;
 using AWM.Service.Infrastructure.Persistence.Repositories.Core;
 using AWM.Service.Infrastructure.Persistence.Repositories.Defense;
 using AWM.Service.Infrastructure.Persistence.Repositories.Dictionary;
+using AWM.Service.Infrastructure.Persistence.Repositories.RbacPlus;
 using AWM.Service.Infrastructure.Persistence.Repositories.Thesis;
 using AWM.Service.Infrastructure.Persistence.Repositories.Workflow;
 using Microsoft.EntityFrameworkCore;
@@ -72,7 +74,6 @@ public static class DependencyInjection
         services.AddScoped<IWorkflowRepository, WorkflowRepository>();
 
         // Register Core Repositories
-        services.AddScoped<IUniversityRepository, UniversityRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IStudentRepository, StudentRepository>();
         services.AddScoped<IStaffRepository, StaffRepository>();
@@ -99,6 +100,14 @@ public static class DependencyInjection
         services.AddScoped<IDegreeLevelRepository, DegreeLevelRepository>();
         services.AddScoped<IRoleRepository, RoleRepository>();
         services.AddScoped<IOrganizationLookupRepository, OrganizationLookupRepository>();
+
+        // Register RBAC+ Repositories
+        services.AddScoped<IRoleAccessRepository, RoleAccessRepository>();
+        services.AddScoped<IRoleOperationRepository, RoleOperationRepository>();
+        services.AddScoped<IRoleActionTypeRepository, RoleActionTypeRepository>();
+        services.AddScoped<IRoleOperationActionRepository, RoleOperationActionRepository>();
+        services.AddScoped<IUserAccessRepository, UserAccessRepository>();
+        services.AddScoped<IUserAccessHistoryRepository, UserAccessHistoryRepository>();
 
         // Register File Storage Service
         // Switch to S3FileStorageService for production (add AWSSDK.S3 NuGet + configure "FileStorage:S3" section)

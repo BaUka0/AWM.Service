@@ -8,7 +8,6 @@ using AWM.Service.Domain.Common;
 /// </summary>
 public class User : AggregateRoot<int>, IAuditable, ISoftDeletable
 {
-    public int UniversityId { get; private set; }
     public string Login { get; private set; } = null!;
     public string Email { get; private set; } = null!;
     public string? PasswordHash { get; private set; }
@@ -27,19 +26,18 @@ public class User : AggregateRoot<int>, IAuditable, ISoftDeletable
     public DateTime? DeletedAt { get; private set; }
     public int? DeletedBy { get; private set; }
 
-    private readonly List<UserRoleAssignment> _roleAssignments = new();
-    public IReadOnlyCollection<UserRoleAssignment> RoleAssignments => _roleAssignments.AsReadOnly();
+    private readonly List<RbacPlus.Entities.UserAccess> _userAccesses = new();
+    public IReadOnlyCollection<RbacPlus.Entities.UserAccess> UserAccesses => _userAccesses.AsReadOnly();
 
     private User() { }
 
-    public User(int universityId, string login, string email, string? passwordHash = null, string? externalId = null)
+    public User(string login, string email, string? passwordHash = null, string? externalId = null)
     {
         if (string.IsNullOrWhiteSpace(login))
             throw new ArgumentException("Login is required.", nameof(login));
         if (string.IsNullOrWhiteSpace(email))
             throw new ArgumentException("Email is required.", nameof(email));
 
-        UniversityId = universityId;
         Login = login;
         Email = email;
         PasswordHash = passwordHash;
@@ -56,12 +54,12 @@ public class User : AggregateRoot<int>, IAuditable, ISoftDeletable
     /// <summary>
     /// Creates a user from SSO.
     /// </summary>
-    public static User CreateFromSso(int universityId, string login, string email, string externalId)
+    public static User CreateFromSso(string login, string email, string externalId)
     {
         if (string.IsNullOrWhiteSpace(externalId))
             throw new ArgumentException("External ID is required for SSO users.", nameof(externalId));
 
-        return new User(universityId, login, email, null, externalId);
+        return new User(login, email, null, externalId);
     }
 
     /// <summary>
@@ -136,25 +134,13 @@ public class User : AggregateRoot<int>, IAuditable, ISoftDeletable
     }
 
     /// <summary>
-    /// Assigns a role to the user.
+    /// Assigns a role access to the user (RBAC+).
     /// </summary>
-    public UserRoleAssignment AssignRole(
-        int roleId,
-        int? departmentId = null,
-        int? instituteId = null,
-        int? academicYearId = null,
-        int? assignedBy = null)
+    public RbacPlus.Entities.UserAccess AssignRoleAccess(int roleAccessId, int? assignedBy = null)
     {
-        var assignment = new UserRoleAssignment(
-            this.Id,
-            roleId,
-            departmentId,
-            instituteId,
-            academicYearId,
-            assignedBy);
-
-        _roleAssignments.Add(assignment);
-        return assignment;
+        var access = new RbacPlus.Entities.UserAccess(this.Id, roleAccessId, assignedBy);
+        _userAccesses.Add(access);
+        return access;
     }
 
     /// <summary>

@@ -3,7 +3,6 @@ namespace AWM.Service.WebAPI.Controllers.v1;
 using AWM.Service.Application.Features.Defense.Evaluation.Commands.GenerateProtocol;
 using AWM.Service.Application.Features.Defense.Evaluation.DTOs;
 using AWM.Service.Application.Features.Defense.Evaluation.Queries.GetProtocol;
-using AWM.Service.Domain.Auth.Enums;
 using AWM.Service.WebAPI.Authorization;
 using AWM.Service.WebAPI.Common.Contracts.Requests.Defense;
 using AWM.Service.WebAPI.Common.Contracts.Responses.Defense;
@@ -33,7 +32,7 @@ public class ProtocolsController : BaseController
     /// <param name="protocolId">Protocol ID</param>
     /// <returns>Protocol details</returns>
     [HttpGet("{protocolId:long}")]
-    [RequireDepartmentPermission(Permission.Defense_View)]
+    [RequireAccess("FinalDefense", "Read")]
     [ProducesResponseType(typeof(ProtocolResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -59,7 +58,7 @@ public class ProtocolsController : BaseController
     /// <param name="request">Protocol generation details</param>
     /// <returns>Created protocol ID</returns>
     [HttpPost]
-    [RequireDepartmentPermission(Permission.Defense_GenerateProtocol)]
+    [RequireAccess("Defense_Protocol", "Create")]
     [ProducesResponseType(typeof(long), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]

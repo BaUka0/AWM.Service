@@ -1,5 +1,4 @@
 using AWM.Service.Application.Features.Admin.Roles.Queries.GetAllRoles;
-using AWM.Service.Domain.Auth.Enums;
 using AWM.Service.WebAPI.Authorization;
 using AWM.Service.WebAPI.Common.Contracts.Responses;
 using Mapster;
@@ -28,11 +27,11 @@ public sealed class RolesController : BaseController
     /// Get all system roles with user counts for a specific university.
     /// </summary>
     [HttpGet]
-    [RequirePermission(Permission.Roles_Manage)]
+    [RequireAccess("Users_Roles", "Read")]
     [ProducesResponseType(typeof(IReadOnlyList<AdminRoleResponse>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetAll([FromQuery] int universityId, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> GetAll(CancellationToken cancellationToken = default)
     {
-        var query = new GetAllRolesQuery { UniversityId = universityId };
+        var query = new GetAllRolesQuery();
         var result = await _sender.Send(query, cancellationToken);
 
         if (result.IsFailed) return HandleResultError(result.Error);

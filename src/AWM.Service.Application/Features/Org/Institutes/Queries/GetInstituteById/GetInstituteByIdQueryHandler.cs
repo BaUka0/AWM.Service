@@ -13,11 +13,11 @@ using MediatR;
 public sealed class GetInstituteByIdQueryHandler
     : IRequestHandler<GetInstituteByIdQuery, Result<InstituteDto>>
 {
-    private readonly IUniversityRepository _universityRepository;
+    private readonly IOrganizationLookupRepository _organizationLookupRepository;
 
-    public GetInstituteByIdQueryHandler(IUniversityRepository universityRepository)
+    public GetInstituteByIdQueryHandler(IOrganizationLookupRepository organizationLookupRepository)
     {
-        _universityRepository = universityRepository ?? throw new ArgumentNullException(nameof(universityRepository));
+        _organizationLookupRepository = organizationLookupRepository ?? throw new ArgumentNullException(nameof(organizationLookupRepository));
     }
 
     public async Task<Result<InstituteDto>> Handle(
@@ -26,18 +26,7 @@ public sealed class GetInstituteByIdQueryHandler
     {
         try
         {
-            var universities = await _universityRepository.GetAllAsync(cancellationToken);
-
-            var university = universities.FirstOrDefault(u =>
-                u.Institutes.Any(i => i.Id == request.InstituteId && !i.IsDeleted));
-
-            if (university is null)
-            {
-                return Result.Failure<InstituteDto>(
-                    new Error("404", $"Institute with ID {request.InstituteId} not found."));
-            }
-
-            var institute = university.Institutes.FirstOrDefault(i => i.Id == request.InstituteId);
+            var institute = await _organizationLookupRepository.GetInstituteByIdAsync(request.InstituteId, cancellationToken);
 
             if (institute is null || institute.IsDeleted)
             {
@@ -61,7 +50,6 @@ public sealed class GetInstituteByIdQueryHandler
         return new InstituteDto
         {
             Id = institute.Id,
-            UniversityId = institute.UniversityId,
             Name = institute.Name,
             CreatedAt = institute.CreatedAt,
             CreatedBy = institute.CreatedBy,

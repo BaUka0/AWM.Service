@@ -14,19 +14,19 @@ public interface IAcademicYearRepository
     Task<AcademicYear?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Gets the current academic year for a university.
+    /// Gets the current academic year.
     /// </summary>
-    Task<AcademicYear?> GetCurrentAsync(int universityId, CancellationToken cancellationToken = default);
+    Task<AcademicYear?> GetCurrentAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets an academic year that contains the specified date.
     /// </summary>
-    Task<AcademicYear?> GetByDateAsync(int universityId, DateTime date, CancellationToken cancellationToken = default);
+    Task<AcademicYear?> GetByDateAsync(DateTime date, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Gets all academic years for a university.
+    /// Gets all academic years.
     /// </summary>
-    Task<IReadOnlyList<AcademicYear>> GetByUniversityAsync(int universityId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<AcademicYear>> GetAllAsync(CancellationToken cancellationToken = default);
 
     Task AddAsync(AcademicYear academicYear, CancellationToken cancellationToken = default);
     Task UpdateAsync(AcademicYear academicYear, CancellationToken cancellationToken = default);

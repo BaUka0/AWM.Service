@@ -3,7 +3,6 @@ namespace AWM.Service.WebAPI.Controllers.v1;
 using AWM.Service.Application.Features.Common.Notifications.Commands.MarkAllAsRead;
 using AWM.Service.Application.Features.Common.Notifications.Commands.MarkAsRead;
 using AWM.Service.Application.Features.Common.Notifications.Queries.GetMyNotifications;
-using AWM.Service.Domain.Auth.Enums;
 using AWM.Service.Domain.Common;
 using AWM.Service.Domain.Repositories;
 using AWM.Service.WebAPI.Authorization;
@@ -44,7 +43,7 @@ public sealed class NotificationsController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>List of notifications with unread count summary.</returns>
     [HttpGet]
-    [RequirePermission(Permission.Notifications_View)]
+    [RequireAccess("Notifications", "Read")]
     [ProducesResponseType(typeof(NotificationListResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -86,7 +85,7 @@ public sealed class NotificationsController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>No content on success.</returns>
     [HttpPatch("{notificationId:long}/read")]
-    [RequirePermission(Permission.Notifications_MarkRead)]
+    [RequireAccess("Notifications", "Update")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -113,7 +112,7 @@ public sealed class NotificationsController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>No content on success.</returns>
     [HttpPatch("read-all")]
-    [RequirePermission(Permission.Notifications_MarkRead)]
+    [RequireAccess("Notifications", "Update")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -135,7 +134,7 @@ public sealed class NotificationsController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Unread notification count.</returns>
     [HttpGet("unread-count")]
-    [RequirePermission(Permission.Notifications_View)]
+    [RequireAccess("Notifications", "Read")]
     [ProducesResponseType(typeof(int), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]

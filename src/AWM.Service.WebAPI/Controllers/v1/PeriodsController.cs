@@ -7,7 +7,6 @@ using AWM.Service.Application.Features.Common.Periods.Commands.UpdatePeriod;
 using AWM.Service.Application.Features.Common.Periods.DTOs;
 using AWM.Service.Application.Features.Common.Periods.Queries.GetActivePeriod;
 using AWM.Service.Application.Features.Common.Periods.Queries.GetPeriodsByDepartment;
-using AWM.Service.Domain.Auth.Enums;
 using AWM.Service.Domain.CommonDomain.Enums;
 using AWM.Service.WebAPI.Authorization;
 using AWM.Service.WebAPI.Common.Contracts.Requests.Common;
@@ -40,7 +39,7 @@ public sealed class PeriodsController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>List of periods</returns>
     [HttpGet]
-    [RequireDepartmentPermission(Permission.Periods_View)]
+    [RequireAccess("Organization", "Read")]
     [ProducesResponseType(typeof(IReadOnlyList<PeriodResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetAll(int departmentId, [FromQuery] int academicYearId, CancellationToken cancellationToken = default)
@@ -72,7 +71,7 @@ public sealed class PeriodsController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Active period or null</returns>
     [HttpGet("active")]
-    [RequireDepartmentPermission(Permission.Periods_View)]
+    [RequireAccess("Organization", "Read")]
     [ProducesResponseType(typeof(PeriodResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetActive(
@@ -115,7 +114,7 @@ public sealed class PeriodsController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Created period ID</returns>
     [HttpPost]
-    [RequireDepartmentPermission(Permission.Periods_Manage)]
+    [RequireAccess("Organization", "Create")]
     [ProducesResponseType(typeof(int), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
@@ -143,7 +142,7 @@ public sealed class PeriodsController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>No content on success</returns>
     [HttpPut("{periodId}")]
-    [RequireDepartmentPermission(Permission.Periods_Manage)]
+    [RequireAccess("Organization", "Update")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -171,7 +170,7 @@ public sealed class PeriodsController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>No content on success.</returns>
     [HttpPost("approve-initial")]
-    [RequireDepartmentPermission(Permission.Periods_Manage)]
+    [RequireAccess("Organization", "Update")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -207,7 +206,7 @@ public sealed class PeriodsController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>No content on success.</returns>
     [HttpPost("approve-defense")]
-    [RequireDepartmentPermission(Permission.Periods_Manage)]
+    [RequireAccess("Organization", "Update")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

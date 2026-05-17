@@ -4,7 +4,6 @@ using AWM.Service.Application.Features.Org.Departments.Commands.CreateDepartment
 using AWM.Service.Application.Features.Org.Departments.Commands.DeleteDepartment;
 using AWM.Service.Application.Features.Org.Departments.Commands.UpdateDepartment;
 using AWM.Service.Application.Features.Org.Departments.Queries.GetDepartmentsByInstitute;
-using AWM.Service.Domain.Auth.Enums;
 using AWM.Service.WebAPI.Authorization;
 using AWM.Service.WebAPI.Common.Contracts.Requests.Departments;
 using AWM.Service.WebAPI.Common.Contracts.Responses.Org;
@@ -36,16 +35,13 @@ public sealed class DepartmentsController : BaseController
     /// <returns>List of departments</returns>
     [HttpGet]
     [Route("~/api/v{version:apiVersion}/departments")]
-    [RequirePermission(Permission.Departments_View)]
+    [RequireAccess("Org_Departments", "Read")]
     [ProducesResponseType(typeof(IReadOnlyList<DepartmentResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> GetAll([FromQuery] int universityId, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> GetAll(CancellationToken cancellationToken = default)
     {
-        var query = new Application.Features.Org.Departments.Queries.GetAllDepartments.GetAllDepartmentsQuery
-        {
-            UniversityId = universityId
-        };
+        var query = new Application.Features.Org.Departments.Queries.GetAllDepartments.GetAllDepartmentsQuery();
 
         var result = await _sender.Send(query, cancellationToken);
 
@@ -67,7 +63,7 @@ public sealed class DepartmentsController : BaseController
     /// <returns>List of departments</returns>
     [HttpGet]
     [Route("~/api/v{version:apiVersion}/institutes/{instituteId}/departments")]
-    [RequirePermission(Permission.Departments_View)]
+    [RequireAccess("Org_Departments", "Read")]
     [ProducesResponseType(typeof(IReadOnlyList<DepartmentResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -99,7 +95,7 @@ public sealed class DepartmentsController : BaseController
     /// <returns>Created department ID</returns>
     [HttpPost]
     [Route("~/api/v{version:apiVersion}/institutes/{instituteId}/departments")]
-    [RequireInstitutePermission(Permission.Department_Manage)]
+    [RequireAccess("Org_Departments", "Create")]
     [ProducesResponseType(typeof(int), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -129,7 +125,7 @@ public sealed class DepartmentsController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>No content on success</returns>
     [HttpPut("{departmentId}")]
-    [RequireDepartmentPermission(Permission.Department_Manage)]
+    [RequireAccess("Org_Departments", "Update")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -155,7 +151,7 @@ public sealed class DepartmentsController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>No content on success</returns>
     [HttpDelete("{departmentId}")]
-    [RequireDepartmentPermission(Permission.Department_Manage)]
+    [RequireAccess("Org_Departments", "Delete")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]

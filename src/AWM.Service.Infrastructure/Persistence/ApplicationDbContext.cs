@@ -10,6 +10,8 @@ using AWM.Service.Domain.CommonDomain.Entities;
 
 // Auth
 using AWM.Service.Domain.Auth.Entities;
+using AWM.Service.Domain.Auth.RbacPlus.Entities;
+using AWM.Service.Domain.Auth.RbacPlus.ViewModels;
 
 // Edu
 using AWM.Service.Domain.Edu.Entities;
@@ -35,7 +37,6 @@ public sealed class ApplicationDbContext : DbContext
     }
 
     #region Org Schema
-    public DbSet<University> Universities => Set<University>();
     public DbSet<Institute> Institutes => Set<Institute>();
     public DbSet<Department> Departments => Set<Department>();
     #endregion
@@ -50,7 +51,14 @@ public sealed class ApplicationDbContext : DbContext
     #region Auth Schema
     public DbSet<User> Users => Set<User>();
     public DbSet<Role> Roles => Set<Role>();
-    public DbSet<UserRoleAssignment> UserRoleAssignments => Set<UserRoleAssignment>();
+
+    // RBAC+ entities
+    public DbSet<RoleAccess> RoleAccesses => Set<RoleAccess>();
+    public DbSet<RoleOperation> RoleOperations => Set<RoleOperation>();
+    public DbSet<RoleActionType> RoleActionTypes => Set<RoleActionType>();
+    public DbSet<RoleOperationAction> RoleOperationActions => Set<RoleOperationAction>();
+    public DbSet<UserAccess> UserAccesses => Set<UserAccess>();
+    public DbSet<UserAccessHistory> UserAccessHistories => Set<UserAccessHistory>();
     #endregion
 
     #region Edu Schema
@@ -97,5 +105,10 @@ public sealed class ApplicationDbContext : DbContext
 
         // Apply all configurations from the current assembly
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
+
+        // RBAC+ Database Views (HasNoKey)
+        modelBuilder.Entity<UserAccessMatrix>().HasNoKey().ToView("UserAccessMatrix", "Auth");
+        modelBuilder.Entity<RoleAccessMatrix>().HasNoKey().ToView("RoleAccessMatrix", "Auth");
+        modelBuilder.Entity<ReducedUserAccessMatrix>().HasNoKey().ToView("ReducedUserAccessMatrix", "Auth");
     }
 }

@@ -40,7 +40,6 @@ public class RegisterUserCommandHandler : IRequestHandler<RegisterUserCommand, R
 
         // Create user
         var user = new User(
-            universityId: request.UniversityId,
             login: request.Login,
             email: request.Email,
             passwordHash: passwordHash);

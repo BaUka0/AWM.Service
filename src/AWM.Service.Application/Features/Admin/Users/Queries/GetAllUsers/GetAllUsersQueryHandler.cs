@@ -27,7 +27,7 @@ public sealed class GetAllUsersQueryHandler
         GetAllUsersQuery request,
         CancellationToken cancellationToken)
     {
-        var users = await _userRepository.GetByUniversityAsync(request.UniversityId, cancellationToken);
+        var users = await _userRepository.GetAllAsync(cancellationToken);
 
         // Apply optional filters
         var filtered = users.AsEnumerable();
@@ -44,33 +44,14 @@ public sealed class GetAllUsersQueryHandler
         }
 
         var filteredUsers = filtered.ToList();
-        var departmentIds = filteredUsers
-            .SelectMany(u => u.RoleAssignments
-                .Where(ra => ra.IsCurrentlyValid() && ra.DepartmentId.HasValue)
-                .Select(ra => ra.DepartmentId!.Value))
-            .Distinct()
-            .ToList();
-        var departments = await _orgLookupRepository.GetDepartmentsByIdsAsync(departmentIds, cancellationToken);
-        var departmentsById = departments.ToDictionary(d => d.Id);
-
         var result = new List<AdminUserDto>();
 
         foreach (var user in filteredUsers)
         {
-            var roles = user.RoleAssignments
-                .Where(ra => ra.IsCurrentlyValid())
-                .Select(ra => ra.Role?.SystemName ?? ra.RoleId.ToString())
+            var roles = user.UserAccesses
+                .Select(ua => ua.RoleAccess?.Code ?? ua.RoleAccessId.ToString())
                 .Distinct()
                 .ToList();
-
-            // Resolve first scoped assignment for department context
-            var scoped = user.RoleAssignments.FirstOrDefault(ra => ra.IsCurrentlyValid() && ra.DepartmentId.HasValue);
-
-            string? departmentName = null;
-            if (scoped?.DepartmentId.HasValue == true)
-            {
-                departmentName = departmentsById.GetValueOrDefault(scoped.DepartmentId.Value)?.Name;
-            }
 
             result.Add(new AdminUserDto
             {
@@ -79,9 +60,9 @@ public sealed class GetAllUsersQueryHandler
                 Email = user.Email,
                 IsActive = user.IsActive,
                 Roles = roles,
-                RoleId = scoped?.RoleId,
-                DepartmentId = scoped?.DepartmentId,
-                DepartmentName = departmentName,
+                RoleId = user.UserAccesses.FirstOrDefault()?.RoleAccessId,
+                DepartmentId = null,
+                DepartmentName = null,
                 CreatedAt = user.CreatedAt,
             });
         }

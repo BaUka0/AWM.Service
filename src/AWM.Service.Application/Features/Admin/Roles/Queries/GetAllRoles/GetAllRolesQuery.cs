@@ -7,7 +7,5 @@ using MediatR;
 /// <summary>
 /// Query to retrieve all system roles with per-university user counts.
 /// </summary>
-public sealed record GetAllRolesQuery : IRequest<Result<IReadOnlyList<AdminRoleDto>>>
-{
-    public int UniversityId { get; init; }
-}
+public sealed record GetAllRolesQuery : IRequest<Result<IReadOnlyList<AdminRoleDto>>>;
+

@@ -45,16 +45,8 @@ public sealed class GetAvailableTopicsQueryHandler
     {
         try
         {
-            // Resolve DepartmentId — use explicit value or auto-resolve from user's role assignment context
+            // Resolve DepartmentId — use explicit value only (UserAccess has no DepartmentId)
             var departmentId = request.DepartmentId;
-            if (!departmentId.HasValue && request.UserId.HasValue)
-            {
-                var user = await _userRepository.GetWithRoleAssignmentsAsync(request.UserId.Value, cancellationToken);
-                departmentId = user?.RoleAssignments
-                    .Where(ra => ra.IsCurrentlyValid() && ra.DepartmentId.HasValue)
-                    .Select(ra => ra.DepartmentId)
-                    .FirstOrDefault();
-            }
 
             if (!departmentId.HasValue)
             {
@@ -64,9 +56,9 @@ public sealed class GetAvailableTopicsQueryHandler
 
             // Resolve AcademicYearId — use explicit value or auto-resolve from current active year
             var academicYearId = request.AcademicYearId;
-            if (!academicYearId.HasValue && request.UniversityId.HasValue)
+            if (!academicYearId.HasValue)
             {
-                var currentYear = await _academicYearRepository.GetCurrentAsync(request.UniversityId.Value, cancellationToken);
+                var currentYear = await _academicYearRepository.GetCurrentAsync(cancellationToken);
                 academicYearId = currentYear?.Id;
             }
 

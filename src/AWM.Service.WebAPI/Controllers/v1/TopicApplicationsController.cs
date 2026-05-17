@@ -7,7 +7,6 @@ using AWM.Service.Application.Features.Thesis.Applications.Commands.WithdrawAppl
 using AWM.Service.Application.Features.Thesis.Applications.DTOs;
 using AWM.Service.Application.Features.Thesis.Applications.Queries.GetApplicationsByStudent;
 using AWM.Service.Application.Features.Thesis.Applications.Queries.GetApplicationsByTopic;
-using AWM.Service.Domain.Auth.Enums;
 using AWM.Service.Domain.Common;
 using AWM.Service.Domain.Thesis.Enums;
 using AWM.Service.WebAPI.Authorization;
@@ -40,7 +39,7 @@ public class TopicApplicationsController : BaseController
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Created application ID</returns>
     [HttpPost]
-    [RequirePermission(Permission.Applications_Create)]
+    [RequireAccess("TopicApplications", "Create")]
     [ProducesResponseType(typeof(long), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -69,7 +68,7 @@ public class TopicApplicationsController : BaseController
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>List of applications for the topic</returns>
     [HttpGet("by-topic/{topicId:long}")]
-    [RequirePermission(Permission.Applications_View)]
+    [RequireAccess("TopicApplications", "Read")]
     [ProducesResponseType(typeof(IReadOnlyList<TopicApplicationResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -102,7 +101,7 @@ public class TopicApplicationsController : BaseController
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>List of student's applications</returns>
     [HttpGet("my")]
-    [RequirePermission(Permission.Applications_ViewOwn)]
+    [RequireAccess("TopicApplications", "Read")]
     [ProducesResponseType(typeof(IReadOnlyList<TopicApplicationResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -132,7 +131,7 @@ public class TopicApplicationsController : BaseController
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>No content on success</returns>
     [HttpPost("{applicationId:long}/accept")]
-    [RequirePermission(Permission.Applications_Accept)]
+    [RequireAccess("TopicApplications", "Update")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -164,7 +163,7 @@ public class TopicApplicationsController : BaseController
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>No content on success</returns>
     [HttpPost("{applicationId:long}/reject")]
-    [RequirePermission(Permission.Applications_Reject)]
+    [RequireAccess("TopicApplications", "Delete")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -193,7 +192,7 @@ public class TopicApplicationsController : BaseController
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>No content on success</returns>
     [HttpDelete("{applicationId:long}")]
-    [RequirePermission(Permission.Applications_Withdraw)]
+    [RequireAccess("TopicApplications", "Delete")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]

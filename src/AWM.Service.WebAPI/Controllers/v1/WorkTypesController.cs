@@ -1,7 +1,6 @@
 namespace AWM.Service.WebAPI.Controllers.v1;
 
 using AWM.Service.Application.Features.Workflow.Queries.GetAllWorkTypes;
-using AWM.Service.Domain.Auth.Enums;
 using AWM.Service.WebAPI.Authorization;
 using AWM.Service.WebAPI.Common.Contracts.Responses.Workflow;
 using Mapster;
@@ -32,7 +31,7 @@ public sealed class WorkTypesController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>List of all work types</returns>
     [HttpGet]
-    [RequirePermission(Permission.Topics_View)]
+    [RequireAccess("Topics", "Read")]
     [ProducesResponseType(typeof(IReadOnlyList<WorkTypeResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken = default)
@@ -56,7 +55,7 @@ public sealed class WorkTypesController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Created work type ID.</returns>
     [HttpPost]
-    [RequirePermission(Permission.Department_Manage)]
+    [RequireAccess("Org_Departments", "Create")]
     [ProducesResponseType(typeof(int), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -87,7 +86,7 @@ public sealed class WorkTypesController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>No content on success.</returns>
     [HttpPut("{id}")]
-    [RequirePermission(Permission.Department_Manage)]
+    [RequireAccess("Org_Departments", "Update")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -116,7 +115,7 @@ public sealed class WorkTypesController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>No content on success.</returns>
     [HttpDelete("{id}")]
-    [RequirePermission(Permission.Department_Manage)]
+    [RequireAccess("Org_Departments", "Delete")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]

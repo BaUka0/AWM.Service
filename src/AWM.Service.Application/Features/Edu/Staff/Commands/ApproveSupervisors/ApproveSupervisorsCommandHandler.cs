@@ -1,7 +1,7 @@
 namespace AWM.Service.Application.Features.Edu.Staff.Commands.ApproveSupervisors;
 
 using AWM.Service.Domain.Auth.Entities;
-using AWM.Service.Domain.Auth.Enums;
+using AWM.Service.Domain.Auth.RbacPlus.Repositories;
 using AWM.Service.Domain.Common;
 using AWM.Service.Domain.CommonDomain.Services;
 using AWM.Service.Domain.Repositories;
@@ -14,26 +14,29 @@ public sealed class ApproveSupervisorsCommandHandler : IRequestHandler<ApproveSu
 {
     private readonly IStaffRepository _staffRepository;
     private readonly IUserRepository _userRepository;
+    private readonly IUserAccessRepository _userAccessRepository;
+    private readonly IRoleAccessRepository _roleAccessRepository;
     private readonly INotificationService _notificationService;
     private readonly ICurrentUserProvider _currentUserProvider;
-    private readonly IRoleRepository _roleRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<ApproveSupervisorsCommandHandler> _logger;
 
     public ApproveSupervisorsCommandHandler(
         IStaffRepository staffRepository,
         IUserRepository userRepository,
+        IUserAccessRepository userAccessRepository,
+        IRoleAccessRepository roleAccessRepository,
         INotificationService notificationService,
         ICurrentUserProvider currentUserProvider,
-        IRoleRepository roleRepository,
         IUnitOfWork unitOfWork,
         ILogger<ApproveSupervisorsCommandHandler> logger)
     {
         _staffRepository = staffRepository ?? throw new ArgumentNullException(nameof(staffRepository));
         _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
+        _userAccessRepository = userAccessRepository ?? throw new ArgumentNullException(nameof(userAccessRepository));
+        _roleAccessRepository = roleAccessRepository ?? throw new ArgumentNullException(nameof(roleAccessRepository));
         _notificationService = notificationService ?? throw new ArgumentNullException(nameof(notificationService));
         _currentUserProvider = currentUserProvider ?? throw new ArgumentNullException(nameof(currentUserProvider));
-        _roleRepository = roleRepository ?? throw new ArgumentNullException(nameof(roleRepository));
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
@@ -57,11 +60,11 @@ public sealed class ApproveSupervisorsCommandHandler : IRequestHandler<ApproveSu
 
             _logger.LogDebug("Found {ValidStaffCount} valid staff members in Dept={DepartmentId}", validStaff.Count, request.DepartmentId);
 
-            var supervisorRole = await _roleRepository.GetBySystemNameAsync(RoleType.Supervisor.ToString(), cancellationToken);
-            if (supervisorRole is null)
+            var supervisorRoleAccess = await _roleAccessRepository.GetByCodeAsync("SUPERVISOR", cancellationToken);
+            if (supervisorRoleAccess is null)
             {
-                _logger.LogError("System role 'Supervisor' not found in database.");
-                return Result.Failure(new Error("500", "System role 'Supervisor' not found."));
+                _logger.LogError("RoleAccess 'SUPERVISOR' not found in database.");
+                return Result.Failure(new Error("500", "RoleAccess 'SUPERVISOR' not found."));
             }
 
             var staffIdsToApprove = request.StaffIds.Distinct().ToHashSet();
@@ -88,17 +91,16 @@ public sealed class ApproveSupervisorsCommandHandler : IRequestHandler<ApproveSu
             {
                 if (usersById.TryGetValue(staff.UserId, out var userWithRoles))
                 {
-                    var activeRoles = userWithRoles.RoleAssignments.Where(r =>
-                        r.RoleId == supervisorRole.Id &&
-                        r.DepartmentId == request.DepartmentId &&
-                        r.IsCurrentlyValid()).ToList();
+                    var supervisorAccesses = userWithRoles.UserAccesses
+                        .Where(ua => ua.RoleAccessId == supervisorRoleAccess.Id)
+                        .ToList();
 
-                    foreach (var role in activeRoles)
+                    foreach (var access in supervisorAccesses)
                     {
-                        role.Revoke(userId.Value);
+                        await _userAccessRepository.RemoveAsync(access, cancellationToken);
                     }
 
-                    if (activeRoles.Any())
+                    if (supervisorAccesses.Any())
                     {
                         changedUsers.Add(userWithRoles);
                     }
@@ -112,14 +114,11 @@ public sealed class ApproveSupervisorsCommandHandler : IRequestHandler<ApproveSu
             {
                 if (usersById.TryGetValue(staff.UserId, out var userWithRoles))
                 {
-                    bool hasRole = userWithRoles.RoleAssignments.Any(r =>
-                        r.RoleId == supervisorRole.Id &&
-                        r.DepartmentId == request.DepartmentId &&
-                        r.IsCurrentlyValid());
+                    bool hasRole = userWithRoles.UserAccesses.Any(ua => ua.RoleAccessId == supervisorRoleAccess.Id);
 
                     if (!hasRole)
                     {
-                        userWithRoles.AssignRole(supervisorRole.Id, request.DepartmentId, null, null, userId.Value);
+                        userWithRoles.AssignRoleAccess(supervisorRoleAccess.Id, userId.Value);
                         changedUsers.Add(userWithRoles);
                     }
                 }

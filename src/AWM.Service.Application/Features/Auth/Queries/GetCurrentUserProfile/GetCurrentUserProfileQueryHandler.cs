@@ -1,7 +1,7 @@
 namespace AWM.Service.Application.Features.Auth.Queries.GetCurrentUserProfile;
 
 using AWM.Service.Application.Features.Auth.DTOs;
-using AWM.Service.Domain.Auth.Enums;
+
 using AWM.Service.Domain.Repositories;
 using KDS.Primitives.FluentResult;
 using MediatR;
@@ -49,24 +49,20 @@ public sealed class GetCurrentUserProfileQueryHandler
         }
 
         // 2. Resolve roles
-        var roles = user.RoleAssignments
-            .Where(ra => ra.IsCurrentlyValid())
-            .Select(ra => ra.Role?.SystemName ?? ra.RoleId.ToString())
+        var roles = user.UserAccesses
+            .Select(ua => ua.RoleAccess?.Code ?? ua.RoleAccessId.ToString())
             .Distinct()
             .ToList();
 
-        // 3. Resolve department context from the first valid scoped role assignment
-        var scopedAssignment = user.RoleAssignments
-            .FirstOrDefault(ra => ra.IsCurrentlyValid() && ra.DepartmentId.HasValue);
-
-        int? departmentId = scopedAssignment?.DepartmentId;
-        int? instituteId = scopedAssignment?.InstituteId;
+        // 3. Department/institute context no longer available from role assignments in RBAC+
+        int? departmentId = null;
+        int? instituteId = null;
 
         string? departmentName = null;
         string? instituteName = null;
 
         // 5. Resolve current academic year
-        var currentYear = await _academicYearRepository.GetCurrentAsync(user.UniversityId, cancellationToken);
+        var currentYear = await _academicYearRepository.GetCurrentAsync(cancellationToken);
 
         // 6. Load staff profile if user has a staff-related role
         int? staffId = null;
@@ -76,11 +72,11 @@ public sealed class GetCurrentUserProfileQueryHandler
 
         var staffRoles = new[]
         {
-            nameof(RoleType.Supervisor),
-            nameof(RoleType.HeadOfDepartment),
-            nameof(RoleType.Secretary),
-            nameof(RoleType.Expert),
-            nameof(RoleType.CommissionMember),
+            "Supervisor",
+            "HeadOfDepartment",
+            "Secretary",
+            "Expert",
+            "CommissionMember",
         };
         var isStaff = roles.Any(r => staffRoles.Contains(r));
         if (isStaff)
@@ -110,7 +106,7 @@ public sealed class GetCurrentUserProfileQueryHandler
         // 7. Load reviewer profile if user has Reviewer role
         int? reviewerId = null;
 
-        var isReviewer = roles.Contains(nameof(RoleType.Reviewer));
+        var isReviewer = roles.Contains("Reviewer");
         if (isReviewer)
         {
             var reviewer = await _reviewerRepository.GetByUserIdAsync(user.Id, cancellationToken);
@@ -121,7 +117,7 @@ public sealed class GetCurrentUserProfileQueryHandler
         int? studentId = null;
         string? groupCode = null;
 
-        var isStudent = roles.Contains(nameof(RoleType.Student));
+        var isStudent = roles.Contains("Student");
         if (isStudent)
         {
             var student = await _studentRepository.GetByUserIdAsync(user.Id, cancellationToken);
@@ -132,7 +128,6 @@ public sealed class GetCurrentUserProfileQueryHandler
         var profile = new UserProfileDto
         {
             UserId = user.Id,
-            UniversityId = user.UniversityId,
             Login = user.Login,
             Email = user.Email,
             Roles = roles,

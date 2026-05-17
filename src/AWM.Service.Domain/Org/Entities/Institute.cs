@@ -7,7 +7,6 @@ using AWM.Service.Domain.Common;
 /// </summary>
 public class Institute : Entity<int>, IAuditable, ISoftDeletable
 {
-    public int UniversityId { get; private set; }
     public string Name { get; private set; } = null!;
     public string? Code { get; private set; }
 
@@ -25,12 +24,11 @@ public class Institute : Entity<int>, IAuditable, ISoftDeletable
 
     private Institute() { }
 
-    internal Institute(int universityId, string name, int createdBy = 0, string? code = null)
+    internal Institute(string name, int createdBy = 0, string? code = null)
     {
         if (string.IsNullOrWhiteSpace(name))
             throw new ArgumentException("Institute name is required.", nameof(name));
 
-        UniversityId = universityId;
         Name = name;
         Code = code;
         CreatedAt = DateTime.UtcNow;
@@ -60,6 +58,11 @@ public class Institute : Entity<int>, IAuditable, ISoftDeletable
         var department = new Department(this.Id, name, createdBy, code);
         _departments.Add(department);
         return department;
+    }
+
+    public static Institute Create(string name, int createdBy = 0, string? code = null)
+    {
+        return new Institute(name, createdBy, code);
     }
 
     /// <summary>

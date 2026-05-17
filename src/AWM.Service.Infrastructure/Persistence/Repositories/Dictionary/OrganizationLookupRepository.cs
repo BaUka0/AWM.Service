@@ -18,11 +18,11 @@ public sealed class OrganizationLookupRepository : IOrganizationLookupRepository
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<Institute>> GetInstitutesByUniversityAsync(int universityId, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<Institute>> GetAllInstitutesAsync(CancellationToken cancellationToken = default)
     {
         return await _context.Institutes
             .AsNoTracking()
-            .Where(i => !i.IsDeleted && i.UniversityId == universityId)
+            .Where(i => !i.IsDeleted)
             .OrderBy(i => i.Name)
             .ToListAsync(cancellationToken);
     }
@@ -38,15 +38,10 @@ public sealed class OrganizationLookupRepository : IOrganizationLookupRepository
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<Department>> GetAllDepartmentsAsync(int universityId, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<Department>> GetAllDepartmentsAsync(CancellationToken cancellationToken = default)
     {
         return await _context.Departments
             .AsNoTracking()
-            .Join(
-                _context.Institutes.Where(i => !i.IsDeleted && i.UniversityId == universityId),
-                d => d.InstituteId,
-                i => i.Id,
-                (d, i) => d)
             .Where(d => !d.IsDeleted)
             .OrderBy(d => d.Name)
             .ToListAsync(cancellationToken);
@@ -77,7 +72,30 @@ public sealed class OrganizationLookupRepository : IOrganizationLookupRepository
     public async Task<Institute?> GetInstituteByIdAsync(int id, CancellationToken cancellationToken = default)
     {
         return await _context.Institutes
+            .AsNoTracking()
             .Where(i => !i.IsDeleted)
             .FirstOrDefaultAsync(i => i.Id == id, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task<Institute?> GetInstituteByIdTrackedAsync(int id, CancellationToken cancellationToken = default)
+    {
+        return await _context.Institutes
+            .Where(i => !i.IsDeleted)
+            .FirstOrDefaultAsync(i => i.Id == id, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task<Department?> GetDepartmentByIdTrackedAsync(int id, CancellationToken cancellationToken = default)
+    {
+        return await _context.Departments
+            .Where(d => !d.IsDeleted)
+            .FirstOrDefaultAsync(d => d.Id == id, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task AddInstituteAsync(Institute institute, CancellationToken cancellationToken = default)
+    {
+        await _context.Institutes.AddAsync(institute, cancellationToken);
     }
 }

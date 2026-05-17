@@ -8,7 +8,6 @@ using AWM.Service.Application.Features.Org.Departments.DTOs;
 public sealed record InstituteDto
 {
     public int Id { get; init; }
-    public int UniversityId { get; init; }
     public string Name { get; init; } = null!;
     public DateTime CreatedAt { get; init; }
     public int CreatedBy { get; init; }

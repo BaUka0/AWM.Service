@@ -5,7 +5,6 @@ using AWM.Service.Application.Features.Org.Institutes.Commands.DeleteInstitute;
 using AWM.Service.Application.Features.Org.Institutes.Commands.UpdateInstitute;
 using AWM.Service.Application.Features.Org.Institutes.Queries.GetAllInstitutes;
 using AWM.Service.Application.Features.Org.Institutes.Queries.GetInstituteById;
-using AWM.Service.Domain.Auth.Enums;
 using AWM.Service.WebAPI.Authorization;
 using AWM.Service.WebAPI.Common.Contracts.Requests.Institutes;
 using AWM.Service.WebAPI.Common.Contracts.Responses.Org;
@@ -37,18 +36,16 @@ public sealed class InstitutesController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>List of institutes</returns>
     [HttpGet]
-    [RequirePermission(Permission.Institutes_View)]
+    [RequireAccess("Org_Institutes", "Read")]
     [ProducesResponseType(typeof(IReadOnlyList<InstituteResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetAll(
-        [FromQuery] int universityId,
         [FromQuery] bool includeDepartments = false,
         CancellationToken cancellationToken = default)
     {
         var query = new GetAllInstitutesQuery
         {
-            UniversityId = universityId,
             IncludeDepartments = includeDepartments
         };
 
@@ -72,7 +69,7 @@ public sealed class InstitutesController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Institute details</returns>
     [HttpGet("{instituteId}")]
-    [RequireInstitutePermission(Permission.Institute_Manage)]
+    [RequireAccess("Org_Institutes", "Read")]
     [ProducesResponseType(typeof(InstituteResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -106,7 +103,7 @@ public sealed class InstitutesController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Created institute ID</returns>
     [HttpPost]
-    [RequirePermission(Permission.Institute_Manage)]
+    [RequireAccess("Org_Institutes", "Create")]
     [ProducesResponseType(typeof(int), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -133,7 +130,7 @@ public sealed class InstitutesController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>No content on success</returns>
     [HttpPut("{instituteId}")]
-    [RequireInstitutePermission(Permission.Institute_Manage)]
+    [RequireAccess("Org_Institutes", "Update")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -159,7 +156,7 @@ public sealed class InstitutesController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>No content on success</returns>
     [HttpDelete("{instituteId}")]
-    [RequireInstitutePermission(Permission.Institute_Manage)]
+    [RequireAccess("Org_Institutes", "Delete")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]

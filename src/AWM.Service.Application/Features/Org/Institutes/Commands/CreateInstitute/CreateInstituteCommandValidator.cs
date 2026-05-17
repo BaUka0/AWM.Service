@@ -9,10 +9,6 @@ public sealed class CreateInstituteCommandValidator : AbstractValidator<CreateIn
 {
     public CreateInstituteCommandValidator()
     {
-        RuleFor(x => x.UniversityId)
-            .GreaterThan(0)
-            .WithMessage("University ID must be greater than 0.");
-
         RuleFor(x => x.Name)
             .NotEmpty()
             .WithMessage("Institute name is required.")

@@ -15,7 +15,6 @@ using AWM.Service.Application.Features.Thesis.Topics.Queries.GetTopicsByDirectio
 using AWM.Service.Application.Features.Thesis.Topics.Queries.GetTopicsBySupervisor;
 using AWM.Service.WebAPI.Common.Contracts.Requests.Thesis;
 using AWM.Service.WebAPI.Common.Contracts.Responses.Thesis;
-using AWM.Service.Domain.Auth.Enums;
 using AWM.Service.WebAPI.Authorization;
 using Mapster;
 using MediatR;
@@ -46,7 +45,7 @@ public sealed class TopicsController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Topic details with applications</returns>
     [HttpGet("{id}")]
-    [RequirePermission(Permission.Topics_View)]
+    [RequireAccess("Topics", "Read")]
     [ProducesResponseType(typeof(TopicDetailResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -75,7 +74,7 @@ public sealed class TopicsController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>List of available topics</returns>
     [HttpGet("available")]
-    [RequirePermission(Permission.Topics_ViewAvailable)]
+    [RequireAccess("Topics", "Read")]
     [ProducesResponseType(typeof(IReadOnlyList<TopicResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -84,28 +83,10 @@ public sealed class TopicsController : BaseController
         [FromQuery] int? academicYearId = null,
         CancellationToken cancellationToken = default)
     {
-        // Extract UserId and UniversityId from JWT for auto-resolution
-        int? userId = null;
-        int? universityId = null;
-
-        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-        if (userIdClaim != null && int.TryParse(userIdClaim.Value, out var parsedUserId))
-        {
-            userId = parsedUserId;
-        }
-
-        var universityIdClaim = User.FindFirst(AuthorizationConstants.UniversityIdClaimType);
-        if (universityIdClaim != null && int.TryParse(universityIdClaim.Value, out var parsedUniversityId))
-        {
-            universityId = parsedUniversityId;
-        }
-
         var query = new GetAvailableTopicsQuery
         {
             DepartmentId = departmentId,
-            AcademicYearId = academicYearId,
-            UserId = userId,
-            UniversityId = universityId
+            AcademicYearId = academicYearId
         };
 
         var result = await _sender.Send(query, cancellationToken);
@@ -127,7 +108,7 @@ public sealed class TopicsController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>List of topics linked to the direction</returns>
     [HttpGet("by-direction/{directionId}")]
-    [RequirePermission(Permission.Topics_View)]
+    [RequireAccess("Topics", "Read")]
     [ProducesResponseType(typeof(IReadOnlyList<TopicResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -154,7 +135,7 @@ public sealed class TopicsController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>List of supervisor topics</returns>
     [HttpGet("by-supervisor")]
-    [RequirePermission(Permission.Topics_View)]
+    [RequireAccess("Topics", "Read")]
     [ProducesResponseType(typeof(IReadOnlyList<TopicResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -188,7 +169,7 @@ public sealed class TopicsController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Created topic ID</returns>
     [HttpPost]
-    [RequirePermission(Permission.Topics_Create)]
+    [RequireAccess("Topics", "Create")]
     [ProducesResponseType(typeof(long), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -217,7 +198,7 @@ public sealed class TopicsController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>No content on success</returns>
     [HttpPut("{id}")]
-    [RequirePermission(Permission.Topics_Edit)]
+    [RequireAccess("Topics", "Update")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -247,7 +228,7 @@ public sealed class TopicsController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>No content on success</returns>
     [HttpPost("{id}/approve")]
-    [RequireDepartmentPermission(Permission.Topics_Approve)]
+    [RequireAccess("Topics_Approval", "Update")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
@@ -276,7 +257,7 @@ public sealed class TopicsController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>No content on success</returns>
     [HttpPost("{id}/close")]
-    [RequirePermission(Permission.Topics_Close)]
+    [RequireAccess("Topics", "Update")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
@@ -305,7 +286,7 @@ public sealed class TopicsController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>No content on success</returns>
     [HttpPost("submit-for-approval")]
-    [RequirePermission(Permission.Topics_Create)]
+    [RequireAccess("Topics", "Create")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
@@ -333,7 +314,7 @@ public sealed class TopicsController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>No content on success</returns>
     [HttpPost("bulk-approve")]
-    [RequireDepartmentPermission(Permission.Topics_Approve)]
+    [RequireAccess("Topics_Approval", "Update")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
@@ -363,7 +344,7 @@ public sealed class TopicsController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Coordination summary</returns>
     [HttpGet("coordination-summary")]
-    [RequireDepartmentPermission(Permission.Topics_View)]
+    [RequireAccess("Topics", "Read")]
     [ProducesResponseType(typeof(TopicCoordinationSummaryResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -396,7 +377,7 @@ public sealed class TopicsController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>No content on success</returns>
     [HttpPost("{id}/deactivate")]
-    [RequireDepartmentPermission(Permission.Topics_Close)]
+    [RequireAccess("Topics", "Delete")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
@@ -423,7 +404,7 @@ public sealed class TopicsController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>No content on success</returns>
     [HttpPost("complete-coordination")]
-    [RequireDepartmentPermission(Permission.Topics_Approve)]
+    [RequireAccess("Topics_Approval", "Update")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

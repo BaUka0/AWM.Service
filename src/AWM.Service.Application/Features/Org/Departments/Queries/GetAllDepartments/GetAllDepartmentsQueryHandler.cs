@@ -11,11 +11,11 @@ using MediatR;
 public sealed class GetAllDepartmentsQueryHandler
     : IRequestHandler<GetAllDepartmentsQuery, Result<IReadOnlyList<DepartmentDto>>>
 {
-    private readonly IUniversityRepository _universityRepository;
+    private readonly IOrganizationLookupRepository _organizationLookupRepository;
 
-    public GetAllDepartmentsQueryHandler(IUniversityRepository universityRepository)
+    public GetAllDepartmentsQueryHandler(IOrganizationLookupRepository organizationLookupRepository)
     {
-        _universityRepository = universityRepository ?? throw new ArgumentNullException(nameof(universityRepository));
+        _organizationLookupRepository = organizationLookupRepository ?? throw new ArgumentNullException(nameof(organizationLookupRepository));
     }
 
     public async Task<Result<IReadOnlyList<DepartmentDto>>> Handle(
@@ -24,17 +24,9 @@ public sealed class GetAllDepartmentsQueryHandler
     {
         try
         {
-            var university = await _universityRepository.GetByIdAsync(request.UniversityId, cancellationToken);
+            var departments = await _organizationLookupRepository.GetAllDepartmentsAsync(cancellationToken);
 
-            if (university is null)
-            {
-                return Result.Failure<IReadOnlyList<DepartmentDto>>(
-                    new Error("NotFound.University", $"University with ID {request.UniversityId} not found."));
-            }
-
-            var departmentDtos = university.Institutes
-                .Where(i => !i.IsDeleted)
-                .SelectMany(i => i.Departments)
+            var departmentDtos = departments
                 .Where(d => !d.IsDeleted)
                 .Select(MapToDto)
                 .ToList();

@@ -22,7 +22,8 @@ public sealed class UserRepository : IUserRepository
     public async Task<User?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
         return await _context.Users
-            .Include(u => u.RoleAssignments)
+            .Include(u => u.UserAccesses)
+                .ThenInclude(ua => ua.RoleAccess)
             .Where(u => !u.IsDeleted)
             .FirstOrDefaultAsync(u => u.Id == id, cancellationToken);
     }
@@ -34,7 +35,8 @@ public sealed class UserRepository : IUserRepository
             return null;
 
         return await _context.Users
-            .Include(u => u.RoleAssignments)
+            .Include(u => u.UserAccesses)
+                .ThenInclude(ua => ua.RoleAccess)
             .Where(u => !u.IsDeleted && u.IsActive)
             .FirstOrDefaultAsync(u => u.Login == login, cancellationToken);
     }
@@ -46,8 +48,8 @@ public sealed class UserRepository : IUserRepository
             return null;
 
         return await _context.Users
-            .Include(u => u.RoleAssignments)
-                .ThenInclude(ra => ra.Role)
+            .Include(u => u.UserAccesses)
+                .ThenInclude(ua => ua.RoleAccess)
             .Where(u => !u.IsDeleted && u.IsActive)
             .FirstOrDefaultAsync(u => u.Login == login, cancellationToken);
     }
@@ -59,7 +61,8 @@ public sealed class UserRepository : IUserRepository
             return null;
 
         return await _context.Users
-            .Include(u => u.RoleAssignments)
+            .Include(u => u.UserAccesses)
+                .ThenInclude(ua => ua.RoleAccess)
             .Where(u => !u.IsDeleted && u.IsActive)
             .FirstOrDefaultAsync(u => u.RefreshToken == refreshToken, cancellationToken);
     }
@@ -71,18 +74,20 @@ public sealed class UserRepository : IUserRepository
             return null;
 
         return await _context.Users
-            .Include(u => u.RoleAssignments)
+            .Include(u => u.UserAccesses)
+                .ThenInclude(ua => ua.RoleAccess)
             .Where(u => !u.IsDeleted)
             .FirstOrDefaultAsync(u => u.ExternalId == externalId, cancellationToken);
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<User>> GetByUniversityAsync(int universityId, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<User>> GetAllAsync(CancellationToken cancellationToken = default)
     {
         return await _context.Users
             .AsNoTracking()
-            .Include(u => u.RoleAssignments)
-            .Where(u => !u.IsDeleted && u.UniversityId == universityId)
+            .Include(u => u.UserAccesses)
+                .ThenInclude(ua => ua.RoleAccess)
+            .Where(u => !u.IsDeleted)
             .OrderBy(u => u.Login)
             .ToListAsync(cancellationToken);
     }
@@ -106,8 +111,8 @@ public sealed class UserRepository : IUserRepository
     public async Task<User?> GetWithRoleAssignmentsAsync(int id, CancellationToken cancellationToken = default)
     {
         return await _context.Users
-            .Include(u => u.RoleAssignments)
-                .ThenInclude(ra => ra.Role)
+            .Include(u => u.UserAccesses)
+                .ThenInclude(ua => ua.RoleAccess)
             .Where(u => !u.IsDeleted && u.IsActive)
             .FirstOrDefaultAsync(u => u.Id == id, cancellationToken);
     }
@@ -139,8 +144,8 @@ public sealed class UserRepository : IUserRepository
         }
 
         return await _context.Users
-            .Include(u => u.RoleAssignments)
-                .ThenInclude(ra => ra.Role)
+            .Include(u => u.UserAccesses)
+                .ThenInclude(ua => ua.RoleAccess)
             .Where(u => distinctIds.Contains(u.Id) && !u.IsDeleted && u.IsActive)
             .ToListAsync(cancellationToken);
     }

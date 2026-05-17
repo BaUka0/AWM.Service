@@ -3,7 +3,6 @@ namespace AWM.Service.Infrastructure.Persistence.Configurations.Common;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using AWM.Service.Domain.CommonDomain.Entities;
-using AWM.Service.Domain.Org.Entities;
 using AWM.Service.Infrastructure.Persistence.Configurations.Base;
 
 /// <summary>
@@ -20,9 +19,6 @@ public class AcademicYearConfiguration : SoftDeletableEntityConfiguration<Academ
 
         builder.Property(e => e.Id)
             .UseIdentityColumn();
-
-        builder.Property(e => e.UniversityId)
-            .IsRequired();
 
         builder.Property(e => e.Name)
             .IsRequired()
@@ -44,11 +40,6 @@ public class AcademicYearConfiguration : SoftDeletableEntityConfiguration<Academ
             .IsRequired()
             .HasDefaultValue(false);
 
-        // Foreign key to University
-        builder.HasOne<University>()
-            .WithMany()
-            .HasForeignKey(e => e.UniversityId)
-            .HasConstraintName("FK_AcademicYears_University")
-            .OnDelete(DeleteBehavior.Restrict);
+
     }
 }

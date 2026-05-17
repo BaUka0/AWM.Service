@@ -10,14 +10,17 @@ using MediatR;
 /// </summary>
 public sealed class CreateDepartmentCommandHandler : IRequestHandler<CreateDepartmentCommand, Result<int>>
 {
-    private readonly IUniversityRepository _universityRepository;
+    private readonly IOrganizationLookupRepository _organizationLookupRepository;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly ICurrentUserProvider _currentUserProvider;
 
     public CreateDepartmentCommandHandler(
-        IUniversityRepository universityRepository,
+        IOrganizationLookupRepository organizationLookupRepository,
+        IUnitOfWork unitOfWork,
         ICurrentUserProvider currentUserProvider)
     {
-        _universityRepository = universityRepository ?? throw new ArgumentNullException(nameof(universityRepository));
+        _organizationLookupRepository = organizationLookupRepository ?? throw new ArgumentNullException(nameof(organizationLookupRepository));
+        _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
         _currentUserProvider = currentUserProvider ?? throw new ArgumentNullException(nameof(currentUserProvider));
     }
 
@@ -25,14 +28,7 @@ public sealed class CreateDepartmentCommandHandler : IRequestHandler<CreateDepar
     {
         try
         {
-            var university = await _universityRepository.GetByInstituteIdAsync(request.InstituteId, cancellationToken);
-
-            if (university is null)
-            {
-                return Result.Failure<int>(new Error("404", $"Institute with ID {request.InstituteId} not found."));
-            }
-
-            var institute = university.Institutes.FirstOrDefault(i => i.Id == request.InstituteId);
+            var institute = await _organizationLookupRepository.GetInstituteByIdTrackedAsync(request.InstituteId, cancellationToken);
 
             if (institute is null || institute.IsDeleted)
             {
@@ -46,7 +42,7 @@ public sealed class CreateDepartmentCommandHandler : IRequestHandler<CreateDepar
             }
             var department = institute.AddDepartment(request.Name, userId.Value, request.Code);
 
-            await _universityRepository.UpdateAsync(university, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             return Result.Success(department.Id);
         }

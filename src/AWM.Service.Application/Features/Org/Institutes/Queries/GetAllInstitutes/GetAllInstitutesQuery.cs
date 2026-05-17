@@ -9,6 +9,5 @@ using MediatR;
 /// </summary>
 public sealed record GetAllInstitutesQuery : IRequest<Result<IReadOnlyList<InstituteDto>>>
 {
-    public int UniversityId { get; init; }
     public bool IncludeDepartments { get; init; }
 }

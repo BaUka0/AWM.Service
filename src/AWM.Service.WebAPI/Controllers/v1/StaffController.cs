@@ -6,7 +6,6 @@ using AWM.Service.Application.Features.Edu.Staff.Commands.UpdateStaff;
 using AWM.Service.Application.Features.Edu.Staff.Commands.UpdateStaffWorkload;
 using AWM.Service.Application.Features.Edu.Staff.Queries.GetStaffByDepartment;
 using AWM.Service.Application.Features.Edu.Staff.Queries.GetSupervisors;
-using AWM.Service.Domain.Auth.Enums;
 using AWM.Service.WebAPI.Authorization;
 using AWM.Service.WebAPI.Common.Contracts.Requests.Edu;
 using AWM.Service.WebAPI.Common.Contracts.Responses.Edu;
@@ -37,7 +36,7 @@ public sealed class StaffController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>List of staff in the department</returns>
     [HttpGet]
-    [RequireDepartmentPermission(Permission.Staff_View)]
+    [RequireAccess("Staff", "Read")]
     [ProducesResponseType(typeof(IReadOnlyList<StaffResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetByDepartment([FromQuery] int departmentId, CancellationToken cancellationToken = default)
@@ -66,7 +65,7 @@ public sealed class StaffController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Created staff ID</returns>
     [HttpPost]
-    [RequireDepartmentPermission(Permission.Staff_Create)]
+    [RequireAccess("Staff", "Create")]
     [ProducesResponseType(typeof(int), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -93,7 +92,7 @@ public sealed class StaffController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>No content on success</returns>
     [HttpPut("{staffId}")]
-    [RequireDepartmentPermission(Permission.Staff_Edit)]
+    [RequireAccess("Staff", "Update")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -120,7 +119,7 @@ public sealed class StaffController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>No content on success</returns>
     [HttpPatch("{staffId}/workload")]
-    [RequireDepartmentPermission(Permission.Staff_Edit)]
+    [RequireAccess("Staff", "Update")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -145,7 +144,7 @@ public sealed class StaffController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>No content on success.</returns>
     [HttpPost("approve-supervisors")]
-    [RequireDepartmentPermission(Permission.Staff_Edit)]
+    [RequireAccess("Staff", "Update")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -171,7 +170,7 @@ public sealed class StaffController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>List of approved supervisors in the department</returns>
     [HttpGet("supervisors")]
-    [RequireDepartmentPermission(Permission.Staff_View)]
+    [RequireAccess("Staff", "Read")]
     [ProducesResponseType(typeof(IReadOnlyList<StaffResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetSupervisors([FromQuery] int departmentId, CancellationToken cancellationToken = default)

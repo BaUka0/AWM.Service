@@ -8,7 +8,6 @@ using AWM.Service.Application.Features.Defense.Schedule.Commands.UpdateDefenseSc
 using AWM.Service.Application.Features.Defense.Schedule.DTOs;
 using AWM.Service.Application.Features.Defense.Schedule.Queries.GetDefenseSchedule;
 using AWM.Service.Application.Features.Defense.Schedule.Queries.GetDefenseSlotById;
-using AWM.Service.Domain.Auth.Enums;
 using AWM.Service.WebAPI.Authorization;
 using AWM.Service.WebAPI.Common.Contracts.Requests.Defense;
 using AWM.Service.WebAPI.Common.Contracts.Responses.Defense;
@@ -38,7 +37,7 @@ public class DefenseScheduleController : BaseController
     /// <param name="commissionId">Commission ID</param>
     /// <returns>List of schedule slots ordered by defense date</returns>
     [HttpGet]
-    [RequireDepartmentPermission(Permission.Defense_View)]
+    [RequireAccess("FinalDefense", "Read")]
     [ProducesResponseType(typeof(IReadOnlyList<ScheduleResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -62,7 +61,7 @@ public class DefenseScheduleController : BaseController
     /// <param name="slotId">Schedule (slot) ID</param>
     /// <returns>Detailed slot information with grades</returns>
     [HttpGet("{slotId:long}")]
-    [RequireDepartmentPermission(Permission.Defense_View)]
+    [RequireAccess("FinalDefense", "Read")]
     [ProducesResponseType(typeof(DefenseSlotResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -87,7 +86,7 @@ public class DefenseScheduleController : BaseController
     /// <param name="request">Schedule creation details</param>
     /// <returns>Created schedule ID</returns>
     [HttpPost]
-    [RequireDepartmentPermission(Permission.Defense_Schedule)]
+    [RequireAccess("FinalDefense", "Create")]
     [ProducesResponseType(typeof(long), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -113,7 +112,7 @@ public class DefenseScheduleController : BaseController
     /// <param name="request">Update details</param>
     /// <returns>No content on success</returns>
     [HttpPut("{scheduleId:long}")]
-    [RequireDepartmentPermission(Permission.Defense_Schedule)]
+    [RequireAccess("FinalDefense", "Update")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -139,7 +138,7 @@ public class DefenseScheduleController : BaseController
     /// <param name="request">Assignment details</param>
     /// <returns>No content on success</returns>
     [HttpPost("{scheduleId:long}/assign")]
-    [RequireDepartmentPermission(Permission.Defense_AssignSlot)]
+    [RequireAccess("FinalDefense", "Create")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -163,7 +162,7 @@ public class DefenseScheduleController : BaseController
     /// Generate timed defense slots for a GAK commission.
     /// </summary>
     [HttpPost("generate-slots")]
-    [RequireDepartmentPermission(Permission.Defense_Schedule)]
+    [RequireAccess("FinalDefense", "Create")]
     [ProducesResponseType(typeof(int), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -195,7 +194,7 @@ public class DefenseScheduleController : BaseController
     /// Start reconciliation for a defense schedule (members see each other's grades).
     /// </summary>
     [HttpPut("{scheduleId:long}/start-reconciliation")]
-    [RequireDepartmentPermission(Permission.Defense_Grade)]
+    [RequireAccess("Defense_Grading", "Update")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]

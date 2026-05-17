@@ -4,7 +4,6 @@ using AWM.Service.Application.Features.Thesis.Reviews.Commands.CreateSupervisorR
 using AWM.Service.Application.Features.Thesis.Reviews.Commands.UploadReview;
 using AWM.Service.Application.Features.Thesis.Reviews.Queries.GetMyReviewerAssignments;
 using AWM.Service.Application.Features.Thesis.Reviews.Queries.GetReviewsByWork;
-using AWM.Service.Domain.Auth.Enums;
 using AWM.Service.WebAPI.Authorization;
 using AWM.Service.WebAPI.Common.Contracts.Requests.Thesis;
 using AWM.Service.WebAPI.Common.Contracts.Responses.Thesis;
@@ -32,7 +31,7 @@ public sealed class ReviewsController : BaseController
     /// Get assignments for the current reviewer ("My Reviews").
     /// </summary>
     [HttpGet("my-assignments")]
-    [RequirePermission(Permission.Reviews_ViewOwn)]
+    [RequireAccess("Reviews", "Read")]
     [ProducesResponseType(typeof(IReadOnlyList<ReviewerAssignmentResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -55,7 +54,7 @@ public sealed class ReviewsController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A summary object containing the supervisor review and external reviews.</returns>
     [HttpGet]
-    [RequireDepartmentPermission(Permission.Reviews_View)]
+    [RequireAccess("Reviews", "Read")]
     [ProducesResponseType(typeof(WorkReviewsResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -95,7 +94,7 @@ public sealed class ReviewsController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ID of the created or updated supervisor review.</returns>
     [HttpPost("supervisor")]
-    [RequireDepartmentPermission(Permission.Reviews_CreateSupervisor)]
+    [RequireAccess("Reviews", "Create")]
     [Consumes("multipart/form-data")]
     [ProducesResponseType(typeof(long), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -127,7 +126,7 @@ public sealed class ReviewsController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>No content on success.</returns>
     [HttpPost("external/{reviewId:long}")]
-    [RequireDepartmentPermission(Permission.Reviews_UploadExternal)]
+    [RequireAccess("Reviews", "Create")]
     [Consumes("multipart/form-data")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

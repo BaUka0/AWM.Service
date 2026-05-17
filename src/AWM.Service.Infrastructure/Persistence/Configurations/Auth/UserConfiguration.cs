@@ -3,7 +3,6 @@ namespace AWM.Service.Infrastructure.Persistence.Configurations.Auth;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using AWM.Service.Domain.Auth.Entities;
-using AWM.Service.Domain.Org.Entities;
 using AWM.Service.Infrastructure.Persistence.Configurations.Base;
 
 /// <summary>
@@ -20,9 +19,6 @@ public class UserConfiguration : SoftDeletableEntityConfiguration<User, int>
 
         builder.Property(e => e.Id)
             .UseIdentityColumn();
-
-        builder.Property(e => e.UniversityId)
-            .IsRequired();
 
         builder.Property(e => e.Login)
             .IsRequired()
@@ -42,21 +38,14 @@ public class UserConfiguration : SoftDeletableEntityConfiguration<User, int>
             .IsRequired()
             .HasDefaultValue(true);
 
-        // Foreign key to University
-        builder.HasOne<University>()
-            .WithMany()
-            .HasForeignKey(e => e.UniversityId)
-            .HasConstraintName("FK_Users_University")
-            .OnDelete(DeleteBehavior.Restrict);
-
-        // Unique constraint on (UniversityId, Email)
-        builder.HasIndex(e => new { e.UniversityId, e.Email })
+        // Unique constraint on Email
+        builder.HasIndex(e => e.Email)
             .IsUnique()
             .HasDatabaseName("UQ_User_Email");
 
-        // Navigation to role assignments
-        builder.HasMany(e => e.RoleAssignments)
-            .WithOne()
+        // Navigation to user accesses (RBAC+)
+        builder.HasMany(e => e.UserAccesses)
+            .WithOne(e => e.User)
             .HasForeignKey(e => e.UserId)
             .OnDelete(DeleteBehavior.Cascade);
     }

@@ -6,7 +6,6 @@ using AWM.Service.Application.Features.Thesis.QualityChecks.Commands.SubmitForCh
 using AWM.Service.Application.Features.Thesis.QualityChecks.DTOs;
 using AWM.Service.Application.Features.Thesis.QualityChecks.Queries.GetChecksByWork;
 using AWM.Service.Application.Features.Thesis.QualityChecks.Queries.GetPendingChecks;
-using AWM.Service.Domain.Auth.Enums;
 using AWM.Service.Domain.Thesis.Enums;
 using AWM.Service.WebAPI.Authorization;
 using AWM.Service.WebAPI.Common.Contracts.Requests.Thesis;
@@ -36,7 +35,7 @@ public class QualityChecksController : BaseController
     /// <param name="workId">StudentWork ID</param>
     /// <returns>List of quality check records ordered by type and attempt</returns>
     [HttpGet("by-work/{workId:long}")]
-    [RequireDepartmentPermission(Permission.QualityChecks_ViewOwn)]
+    [RequireAccess("QualityChecks", "Read")]
     [ProducesResponseType(typeof(IReadOnlyList<QualityCheckDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -61,7 +60,7 @@ public class QualityChecksController : BaseController
     /// <param name="checkType">Optional check type filter</param>
     /// <returns>List of pending quality checks</returns>
     [HttpGet("pending")]
-    [RequireDepartmentPermission(Permission.QualityChecks_Perform)]
+    [RequireAccess("QualityChecks", "Read")]
     [ProducesResponseType(typeof(IReadOnlyList<QualityCheckDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -94,7 +93,7 @@ public class QualityChecksController : BaseController
     /// <param name="request">Submit request with check type</param>
     /// <returns>Created quality check ID</returns>
     [HttpPost("works/{workId:long}/submit")]
-    [RequireDepartmentPermission(Permission.QualityChecks_Submit)]
+    [RequireAccess("QualityChecks", "Create")]
     [ProducesResponseType(typeof(long), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -122,7 +121,7 @@ public class QualityChecksController : BaseController
     /// <param name="request">Check result details</param>
     /// <returns>Updated quality check ID</returns>
     [HttpPut("works/{workId:long}/checks/{checkId:long}/record")]
-    [RequireDepartmentPermission(Permission.QualityChecks_Perform)]
+    [RequireAccess("QualityChecks", "Update")]
     [ProducesResponseType(typeof(long), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -148,7 +147,7 @@ public class QualityChecksController : BaseController
     /// <param name="request">Expert assignment details</param>
     /// <returns>Number of new experts created</returns>
     [HttpPost("assign-experts")]
-    [RequireDepartmentPermission(Permission.Experts_Manage)]
+    [RequireAccess("QualityChecks", "Create")]
     [ProducesResponseType(typeof(int), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]

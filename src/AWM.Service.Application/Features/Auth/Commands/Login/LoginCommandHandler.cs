@@ -62,10 +62,9 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<AuthResu
             return Result.Failure<AuthResult>(new Error("401", "Неверный логин или пароль."));
         }
 
-        // Get user roles (use Role.SystemName if available, otherwise fall back to RoleId)
-        var roles = user.RoleAssignments
-            .Where(ra => ra.IsCurrentlyValid())
-            .Select(ra => ra.Role?.SystemName ?? ra.RoleId.ToString())
+        // Get user roles (use RoleAccess.Code if available, otherwise fall back to RoleAccessId)
+        var roles = user.UserAccesses
+            .Select(ua => ua.RoleAccess?.Code ?? ua.RoleAccessId.ToString())
             .Distinct()
             .ToList();
 

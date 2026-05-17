@@ -18,7 +18,6 @@ using AWM.Service.Application.Features.Thesis.Works.Queries.GetStudentWorksByDep
 using AWM.Service.Application.Features.Thesis.Works.Queries.GetMySupervisedWorks;
 using AWM.Service.Application.Features.Thesis.Works.Queries.GetStudentDefenseStep;
 using AWM.Service.Application.Features.Thesis.Works.Queries.GetStudentWorksBySupervisor;
-using AWM.Service.Domain.Auth.Enums;
 using AWM.Service.Domain.Common;
 using AWM.Service.WebAPI.Authorization;
 using AWM.Service.WebAPI.Common.Contracts.Requests.Thesis;
@@ -51,7 +50,7 @@ public class StudentWorksController : BaseController
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>List of works</returns>
     [HttpGet("supervisor/{supervisorId:int}")]
-    [RequireDepartmentPermission(Permission.Works_View)]
+    [RequireAccess("StudentWorks", "Read")]
     [ProducesResponseType(typeof(IReadOnlyList<StudentWorkResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -74,7 +73,7 @@ public class StudentWorksController : BaseController
     /// Get the current supervisor's supervised works ("My Students").
     /// </summary>
     [HttpGet("my-supervised")]
-    [RequirePermission(Permission.Works_ViewSupervised)]
+    [RequireAccess("StudentWorks", "Read")]
     [ProducesResponseType(typeof(IReadOnlyList<SupervisedWorkResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -99,7 +98,7 @@ public class StudentWorksController : BaseController
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Detailed work information including participants</returns>
     [HttpGet("{id:long}")]
-    [RequireDepartmentPermission(Permission.Works_View)]
+    [RequireAccess("StudentWorks", "Read")]
     [ProducesResponseType(typeof(StudentWorkDetailResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -124,7 +123,7 @@ public class StudentWorksController : BaseController
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>List of works</returns>
     [HttpGet("by-department")]
-    [RequireDepartmentPermission(Permission.Works_View)]
+    [RequireAccess("StudentWorks", "Read")]
     [ProducesResponseType(typeof(IReadOnlyList<StudentWorkResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -155,7 +154,7 @@ public class StudentWorksController : BaseController
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>List of student's works</returns>
     [HttpGet("my")]
-    [RequirePermission(Permission.Works_ViewOwn)]
+    [RequireAccess("StudentWorks", "Read")]
     [ProducesResponseType(typeof(IReadOnlyList<StudentWorkResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -177,7 +176,7 @@ public class StudentWorksController : BaseController
     /// Get the current student's defense step data (pre-defense or final defense schedule, commission, attempts, results).
     /// </summary>
     [HttpGet("my-defense-step")]
-    [RequirePermission(Permission.Works_ViewOwn)]
+    [RequireAccess("StudentWorks", "Read")]
     [ProducesResponseType(typeof(StudentDefenseStepResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -204,7 +203,7 @@ public class StudentWorksController : BaseController
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Student work progress or null if no work exists</returns>
     [HttpGet("my-progress")]
-    [RequirePermission(Permission.Works_ViewOwn)]
+    [RequireAccess("StudentWorks", "Read")]
     [ProducesResponseType(typeof(StudentWorkProgressResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -232,7 +231,7 @@ public class StudentWorksController : BaseController
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Created work ID</returns>
     [HttpPost]
-    [RequireDepartmentPermission(Permission.Works_Edit)]
+    [RequireAccess("StudentWorks", "Create")]
     [ProducesResponseType(typeof(long), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -261,7 +260,7 @@ public class StudentWorksController : BaseController
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Created participant ID</returns>
     [HttpPost("{workId:long}/participants")]
-    [RequireDepartmentPermission(Permission.Works_ManageParticipants)]
+    [RequireAccess("StudentWorks", "Create")]
     [ProducesResponseType(typeof(long), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -292,7 +291,7 @@ public class StudentWorksController : BaseController
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>No content on success</returns>
     [HttpDelete("{workId:long}/participants/{studentId:int}")]
-    [RequireDepartmentPermission(Permission.Works_ManageParticipants)]
+    [RequireAccess("StudentWorks", "Delete")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -326,7 +325,7 @@ public class StudentWorksController : BaseController
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Created review ID</returns>
     [HttpPost("{workId:long}/assign-reviewer")]
-    [RequireDepartmentPermission(Permission.Reviews_Assign)]
+    [RequireAccess("Reviews", "Create")]
     [ProducesResponseType(typeof(long), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -361,7 +360,7 @@ public class StudentWorksController : BaseController
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>No content on success</returns>
     [HttpPut("{workId:long}/repository-url")]
-    [RequireDepartmentPermission(Permission.Works_Edit)]
+    [RequireAccess("StudentWorks", "Update")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -393,7 +392,7 @@ public class StudentWorksController : BaseController
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Assigned reviewer details or null</returns>
     [HttpGet("{workId:long}/assigned-reviewer")]
-    [RequireDepartmentPermission(Permission.Works_View)]
+    [RequireAccess("StudentWorks", "Read")]
     [ProducesResponseType(typeof(AssignedReviewerDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -419,7 +418,7 @@ public class StudentWorksController : BaseController
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Review status summary</returns>
     [HttpGet("review-status")]
-    [RequireDepartmentPermission(Permission.Works_View)]
+    [RequireAccess("StudentWorks", "Read")]
     [ProducesResponseType(typeof(ReviewStatusByDepartmentDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -447,7 +446,7 @@ public class StudentWorksController : BaseController
     /// Get defense readiness dashboard for a department.
     /// </summary>
     [HttpGet("defense-readiness")]
-    [RequireDepartmentPermission(Permission.Works_View)]
+    [RequireAccess("StudentWorks", "Read")]
     [ProducesResponseType(typeof(DefenseReadinessDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -474,7 +473,7 @@ public class StudentWorksController : BaseController
     /// Get list of students admitted to final defense.
     /// </summary>
     [HttpGet("admitted-students")]
-    [RequireDepartmentPermission(Permission.Works_View)]
+    [RequireAccess("StudentWorks", "Read")]
     [ProducesResponseType(typeof(IReadOnlyList<AdmittedStudentDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -501,7 +500,7 @@ public class StudentWorksController : BaseController
     /// Send readiness reminders to students with incomplete steps.
     /// </summary>
     [HttpPost("send-readiness-reminders")]
-    [RequireDepartmentPermission(Permission.Works_Edit)]
+    [RequireAccess("StudentWorks", "Create")]
     [ProducesResponseType(typeof(int), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]

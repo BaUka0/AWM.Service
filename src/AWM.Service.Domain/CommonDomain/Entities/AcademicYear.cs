@@ -9,7 +9,6 @@ using AWM.Service.Domain.Primitives;
 /// </summary>
 public class AcademicYear : Entity<int>, IAuditable, ISoftDeletable
 {
-    public int UniversityId { get; private set; }
     public string Name { get; private set; } = null!;
     public DateTime StartDate { get; private set; }
     public DateTime EndDate { get; private set; }
@@ -27,14 +26,13 @@ public class AcademicYear : Entity<int>, IAuditable, ISoftDeletable
 
     private AcademicYear() { }
 
-    public AcademicYear(int universityId, string name, DateTime startDate, DateTime endDate, int createdBy)
+    public AcademicYear(string name, DateTime startDate, DateTime endDate, int createdBy)
     {
         if (string.IsNullOrWhiteSpace(name))
             throw new ArgumentException("Academic year name is required.", nameof(name));
         if (endDate <= startDate)
             throw new ArgumentException("End date must be after start date.", nameof(endDate));
 
-        UniversityId = universityId;
         Name = name;
         StartDate = startDate;
         EndDate = endDate;

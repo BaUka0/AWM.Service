@@ -54,10 +54,9 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, R
         // 3. Load user with role assignments for context resolution
         var userWithRoles = await _userRepository.GetWithRoleAssignmentsAsync(user.Id, cancellationToken);
 
-        // 4. Get user roles (use Role.SystemName if available, otherwise fall back to RoleId)
-        var roles = (userWithRoles ?? user).RoleAssignments
-            .Where(ra => ra.IsCurrentlyValid())
-            .Select(ra => ra.Role?.SystemName ?? ra.RoleId.ToString())
+        // 4. Get user roles (use RoleAccess.Code if available, otherwise fall back to RoleAccessId)
+        var roles = (userWithRoles ?? user).UserAccesses
+            .Select(ua => ua.RoleAccess?.Code ?? ua.RoleAccessId.ToString())
             .Distinct()
             .ToList();
 

@@ -23,21 +23,20 @@ public sealed class GetAllRolesQueryHandler : IRequestHandler<GetAllRolesQuery, 
     public async Task<Result<IReadOnlyList<AdminRoleDto>>> Handle(GetAllRolesQuery request, CancellationToken cancellationToken)
     {
         var roles = await _roleRepository.GetAllAsync(cancellationToken);
-        var users = await _userRepository.GetByUniversityAsync(request.UniversityId, cancellationToken);
+        var users = await _userRepository.GetAllAsync(cancellationToken);
 
         var result = new List<AdminRoleDto>();
 
         foreach (var role in roles)
         {
-            // Count users who have this role currently assigned
-            var usersCount = users.Count(u => u.RoleAssignments.Any(ra => ra.RoleId == role.Id && ra.IsCurrentlyValid()));
+            // Count users who have this role assigned via RBAC+ UserAccess
+            var usersCount = users.Count(u => u.UserAccesses.Any(ua => ua.RoleAccessId == role.Id));
 
             result.Add(new AdminRoleDto
             {
                 RoleId = role.Id,
                 SystemName = role.SystemName,
                 DisplayName = role.DisplayName ?? role.SystemName,
-                ScopeLevel = role.ScopeLevel.ToString(),
                 UsersCount = usersCount
             });
         }

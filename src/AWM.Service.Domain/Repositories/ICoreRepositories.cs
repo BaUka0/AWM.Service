@@ -6,20 +6,6 @@ using AWM.Service.Domain.Edu.Entities;
 using System.Collections.Generic;
 
 /// <summary>
-/// Repository interface for University aggregate.
-/// </summary>
-public interface IUniversityRepository
-{
-    Task<University?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
-    Task<University?> GetByCodeAsync(string code, CancellationToken cancellationToken = default);
-    Task<IReadOnlyList<University>> GetAllAsync(CancellationToken cancellationToken = default);
-    Task AddAsync(University university, CancellationToken cancellationToken = default);
-    Task UpdateAsync(University university, CancellationToken cancellationToken = default);
-    Task<University?> GetByInstituteIdAsync(int instituteId, CancellationToken cancellationToken = default);
-    Task<University?> GetByDepartmentIdAsync(int departmentId, CancellationToken cancellationToken = default);
-}
-
-/// <summary>
 /// Repository interface for User aggregate.
 /// </summary>
 public interface IUserRepository
@@ -29,7 +15,7 @@ public interface IUserRepository
     Task<User?> GetByLoginWithRoleAssignmentsAsync(string login, CancellationToken cancellationToken = default);
     Task<User?> GetByRefreshTokenAsync(string refreshToken, CancellationToken cancellationToken = default);
     Task<User?> GetByExternalIdAsync(string externalId, CancellationToken cancellationToken = default);
-    Task<IReadOnlyList<User>> GetByUniversityAsync(int universityId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<User>> GetAllAsync(CancellationToken cancellationToken = default);
     Task AddAsync(User user, CancellationToken cancellationToken = default);
     Task UpdateAsync(User user, CancellationToken cancellationToken = default);
 

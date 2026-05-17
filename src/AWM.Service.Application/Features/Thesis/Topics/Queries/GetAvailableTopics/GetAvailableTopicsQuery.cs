@@ -30,8 +30,4 @@ public sealed record GetAvailableTopicsQuery : IRequest<Result<IReadOnlyList<Top
     /// </summary>
     public int? UserId { get; init; }
 
-    /// <summary>
-    /// University ID used for resolving the current academic year.
-    /// </summary>
-    public int? UniversityId { get; init; }
 }

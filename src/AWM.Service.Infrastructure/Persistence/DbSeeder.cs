@@ -2,7 +2,7 @@ namespace AWM.Service.Infrastructure.Persistence;
 
 using Microsoft.EntityFrameworkCore;
 using AWM.Service.Domain.Auth.Entities;
-using AWM.Service.Domain.Auth.Enums;
+using AWM.Service.Domain.Auth.RbacPlus.Entities;
 using AWM.Service.Domain.Auth.Interfaces;
 using AWM.Service.Domain.CommonDomain.Entities;
 using AWM.Service.Domain.CommonDomain.Enums;
@@ -24,26 +24,15 @@ public static class DbSeeder
     public static async Task SeedAsync(ApplicationDbContext db, IPasswordHasher passwordHasher)
     {
         // =======================================================
-        // 1. ORG: University
-        // =======================================================
-        if (!await db.Universities.AnyAsync())
-        {
-            db.Universities.Add(new University("Тестовый Университет", "TESTUNI"));
-            await db.SaveChangesAsync();
-        }
-
-        var university = await db.Universities.FirstAsync(u => u.Code == "TESTUNI");
-
-        // =======================================================
-        // 2. ORG: Institutes
+        // 1. ORG: Institutes
         // =======================================================
         if (!await db.Institutes.AnyAsync())
         {
             db.Institutes.AddRange(
                 new[]
                 {
-                    university.AddInstitute("Институт информационных технологий", 0),
-                    university.AddInstitute("Институт инженерии", 0)
+                    Institute.Create("Институт информационных технологий", 0),
+                    Institute.Create("Институт инженерии", 0)
                 });
             await db.SaveChangesAsync();
 
@@ -76,31 +65,223 @@ public static class DbSeeder
         var departmentME = await db.Departments.FirstAsync(d => d.Code == "ME");
 
         // =======================================================
-        // 4. AUTH: Roles (all 8 RoleTypes)
+        // 4. AUTH: Legacy Roles (for Workflow compatibility)
         // =======================================================
         if (!await db.Roles.AnyAsync())
         {
             db.Roles.AddRange(
-                Role.FromRoleType(RoleType.Admin, ScopeLevel.Global),
-                Role.FromRoleType(RoleType.ViceRector, ScopeLevel.University),
-                Role.FromRoleType(RoleType.HeadOfDepartment, ScopeLevel.Department),
-                Role.FromRoleType(RoleType.Supervisor, ScopeLevel.Department),
-                Role.FromRoleType(RoleType.Secretary, ScopeLevel.Department),
-                Role.FromRoleType(RoleType.Expert, ScopeLevel.Department),
-                Role.FromRoleType(RoleType.Student, ScopeLevel.Department),
-                Role.FromRoleType(RoleType.CommissionMember, ScopeLevel.Commission)
+                Role.Create("Admin", "Администратор"),
+                Role.Create("ViceRector", "Проректор по УР"),
+                Role.Create("HeadOfDepartment", "Заведующий кафедрой"),
+                Role.Create("Supervisor", "Научный руководитель"),
+                Role.Create("Secretary", "Секретарь"),
+                Role.Create("Expert", "Эксперт"),
+                Role.Create("Student", "Студент"),
+                Role.Create("CommissionMember", "Член комиссии")
             );
             await db.SaveChangesAsync();
         }
 
-        var roleAdmin = await db.Roles.FirstAsync(r => r.SystemName == nameof(RoleType.Admin));
-        var roleViceRector = await db.Roles.FirstAsync(r => r.SystemName == nameof(RoleType.ViceRector));
-        var roleHeadDept = await db.Roles.FirstAsync(r => r.SystemName == nameof(RoleType.HeadOfDepartment));
-        var roleSupervisor = await db.Roles.FirstAsync(r => r.SystemName == nameof(RoleType.Supervisor));
-        var roleSecretary = await db.Roles.FirstAsync(r => r.SystemName == nameof(RoleType.Secretary));
-        var roleExpert = await db.Roles.FirstAsync(r => r.SystemName == nameof(RoleType.Expert));
-        var roleStudent = await db.Roles.FirstAsync(r => r.SystemName == nameof(RoleType.Student));
-        var roleCommission = await db.Roles.FirstAsync(r => r.SystemName == nameof(RoleType.CommissionMember));
+        var roleAdmin = await db.Roles.FirstAsync(r => r.SystemName == "Admin");
+        var roleViceRector = await db.Roles.FirstAsync(r => r.SystemName == "ViceRector");
+        var roleHeadDept = await db.Roles.FirstAsync(r => r.SystemName == "HeadOfDepartment");
+        var roleSupervisor = await db.Roles.FirstAsync(r => r.SystemName == "Supervisor");
+        var roleSecretary = await db.Roles.FirstAsync(r => r.SystemName == "Secretary");
+        var roleExpert = await db.Roles.FirstAsync(r => r.SystemName == "Expert");
+        var roleStudent = await db.Roles.FirstAsync(r => r.SystemName == "Student");
+        var roleCommission = await db.Roles.FirstAsync(r => r.SystemName == "CommissionMember");
+
+        // =======================================================
+        // 4b. RBAC+ Seed: RoleAccess, RoleOperation, RoleActionType, RoleOperationAction
+        // =======================================================
+        if (!await db.RoleAccesses.AnyAsync())
+        {
+            db.RoleAccesses.AddRange(
+                new RoleAccess("ADMIN", "Администратор", "Администратор", "Administrator", 0),
+                new RoleAccess("VICERECTOR", "Проректор по УР", "Проректор по УР", "Vice-Rector", 0),
+                new RoleAccess("HEADDEPARTMENT", "Заведующий кафедрой", "Кафедра меңгерушісі", "Head of Department", 0),
+                new RoleAccess("SUPERVISOR", "Научный руководитель", "Ғылыми жетекші", "Supervisor", 0),
+                new RoleAccess("SECRETARY", "Секретарь", "Хатшы", "Secretary", 0),
+                new RoleAccess("EXPERT", "Эксперт", "Сарапшы", "Expert", 0),
+                new RoleAccess("STUDENT", "Студент", "Студент", "Student", 0),
+                new RoleAccess("COMMISSIONMEMBER", "Член комиссии", "Комиссия мүшесі", "Commission Member", 0),
+                new RoleAccess("REVIEWER", "Рецензент", "Рецензент", "Reviewer", 0),
+                new RoleAccess("CHAIRMAN", "Председатель комиссии", "Комиссия төрағасы", "Chairman", 0)
+            );
+            await db.SaveChangesAsync();
+        }
+
+        var raAdmin = await db.RoleAccesses.FirstAsync(r => r.Code == "ADMIN");
+        var raViceRector = await db.RoleAccesses.FirstAsync(r => r.Code == "VICERECTOR");
+        var raHeadDept = await db.RoleAccesses.FirstAsync(r => r.Code == "HEADDEPARTMENT");
+        var raSupervisor = await db.RoleAccesses.FirstAsync(r => r.Code == "SUPERVISOR");
+        var raSecretary = await db.RoleAccesses.FirstAsync(r => r.Code == "SECRETARY");
+        var raExpert = await db.RoleAccesses.FirstAsync(r => r.Code == "EXPERT");
+        var raStudent = await db.RoleAccesses.FirstAsync(r => r.Code == "STUDENT");
+        var raCommission = await db.RoleAccesses.FirstAsync(r => r.Code == "COMMISSIONMEMBER");
+        var raReviewer = await db.RoleAccesses.FirstAsync(r => r.Code == "REVIEWER");
+        var raChairman = await db.RoleAccesses.FirstAsync(r => r.Code == "CHAIRMAN");
+
+        if (!await db.RoleActionTypes.AnyAsync())
+        {
+            db.RoleActionTypes.AddRange(
+                new RoleActionType("READ", "Просмотр", "Қарау", "Read"),
+                new RoleActionType("CREATE", "Создание", "Жасау", "Create"),
+                new RoleActionType("UPDATE", "Обновление", "Жаңарту", "Update"),
+                new RoleActionType("DELETE", "Удаление", "Жою", "Delete")
+            );
+            await db.SaveChangesAsync();
+        }
+
+        var actRead = await db.RoleActionTypes.FirstAsync(a => a.Code == "READ");
+        var actCreate = await db.RoleActionTypes.FirstAsync(a => a.Code == "CREATE");
+        var actUpdate = await db.RoleActionTypes.FirstAsync(a => a.Code == "UPDATE");
+        var actDelete = await db.RoleActionTypes.FirstAsync(a => a.Code == "DELETE");
+
+        if (!await db.RoleOperations.AnyAsync())
+        {
+            db.RoleOperations.AddRange(
+                new RoleOperation("Directions", "Направления", "Бағыттар", "Directions", 0, orderBy: 10),
+                new RoleOperation("Directions_Approval", "Утверждение направлений", "Бағыттарды бекіту", "Direction Approval", 0, parentId: null, orderBy: 11),
+                new RoleOperation("Topics", "Темы", "Тақырыптар", "Topics", 0, orderBy: 20),
+                new RoleOperation("Topics_Approval", "Утверждение тем", "Тақырыптарды бекіту", "Topic Approval", 0, parentId: null, orderBy: 21),
+                new RoleOperation("TopicApplications", "Заявки", "Өтініштер", "Applications", 0, orderBy: 30),
+                new RoleOperation("StudentWorks", "Работы", "Жұмыстар", "Student Works", 0, orderBy: 40),
+                new RoleOperation("Works_StateChange", "Смена статуса работы", "Жұмыс күйін өзгерту", "Work State Change", 0, orderBy: 41),
+                new RoleOperation("QualityChecks", "Проверки качества", "Сапа тексеру", "Quality Checks", 0, orderBy: 50),
+                new RoleOperation("Reviews", "Рецензии", "Пікірлер", "Reviews", 0, orderBy: 60),
+                new RoleOperation("PreDefense", "Предзащита", "Алдын ала қорғау", "Pre-Defense", 0, orderBy: 70),
+                new RoleOperation("PreDefense_Grading", "Оценка предзащиты", "Алдын ала қорғау бағалауы", "Pre-Defense Grading", 0, orderBy: 71),
+                new RoleOperation("FinalDefense", "Защита", "Қорғау", "Final Defense", 0, orderBy: 80),
+                new RoleOperation("Defense_Grading", "Оценка защиты", "Қорғау бағалауы", "Defense Grading", 0, orderBy: 81),
+                new RoleOperation("Defense_Protocol", "Протоколы защиты", "Қорғау хаттамалары", "Defense Protocols", 0, orderBy: 82),
+                new RoleOperation("Commissions", "Комиссии", "Комиссиялар", "Commissions", 0, orderBy: 90),
+                new RoleOperation("Users", "Пользователи", "Пайдаланушылар", "Users", 0, orderBy: 100),
+                new RoleOperation("Users_Roles", "Управление ролями", "Рөлдерді басқару", "Role Management", 0, orderBy: 101),
+                new RoleOperation("Organization", "Организация", "Ұйым", "Organization", 0, orderBy: 110),
+                new RoleOperation("Org_Departments", "Кафедры", "Кафедралар", "Departments", 0, orderBy: 111),
+                new RoleOperation("Org_Institutes", "Институты", "Институттар", "Institutes", 0, orderBy: 112),
+                new RoleOperation("Reports", "Отчеты", "Есептер", "Reports", 0, orderBy: 120)
+            );
+            await db.SaveChangesAsync();
+        }
+
+        var opDirections = await db.RoleOperations.FirstAsync(o => o.Name == "Directions");
+        var opDirectionsApproval = await db.RoleOperations.FirstAsync(o => o.Name == "Directions_Approval");
+        var opTopics = await db.RoleOperations.FirstAsync(o => o.Name == "Topics");
+        var opTopicsApproval = await db.RoleOperations.FirstAsync(o => o.Name == "Topics_Approval");
+        var opApplications = await db.RoleOperations.FirstAsync(o => o.Name == "TopicApplications");
+        var opWorks = await db.RoleOperations.FirstAsync(o => o.Name == "StudentWorks");
+        var opStateChange = await db.RoleOperations.FirstAsync(o => o.Name == "Works_StateChange");
+        var opQuality = await db.RoleOperations.FirstAsync(o => o.Name == "QualityChecks");
+        var opReviews = await db.RoleOperations.FirstAsync(o => o.Name == "Reviews");
+        var opPreDefense = await db.RoleOperations.FirstAsync(o => o.Name == "PreDefense");
+        var opPreDefenseGrade = await db.RoleOperations.FirstAsync(o => o.Name == "PreDefense_Grading");
+        var opFinalDefense = await db.RoleOperations.FirstAsync(o => o.Name == "FinalDefense");
+        var opDefenseGrade = await db.RoleOperations.FirstAsync(o => o.Name == "Defense_Grading");
+        var opDefenseProtocol = await db.RoleOperations.FirstAsync(o => o.Name == "Defense_Protocol");
+        var opCommissions = await db.RoleOperations.FirstAsync(o => o.Name == "Commissions");
+        var opUsers = await db.RoleOperations.FirstAsync(o => o.Name == "Users");
+        var opUsersRoles = await db.RoleOperations.FirstAsync(o => o.Name == "Users_Roles");
+        var opOrg = await db.RoleOperations.FirstAsync(o => o.Name == "Organization");
+        var opOrgDepts = await db.RoleOperations.FirstAsync(o => o.Name == "Org_Departments");
+        var opOrgInsts = await db.RoleOperations.FirstAsync(o => o.Name == "Org_Institutes");
+        var opReports = await db.RoleOperations.FirstAsync(o => o.Name == "Reports");
+
+        if (!await db.RoleOperationActions.AnyAsync())
+        {
+            // Helper to add multiple actions
+            void Grant(RoleAccess ra, RoleOperation op, params RoleActionType[] actions)
+            {
+                foreach (var a in actions)
+                    db.RoleOperationActions.Add(new RoleOperationAction(ra.Id, op.Id, a.Id));
+            }
+
+            // ADMIN — full access
+            Grant(raAdmin, opDirections, actRead, actCreate, actUpdate, actDelete);
+            Grant(raAdmin, opDirectionsApproval, actRead, actCreate, actUpdate, actDelete);
+            Grant(raAdmin, opTopics, actRead, actCreate, actUpdate, actDelete);
+            Grant(raAdmin, opTopicsApproval, actRead, actCreate, actUpdate, actDelete);
+            Grant(raAdmin, opApplications, actRead, actCreate, actUpdate, actDelete);
+            Grant(raAdmin, opWorks, actRead, actCreate, actUpdate, actDelete);
+            Grant(raAdmin, opStateChange, actRead, actCreate, actUpdate, actDelete);
+            Grant(raAdmin, opQuality, actRead, actCreate, actUpdate, actDelete);
+            Grant(raAdmin, opReviews, actRead, actCreate, actUpdate, actDelete);
+            Grant(raAdmin, opPreDefense, actRead, actCreate, actUpdate, actDelete);
+            Grant(raAdmin, opPreDefenseGrade, actRead, actCreate, actUpdate, actDelete);
+            Grant(raAdmin, opFinalDefense, actRead, actCreate, actUpdate, actDelete);
+            Grant(raAdmin, opDefenseGrade, actRead, actCreate, actUpdate, actDelete);
+            Grant(raAdmin, opDefenseProtocol, actRead, actCreate, actUpdate, actDelete);
+            Grant(raAdmin, opCommissions, actRead, actCreate, actUpdate, actDelete);
+            Grant(raAdmin, opUsers, actRead, actCreate, actUpdate, actDelete);
+            Grant(raAdmin, opUsersRoles, actRead, actCreate, actUpdate, actDelete);
+            Grant(raAdmin, opOrg, actRead, actCreate, actUpdate, actDelete);
+            Grant(raAdmin, opOrgDepts, actRead, actCreate, actUpdate, actDelete);
+            Grant(raAdmin, opOrgInsts, actRead, actCreate, actUpdate, actDelete);
+            Grant(raAdmin, opReports, actRead, actCreate, actUpdate, actDelete);
+
+            // STUDENT
+            Grant(raStudent, opTopics, actRead);
+            Grant(raStudent, opApplications, actRead, actCreate);
+            Grant(raStudent, opWorks, actRead, actUpdate);
+            Grant(raStudent, opReviews, actRead);
+
+            // SUPERVISOR
+            Grant(raSupervisor, opTopics, actRead, actCreate);
+            Grant(raSupervisor, opWorks, actRead, actUpdate);
+            Grant(raSupervisor, opReviews, actRead, actCreate);
+            Grant(raSupervisor, opDirections, actRead);
+
+            // HEAD OF DEPARTMENT
+            Grant(raHeadDept, opDirections, actRead, actCreate, actUpdate);
+            Grant(raHeadDept, opDirectionsApproval, actUpdate);
+            Grant(raHeadDept, opTopics, actRead, actCreate, actUpdate);
+            Grant(raHeadDept, opTopicsApproval, actUpdate);
+            Grant(raHeadDept, opApplications, actRead, actUpdate, actDelete);
+            Grant(raHeadDept, opWorks, actRead, actUpdate);
+            Grant(raHeadDept, opStateChange, actUpdate);
+            Grant(raHeadDept, opPreDefense, actRead);
+            Grant(raHeadDept, opPreDefenseGrade, actUpdate);
+            Grant(raHeadDept, opCommissions, actRead, actCreate, actUpdate, actDelete);
+            Grant(raHeadDept, opFinalDefense, actRead);
+            Grant(raHeadDept, opDefenseGrade, actUpdate);
+            Grant(raHeadDept, opDefenseProtocol, actCreate);
+            Grant(raHeadDept, opReports, actRead);
+
+            // SECRETARY
+            Grant(raSecretary, opDirections, actRead);
+            Grant(raSecretary, opTopics, actRead);
+            Grant(raSecretary, opWorks, actRead, actUpdate);
+            Grant(raSecretary, opCommissions, actRead, actCreate, actUpdate, actDelete);
+            Grant(raSecretary, opPreDefense, actRead);
+            Grant(raSecretary, opFinalDefense, actRead);
+            Grant(raSecretary, opDefenseProtocol, actCreate);
+            Grant(raSecretary, opReports, actRead);
+
+            // EXPERT
+            Grant(raExpert, opQuality, actCreate);
+            Grant(raExpert, opWorks, actRead);
+
+            // COMMISSION MEMBER
+            Grant(raCommission, opFinalDefense, actRead);
+            Grant(raCommission, opDefenseGrade, actUpdate);
+            Grant(raCommission, opCommissions, actRead);
+
+            // REVIEWER
+            Grant(raReviewer, opReviews, actRead, actCreate);
+
+            // CHAIRMAN
+            Grant(raChairman, opFinalDefense, actRead);
+            Grant(raChairman, opDefenseGrade, actUpdate);
+            Grant(raChairman, opCommissions, actRead, actCreate, actUpdate, actDelete);
+            Grant(raChairman, opDefenseProtocol, actCreate);
+
+            // VICE RECTOR
+            Grant(raViceRector, opReports, actRead, actCreate);
+            Grant(raViceRector, opOrg, actRead);
+
+            await db.SaveChangesAsync();
+        }
 
         // =======================================================
         // 5. AUTH: Users (8 test users, one per role)
@@ -110,17 +291,17 @@ public static class DbSeeder
         if (!await db.Users.AnyAsync())
         {
             db.Users.AddRange(
-                new User(university.Id, "admin", "admin@test.edu", hashedPassword),
-                new User(university.Id, "vicerector", "vicerector@test.edu", hashedPassword),
-                new User(university.Id, "head_cs", "head_cs@test.edu", hashedPassword),
-                new User(university.Id, "supervisor1", "supervisor1@test.edu", hashedPassword),
-                new User(university.Id, "supervisor2", "supervisor2@test.edu", hashedPassword),
-                new User(university.Id, "secretary1", "secretary1@test.edu", hashedPassword),
-                new User(university.Id, "expert1", "expert1@test.edu", hashedPassword),
-                new User(university.Id, "commission1", "commission1@test.edu", hashedPassword),
-                new User(university.Id, "student1", "student1@test.edu", hashedPassword),
-                new User(university.Id, "student2", "student2@test.edu", hashedPassword),
-                new User(university.Id, "student3", "student3@test.edu", hashedPassword)
+                new User("admin", "admin@test.edu", hashedPassword),
+                new User("vicerector", "vicerector@test.edu", hashedPassword),
+                new User("head_cs", "head_cs@test.edu", hashedPassword),
+                new User("supervisor1", "supervisor1@test.edu", hashedPassword),
+                new User("supervisor2", "supervisor2@test.edu", hashedPassword),
+                new User("secretary1", "secretary1@test.edu", hashedPassword),
+                new User("expert1", "expert1@test.edu", hashedPassword),
+                new User("commission1", "commission1@test.edu", hashedPassword),
+                new User("student1", "student1@test.edu", hashedPassword),
+                new User("student2", "student2@test.edu", hashedPassword),
+                new User("student3", "student3@test.edu", hashedPassword)
             );
             await db.SaveChangesAsync();
         }
@@ -143,7 +324,6 @@ public static class DbSeeder
         if (!await db.AcademicYears.AnyAsync())
         {
             var year = new AcademicYear(
-                university.Id,
                 "2025-2026",
                 new DateTime(2025, 9, 1, 0, 0, 0, DateTimeKind.Utc),
                 new DateTime(2026, 6, 30, 23, 59, 59, DateTimeKind.Utc),
@@ -156,76 +336,38 @@ public static class DbSeeder
         var academicYear = await db.AcademicYears.FirstAsync(y => y.Name == "2025-2026");
 
         // =======================================================
-        // 7. AUTH: User Role Assignments (context-aware RBAC)
+        // 7. AUTH: User Access Assignments (RBAC+)
         // =======================================================
-        if (!await db.UserRoleAssignments.AnyAsync())
+        if (!await db.UserAccesses.AnyAsync())
         {
-            // Admin — Global scope (no dept/inst/year context)
-            userAdmin.AssignRole(roleAdmin.Id, assignedBy: userAdmin.Id);
+            // Admin
+            userAdmin.AssignRoleAccess(roleAdmin.Id, assignedBy: userAdmin.Id);
 
-            // ViceRector — University scope (no dept context, but with year)
-            userViceRector.AssignRole(roleViceRector.Id, academicYearId: academicYear.Id, assignedBy: userAdmin.Id);
+            // ViceRector
+            userViceRector.AssignRoleAccess(roleViceRector.Id, assignedBy: userAdmin.Id);
 
-            // HeadOfDepartment — Department scope (CS dept, with year)
-            userHeadCS.AssignRole(roleHeadDept.Id,
-                departmentId: departmentCS.Id,
-                instituteId: instituteIT.Id,
-                academicYearId: academicYear.Id,
-                assignedBy: userAdmin.Id);
+            // HeadOfDepartment
+            userHeadCS.AssignRoleAccess(roleHeadDept.Id, assignedBy: userAdmin.Id);
 
-            // Supervisor1 — Department scope (CS dept)
-            userSupervisor1.AssignRole(roleSupervisor.Id,
-                departmentId: departmentCS.Id,
-                instituteId: instituteIT.Id,
-                academicYearId: academicYear.Id,
-                assignedBy: userAdmin.Id);
+            // Supervisor1
+            userSupervisor1.AssignRoleAccess(roleSupervisor.Id, assignedBy: userAdmin.Id);
 
-            // Supervisor2 — Department scope (SE dept)
-            userSupervisor2.AssignRole(roleSupervisor.Id,
-                departmentId: departmentSE.Id,
-                instituteId: instituteIT.Id,
-                academicYearId: academicYear.Id,
-                assignedBy: userAdmin.Id);
+            // Supervisor2
+            userSupervisor2.AssignRoleAccess(roleSupervisor.Id, assignedBy: userAdmin.Id);
 
-            // Secretary — Department scope (CS dept)
-            userSecretary1.AssignRole(roleSecretary.Id,
-                departmentId: departmentCS.Id,
-                instituteId: instituteIT.Id,
-                academicYearId: academicYear.Id,
-                assignedBy: userAdmin.Id);
+            // Secretary
+            userSecretary1.AssignRoleAccess(roleSecretary.Id, assignedBy: userAdmin.Id);
 
-            // Expert — Department scope (CS dept)
-            userExpert1.AssignRole(roleExpert.Id,
-                departmentId: departmentCS.Id,
-                instituteId: instituteIT.Id,
-                academicYearId: academicYear.Id,
-                assignedBy: userAdmin.Id);
+            // Expert
+            userExpert1.AssignRoleAccess(roleExpert.Id, assignedBy: userAdmin.Id);
 
-            // CommissionMember — Commission scope
-            userCommission1.AssignRole(roleCommission.Id,
-                departmentId: departmentCS.Id,
-                academicYearId: academicYear.Id,
-                assignedBy: userAdmin.Id);
+            // CommissionMember
+            userCommission1.AssignRoleAccess(roleCommission.Id, assignedBy: userAdmin.Id);
 
-            // Students — Department scope (CS dept)
-            userStudent1.AssignRole(roleStudent.Id,
-                departmentId: departmentCS.Id,
-                instituteId: instituteIT.Id,
-                academicYearId: academicYear.Id,
-                assignedBy: userAdmin.Id);
-
-            userStudent2.AssignRole(roleStudent.Id,
-                departmentId: departmentCS.Id,
-                instituteId: instituteIT.Id,
-                academicYearId: academicYear.Id,
-                assignedBy: userAdmin.Id);
-
-            // Student3 — Different dept (SE) for cross-dept testing
-            userStudent3.AssignRole(roleStudent.Id,
-                departmentId: departmentSE.Id,
-                instituteId: instituteIT.Id,
-                academicYearId: academicYear.Id,
-                assignedBy: userAdmin.Id);
+            // Students
+            userStudent1.AssignRoleAccess(roleStudent.Id, assignedBy: userAdmin.Id);
+            userStudent2.AssignRoleAccess(roleStudent.Id, assignedBy: userAdmin.Id);
+            userStudent3.AssignRoleAccess(roleStudent.Id, assignedBy: userAdmin.Id);
 
             await db.SaveChangesAsync();
         }

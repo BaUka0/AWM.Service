@@ -5,7 +5,6 @@ using AWM.Service.Application.Features.Defense.Evaluation.Commands.SubmitGrade;
 using AWM.Service.Application.Features.Defense.Evaluation.DTOs;
 using AWM.Service.Application.Features.Defense.Evaluation.Queries.GetEvaluationCriteria;
 using AWM.Service.Application.Features.Defense.Evaluation.Queries.GetGradesByWork;
-using AWM.Service.Domain.Auth.Enums;
 using AWM.Service.WebAPI.Authorization;
 using AWM.Service.WebAPI.Common.Contracts.Requests.Defense;
 using AWM.Service.WebAPI.Common.Contracts.Responses.Defense;
@@ -36,7 +35,7 @@ public class EvaluationController : BaseController
     /// <param name="departmentId">Optional department ID</param>
     /// <returns>List of evaluation criteria</returns>
     [HttpGet("criteria")]
-    [RequireDepartmentPermission(Permission.Defense_View)]
+    [RequireAccess("FinalDefense", "Read")]
     [ProducesResponseType(typeof(IReadOnlyList<EvaluationCriteriaResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -65,7 +64,7 @@ public class EvaluationController : BaseController
     /// <param name="scheduleId">Schedule ID</param>
     /// <returns>List of grades</returns>
     [HttpGet("schedule/{scheduleId:long}/grades")]
-    [RequireDepartmentPermission(Permission.Defense_View)]
+    [RequireAccess("FinalDefense", "Read")]
     [ProducesResponseType(typeof(IReadOnlyList<GradeResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -91,7 +90,7 @@ public class EvaluationController : BaseController
     /// <param name="request">Grade details</param>
     /// <returns>Created grade ID</returns>
     [HttpPost("schedule/{scheduleId:long}/grades")]
-    [RequireDepartmentPermission(Permission.Defense_Grade)]
+    [RequireAccess("Defense_Grading", "Update")]
     [ProducesResponseType(typeof(long), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -118,7 +117,7 @@ public class EvaluationController : BaseController
     /// <param name="scheduleId">Schedule ID</param>
     /// <returns>No content on success</returns>
     [HttpPut("schedule/{scheduleId:long}/finalize")]
-    [RequireDepartmentPermission(Permission.Defense_Finalize)]
+    [RequireAccess("FinalDefense", "Update")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]

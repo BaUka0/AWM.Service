@@ -9,6 +9,5 @@ namespace AWM.Service.Application.Features.Auth.Commands.Register;
 public record RegisterUserCommand(
     string Login,
     string Email,
-    string Password,
-    int UniversityId
+    string Password
 ) : IRequest<Result<int>>;

@@ -102,9 +102,9 @@ public interface IRoleRepository
 public interface IOrganizationLookupRepository
 {
     /// <summary>
-    /// Gets all institutes for a university.
+    /// Gets all institutes.
     /// </summary>
-    Task<IReadOnlyList<Institute>> GetInstitutesByUniversityAsync(int universityId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<Institute>> GetAllInstitutesAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets all departments for an institute.
@@ -112,9 +112,9 @@ public interface IOrganizationLookupRepository
     Task<IReadOnlyList<Department>> GetDepartmentsByInstituteAsync(int instituteId, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Gets all departments for a university (flat list for search).
+    /// Gets all departments (flat list for search).
     /// </summary>
-    Task<IReadOnlyList<Department>> GetAllDepartmentsAsync(int universityId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<Department>> GetAllDepartmentsAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets a department by ID.
@@ -127,7 +127,22 @@ public interface IOrganizationLookupRepository
     Task<IReadOnlyList<Department>> GetDepartmentsByIdsAsync(IEnumerable<int> ids, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Gets an institute by ID.
+    /// Gets an institute by ID (tracked).
     /// </summary>
     Task<Institute?> GetInstituteByIdAsync(int id, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets an institute by ID with tracking for updates.
+    /// </summary>
+    Task<Institute?> GetInstituteByIdTrackedAsync(int id, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets a department by ID with tracking for updates.
+    /// </summary>
+    Task<Department?> GetDepartmentByIdTrackedAsync(int id, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Adds a new institute.
+    /// </summary>
+    Task AddInstituteAsync(Institute institute, CancellationToken cancellationToken = default);
 }

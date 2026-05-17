@@ -52,7 +52,6 @@ public sealed class CreateUserCommandHandler : IRequestHandler<CreateUserCommand
 
             // 4. Create user
             var user = new User(
-                universityId: request.UniversityId,
                 login: request.Login,
                 email: request.Email,
                 passwordHash: passwordHash);
@@ -63,11 +62,9 @@ public sealed class CreateUserCommandHandler : IRequestHandler<CreateUserCommand
             await _userRepository.AddAsync(user, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-            // 5. Assign role
-            user.AssignRole(
-                roleId: request.RoleId,
-                departmentId: request.DepartmentId,
-                instituteId: request.InstituteId,
+            // 5. Assign role access (RBAC+)
+            user.AssignRoleAccess(
+                roleAccessId: request.RoleId,
                 assignedBy: adminId);
 
             await _userRepository.UpdateAsync(user, cancellationToken);

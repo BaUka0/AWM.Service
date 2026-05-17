@@ -8,7 +8,6 @@ using AWM.Service.Application.Features.Defense.Commissions.Commands.UpdateCommis
 using AWM.Service.Application.Features.Defense.Commissions.DTOs;
 using AWM.Service.Application.Features.Defense.Commissions.Queries.GetCommissionById;
 using AWM.Service.Application.Features.Defense.Commissions.Queries.GetCommissionsByDepartment;
-using AWM.Service.Domain.Auth.Enums;
 using AWM.Service.WebAPI.Authorization;
 using AWM.Service.WebAPI.Common.Contracts.Requests.Defense;
 using Mapster;
@@ -38,7 +37,7 @@ public class CommissionsController : BaseController
     /// <param name="academicYearId">Academic year ID</param>
     /// <returns>List of commissions</returns>
     [HttpGet]
-    [RequireDepartmentPermission(Permission.Commissions_View)]
+    [RequireAccess("Commissions", "Read")]
     [ProducesResponseType(typeof(IReadOnlyList<CommissionDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -67,7 +66,7 @@ public class CommissionsController : BaseController
     /// <param name="id">Commission ID</param>
     /// <returns>Commission with member list</returns>
     [HttpGet("{id:int}")]
-    [RequireDepartmentPermission(Permission.Commissions_View)]
+    [RequireAccess("Commissions", "Read")]
     [ProducesResponseType(typeof(CommissionDetailDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -90,7 +89,7 @@ public class CommissionsController : BaseController
     /// <param name="request">Create commission request</param>
     /// <returns>Created commission ID</returns>
     [HttpPost]
-    [RequireDepartmentPermission(Permission.Commissions_Manage)]
+    [RequireAccess("Commissions", "Create")]
     [ProducesResponseType(typeof(int), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -114,7 +113,7 @@ public class CommissionsController : BaseController
     /// <param name="request">Update request</param>
     /// <returns>No content on success</returns>
     [HttpPut("{id:int}")]
-    [RequireDepartmentPermission(Permission.Commissions_Manage)]
+    [RequireAccess("Commissions", "Update")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -139,7 +138,7 @@ public class CommissionsController : BaseController
     /// <param name="request">Add member request</param>
     /// <returns>Created member ID</returns>
     [HttpPost("{id:int}/members")]
-    [RequireDepartmentPermission(Permission.Commissions_ManageMembers)]
+    [RequireAccess("Commissions", "Create")]
     [ProducesResponseType(typeof(int), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -164,7 +163,7 @@ public class CommissionsController : BaseController
     /// <param name="memberId">Member record ID to remove</param>
     /// <returns>No content on success</returns>
     [HttpDelete("{id:int}/members/{memberId:int}")]
-    [RequireDepartmentPermission(Permission.Commissions_ManageMembers)]
+    [RequireAccess("Commissions", "Delete")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -190,7 +189,7 @@ public class CommissionsController : BaseController
     /// <param name="id">Commission ID</param>
     /// <returns>No content on success</returns>
     [HttpDelete("{id:int}")]
-    [RequireDepartmentPermission(Permission.Commissions_Manage)]
+    [RequireAccess("Commissions", "Delete")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]

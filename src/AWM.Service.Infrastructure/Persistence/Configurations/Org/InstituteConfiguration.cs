@@ -20,22 +20,12 @@ public class InstituteConfiguration : SoftDeletableEntityConfiguration<Institute
         builder.Property(e => e.Id)
             .UseIdentityColumn();
 
-        builder.Property(e => e.UniversityId)
-            .IsRequired();
-
         builder.Property(e => e.Name)
             .IsRequired()
             .HasMaxLength(255);
 
         builder.Property(e => e.Code)
             .HasMaxLength(50);
-
-        // Foreign key to University
-        builder.HasOne<University>()
-            .WithMany(u => u.Institutes)
-            .HasForeignKey(e => e.UniversityId)
-            .HasConstraintName("FK_Institutes_University")
-            .OnDelete(DeleteBehavior.Restrict);
 
         // Navigation to Departments
         builder.HasMany(e => e.Departments)

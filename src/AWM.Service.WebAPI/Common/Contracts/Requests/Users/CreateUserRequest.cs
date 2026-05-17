@@ -9,5 +9,4 @@ public sealed record CreateUserRequest(
     string Password,
     int RoleId,
     int? DepartmentId,
-    int? InstituteId,
-    int UniversityId);
+    int? InstituteId);

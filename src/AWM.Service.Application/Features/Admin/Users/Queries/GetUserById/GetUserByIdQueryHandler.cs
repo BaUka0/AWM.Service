@@ -32,20 +32,10 @@ public sealed class GetUserByIdQueryHandler
         if (user is null)
             return Result.Failure<AdminUserDto>(new Error("NotFound.User", "Пользователь не найден."));
 
-        var roles = user.RoleAssignments
-            .Where(ra => ra.IsCurrentlyValid())
-            .Select(ra => ra.Role?.SystemName ?? ra.RoleId.ToString())
+        var roles = user.UserAccesses
+            .Select(ua => ua.RoleAccess?.Code ?? ua.RoleAccessId.ToString())
             .Distinct()
             .ToList();
-
-        var scoped = user.RoleAssignments.FirstOrDefault(ra => ra.IsCurrentlyValid() && ra.DepartmentId.HasValue);
-
-        string? departmentName = null;
-        if (scoped?.DepartmentId.HasValue == true)
-        {
-            var dept = await _orgLookupRepository.GetDepartmentByIdAsync(scoped.DepartmentId!.Value, cancellationToken);
-            departmentName = dept?.Name;
-        }
 
         var dto = new AdminUserDto
         {
@@ -54,9 +44,9 @@ public sealed class GetUserByIdQueryHandler
             Email = user.Email,
             IsActive = user.IsActive,
             Roles = roles,
-            RoleId = scoped?.RoleId,
-            DepartmentId = scoped?.DepartmentId,
-            DepartmentName = departmentName,
+            RoleId = user.UserAccesses.FirstOrDefault()?.RoleAccessId,
+            DepartmentId = null,
+            DepartmentName = null,
             CreatedAt = user.CreatedAt,
         };
 

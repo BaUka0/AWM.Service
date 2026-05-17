@@ -16,11 +16,6 @@ public record InstituteResponse
     public string Name { get; init; } = null!;
 
     /// <summary>
-    /// University ID to which the institute belongs.
-    /// </summary>
-    public int UniversityId { get; init; }
-
-    /// <summary>
     /// List of departments (if included).
     /// </summary>
     public IReadOnlyList<DepartmentSummaryResponse>? Departments { get; init; }

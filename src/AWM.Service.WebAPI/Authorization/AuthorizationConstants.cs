@@ -48,11 +48,6 @@ public static class AuthorizationConstants
     public const string AcademicYearIdClaimType = "academic_year_id";
 
     /// <summary>
-    /// Claim type for university/tenant ID.
-    /// </summary>
-    public const string UniversityIdClaimType = "university_id";
-
-    /// <summary>
     /// Policy name prefix for permission-based policies.
     /// </summary>
     public const string PermissionPolicyPrefix = "Permission:";

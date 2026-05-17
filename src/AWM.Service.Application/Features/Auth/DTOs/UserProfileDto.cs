@@ -6,7 +6,6 @@ namespace AWM.Service.Application.Features.Auth.DTOs;
 public sealed class UserProfileDto
 {
     public int UserId { get; init; }
-    public int UniversityId { get; init; }
     public string Login { get; init; } = string.Empty;
     public string Email { get; init; } = string.Empty;
     public IReadOnlyList<string> Roles { get; init; } = [];

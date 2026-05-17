@@ -26,8 +26,5 @@ public class CreateUserCommandValidator : AbstractValidator<CreateUserCommand>
 
         RuleFor(x => x.RoleId)
             .GreaterThan(0).WithMessage("Роль обязательна.");
-
-        RuleFor(x => x.UniversityId)
-            .GreaterThan(0).WithMessage("UniversityId обязателен.");
     }
 }

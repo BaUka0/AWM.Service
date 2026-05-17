@@ -11,11 +11,11 @@ using MediatR;
 public sealed class GetDepartmentsByInstituteQueryHandler
     : IRequestHandler<GetDepartmentsByInstituteQuery, Result<IReadOnlyList<DepartmentDto>>>
 {
-    private readonly IUniversityRepository _universityRepository;
+    private readonly IOrganizationLookupRepository _organizationLookupRepository;
 
-    public GetDepartmentsByInstituteQueryHandler(IUniversityRepository universityRepository)
+    public GetDepartmentsByInstituteQueryHandler(IOrganizationLookupRepository organizationLookupRepository)
     {
-        _universityRepository = universityRepository ?? throw new ArgumentNullException(nameof(universityRepository));
+        _organizationLookupRepository = organizationLookupRepository ?? throw new ArgumentNullException(nameof(organizationLookupRepository));
     }
 
     public async Task<Result<IReadOnlyList<DepartmentDto>>> Handle(
@@ -24,24 +24,9 @@ public sealed class GetDepartmentsByInstituteQueryHandler
     {
         try
         {
-            var university = await _universityRepository.GetByInstituteIdAsync(request.InstituteId, cancellationToken);
+            var departments = await _organizationLookupRepository.GetDepartmentsByInstituteAsync(request.InstituteId, cancellationToken);
 
-            if (university is null)
-            {
-                return Result.Failure<IReadOnlyList<DepartmentDto>>(
-                    new Error("NotFound.Institute", $"Institute with ID {request.InstituteId} not found."));
-            }
-
-            var institute = university.Institutes.FirstOrDefault(i => i.Id == request.InstituteId);
-
-            if (institute is null || institute.IsDeleted)
-            {
-                return Result.Failure<IReadOnlyList<DepartmentDto>>(
-                    new Error("NotFound.Institute", $"Institute with ID {request.InstituteId} not found or has been deleted."));
-            }
-
-            var departmentDtos = institute.Departments
-                .Where(d => !d.IsDeleted)
+            var departmentDtos = departments
                 .Select(MapToDto)
                 .ToList();
 

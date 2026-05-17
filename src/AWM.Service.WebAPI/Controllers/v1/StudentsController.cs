@@ -4,7 +4,6 @@ using AWM.Service.Application.Features.Edu.Students.Commands.CreateStudent;
 using AWM.Service.Application.Features.Edu.Students.Commands.UpdateStudent;
 using AWM.Service.Application.Features.Edu.Students.Queries.GetStudentById;
 using AWM.Service.Application.Features.Edu.Students.Queries.GetStudentsByProgram;
-using AWM.Service.Domain.Auth.Enums;
 using AWM.Service.WebAPI.Authorization;
 using AWM.Service.WebAPI.Common.Contracts.Requests.Edu;
 using AWM.Service.WebAPI.Common.Contracts.Responses.Edu;
@@ -35,7 +34,7 @@ public sealed class StudentsController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Student details</returns>
     [HttpGet("{studentId}")]
-    [RequireDepartmentPermission(Permission.Students_View)]
+    [RequireAccess("Students", "Read")]
     [ProducesResponseType(typeof(StudentResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -65,7 +64,7 @@ public sealed class StudentsController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>List of students in the program</returns>
     [HttpGet]
-    [RequireDepartmentPermission(Permission.Students_View)]
+    [RequireAccess("Students", "Read")]
     [ProducesResponseType(typeof(IReadOnlyList<StudentResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetByProgram([FromQuery] int programId, CancellationToken cancellationToken = default)
@@ -94,7 +93,7 @@ public sealed class StudentsController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Created student ID</returns>
     [HttpPost]
-    [RequireDepartmentPermission(Permission.Students_Create)]
+    [RequireAccess("Students", "Create")]
     [ProducesResponseType(typeof(int), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -121,7 +120,7 @@ public sealed class StudentsController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>No content on success</returns>
     [HttpPut("{studentId}")]
-    [RequireDepartmentPermission(Permission.Students_Edit)]
+    [RequireAccess("Students", "Update")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

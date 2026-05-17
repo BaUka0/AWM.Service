@@ -11,25 +11,25 @@ public sealed class GetSupervisorsQueryHandler : IRequestHandler<GetSupervisorsQ
 {
     private readonly IStaffRepository _staffRepository;
     private readonly IUserRepository _userRepository;
-    private readonly IUniversityRepository _universityRepository;
+    private readonly IOrganizationLookupRepository _organizationLookupRepository;
 
     public GetSupervisorsQueryHandler(
         IStaffRepository staffRepository,
         IUserRepository userRepository,
-        IUniversityRepository universityRepository)
+        IOrganizationLookupRepository organizationLookupRepository)
     {
         _staffRepository = staffRepository ?? throw new ArgumentNullException(nameof(staffRepository));
         _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
-        _universityRepository = universityRepository ?? throw new ArgumentNullException(nameof(universityRepository));
+        _organizationLookupRepository = organizationLookupRepository ?? throw new ArgumentNullException(nameof(organizationLookupRepository));
     }
 
     public async Task<Result<IReadOnlyList<StaffDto>>> Handle(GetSupervisorsQuery request, CancellationToken cancellationToken)
     {
         try
         {
-            // First, verify the department exists and get its university for scoping
-            var university = await _universityRepository.GetByDepartmentIdAsync(request.DepartmentId, cancellationToken);
-            if (university is null)
+            // Verify the department exists
+            var department = await _organizationLookupRepository.GetDepartmentByIdAsync(request.DepartmentId, cancellationToken);
+            if (department is null)
             {
                 return Result.Failure<IReadOnlyList<StaffDto>>(new Error("NotFound.Department", "Department not found."));
             }

@@ -9,7 +9,6 @@ using MediatR;
 /// </summary>
 public sealed record GetAllUsersQuery : IRequest<Result<IReadOnlyList<AdminUserDto>>>
 {
-    public int UniversityId { get; init; }
     public bool? IsActive { get; init; }
     public string? Search { get; init; }
 }

@@ -3,8 +3,8 @@ using System.Security.Claims;
 using System.Text;
 using AWM.Service.Domain.Auth.Entities;
 using AWM.Service.Domain.Auth.Interfaces;
-using AWM.Service.WebAPI.Common.Settings;
 using AWM.Service.WebAPI.Authorization;
+using AWM.Service.WebAPI.Common.Settings;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
@@ -29,8 +29,7 @@ public class JwtTokenService : IJwtTokenService
         {
             new(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new(ClaimTypes.Name, user.Login),
-            new(ClaimTypes.Email, user.Email),
-            new(AuthorizationConstants.UniversityIdClaimType, user.UniversityId.ToString())
+            new(ClaimTypes.Email, user.Email)
         };
 
         // Add role claims

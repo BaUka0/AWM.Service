@@ -5,7 +5,6 @@ using AWM.Service.Application.Features.Thesis.Attachments.Commands.UploadAttachm
 using AWM.Service.Application.Features.Thesis.Attachments.Queries.GetAttachmentById;
 using AWM.Service.Application.Features.Thesis.Attachments.Queries.GetAttachmentsByWork;
 using AWM.Service.Domain.Thesis.Service;
-using AWM.Service.Domain.Auth.Enums;
 using AWM.Service.WebAPI.Authorization;
 using AWM.Service.WebAPI.Common.Contracts.Requests.Thesis;
 using AWM.Service.WebAPI.Common.Contracts.Responses.Thesis;
@@ -38,7 +37,7 @@ public sealed class AttachmentsController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>List of attachments.</returns>
     [HttpGet]
-    [RequireDepartmentPermission(Permission.Attachments_Download)]
+    [RequireAccess("Attachments", "Read")]
     [ProducesResponseType(typeof(IReadOnlyList<AttachmentResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -63,7 +62,7 @@ public sealed class AttachmentsController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Attachment metadata.</returns>
     [HttpGet("{attachmentId:long}")]
-    [RequireDepartmentPermission(Permission.Attachments_Download)]
+    [RequireAccess("Attachments", "Read")]
     [ProducesResponseType(typeof(AttachmentResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -88,7 +87,7 @@ public sealed class AttachmentsController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>ID of the created attachment.</returns>
     [HttpPost]
-    [RequireDepartmentPermission(Permission.Attachments_Upload)]
+    [RequireAccess("Attachments", "Create")]
     [Consumes("multipart/form-data")]
     [ProducesResponseType(typeof(long), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -120,7 +119,7 @@ public sealed class AttachmentsController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>File stream with original content type.</returns>
     [HttpGet("{attachmentId:long}/download")]
-    [RequireDepartmentPermission(Permission.Attachments_Download)]
+    [RequireAccess("Attachments", "Read")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -161,7 +160,7 @@ public sealed class AttachmentsController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>No content on success.</returns>
     [HttpDelete("{attachmentId:long}")]
-    [RequireDepartmentPermission(Permission.Attachments_Delete)]
+    [RequireAccess("Attachments", "Delete")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]

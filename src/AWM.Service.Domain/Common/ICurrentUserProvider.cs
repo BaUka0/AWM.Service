@@ -6,6 +6,5 @@ namespace AWM.Service.Domain.Common;
 public interface ICurrentUserProvider
 {
     int? UserId { get; }
-    int? UniversityId { get; }
     bool IsAuthenticated { get; }
 }

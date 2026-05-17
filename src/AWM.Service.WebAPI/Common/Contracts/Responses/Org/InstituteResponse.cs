@@ -12,12 +12,6 @@ public sealed record InstituteResponse
     public int Id { get; init; }
 
     /// <summary>
-    /// University ID to which the institute belongs.
-    /// </summary>
-    /// <example>1</example>
-    public int UniversityId { get; init; }
-
-    /// <summary>
     /// Institute name.
     /// </summary>
     /// <example>Faculty of Computer Science</example>

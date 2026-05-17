@@ -13,29 +13,27 @@ public sealed class AcademicYearRepository : RepositoryBase<AcademicYear, int>, 
     public AcademicYearRepository(ApplicationDbContext context) : base(context) { }
 
     /// <inheritdoc />
-    public async Task<AcademicYear?> GetCurrentAsync(int universityId, CancellationToken cancellationToken = default)
+    public async Task<AcademicYear?> GetCurrentAsync(CancellationToken cancellationToken = default)
     {
         return await Context.AcademicYears
-            .Where(a => a.UniversityId == universityId && a.IsCurrent)
+            .Where(a => a.IsCurrent)
             .FirstOrDefaultAsync(cancellationToken);
     }
 
     /// <inheritdoc />
-    public async Task<AcademicYear?> GetByDateAsync(int universityId, DateTime date, CancellationToken cancellationToken = default)
+    public async Task<AcademicYear?> GetByDateAsync(DateTime date, CancellationToken cancellationToken = default)
     {
         return await Context.AcademicYears
-            .Where(a => a.UniversityId == universityId &&
-                        a.StartDate <= date &&
+            .Where(a => a.StartDate <= date &&
                         a.EndDate >= date)
             .FirstOrDefaultAsync(cancellationToken);
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<AcademicYear>> GetByUniversityAsync(int universityId, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<AcademicYear>> GetAllAsync(CancellationToken cancellationToken = default)
     {
         return await Context.AcademicYears
             .AsNoTracking()
-            .Where(a => a.UniversityId == universityId)
             .OrderByDescending(a => a.StartDate)
             .ToListAsync(cancellationToken);
     }

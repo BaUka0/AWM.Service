@@ -135,9 +135,7 @@ builder.Services.AddScoped<AWM.Service.Domain.Common.ICurrentUserProvider, AWM.S
 builder.Services.AddScoped<AWM.Service.Domain.Auth.Interfaces.IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<AWM.Service.Domain.Auth.Interfaces.IJwtTokenService, JwtTokenService>();
 
-// Add Context-Aware RBAC Authorization
-builder.Services.AddContextAwareAuthorization();
-builder.Services.AddPermissionPolicies();
+// RBAC+ authorization is handled by RequireAccessAttribute via MediatR (registered in AddApplication).
 
 
 var app = builder.Build();

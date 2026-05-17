@@ -8,7 +8,6 @@ using MediatR;
 /// </summary>
 public sealed record CreateUserCommand : IRequest<Result<int>>
 {
-    public int UniversityId { get; init; }
     public string Login { get; init; } = null!;
     public string Email { get; init; } = null!;
     public string Password { get; init; } = null!;

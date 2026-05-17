@@ -10,7 +10,8 @@ using MediatR;
 /// </summary>
 public sealed class DeleteDepartmentCommandHandler : IRequestHandler<DeleteDepartmentCommand, Result>
 {
-    private readonly IUniversityRepository _universityRepository;
+    private readonly IOrganizationLookupRepository _organizationLookupRepository;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly ICurrentUserProvider _currentUserProvider;
     private readonly IStaffRepository _staffRepository;
     private readonly IAcademicProgramRepository _academicProgramRepository;
@@ -18,14 +19,16 @@ public sealed class DeleteDepartmentCommandHandler : IRequestHandler<DeleteDepar
     private readonly IAcademicYearRepository _academicYearRepository;
 
     public DeleteDepartmentCommandHandler(
-        IUniversityRepository universityRepository,
+        IOrganizationLookupRepository organizationLookupRepository,
+        IUnitOfWork unitOfWork,
         ICurrentUserProvider currentUserProvider,
         IStaffRepository staffRepository,
         IAcademicProgramRepository academicProgramRepository,
         ITopicRepository topicRepository,
         IAcademicYearRepository academicYearRepository)
     {
-        _universityRepository = universityRepository ?? throw new ArgumentNullException(nameof(universityRepository));
+        _organizationLookupRepository = organizationLookupRepository ?? throw new ArgumentNullException(nameof(organizationLookupRepository));
+        _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
         _currentUserProvider = currentUserProvider ?? throw new ArgumentNullException(nameof(currentUserProvider));
         _staffRepository = staffRepository ?? throw new ArgumentNullException(nameof(staffRepository));
         _academicProgramRepository = academicProgramRepository ?? throw new ArgumentNullException(nameof(academicProgramRepository));
@@ -37,22 +40,7 @@ public sealed class DeleteDepartmentCommandHandler : IRequestHandler<DeleteDepar
     {
         try
         {
-            var university = await _universityRepository.GetByDepartmentIdAsync(request.DepartmentId, cancellationToken);
-
-            if (university is null)
-            {
-                return Result.Failure(new Error("404", $"Department with ID {request.DepartmentId} not found."));
-            }
-
-            var institute = university.Institutes.FirstOrDefault(i =>
-                i.Departments.Any(d => d.Id == request.DepartmentId));
-
-            if (institute is null)
-            {
-                return Result.Failure(new Error("404", $"Department with ID {request.DepartmentId} not found."));
-            }
-
-            var department = institute.Departments.FirstOrDefault(d => d.Id == request.DepartmentId);
+            var department = await _organizationLookupRepository.GetDepartmentByIdTrackedAsync(request.DepartmentId, cancellationToken);
 
             if (department is null || department.IsDeleted)
             {
@@ -78,7 +66,7 @@ public sealed class DeleteDepartmentCommandHandler : IRequestHandler<DeleteDepar
             }
 
             // 3. Check for active topics in current academic year
-            var currentYear = await _academicYearRepository.GetCurrentAsync(university.Id, cancellationToken);
+            var currentYear = await _academicYearRepository.GetCurrentAsync(cancellationToken);
             if (currentYear != null)
             {
                 var topics = await _topicRepository.GetByDepartmentAsync(request.DepartmentId, currentYear.Id, cancellationToken);
@@ -97,7 +85,7 @@ public sealed class DeleteDepartmentCommandHandler : IRequestHandler<DeleteDepar
             }
             department.Delete(userId.Value);
 
-            await _universityRepository.UpdateAsync(university, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             return Result.Success();
         }

@@ -6,6 +6,5 @@ namespace AWM.Service.WebAPI.Common.Contracts.Requests;
 public record RegisterRequest(
     string Login,
     string Email,
-    string Password,
-    int UniversityId = 1
+    string Password
 );

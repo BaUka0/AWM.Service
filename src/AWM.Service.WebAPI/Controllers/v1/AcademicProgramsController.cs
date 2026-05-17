@@ -5,7 +5,6 @@ using AWM.Service.Application.Features.Edu.AcademicPrograms.Commands.UpdateAcade
 using AWM.Service.Application.Features.Edu.AcademicPrograms.Queries.GetAcademicPrograms;
 using AWM.Service.WebAPI.Common.Contracts.Requests.Edu;
 using AWM.Service.WebAPI.Common.Contracts.Responses.Edu;
-using AWM.Service.Domain.Auth.Enums;
 using AWM.Service.WebAPI.Authorization;
 using Mapster;
 using MediatR;
@@ -38,7 +37,7 @@ public sealed class AcademicProgramsController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>List of academic programs.</returns>
     [HttpGet]
-    [RequirePermission(Permission.AcademicPrograms_View)]
+    [RequireAccess("AcademicPrograms", "Read")]
     [ProducesResponseType(typeof(IReadOnlyList<AcademicProgramResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -78,7 +77,7 @@ public sealed class AcademicProgramsController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Created program ID.</returns>
     [HttpPost]
-    [RequirePermission(Permission.AcademicPrograms_Create)]
+    [RequireAccess("AcademicPrograms", "Create")]
     [ProducesResponseType(typeof(int), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -110,7 +109,7 @@ public sealed class AcademicProgramsController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>No content on success.</returns>
     [HttpPut("{id}")]
-    [RequirePermission(Permission.AcademicPrograms_Edit)]
+    [RequireAccess("AcademicPrograms", "Update")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -139,7 +138,7 @@ public sealed class AcademicProgramsController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>No content on success.</returns>
     [HttpDelete("{id}")]
-    [RequirePermission(Permission.AcademicPrograms_Edit)]
+    [RequireAccess("AcademicPrograms", "Delete")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]

@@ -12,7 +12,6 @@ using AWM.Service.Application.Features.Defense.PreDefense.DTOs;
 using AWM.Service.Application.Features.Defense.PreDefense.Queries.GetFailedPreDefenseStudents;
 using AWM.Service.Application.Features.Defense.PreDefense.Queries.GetPreDefenseAttempts;
 using AWM.Service.Application.Features.Defense.PreDefense.Queries.GetPreDefenseSchedule;
-using AWM.Service.Domain.Auth.Enums;
 using AWM.Service.WebAPI.Authorization;
 using AWM.Service.WebAPI.Common.Contracts.Requests.Defense;
 using Mapster;
@@ -41,7 +40,7 @@ public class PreDefenseController : BaseController
     /// <param name="commissionId">Commission ID</param>
     /// <returns>List of schedule slots ordered by defense date</returns>
     [HttpGet("schedule")]
-    [RequireDepartmentPermission(Permission.PreDefense_View)]
+    [RequireAccess("PreDefense", "Read")]
     [ProducesResponseType(typeof(IReadOnlyList<PreDefenseScheduleDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -63,7 +62,7 @@ public class PreDefenseController : BaseController
     /// <param name="workId">StudentWork ID</param>
     /// <returns>List of attempts ordered by attempt number</returns>
     [HttpGet("works/{workId:long}/attempts")]
-    [RequireDepartmentPermission(Permission.PreDefense_View)]
+    [RequireAccess("PreDefense", "Read")]
     [ProducesResponseType(typeof(IReadOnlyList<PreDefenseAttemptDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -88,7 +87,7 @@ public class PreDefenseController : BaseController
     /// <param name="preDefenseNumber">Optional pre-defense round filter (1, 2, or 3)</param>
     /// <returns>List of failed students with attempt details</returns>
     [HttpGet("failed-students")]
-    [RequireDepartmentPermission(Permission.PreDefense_View)]
+    [RequireAccess("PreDefense", "Read")]
     [ProducesResponseType(typeof(IReadOnlyList<FailedPreDefenseStudentDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -121,7 +120,7 @@ public class PreDefenseController : BaseController
     /// <param name="request">Schedule details</param>
     /// <returns>Created schedule ID</returns>
     [HttpPost("works/{workId:long}/schedule")]
-    [RequireDepartmentPermission(Permission.PreDefense_Schedule)]
+    [RequireAccess("PreDefense", "Create")]
     [ProducesResponseType(typeof(long), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -147,7 +146,7 @@ public class PreDefenseController : BaseController
     /// <param name="request">Attendance details</param>
     /// <returns>No content on success</returns>
     [HttpPut("attempts/{attemptId:long}/attendance")]
-    [RequireDepartmentPermission(Permission.PreDefense_RecordAttendance)]
+    [RequireAccess("PreDefense", "Update")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -173,7 +172,7 @@ public class PreDefenseController : BaseController
     /// <param name="request">Grade details</param>
     /// <returns>Created grade ID</returns>
     [HttpPost("schedule/{scheduleId:long}/grades")]
-    [RequireDepartmentPermission(Permission.PreDefense_Grade)]
+    [RequireAccess("PreDefense_Grading", "Update")]
     [ProducesResponseType(typeof(long), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -200,7 +199,7 @@ public class PreDefenseController : BaseController
     /// <param name="request">Finalize details including average score and pass/fail result</param>
     /// <returns>No content on success</returns>
     [HttpPut("attempts/{attemptId:long}/finalize")]
-    [RequireDepartmentPermission(Permission.PreDefense_Finalize)]
+    [RequireAccess("PreDefense", "Update")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -226,7 +225,7 @@ public class PreDefenseController : BaseController
     /// <param name="scheduleId">Schedule ID</param>
     /// <returns>No content on success</returns>
     [HttpPut("schedule/{scheduleId:long}/start-reconciliation")]
-    [RequireDepartmentPermission(Permission.PreDefense_Finalize)]
+    [RequireAccess("PreDefense", "Update")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -251,7 +250,7 @@ public class PreDefenseController : BaseController
     /// <param name="request">Distribution parameters</param>
     /// <returns>Number of works distributed</returns>
     [HttpPost("distribute")]
-    [RequireDepartmentPermission(Permission.PreDefense_Schedule)]
+    [RequireAccess("PreDefense", "Create")]
     [ProducesResponseType(typeof(int), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -276,7 +275,7 @@ public class PreDefenseController : BaseController
     /// <param name="request">Slot generation parameters</param>
     /// <returns>Number of slots generated</returns>
     [HttpPost("generate-slots")]
-    [RequireDepartmentPermission(Permission.PreDefense_Schedule)]
+    [RequireAccess("PreDefense", "Create")]
     [ProducesResponseType(typeof(int), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -301,7 +300,7 @@ public class PreDefenseController : BaseController
     /// <param name="request">Protocol generation details</param>
     /// <returns>Created protocol ID</returns>
     [HttpPost("protocols")]
-    [RequireDepartmentPermission(Permission.PreDefense_Finalize)]
+    [RequireAccess("PreDefense", "Create")]
     [ProducesResponseType(typeof(long), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
