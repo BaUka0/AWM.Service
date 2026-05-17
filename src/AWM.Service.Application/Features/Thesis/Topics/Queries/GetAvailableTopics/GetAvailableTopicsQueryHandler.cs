@@ -14,6 +14,7 @@ public sealed class GetAvailableTopicsQueryHandler
     : IRequestHandler<GetAvailableTopicsQuery, Result<IReadOnlyList<TopicDto>>>
 {
     private readonly ITopicRepository _topicRepository;
+    private readonly ITopicApplicationRepository _applicationRepository;
     private readonly IDirectionRepository _directionRepository;
     private readonly IUserRepository _userRepository;
     private readonly IStaffRepository _staffRepository;
@@ -22,6 +23,7 @@ public sealed class GetAvailableTopicsQueryHandler
 
     public GetAvailableTopicsQueryHandler(
         ITopicRepository topicRepository,
+        ITopicApplicationRepository applicationRepository,
         IDirectionRepository directionRepository,
         IUserRepository userRepository,
         IStaffRepository staffRepository,
@@ -29,6 +31,7 @@ public sealed class GetAvailableTopicsQueryHandler
         IAcademicYearRepository academicYearRepository)
     {
         _topicRepository = topicRepository ?? throw new ArgumentNullException(nameof(topicRepository));
+        _applicationRepository = applicationRepository ?? throw new ArgumentNullException(nameof(applicationRepository));
         _directionRepository = directionRepository ?? throw new ArgumentNullException(nameof(directionRepository));
         _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
         _staffRepository = staffRepository ?? throw new ArgumentNullException(nameof(staffRepository));
@@ -79,8 +82,13 @@ public sealed class GetAvailableTopicsQueryHandler
                 departmentId.Value,
                 academicYearId.Value,
                 cancellationToken);
+            var applicationCountersByTopicId = (await _applicationRepository.GetByTopicIdsAsync(
+                    topics.Select(topic => topic.Id),
+                    cancellationToken))
+                .Where(application => !application.IsDeleted)
+                .GroupBy(application => application.TopicId)
+                .ToDictionary(group => group.Key, TopicApplicationCounters.FromApplications);
 
-            // Bulk fetch dependencies to prevent N+1 queries
             var directionIds = topics.Where(t => t.DirectionId.HasValue).Select(t => t.DirectionId!.Value).Distinct();
             var supervisorIds = topics.Select(t => t.SupervisorId).Distinct();
             var workTypeIds = topics.Select(t => t.WorkTypeId).Distinct();
@@ -97,13 +105,26 @@ public sealed class GetAvailableTopicsQueryHandler
             var userDict = users.ToDictionary(u => u.Id);
             var workTypeDict = workTypes.ToDictionary(w => w.Id);
 
-            var dtos = topics.Select(topic => TopicDtoFactory.Create(
-                topic,
-                topic.DirectionId.HasValue && directionDict.TryGetValue(topic.DirectionId.Value, out var dir) ? dir : null,
-                staffDict.TryGetValue(topic.SupervisorId, out var supervisor) ? supervisor : null,
-                supervisor != null && userDict.TryGetValue(supervisor.UserId, out var user) ? user : null,
-                workTypeDict.TryGetValue(topic.WorkTypeId, out var wt) ? wt : null
-            )).ToList();
+            var dtos = topics.Select(topic =>
+            {
+                var counters = applicationCountersByTopicId.GetValueOrDefault(topic.Id, TopicApplicationCounters.Empty);
+                var direction = topic.DirectionId.HasValue
+                    ? directionDict.GetValueOrDefault(topic.DirectionId.Value)
+                    : null;
+                var supervisor = staffDict.GetValueOrDefault(topic.SupervisorId);
+                var supervisorUser = supervisor is null
+                    ? null
+                    : userDict.GetValueOrDefault(supervisor.UserId);
+                var workType = workTypeDict.GetValueOrDefault(topic.WorkTypeId);
+
+                return TopicDtoFactory.Create(
+                    topic,
+                    direction,
+                    supervisor,
+                    supervisorUser,
+                    workType,
+                    counters);
+            }).ToList();
 
             return Result.Success<IReadOnlyList<TopicDto>>(dtos);
         }

@@ -2,10 +2,46 @@ namespace AWM.Service.Application.Features.Thesis.Topics.DTOs;
 
 using AWM.Service.Domain.Auth.Entities;
 using AWM.Service.Domain.Edu.Entities;
-using AWM.Service.Domain.Repositories;
 using AWM.Service.Domain.Thesis.Entities;
 using AWM.Service.Domain.Thesis.Enums;
 using AWM.Service.Domain.Wf.Entities;
+using ApplicationTopicApplicationDto = AWM.Service.Application.Features.Thesis.Applications.DTOs.TopicApplicationDto;
+
+internal readonly record struct TopicApplicationCounters(
+    int ApplicationsCount,
+    int PendingApplicationsCount,
+    int AcceptedApplicationsCount)
+{
+    public static TopicApplicationCounters Empty => new(0, 0, 0);
+
+    public static TopicApplicationCounters FromApplications(IEnumerable<TopicApplication> applications)
+    {
+        var applicationsCount = 0;
+        var pendingApplicationsCount = 0;
+        var acceptedApplicationsCount = 0;
+
+        foreach (var application in applications)
+        {
+            if (application.IsDeleted)
+            {
+                continue;
+            }
+
+            applicationsCount++;
+
+            if (application.Status == ApplicationStatus.Submitted)
+            {
+                pendingApplicationsCount++;
+            }
+            else if (application.Status == ApplicationStatus.Accepted)
+            {
+                acceptedApplicationsCount++;
+            }
+        }
+
+        return new TopicApplicationCounters(applicationsCount, pendingApplicationsCount, acceptedApplicationsCount);
+    }
+}
 
 internal static class TopicDtoFactory
 {
@@ -14,10 +50,11 @@ internal static class TopicDtoFactory
         Direction? direction,
         Staff? supervisorStaff,
         User? supervisorUser,
-        WorkType? workType)
+        WorkType? workType,
+        TopicApplicationCounters applicationCounters)
     {
         var supervisorName = supervisorUser?.Login ?? supervisorUser?.Email ?? supervisorStaff?.Position;
-        var applications = topic.Applications.Where(a => !a.IsDeleted).ToList();
+        var availableSpots = Math.Max(0, topic.MaxParticipants - applicationCounters.AcceptedApplicationsCount);
 
         return new TopicDto
         {
@@ -39,10 +76,10 @@ internal static class TopicDtoFactory
             SupervisorName = supervisorName,
             WorkTypeName = workType?.Name,
             MaxParticipants = topic.MaxParticipants,
-            AvailableSpots = topic.GetAvailableSpots(),
-            AcceptedApplicationsCount = applications.Count(a => a.Status == ApplicationStatus.Accepted),
-            PendingApplicationsCount = applications.Count(a => a.Status == ApplicationStatus.Submitted),
-            ApplicationsCount = applications.Count,
+            AvailableSpots = availableSpots,
+            AcceptedApplicationsCount = applicationCounters.AcceptedApplicationsCount,
+            PendingApplicationsCount = applicationCounters.PendingApplicationsCount,
+            ApplicationsCount = applicationCounters.ApplicationsCount,
             IsSubmittedForApproval = topic.IsSubmittedForApproval,
             IsApproved = topic.IsApproved,
             IsClosed = topic.IsClosed,
@@ -51,64 +88,22 @@ internal static class TopicDtoFactory
         };
     }
 
-    public static async Task<TopicDto> CreateAsync(
+    public static TopicDetailDto CreateDetail(
         Topic topic,
-        IDirectionRepository directionRepository,
-        IStaffRepository staffRepository,
-        IUserRepository userRepository,
-        IWorkflowRepository workflowRepository,
-        CancellationToken cancellationToken)
+        Direction? direction,
+        Staff? supervisorStaff,
+        User? supervisorUser,
+        WorkType? workType,
+        TopicApplicationCounters applicationCounters,
+        IReadOnlyCollection<ApplicationTopicApplicationDto> applications)
     {
-        var direction = topic.DirectionId.HasValue
-            ? await directionRepository.GetByIdAsync(topic.DirectionId.Value, cancellationToken)
-            : null;
-        var staff = await staffRepository.GetByIdAsync(topic.SupervisorId, cancellationToken);
-        var user = staff is null ? null : await userRepository.GetByIdAsync(staff.UserId, cancellationToken);
-        var workType = await workflowRepository.GetWorkTypeByIdAsync(topic.WorkTypeId, cancellationToken);
-
-        return Create(topic, direction, staff, user, workType);
-    }
-
-    public static async Task<TopicDetailDto> CreateDetailAsync(
-        Topic topic,
-        IDirectionRepository directionRepository,
-        IStaffRepository staffRepository,
-        IStudentRepository studentRepository,
-        IUserRepository userRepository,
-        IWorkflowRepository workflowRepository,
-        CancellationToken cancellationToken)
-    {
-        var topicDto = await CreateAsync(
+        var topicDto = Create(
             topic,
-            directionRepository,
-            staffRepository,
-            userRepository,
-            workflowRepository,
-            cancellationToken);
-
-        var applications = new List<TopicApplicationDto>();
-        foreach (var application in topic.Applications.Where(a => !a.IsDeleted).OrderByDescending(a => a.AppliedAt))
-        {
-            var student = await studentRepository.GetByIdAsync(application.StudentId, cancellationToken);
-            var user = student is null
-                ? null
-                : await userRepository.GetByIdAsync(student.UserId, cancellationToken);
-
-            applications.Add(new TopicApplicationDto
-            {
-                Id = application.Id,
-                TopicId = application.TopicId,
-                StudentId = application.StudentId,
-                StudentName = user?.Login,
-                StudentGroupCode = student?.GroupCode,
-                MotivationLetter = application.MotivationLetter,
-                Status = application.Status.ToString(),
-                AppliedAt = application.AppliedAt,
-                ReviewedAt = application.ReviewedAt,
-                ReviewedBy = application.ReviewedBy,
-                ReviewComment = application.ReviewComment
-            });
-        }
+            direction,
+            supervisorStaff,
+            supervisorUser,
+            workType,
+            applicationCounters);
 
         return new TopicDetailDto
         {

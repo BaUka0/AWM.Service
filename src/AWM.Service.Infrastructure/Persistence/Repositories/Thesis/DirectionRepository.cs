@@ -31,7 +31,6 @@ public sealed class DirectionRepository : IDirectionRepository
         var distinctIds = ids.Distinct().ToList();
         return await _context.Directions
             .AsNoTracking()
-            .Include(d => d.Topics.Where(t => !t.IsDeleted))
             .Where(d => distinctIds.Contains(d.Id) && !d.IsDeleted)
             .ToListAsync(cancellationToken);
     }
@@ -44,7 +43,6 @@ public sealed class DirectionRepository : IDirectionRepository
     {
         return await _context.Directions
             .AsNoTracking()
-            .Include(d => d.Topics.Where(t => !t.IsDeleted))
             .Where(d => !d.IsDeleted && 
                         d.DepartmentId == departmentId && 
                         d.AcademicYearId == academicYearId)
@@ -60,7 +58,6 @@ public sealed class DirectionRepository : IDirectionRepository
     {
         return await _context.Directions
             .AsNoTracking()
-            .Include(d => d.Topics.Where(t => !t.IsDeleted))
             .Where(d => !d.IsDeleted && 
                         d.SupervisorId == supervisorId && 
                         d.AcademicYearId == academicYearId)

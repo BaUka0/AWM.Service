@@ -94,7 +94,7 @@ public sealed class TopicsController : BaseController
             userId = parsedUserId;
         }
 
-        var universityIdClaim = User.FindFirst("UniversityId");
+        var universityIdClaim = User.FindFirst(AuthorizationConstants.UniversityIdClaimType);
         if (universityIdClaim != null && int.TryParse(universityIdClaim.Value, out var parsedUniversityId))
         {
             universityId = parsedUniversityId;

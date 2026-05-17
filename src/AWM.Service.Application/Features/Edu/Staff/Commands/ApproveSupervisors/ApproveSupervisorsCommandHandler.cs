@@ -64,18 +64,29 @@ public sealed class ApproveSupervisorsCommandHandler : IRequestHandler<ApproveSu
                 return Result.Failure(new Error("500", "System role 'Supervisor' not found."));
             }
 
-            // Determine who needs to be added vs removed
-            var staffIdsToApprove = request.StaffIds.ToList();
-            var staffToAdd = validStaff.Where(s => staffIdsToApprove.Contains(s.Id) && !s.IsSupervisor).ToList();
-            var staffToRemove = validStaff.Where(s => !staffIdsToApprove.Contains(s.Id) && s.IsSupervisor).ToList();
+            var staffIdsToApprove = request.StaffIds.Distinct().ToHashSet();
+            var staffToAdd = validStaff.Where(staff => staffIdsToApprove.Contains(staff.Id) && !staff.IsSupervisor).ToList();
+            var staffToRemove = validStaff.Where(staff => !staffIdsToApprove.Contains(staff.Id) && staff.IsSupervisor).ToList();
 
             _logger.LogInformation("Plan: Add {AddCount} supervisors, Remove {RemoveCount} supervisors", staffToAdd.Count, staffToRemove.Count);
 
-            // Process removals
+            var affectedStaff = staffToAdd.Concat(staffToRemove).ToList();
+            if (affectedStaff.Count == 0)
+            {
+                _logger.LogInformation("ApproveSupervisors detected no changes for Dept={DepartmentId}", request.DepartmentId);
+                return Result.Success();
+            }
+
+            var usersWithRoles = await _userRepository.GetWithRoleAssignmentsByIdsAsync(
+                affectedStaff.Select(staff => staff.UserId).Distinct(),
+                cancellationToken);
+            var usersById = usersWithRoles.ToDictionary(user => user.Id);
+            var changedUsers = new List<User>();
+            var changedStaff = new List<Domain.Edu.Entities.Staff>();
+
             foreach (var staff in staffToRemove)
             {
-                var userWithRoles = await _userRepository.GetWithRoleAssignmentsAsync(staff.UserId, cancellationToken);
-                if (userWithRoles is not null)
+                if (usersById.TryGetValue(staff.UserId, out var userWithRoles))
                 {
                     var activeRoles = userWithRoles.RoleAssignments.Where(r =>
                         r.RoleId == supervisorRole.Id &&
@@ -89,19 +100,17 @@ public sealed class ApproveSupervisorsCommandHandler : IRequestHandler<ApproveSu
 
                     if (activeRoles.Any())
                     {
-                        await _userRepository.UpdateAsync(userWithRoles, cancellationToken);
+                        changedUsers.Add(userWithRoles);
                     }
                 }
 
                 staff.SetSupervisorStatus(false, userId.Value);
-                await _staffRepository.UpdateAsync(staff, cancellationToken);
+                changedStaff.Add(staff);
             }
 
-            // Process additions
             foreach (var staff in staffToAdd)
             {
-                var userWithRoles = await _userRepository.GetWithRoleAssignmentsAsync(staff.UserId, cancellationToken);
-                if (userWithRoles is not null)
+                if (usersById.TryGetValue(staff.UserId, out var userWithRoles))
                 {
                     bool hasRole = userWithRoles.RoleAssignments.Any(r =>
                         r.RoleId == supervisorRole.Id &&
@@ -111,16 +120,25 @@ public sealed class ApproveSupervisorsCommandHandler : IRequestHandler<ApproveSu
                     if (!hasRole)
                     {
                         userWithRoles.AssignRole(supervisorRole.Id, request.DepartmentId, null, null, userId.Value);
-                        await _userRepository.UpdateAsync(userWithRoles, cancellationToken);
+                        changedUsers.Add(userWithRoles);
                     }
                 }
 
                 staff.SetSupervisorStatus(true, userId.Value);
-                await _staffRepository.UpdateAsync(staff, cancellationToken);
+                changedStaff.Add(staff);
                 _logger.LogTrace("Set Supervisor status = true for StaffId={StaffId}", staff.Id);
             }
 
-            // Save all changes (removals and additions) mapped in the repositories above
+            foreach (var changedUser in changedUsers.DistinctBy(user => user.Id))
+            {
+                await _userRepository.UpdateAsync(changedUser, cancellationToken);
+            }
+
+            foreach (var updatedStaff in changedStaff.DistinctBy(staff => staff.Id))
+            {
+                await _staffRepository.UpdateAsync(updatedStaff, cancellationToken);
+            }
+
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             var newSupervisorUserIds = staffToAdd.Select(s => s.UserId).Distinct().ToList();

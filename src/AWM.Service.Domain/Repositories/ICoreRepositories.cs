@@ -42,6 +42,11 @@ public interface IUserRepository
     /// Gets user with all role assignments eagerly loaded for authorization.
     /// </summary>
     Task<User?> GetWithRoleAssignmentsAsync(int id, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets users with all role assignments eagerly loaded for bulk authorization updates.
+    /// </summary>
+    Task<IReadOnlyList<User>> GetWithRoleAssignmentsByIdsAsync(IEnumerable<int> ids, CancellationToken cancellationToken = default);
 }
 
 /// <summary>

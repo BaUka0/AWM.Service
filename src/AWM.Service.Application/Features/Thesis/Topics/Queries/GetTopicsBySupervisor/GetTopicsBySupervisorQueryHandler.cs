@@ -9,6 +9,7 @@ public sealed class GetTopicsBySupervisorQueryHandler
     : IRequestHandler<GetTopicsBySupervisorQuery, Result<IReadOnlyList<TopicDto>>>
 {
     private readonly ITopicRepository _topicRepository;
+    private readonly ITopicApplicationRepository _applicationRepository;
     private readonly IDirectionRepository _directionRepository;
     private readonly IStaffRepository _staffRepository;
     private readonly IUserRepository _userRepository;
@@ -16,12 +17,14 @@ public sealed class GetTopicsBySupervisorQueryHandler
 
     public GetTopicsBySupervisorQueryHandler(
         ITopicRepository topicRepository,
+        ITopicApplicationRepository applicationRepository,
         IDirectionRepository directionRepository,
         IStaffRepository staffRepository,
         IUserRepository userRepository,
         IWorkflowRepository workflowRepository)
     {
         _topicRepository = topicRepository ?? throw new ArgumentNullException(nameof(topicRepository));
+        _applicationRepository = applicationRepository ?? throw new ArgumentNullException(nameof(applicationRepository));
         _directionRepository = directionRepository ?? throw new ArgumentNullException(nameof(directionRepository));
         _staffRepository = staffRepository ?? throw new ArgumentNullException(nameof(staffRepository));
         _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
@@ -38,8 +41,13 @@ public sealed class GetTopicsBySupervisorQueryHandler
             cancellationToken);
 
         var activeTopics = topics.Where(t => !t.IsDeleted).ToList();
+        var applicationCountersByTopicId = (await _applicationRepository.GetByTopicIdsAsync(
+                activeTopics.Select(topic => topic.Id),
+                cancellationToken))
+            .Where(application => !application.IsDeleted)
+            .GroupBy(application => application.TopicId)
+            .ToDictionary(group => group.Key, TopicApplicationCounters.FromApplications);
 
-        // Bulk fetch dependencies to prevent N+1 queries
         var directionIds = activeTopics.Where(t => t.DirectionId.HasValue).Select(t => t.DirectionId!.Value).Distinct();
         var supervisorIds = activeTopics.Select(t => t.SupervisorId).Distinct();
         var workTypeIds = activeTopics.Select(t => t.WorkTypeId).Distinct();
@@ -56,13 +64,26 @@ public sealed class GetTopicsBySupervisorQueryHandler
         var userDict = users.ToDictionary(u => u.Id);
         var workTypeDict = workTypes.ToDictionary(w => w.Id);
 
-        var dtos = activeTopics.Select(topic => TopicDtoFactory.Create(
-            topic,
-            topic.DirectionId.HasValue && directionDict.TryGetValue(topic.DirectionId.Value, out var dir) ? dir : null,
-            staffDict.TryGetValue(topic.SupervisorId, out var supervisor) ? supervisor : null,
-            supervisor != null && userDict.TryGetValue(supervisor.UserId, out var user) ? user : null,
-            workTypeDict.TryGetValue(topic.WorkTypeId, out var wt) ? wt : null
-        )).ToList();
+        var dtos = activeTopics.Select(topic =>
+        {
+            var counters = applicationCountersByTopicId.GetValueOrDefault(topic.Id, TopicApplicationCounters.Empty);
+            var direction = topic.DirectionId.HasValue
+                ? directionDict.GetValueOrDefault(topic.DirectionId.Value)
+                : null;
+            var supervisor = staffDict.GetValueOrDefault(topic.SupervisorId);
+            var supervisorUser = supervisor is null
+                ? null
+                : userDict.GetValueOrDefault(supervisor.UserId);
+            var workType = workTypeDict.GetValueOrDefault(topic.WorkTypeId);
+
+            return TopicDtoFactory.Create(
+                topic,
+                direction,
+                supervisor,
+                supervisorUser,
+                workType,
+                counters);
+        }).ToList();
 
         return Result.Success<IReadOnlyList<TopicDto>>(dtos);
     }

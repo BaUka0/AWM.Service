@@ -57,7 +57,7 @@ public sealed class CompleteTopicCoordinationCommandHandler
             return Result.Failure(new Error("401", "User ID is not available."));
         }
 
-        var topics = await _topicRepository.GetByDepartmentAsync(
+        var topics = await _topicRepository.GetByDepartmentWithApplicationsAsync(
             request.DepartmentId, request.AcademicYearId, cancellationToken);
 
         if (topics.Count == 0)

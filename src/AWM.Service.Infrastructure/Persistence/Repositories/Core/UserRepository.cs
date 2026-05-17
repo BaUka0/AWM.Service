@@ -123,4 +123,25 @@ public sealed class UserRepository : IUserRepository
             .Where(u => ids.Contains(u.Id) && !u.IsDeleted)
             .ToListAsync(cancellationToken);
     }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<User>> GetWithRoleAssignmentsByIdsAsync(IEnumerable<int> ids, CancellationToken cancellationToken = default)
+    {
+        if (ids is null)
+        {
+            return [];
+        }
+
+        var distinctIds = ids.Distinct().ToList();
+        if (distinctIds.Count == 0)
+        {
+            return [];
+        }
+
+        return await _context.Users
+            .Include(u => u.RoleAssignments)
+                .ThenInclude(ra => ra.Role)
+            .Where(u => distinctIds.Contains(u.Id) && !u.IsDeleted && u.IsActive)
+            .ToListAsync(cancellationToken);
+    }
 }

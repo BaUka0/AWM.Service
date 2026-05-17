@@ -24,6 +24,7 @@ public interface ITopicRepository
     Task<Topic?> GetByIdAsync(long id, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Topic>> GetByIdsAsync(IEnumerable<long> ids, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Topic>> GetByDepartmentAsync(int departmentId, int academicYearId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<Topic>> GetByDepartmentWithApplicationsAsync(int departmentId, int academicYearId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Topic>> GetBySupervisorAsync(int supervisorId, int academicYearId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Topic>> GetAvailableForSelectionAsync(int departmentId, int academicYearId, CancellationToken cancellationToken = default);
 

@@ -62,21 +62,8 @@ public sealed class GetCurrentUserProfileQueryHandler
         int? departmentId = scopedAssignment?.DepartmentId;
         int? instituteId = scopedAssignment?.InstituteId;
 
-        // 4. Load department and institute names if available
         string? departmentName = null;
         string? instituteName = null;
-
-        if (departmentId.HasValue)
-        {
-            var department = await _orgLookupRepository.GetDepartmentByIdAsync(departmentId.Value, cancellationToken);
-            departmentName = department?.Name;
-        }
-
-        if (instituteId.HasValue)
-        {
-            var institute = await _orgLookupRepository.GetInstituteByIdAsync(instituteId.Value, cancellationToken);
-            instituteName = institute?.Name;
-        }
 
         // 5. Resolve current academic year
         var currentYear = await _academicYearRepository.GetCurrentAsync(user.UniversityId, cancellationToken);
@@ -106,14 +93,18 @@ public sealed class GetCurrentUserProfileQueryHandler
                 academicDegree = staff.AcademicDegree;
                 isSupervisor = staff.IsSupervisor;
 
-                // Use staff's department as fallback if not resolved from role assignment
                 departmentId ??= staff.DepartmentId;
-                if (departmentId.HasValue && departmentName is null)
-                {
-                    var dept = await _orgLookupRepository.GetDepartmentByIdAsync(departmentId.Value, cancellationToken);
-                    departmentName = dept?.Name;
-                }
             }
+        }
+
+        if (departmentId.HasValue)
+        {
+            departmentName = (await _orgLookupRepository.GetDepartmentByIdAsync(departmentId.Value, cancellationToken))?.Name;
+        }
+
+        if (instituteId.HasValue)
+        {
+            instituteName = (await _orgLookupRepository.GetInstituteByIdAsync(instituteId.Value, cancellationToken))?.Name;
         }
 
         // 7. Load reviewer profile if user has Reviewer role

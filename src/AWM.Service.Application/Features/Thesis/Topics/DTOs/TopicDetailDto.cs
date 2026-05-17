@@ -1,3 +1,5 @@
+using ApplicationTopicApplicationDto = AWM.Service.Application.Features.Thesis.Applications.DTOs.TopicApplicationDto;
+
 namespace AWM.Service.Application.Features.Thesis.Topics.DTOs;
 
 /// <summary>
@@ -42,23 +44,5 @@ public sealed record TopicDetailDto
     /// <summary>
     /// List of applications for this topic.
     /// </summary>
-    public IReadOnlyCollection<TopicApplicationDto>? Applications { get; init; }
-}
-
-/// <summary>
-/// Data Transfer Object for TopicApplication entity.
-/// </summary>
-public sealed record TopicApplicationDto
-{
-    public long Id { get; init; }
-    public long TopicId { get; init; }
-    public int StudentId { get; init; }
-    public string? StudentName { get; init; }
-    public string? StudentGroupCode { get; init; }
-    public string? MotivationLetter { get; init; }
-    public string Status { get; init; } = null!;
-    public DateTime AppliedAt { get; init; }
-    public DateTime? ReviewedAt { get; init; }
-    public int? ReviewedBy { get; init; }
-    public string? ReviewComment { get; init; }
+    public IReadOnlyCollection<ApplicationTopicApplicationDto>? Applications { get; init; }
 }

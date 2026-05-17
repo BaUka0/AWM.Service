@@ -39,6 +39,19 @@ public sealed class TopicRepository : RepositoryBase<Topic, long>, ITopicReposit
     {
         return await Context.Topics
             .AsNoTracking()
+            .Where(t => t.DepartmentId == departmentId &&
+                        t.AcademicYearId == academicYearId)
+            .OrderByDescending(t => t.CreatedAt)
+            .ToListAsync(cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<Topic>> GetByDepartmentWithApplicationsAsync(
+        int departmentId,
+        int academicYearId,
+        CancellationToken cancellationToken = default)
+    {
+        return await Context.Topics
             .Include(t => t.Applications.Where(a => !a.IsDeleted))
             .Where(t => t.DepartmentId == departmentId &&
                         t.AcademicYearId == academicYearId)
@@ -54,7 +67,6 @@ public sealed class TopicRepository : RepositoryBase<Topic, long>, ITopicReposit
     {
         return await Context.Topics
             .AsNoTracking()
-            .Include(t => t.Applications.Where(a => !a.IsDeleted))
             .Where(t => t.SupervisorId == supervisorId &&
                         t.AcademicYearId == academicYearId)
             .OrderByDescending(t => t.CreatedAt)
@@ -67,22 +79,37 @@ public sealed class TopicRepository : RepositoryBase<Topic, long>, ITopicReposit
         int academicYearId,
         CancellationToken cancellationToken = default)
     {
-        // Get approved, open topics with available spots
-        var topics = await Context.Topics
+        var acceptedCountsQuery = Context.TopicApplications
             .AsNoTracking()
-            .Include(t => t.Applications.Where(a => !a.IsDeleted))
-            .Where(t => t.DepartmentId == departmentId &&
+            .Where(a => !a.IsDeleted && a.Status == ApplicationStatus.Accepted)
+            .GroupBy(a => a.TopicId)
+            .Select(group => new
+            {
+                TopicId = group.Key,
+                AcceptedCount = group.Count()
+            });
+
+        return await Context.Topics
+            .AsNoTracking()
+            .Where(t => !t.IsDeleted &&
+                        t.DepartmentId == departmentId &&
                         t.AcademicYearId == academicYearId &&
                         t.IsApproved &&
                         !t.IsClosed)
+            .GroupJoin(
+                acceptedCountsQuery,
+                topic => topic.Id,
+                counter => counter.TopicId,
+                (topic, counters) => new
+                {
+                    Topic = topic,
+                    AcceptedCount = counters.Select(counter => (int?)counter.AcceptedCount).FirstOrDefault() ?? 0
+                })
+            .Where(item => item.AcceptedCount < item.Topic.MaxParticipants)
+            .OrderByDescending(item => item.Topic.MaxParticipants - item.AcceptedCount)
+            .ThenByDescending(item => item.Topic.CreatedAt)
+            .Select(item => item.Topic)
             .ToListAsync(cancellationToken);
-
-        // Filter in memory - only topics with available spots
-        return topics
-            .Where(t => t.Applications.Count(a => a.Status == ApplicationStatus.Accepted) < t.MaxParticipants)
-            .OrderByDescending(t => t.MaxParticipants - t.Applications.Count(a => a.Status == ApplicationStatus.Accepted))
-            .ThenByDescending(t => t.CreatedAt)
-            .ToList();
     }
 
     /// <inheritdoc />

@@ -61,44 +61,41 @@ public sealed class GetDirectionsByDepartmentQueryHandler
             }
 
             var filteredList = filtered.ToList();
-            var statesById = new Dictionary<int, (string? SystemName, string? DisplayName)>();
-            foreach (var stateId in filteredList.Select(d => d.CurrentStateId).Distinct())
-            {
-                var state = await _workflowRepository.GetStateByIdAsync(stateId, cancellationToken);
-                statesById[stateId] = (state?.SystemName, state?.DisplayName);
-            }
+            var statesById = (await _workflowRepository.GetStatesByIdsAsync(
+                    filteredList.Select(direction => direction.CurrentStateId).Distinct(),
+                    cancellationToken))
+                .ToDictionary(state => state.Id, state => (state.SystemName, state.DisplayName));
 
-            // Map to DTOs
             var result = filteredList
-                .Select(d =>
+                .Select(direction =>
                 {
-                    statesById.TryGetValue(d.CurrentStateId, out var state);
+                    statesById.TryGetValue(direction.CurrentStateId, out var state);
 
                     return new DirectionDto
                     {
-                        Id = d.Id,
-                        DepartmentId = d.DepartmentId,
-                        SupervisorId = d.SupervisorId,
-                        AcademicYearId = d.AcademicYearId,
-                        WorkTypeId = d.WorkTypeId,
-                        TitleRu = d.TitleRu,
-                        TitleKz = d.TitleKz,
-                        TitleEn = d.TitleEn,
-                        DescriptionRu = d.DescriptionRu,
-                        DescriptionKz = d.DescriptionKz,
-                        DescriptionEn = d.DescriptionEn,
-                        CurrentStateId = d.CurrentStateId,
+                        Id = direction.Id,
+                        DepartmentId = direction.DepartmentId,
+                        SupervisorId = direction.SupervisorId,
+                        AcademicYearId = direction.AcademicYearId,
+                        WorkTypeId = direction.WorkTypeId,
+                        TitleRu = direction.TitleRu,
+                        TitleKz = direction.TitleKz,
+                        TitleEn = direction.TitleEn,
+                        DescriptionRu = direction.DescriptionRu,
+                        DescriptionKz = direction.DescriptionKz,
+                        DescriptionEn = direction.DescriptionEn,
+                        CurrentStateId = direction.CurrentStateId,
                         CurrentStateName = state.SystemName,
                         CurrentStateDisplayName = state.DisplayName,
-                        SubmittedAt = d.SubmittedAt,
-                        ReviewedAt = d.ReviewedAt,
-                        ReviewedBy = d.ReviewedBy,
-                        ReviewComment = d.ReviewComment,
-                        CreatedAt = d.CreatedAt,
-                        IsDeleted = d.IsDeleted
+                        SubmittedAt = direction.SubmittedAt,
+                        ReviewedAt = direction.ReviewedAt,
+                        ReviewedBy = direction.ReviewedBy,
+                        ReviewComment = direction.ReviewComment,
+                        CreatedAt = direction.CreatedAt,
+                        IsDeleted = direction.IsDeleted
                     };
                 })
-                .OrderByDescending(d => d.CreatedAt) // Most recent first
+                .OrderByDescending(direction => direction.CreatedAt)
                 .ToList();
 
             return Result.Success<IReadOnlyList<DirectionDto>>(result);

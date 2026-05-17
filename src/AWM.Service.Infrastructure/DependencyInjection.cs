@@ -12,6 +12,7 @@ using AWM.Service.Infrastructure.Persistence.Repositories.Workflow;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace AWM.Service.Infrastructure;
 
@@ -28,6 +29,13 @@ public static class DependencyInjection
         {
             var auditableInterceptor = sp.GetRequiredService<AuditableEntityInterceptor>();
             var domainEventsInterceptor = sp.GetRequiredService<DispatchDomainEventsInterceptor>();
+            var enableEfCommandLogging = bool.TryParse(
+                configuration["Observability:EnableEfCommandLogging"],
+                out var parsedEnableEfCommandLogging) && parsedEnableEfCommandLogging;
+            var environmentName = configuration["ASPNETCORE_ENVIRONMENT"] ?? configuration["DOTNET_ENVIRONMENT"];
+            var isDevelopmentOrStaging =
+                string.Equals(environmentName, "Development", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(environmentName, "Staging", StringComparison.OrdinalIgnoreCase);
 
             options.UseSqlServer(connectionString, sqlOptions =>
                    {
@@ -37,6 +45,18 @@ public static class DependencyInjection
                            errorNumbersToAdd: null);
                    })
                    .AddInterceptors(auditableInterceptor, domainEventsInterceptor);
+
+            if (enableEfCommandLogging && isDevelopmentOrStaging)
+            {
+                var efCommandLogger = sp.GetRequiredService<ILoggerFactory>()
+                    .CreateLogger("AWM.Service.Infrastructure.EFCore.Commands");
+
+                options.EnableDetailedErrors();
+                options.LogTo(
+                    message => efCommandLogger.LogInformation("{EfCommand}", message.TrimEnd()),
+                    new[] { DbLoggerCategory.Database.Command.Name },
+                    LogLevel.Information);
+            }
         });
 
         // Register Unit of Work

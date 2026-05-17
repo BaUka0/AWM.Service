@@ -1,7 +1,9 @@
 namespace AWM.Service.Application.Features.Thesis.Topics.Queries.GetTopicById;
 
+using AWM.Service.Application.Features.Thesis.Applications.DTOs;
 using AWM.Service.Application.Features.Thesis.Topics.DTOs;
 using AWM.Service.Domain.Repositories;
+using AWM.Service.Domain.Thesis.Entities;
 using KDS.Primitives.FluentResult;
 using MediatR;
 
@@ -37,7 +39,6 @@ public sealed class GetTopicByIdQueryHandler : IRequestHandler<GetTopicByIdQuery
     {
         try
         {
-            // 1. Retrieve topic with applications
             var topic = await _topicRepository.GetByIdAsync(request.TopicId, cancellationToken);
 
             if (topic is null)
@@ -46,14 +47,71 @@ public sealed class GetTopicByIdQueryHandler : IRequestHandler<GetTopicByIdQuery
                     new Error("NotFound.Topic", $"Topic with ID {request.TopicId} not found."));
             }
 
-            var dto = await TopicDtoFactory.CreateDetailAsync(
-                topic,
-                _directionRepository,
-                _staffRepository,
-                _studentRepository,
-                _userRepository,
-                _workflowRepository,
+            var applications = topic.Applications
+                .Where(application => !application.IsDeleted)
+                .OrderByDescending(application => application.AppliedAt)
+                .ToList();
+            var applicationCounters = TopicApplicationCounters.FromApplications(applications);
+
+            Direction? direction = null;
+            if (topic.DirectionId.HasValue)
+            {
+                direction = (await _directionRepository.GetByIdsAsync(
+                    new[] { topic.DirectionId.Value },
+                    cancellationToken)).FirstOrDefault();
+            }
+
+            var supervisorStaff = (await _staffRepository.GetByIdsAsync(
+                new[] { topic.SupervisorId },
+                cancellationToken)).FirstOrDefault();
+            var students = await _studentRepository.GetByIdsAsync(
+                applications.Select(application => application.StudentId).Distinct(),
                 cancellationToken);
+            var studentsById = students.ToDictionary(student => student.Id);
+
+            var userIds = students.Select(student => student.UserId).ToList();
+            if (supervisorStaff is not null)
+            {
+                userIds.Add(supervisorStaff.UserId);
+            }
+
+            var usersById = (await _userRepository.GetByIdsAsync(userIds.Distinct(), cancellationToken))
+                .ToDictionary(user => user.Id);
+            var supervisorUser = supervisorStaff is null
+                ? null
+                : usersById.GetValueOrDefault(supervisorStaff.UserId);
+            var workType = (await _workflowRepository.GetWorkTypesByIdsAsync(
+                new[] { topic.WorkTypeId },
+                cancellationToken)).FirstOrDefault();
+            var availableSpots = Math.Max(0, topic.MaxParticipants - applicationCounters.AcceptedApplicationsCount);
+
+            var applicationDtos = applications.Select(application =>
+            {
+                var student = studentsById.GetValueOrDefault(application.StudentId);
+                var studentUser = student is null
+                    ? null
+                    : usersById.GetValueOrDefault(student.UserId);
+
+                return TopicApplicationDtoFactory.Create(
+                    application,
+                    topic,
+                    student,
+                    studentUser,
+                    supervisorStaff,
+                    supervisorUser,
+                    direction,
+                    workType,
+                    availableSpots);
+            }).ToList();
+
+            var dto = TopicDtoFactory.CreateDetail(
+                topic,
+                direction,
+                supervisorStaff,
+                supervisorUser,
+                workType,
+                applicationCounters,
+                applicationDtos);
 
             return Result.Success(dto);
         }
