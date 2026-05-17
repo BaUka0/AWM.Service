@@ -70,13 +70,24 @@ public sealed class CompleteTopicCoordinationCommandHandler
         // Students: app.StudentId is Student.Id — resolve to UserId.
         var supervisorUserIds = new HashSet<int>();
         var notifiedStudentUserIds = new HashSet<int>();
+        var supervisors = await _staffRepository.GetByIdsAsync(
+            topics.Select(t => t.SupervisorId).Distinct(),
+            cancellationToken);
+        var supervisorsById = supervisors.ToDictionary(s => s.Id);
+        var pendingApplications = topics
+            .SelectMany(t => t.Applications.Where(a => a.Status == ApplicationStatus.Submitted))
+            .ToList();
+        var studentsById = (await _studentRepository.GetByIdsAsync(
+                pendingApplications.Select(a => a.StudentId).Distinct(),
+                cancellationToken))
+            .ToDictionary(s => s.Id);
 
         foreach (var topic in topics)
         {
             if (topic.IsDeleted) continue;
 
             // Resolve supervisor UserId for notification
-            var supervisorStaff = await _staffRepository.GetByIdAsync(topic.SupervisorId, cancellationToken);
+            var supervisorStaff = supervisorsById.GetValueOrDefault(topic.SupervisorId);
             if (supervisorStaff is not null)
                 supervisorUserIds.Add(supervisorStaff.UserId);
             else
@@ -90,8 +101,7 @@ public sealed class CompleteTopicCoordinationCommandHandler
             }
 
             // Reject all pending applications
-            var applications = await _applicationRepository.GetByTopicIdAsync(topic.Id, cancellationToken);
-            foreach (var app in applications)
+            foreach (var app in topic.Applications)
             {
                 if (app.Status == ApplicationStatus.Submitted)
                 {
@@ -100,7 +110,7 @@ public sealed class CompleteTopicCoordinationCommandHandler
                     await _applicationRepository.UpdateAsync(app, cancellationToken);
 
                     // Resolve student UserId for notification
-                    var studentProfile = await _studentRepository.GetByIdAsync(app.StudentId, cancellationToken);
+                    var studentProfile = studentsById.GetValueOrDefault(app.StudentId);
                     if (studentProfile is not null)
                         notifiedStudentUserIds.Add(studentProfile.UserId);
                     else

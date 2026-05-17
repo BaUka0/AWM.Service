@@ -32,10 +32,7 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<AuthResu
 
     public async Task<Result<AuthResult>> Handle(LoginCommand request, CancellationToken cancellationToken)
     {
-        // Find user by login (with role assignments for authorization)
-        var user = await _userRepository.GetWithRoleAssignmentsAsync(
-            (await _userRepository.GetByLoginAsync(request.Login, cancellationToken))?.Id ?? 0,
-            cancellationToken);
+        var user = await _userRepository.GetByLoginWithRoleAssignmentsAsync(request.Login, cancellationToken);
 
         if (user is null)
         {

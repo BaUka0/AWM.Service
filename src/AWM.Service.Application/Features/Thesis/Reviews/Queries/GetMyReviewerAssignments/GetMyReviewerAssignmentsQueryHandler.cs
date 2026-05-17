@@ -57,26 +57,47 @@ public sealed class GetMyReviewerAssignmentsQueryHandler
         }
 
         var reviews = await _reviewRepository.GetByReviewerAsync(reviewer.Id, cancellationToken);
+        var works = await _workRepository.GetByIdsAsync(reviews.Select(r => r.WorkId).Distinct(), cancellationToken);
+        var worksById = works.ToDictionary(w => w.Id);
+        var topics = await _topicRepository.GetByIdsAsync(
+            works.Where(w => w.TopicId.HasValue).Select(w => w.TopicId!.Value).Distinct(),
+            cancellationToken);
+        var topicsById = topics.ToDictionary(t => t.Id);
+        var leaderStudentIds = works
+            .Select(w => w.Participants.FirstOrDefault(p => p.IsLeader)?.StudentId)
+            .Where(studentId => studentId.HasValue)
+            .Select(studentId => studentId!.Value)
+            .Distinct()
+            .ToList();
+        var students = await _studentRepository.GetByIdsAsync(leaderStudentIds, cancellationToken);
+        var studentsById = students.ToDictionary(s => s.Id);
+        var users = await _userRepository.GetByIdsAsync(
+            students.Select(s => s.UserId).Distinct(),
+            cancellationToken);
+        var usersById = users.ToDictionary(u => u.Id);
+        var departments = await _orgLookupRepository.GetDepartmentsByIdsAsync(
+            works.Where(w => w.DepartmentId > 0).Select(w => w.DepartmentId).Distinct(),
+            cancellationToken);
+        var departmentsById = departments.ToDictionary(d => d.Id);
 
         var dtos = new List<ReviewerAssignmentDto>();
 
         foreach (var review in reviews)
         {
-            var work = await _workRepository.GetByIdWithDetailsAsync(review.WorkId, cancellationToken);
-            if (work is null)
+            if (!worksById.TryGetValue(review.WorkId, out var work))
                 continue;
 
             var topic = work.TopicId.HasValue
-                ? await _topicRepository.GetByIdAsync(work.TopicId.Value, cancellationToken)
+                ? topicsById.GetValueOrDefault(work.TopicId.Value)
                 : null;
 
             string? studentName = null;
             var leader = work.Participants.FirstOrDefault(p => p.IsLeader);
             if (leader is not null)
             {
-                var student = await _studentRepository.GetByIdAsync(leader.StudentId, cancellationToken);
+                var student = studentsById.GetValueOrDefault(leader.StudentId);
                 var studentUser = student is not null
-                    ? await _userRepository.GetByIdAsync(student.UserId, cancellationToken)
+                    ? usersById.GetValueOrDefault(student.UserId)
                     : null;
                 studentName = studentUser?.Login ?? studentUser?.Email;
             }
@@ -84,8 +105,7 @@ public sealed class GetMyReviewerAssignmentsQueryHandler
             string? departmentName = null;
             if (work.DepartmentId > 0)
             {
-                var dept = await _orgLookupRepository.GetDepartmentByIdAsync(work.DepartmentId, cancellationToken);
-                departmentName = dept?.Name;
+                departmentName = departmentsById.GetValueOrDefault(work.DepartmentId)?.Name;
             }
 
             dtos.Add(new ReviewerAssignmentDto

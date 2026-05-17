@@ -20,6 +20,7 @@ public sealed class ApproveDefensePeriodsCommandHandler : IRequestHandler<Approv
     private readonly IAcademicYearRepository _academicYearRepository;
     private readonly ICommissionRepository _commissionRepository;
     private readonly IStudentWorkRepository _studentWorkRepository;
+    private readonly IStudentRepository _studentRepository;
     private readonly ICurrentUserProvider _currentUserProvider;
     private readonly INotificationService _notificationService;
     private readonly IUnitOfWork _unitOfWork;
@@ -30,6 +31,7 @@ public sealed class ApproveDefensePeriodsCommandHandler : IRequestHandler<Approv
         IAcademicYearRepository academicYearRepository,
         ICommissionRepository commissionRepository,
         IStudentWorkRepository studentWorkRepository,
+        IStudentRepository studentRepository,
         ICurrentUserProvider currentUserProvider,
         INotificationService notificationService,
         IUnitOfWork unitOfWork,
@@ -39,6 +41,7 @@ public sealed class ApproveDefensePeriodsCommandHandler : IRequestHandler<Approv
         _academicYearRepository = academicYearRepository ?? throw new ArgumentNullException(nameof(academicYearRepository));
         _commissionRepository = commissionRepository ?? throw new ArgumentNullException(nameof(commissionRepository));
         _studentWorkRepository = studentWorkRepository ?? throw new ArgumentNullException(nameof(studentWorkRepository));
+        _studentRepository = studentRepository ?? throw new ArgumentNullException(nameof(studentRepository));
         _currentUserProvider = currentUserProvider ?? throw new ArgumentNullException(nameof(currentUserProvider));
         _notificationService = notificationService ?? throw new ArgumentNullException(nameof(notificationService));
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
@@ -114,8 +117,13 @@ public sealed class ApproveDefensePeriodsCommandHandler : IRequestHandler<Approv
             {
                 var works = await _studentWorkRepository.GetByDepartmentAsync(
                     request.DepartmentId, request.AcademicYearId, cancellationToken);
-                var studentUserIds = works
-                    .SelectMany(w => w.Participants.Select(p => p.StudentId))
+                var students = await _studentRepository.GetByIdsAsync(
+                    works
+                        .SelectMany(w => w.Participants.Select(p => p.StudentId))
+                        .Distinct(),
+                    cancellationToken);
+                var studentUserIds = students
+                    .Select(s => s.UserId)
                     .Distinct()
                     .ToList();
 

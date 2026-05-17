@@ -38,6 +38,7 @@ public interface IPreDefenseAttemptRepository
 {
     Task<PreDefenseAttempt?> GetByIdAsync(long id, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<PreDefenseAttempt>> GetByWorkIdAsync(long workId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<PreDefenseAttempt>> GetByWorkIdsAsync(IEnumerable<long> workIds, CancellationToken cancellationToken = default);
     Task<PreDefenseAttempt?> GetLatestByWorkIdAsync(long workId, CancellationToken cancellationToken = default);
     Task AddAsync(PreDefenseAttempt attempt, CancellationToken cancellationToken = default);
     Task UpdateAsync(PreDefenseAttempt attempt, CancellationToken cancellationToken = default);

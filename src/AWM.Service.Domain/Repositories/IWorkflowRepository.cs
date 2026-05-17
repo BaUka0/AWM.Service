@@ -50,6 +50,11 @@ public interface IWorkflowRepository
     Task<State?> GetStateByIdAsync(int id, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Gets states by their IDs.
+    /// </summary>
+    Task<IReadOnlyList<State>> GetStatesByIdsAsync(IEnumerable<int> ids, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Gets a state by system name (e.g., "Draft", "OnReview").
     /// </summary>
     Task<State?> GetStateBySystemNameAsync(int workTypeId, string systemName, CancellationToken cancellationToken = default);

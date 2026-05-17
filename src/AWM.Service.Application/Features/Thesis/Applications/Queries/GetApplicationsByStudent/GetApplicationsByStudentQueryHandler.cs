@@ -81,24 +81,77 @@ public sealed class GetApplicationsByStudentQueryHandler
                 cancellationToken);
         }
 
-        var dtos = new List<TopicApplicationDto>();
-        foreach (var application in applications.Where(a => !a.IsDeleted))
+        var activeApplications = applications.Where(a => !a.IsDeleted).ToList();
+        if (activeApplications.Count == 0)
         {
-            var topic = await _topicRepository.GetByIdAsync(application.TopicId, cancellationToken);
-            if (topic is null)
+            return Result.Success<IReadOnlyList<TopicApplicationDto>>([]);
+        }
+
+        var topicIds = activeApplications.Select(a => a.TopicId).Distinct().ToList();
+        var topics = await _topicRepository.GetByIdsAsync(topicIds, cancellationToken);
+        var topicsById = topics.ToDictionary(t => t.Id);
+        var topicApplications = await _applicationRepository.GetByTopicIdsAsync(topicIds, cancellationToken);
+        var acceptedCountsByTopicId = topicApplications
+            .Where(a => !a.IsDeleted && a.Status == Domain.Thesis.Enums.ApplicationStatus.Accepted)
+            .GroupBy(a => a.TopicId)
+            .ToDictionary(g => g.Key, g => g.Count());
+
+        var studentIds = activeApplications.Select(a => a.StudentId).Distinct().ToList();
+        var students = await _studentRepository.GetByIdsAsync(studentIds, cancellationToken);
+        var studentsById = students.ToDictionary(s => s.Id);
+
+        var supervisorIds = topics.Select(t => t.SupervisorId).Distinct().ToList();
+        var supervisors = await _staffRepository.GetByIdsAsync(supervisorIds, cancellationToken);
+        var supervisorsById = supervisors.ToDictionary(s => s.Id);
+
+        var directionIds = topics.Where(t => t.DirectionId.HasValue).Select(t => t.DirectionId!.Value).Distinct().ToList();
+        var directions = await _directionRepository.GetByIdsAsync(directionIds, cancellationToken);
+        var directionsById = directions.ToDictionary(d => d.Id);
+
+        var workTypeIds = topics.Select(t => t.WorkTypeId).Distinct().ToList();
+        var workTypes = await _workflowRepository.GetWorkTypesByIdsAsync(workTypeIds, cancellationToken);
+        var workTypesById = workTypes.ToDictionary(w => w.Id);
+
+        var userIds = students.Select(s => s.UserId)
+            .Concat(supervisors.Select(s => s.UserId))
+            .Distinct()
+            .ToList();
+        var users = await _userRepository.GetByIdsAsync(userIds, cancellationToken);
+        var usersById = users.ToDictionary(u => u.Id);
+
+        var dtos = new List<TopicApplicationDto>();
+        foreach (var application in activeApplications)
+        {
+            if (!topicsById.TryGetValue(application.TopicId, out var topic))
             {
                 continue;
             }
 
-            dtos.Add(await TopicApplicationDtoFactory.CreateAsync(
+            var applicationStudent = studentsById.GetValueOrDefault(application.StudentId);
+            var studentUser = applicationStudent is not null
+                ? usersById.GetValueOrDefault(applicationStudent.UserId)
+                : null;
+            var supervisor = supervisorsById.GetValueOrDefault(topic.SupervisorId);
+            var supervisorUser = supervisor is not null
+                ? usersById.GetValueOrDefault(supervisor.UserId)
+                : null;
+            var direction = topic.DirectionId.HasValue
+                ? directionsById.GetValueOrDefault(topic.DirectionId.Value)
+                : null;
+            var workType = workTypesById.GetValueOrDefault(topic.WorkTypeId);
+            var acceptedCount = acceptedCountsByTopicId.GetValueOrDefault(topic.Id);
+            var availableSpots = Math.Max(0, topic.MaxParticipants - acceptedCount);
+
+            dtos.Add(TopicApplicationDtoFactory.Create(
                 application,
                 topic,
-                _studentRepository,
-                _staffRepository,
-                _userRepository,
-                _directionRepository,
-                _workflowRepository,
-                cancellationToken));
+                applicationStudent,
+                studentUser,
+                supervisor,
+                supervisorUser,
+                direction,
+                workType,
+                availableSpots));
         }
 
         return Result.Success<IReadOnlyList<TopicApplicationDto>>(dtos);

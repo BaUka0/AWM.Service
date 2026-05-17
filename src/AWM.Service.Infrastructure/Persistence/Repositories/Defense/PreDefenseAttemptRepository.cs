@@ -37,6 +37,24 @@ public sealed class PreDefenseAttemptRepository : IPreDefenseAttemptRepository
     }
 
     /// <inheritdoc />
+    public async Task<IReadOnlyList<PreDefenseAttempt>> GetByWorkIdsAsync(
+        IEnumerable<long> workIds,
+        CancellationToken cancellationToken = default)
+    {
+        var ids = workIds.Distinct().ToList();
+        if (ids.Count == 0)
+            return [];
+
+        return await _context.PreDefenseAttempts
+            .AsNoTracking()
+            .Where(p => ids.Contains(p.WorkId))
+            .OrderBy(p => p.WorkId)
+            .ThenBy(p => p.PreDefenseNumber)
+            .ThenByDescending(p => p.AttemptDate)
+            .ToListAsync(cancellationToken);
+    }
+
+    /// <inheritdoc />
     public async Task<PreDefenseAttempt?> GetLatestByWorkIdAsync(
         long workId, 
         CancellationToken cancellationToken = default)

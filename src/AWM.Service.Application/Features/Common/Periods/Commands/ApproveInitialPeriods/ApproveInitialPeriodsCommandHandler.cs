@@ -128,13 +128,13 @@ public sealed class ApproveInitialPeriodsCommandHandler : IRequestHandler<Approv
             if (selectionPeriod != null)
             {
                 var programs = await _academicProgramRepository.GetByDepartmentAsync(request.DepartmentId, cancellationToken);
-
-                var studentUserIds = new List<int>();
-                foreach (var program in programs)
-                {
-                    var students = await _studentRepository.GetByProgramAsync(program.Id, cancellationToken);
-                    studentUserIds.AddRange(students.Select(s => s.UserId));
-                }
+                var students = await _studentRepository.GetByProgramIdsAsync(
+                    programs.Select(p => p.Id).Distinct(),
+                    cancellationToken);
+                var studentUserIds = students
+                    .Select(s => s.UserId)
+                    .Distinct()
+                    .ToList();
 
                 if (studentUserIds.Any())
                 {

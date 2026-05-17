@@ -46,20 +46,25 @@ public sealed class GetFailedPreDefenseStudentsQueryHandler
 
             var works = await _workRepository.GetByDepartmentAsync(
                 request.DepartmentId, request.AcademicYearId, cancellationToken);
+            var attempts = await _attemptRepository.GetByWorkIdsAsync(
+                works.Select(w => w.Id),
+                cancellationToken);
+            var attemptsByWorkId = attempts.GroupBy(a => a.WorkId)
+                .ToDictionary(g => g.Key, g => g.ToList());
 
             var failedStudents = new List<FailedPreDefenseStudentDto>();
 
             foreach (var work in works)
             {
-                var attempts = await _attemptRepository.GetByWorkIdAsync(work.Id, cancellationToken);
+                var workAttempts = attemptsByWorkId.GetValueOrDefault(work.Id, []);
 
-                if (!attempts.Any())
+                if (!workAttempts.Any())
                     continue;
 
                 // Filter by pre-defense number if specified
                 var relevantAttempts = request.PreDefenseNumber.HasValue
-                    ? attempts.Where(a => a.PreDefenseNumber == request.PreDefenseNumber.Value).ToList()
-                    : attempts.ToList();
+                    ? workAttempts.Where(a => a.PreDefenseNumber == request.PreDefenseNumber.Value).ToList()
+                    : workAttempts.ToList();
 
                 if (!relevantAttempts.Any())
                     continue;

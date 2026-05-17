@@ -49,20 +49,31 @@ public sealed class SendReadinessRemindersCommandHandler
             if (!userId.HasValue)
                 return Result.Failure<int>(new Error("401", "User ID is not available."));
 
-            var works = await _workRepository.GetByDepartmentAsync(
+            var works = await _workRepository.GetByDepartmentWithParticipantsAndQualityChecksAsync(
                 request.DepartmentId, request.AcademicYearId, cancellationToken);
+            var workIds = works.Select(w => w.Id).ToList();
+            var attempts = await _attemptRepository.GetByWorkIdsAsync(workIds, cancellationToken);
+            var attemptsByWorkId = attempts.GroupBy(a => a.WorkId)
+                .ToDictionary(g => g.Key, g => g.ToList());
+            var reviews = await _reviewRepository.GetByWorkIdsAsync(workIds, cancellationToken);
+            var reviewsByWorkId = reviews.GroupBy(r => r.WorkId)
+                .ToDictionary(g => g.Key, g => g.ToList());
+            var students = await _studentRepository.GetByIdsAsync(
+                works.SelectMany(w => w.Participants.Select(p => p.StudentId)).Distinct(),
+                cancellationToken);
+            var studentsById = students.ToDictionary(s => s.Id);
 
             var notifiedCount = 0;
 
             foreach (var work in works)
             {
-                var attempts = await _attemptRepository.GetByWorkIdAsync(work.Id, cancellationToken);
-                var preDefensePassed = attempts.Any(a => a.IsPassed);
+                var workAttempts = attemptsByWorkId.GetValueOrDefault(work.Id, []);
+                var preDefensePassed = workAttempts.Any(a => a.IsPassed);
                 var normPassed = work.HasPassedCheck(CheckType.NormControl);
                 var softwarePassed = work.HasPassedCheck(CheckType.SoftwareCheck);
                 var plagiarismPassed = work.HasPassedCheck(CheckType.AntiPlagiarism);
-                var reviews = await _reviewRepository.GetByWorkIdAsync(work.Id, cancellationToken);
-                var hasReview = reviews.Any(r => r.IsUploaded);
+                var workReviews = reviewsByWorkId.GetValueOrDefault(work.Id, []);
+                var hasReview = workReviews.Any(r => r.IsUploaded);
 
                 if (preDefensePassed && normPassed && softwarePassed && plagiarismPassed && hasReview)
                     continue;
@@ -81,7 +92,7 @@ public sealed class SendReadinessRemindersCommandHandler
                 var studentUserIds = new List<int>();
                 foreach (var participant in work.Participants)
                 {
-                    var student = await _studentRepository.GetByIdAsync(participant.StudentId, cancellationToken);
+                    var student = studentsById.GetValueOrDefault(participant.StudentId);
                     if (student is not null)
                         studentUserIds.Add(student.UserId);
                 }

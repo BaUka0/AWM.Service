@@ -15,8 +15,6 @@ public sealed class GetStudentDefenseStepQueryHandler
     private readonly IScheduleRepository _scheduleRepository;
     private readonly ICommissionRepository _commissionRepository;
     private readonly IPreDefenseAttemptRepository _preDefenseAttemptRepository;
-    private readonly IProtocolRepository _protocolRepository;
-    private readonly IStaffRepository _staffRepository;
     private readonly IUserRepository _userRepository;
     private readonly IWorkflowRepository _workflowRepository;
 
@@ -27,8 +25,6 @@ public sealed class GetStudentDefenseStepQueryHandler
         IScheduleRepository scheduleRepository,
         ICommissionRepository commissionRepository,
         IPreDefenseAttemptRepository preDefenseAttemptRepository,
-        IProtocolRepository protocolRepository,
-        IStaffRepository staffRepository,
         IUserRepository userRepository,
         IWorkflowRepository workflowRepository)
     {
@@ -38,8 +34,6 @@ public sealed class GetStudentDefenseStepQueryHandler
         _scheduleRepository = scheduleRepository ?? throw new ArgumentNullException(nameof(scheduleRepository));
         _commissionRepository = commissionRepository ?? throw new ArgumentNullException(nameof(commissionRepository));
         _preDefenseAttemptRepository = preDefenseAttemptRepository ?? throw new ArgumentNullException(nameof(preDefenseAttemptRepository));
-        _protocolRepository = protocolRepository ?? throw new ArgumentNullException(nameof(protocolRepository));
-        _staffRepository = staffRepository ?? throw new ArgumentNullException(nameof(staffRepository));
         _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
         _workflowRepository = workflowRepository ?? throw new ArgumentNullException(nameof(workflowRepository));
     }
@@ -110,13 +104,14 @@ public sealed class GetStudentDefenseStepQueryHandler
             var commission = await _commissionRepository.GetByIdWithMembersAsync(schedule.CommissionId, cancellationToken);
             if (commission is not null)
             {
+                var commissionUsers = await _userRepository.GetByIdsAsync(
+                    commission.Members.Select(m => m.UserId).Distinct(),
+                    cancellationToken);
+                var commissionUsersById = commissionUsers.ToDictionary(u => u.Id);
                 var members = new List<DefenseStepMemberDto>();
                 foreach (var member in commission.Members)
                 {
-                    var staff = await _staffRepository.GetByIdAsync(member.UserId, cancellationToken);
-                    var memberUser = staff is not null
-                        ? await _userRepository.GetByIdAsync(staff.UserId, cancellationToken)
-                        : null;
+                    var memberUser = commissionUsersById.GetValueOrDefault(member.UserId);
 
                     members.Add(new DefenseStepMemberDto
                     {
@@ -130,7 +125,6 @@ public sealed class GetStudentDefenseStepQueryHandler
             if (stepType == "defense")
             {
                 var averageScore = schedule.GetAverageScore();
-                var protocol = await _protocolRepository.GetByScheduleIdAsync(schedule.Id, cancellationToken);
 
                 results = new DefenseStepResultsDto
                 {

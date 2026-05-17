@@ -40,6 +40,19 @@ public sealed class UserRepository : IUserRepository
     }
 
     /// <inheritdoc />
+    public async Task<User?> GetByLoginWithRoleAssignmentsAsync(string login, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(login))
+            return null;
+
+        return await _context.Users
+            .Include(u => u.RoleAssignments)
+                .ThenInclude(ra => ra.Role)
+            .Where(u => !u.IsDeleted && u.IsActive)
+            .FirstOrDefaultAsync(u => u.Login == login, cancellationToken);
+    }
+
+    /// <inheritdoc />
     public async Task<User?> GetByRefreshTokenAsync(string refreshToken, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(refreshToken))

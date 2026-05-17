@@ -1,33 +1,23 @@
 namespace AWM.Service.Application.Features.Thesis.Applications.DTOs;
 
-using AWM.Service.Domain.Repositories;
+using AWM.Service.Domain.Auth.Entities;
+using AWM.Service.Domain.Edu.Entities;
 using AWM.Service.Domain.Thesis.Entities;
+using AWM.Service.Domain.Wf.Entities;
 
 internal static class TopicApplicationDtoFactory
 {
-    public static async Task<TopicApplicationDto> CreateAsync(
+    public static TopicApplicationDto Create(
         TopicApplication application,
         Topic topic,
-        IStudentRepository studentRepository,
-        IStaffRepository staffRepository,
-        IUserRepository userRepository,
-        IDirectionRepository directionRepository,
-        IWorkflowRepository workflowRepository,
-        CancellationToken cancellationToken)
+        Student? student,
+        User? studentUser,
+        Staff? supervisorStaff,
+        User? supervisorUser,
+        Direction? direction,
+        WorkType? workType,
+        int availableSpots)
     {
-        var student = await studentRepository.GetByIdAsync(application.StudentId, cancellationToken);
-        var studentUser = student is null
-            ? null
-            : await userRepository.GetByIdAsync(student.UserId, cancellationToken);
-        var staff = await staffRepository.GetByIdAsync(topic.SupervisorId, cancellationToken);
-        var supervisorUser = staff is null
-            ? null
-            : await userRepository.GetByIdAsync(staff.UserId, cancellationToken);
-        var direction = topic.DirectionId.HasValue
-            ? await directionRepository.GetByIdAsync(topic.DirectionId.Value, cancellationToken)
-            : null;
-        var workType = await workflowRepository.GetWorkTypeByIdAsync(topic.WorkTypeId, cancellationToken);
-
         return new TopicApplicationDto
         {
             Id = application.Id,
@@ -50,11 +40,11 @@ internal static class TopicApplicationDtoFactory
             DirectionTitleKz = direction?.TitleKz,
             DirectionTitleEn = direction?.TitleEn,
             SupervisorId = topic.SupervisorId,
-            SupervisorName = supervisorUser?.Login ?? supervisorUser?.Email ?? staff?.Position,
+            SupervisorName = supervisorUser?.Login ?? supervisorUser?.Email ?? supervisorStaff?.Position,
             WorkTypeId = topic.WorkTypeId,
             WorkTypeName = workType?.Name,
             TopicMaxParticipants = topic.MaxParticipants,
-            TopicAvailableSpots = topic.GetAvailableSpots(),
+            TopicAvailableSpots = availableSpots,
             IsPending = application.IsPending,
             IsAccepted = application.IsAccepted,
             IsDeleted = application.IsDeleted

@@ -43,9 +43,19 @@ public sealed class GetAllUsersQueryHandler
                 u.Email.ToLowerInvariant().Contains(search));
         }
 
+        var filteredUsers = filtered.ToList();
+        var departmentIds = filteredUsers
+            .SelectMany(u => u.RoleAssignments
+                .Where(ra => ra.IsCurrentlyValid() && ra.DepartmentId.HasValue)
+                .Select(ra => ra.DepartmentId!.Value))
+            .Distinct()
+            .ToList();
+        var departments = await _orgLookupRepository.GetDepartmentsByIdsAsync(departmentIds, cancellationToken);
+        var departmentsById = departments.ToDictionary(d => d.Id);
+
         var result = new List<AdminUserDto>();
 
-        foreach (var user in filtered)
+        foreach (var user in filteredUsers)
         {
             var roles = user.RoleAssignments
                 .Where(ra => ra.IsCurrentlyValid())
@@ -59,8 +69,7 @@ public sealed class GetAllUsersQueryHandler
             string? departmentName = null;
             if (scoped?.DepartmentId.HasValue == true)
             {
-                var dept = await _orgLookupRepository.GetDepartmentByIdAsync(scoped.DepartmentId!.Value, cancellationToken);
-                departmentName = dept?.Name;
+                departmentName = departmentsById.GetValueOrDefault(scoped.DepartmentId.Value)?.Name;
             }
 
             result.Add(new AdminUserDto

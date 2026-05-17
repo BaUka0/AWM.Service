@@ -39,4 +39,19 @@ public sealed class StudentRepository : RepositoryBase<Student, int>, IStudentRe
             .ThenBy(s => s.GroupCode)
             .ToListAsync(cancellationToken);
     }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<Student>> GetByProgramIdsAsync(IEnumerable<int> programIds, CancellationToken cancellationToken = default)
+    {
+        var ids = programIds.Distinct().ToList();
+        if (ids.Count == 0)
+            return [];
+
+        return await Context.Students
+            .AsNoTracking()
+            .Where(s => ids.Contains(s.ProgramId))
+            .OrderBy(s => s.CurrentCourse)
+            .ThenBy(s => s.GroupCode)
+            .ToListAsync(cancellationToken);
+    }
 }

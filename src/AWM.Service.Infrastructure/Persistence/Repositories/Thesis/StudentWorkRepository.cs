@@ -21,6 +21,43 @@ public sealed class StudentWorkRepository : RepositoryBase<StudentWork, long>, I
     }
 
     /// <inheritdoc />
+    public async Task<IReadOnlyList<StudentWork>> GetByIdsAsync(
+        IEnumerable<long> ids,
+        CancellationToken cancellationToken = default)
+    {
+        var workIds = ids.Distinct().ToList();
+        if (workIds.Count == 0)
+            return [];
+
+        return await Context.StudentWorks
+            .AsNoTracking()
+            .Include(w => w.Participants)
+            .Where(w => workIds.Contains(w.Id))
+            .AsSplitQuery()
+            .ToListAsync(cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<StudentWork>> GetByIdsWithDetailsAsync(
+        IEnumerable<long> ids,
+        CancellationToken cancellationToken = default)
+    {
+        var workIds = ids.Distinct().ToList();
+        if (workIds.Count == 0)
+            return [];
+
+        return await Context.StudentWorks
+            .AsNoTracking()
+            .Include(w => w.Participants)
+            .Include(w => w.Attachments)
+            .Include(w => w.QualityChecks)
+            .Include(w => w.WorkflowHistory)
+            .Where(w => workIds.Contains(w.Id))
+            .AsSplitQuery()
+            .ToListAsync(cancellationToken);
+    }
+
+    /// <inheritdoc />
     public async Task<StudentWork?> GetByIdWithDetailsAsync(long id, CancellationToken cancellationToken = default)
     {
         return await Context.StudentWorks
@@ -57,6 +94,23 @@ public sealed class StudentWorkRepository : RepositoryBase<StudentWork, long>, I
             .Where(w => w.DepartmentId == departmentId &&
                         w.AcademicYearId == academicYearId)
             .OrderByDescending(w => w.CreatedAt)
+            .ToListAsync(cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<StudentWork>> GetByDepartmentWithParticipantsAndQualityChecksAsync(
+        int departmentId,
+        int academicYearId,
+        CancellationToken cancellationToken = default)
+    {
+        return await Context.StudentWorks
+            .AsNoTracking()
+            .Include(w => w.Participants)
+            .Include(w => w.QualityChecks)
+            .Where(w => w.DepartmentId == departmentId &&
+                        w.AcademicYearId == academicYearId)
+            .OrderByDescending(w => w.CreatedAt)
+            .AsSplitQuery()
             .ToListAsync(cancellationToken);
     }
 

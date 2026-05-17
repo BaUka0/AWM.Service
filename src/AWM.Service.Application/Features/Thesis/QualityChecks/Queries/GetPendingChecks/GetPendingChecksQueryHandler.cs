@@ -26,7 +26,7 @@ public sealed class GetPendingChecksQueryHandler
         try
         {
             // Load all works in the department for the given academic year
-            var works = await _workRepository.GetByDepartmentAsync(
+            var works = await _workRepository.GetByDepartmentWithParticipantsAndQualityChecksAsync(
                 request.DepartmentId,
                 request.AcademicYearId,
                 cancellationToken);

@@ -57,4 +57,14 @@ public sealed class NotificationRepository : RepositoryBase<Notification, long>,
             notification.MarkAsRead();
         }
     }
+
+    /// <inheritdoc />
+    public async Task AddRangeAsync(IEnumerable<Notification> notifications, CancellationToken cancellationToken = default)
+    {
+        var notificationList = notifications.ToList();
+        if (notificationList.Count == 0)
+            return;
+
+        await Context.Notifications.AddRangeAsync(notificationList, cancellationToken);
+    }
 }

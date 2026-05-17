@@ -49,16 +49,18 @@ public sealed class NotificationService : INotificationService
         long? relatedEntityId = null,
         CancellationToken cancellationToken = default)
     {
-        var tasks = userIds.Select(userId => SendAsync(
-            userId,
-            title,
-            createdBy,
-            body,
-            templateId,
-            relatedEntityType,
-            relatedEntityId,
-            cancellationToken));
+        var notifications = userIds
+            .Distinct()
+            .Select(userId => new Notification(
+                userId,
+                title,
+                createdBy,
+                body,
+                templateId,
+                relatedEntityType,
+                relatedEntityId))
+            .ToList();
 
-        await Task.WhenAll(tasks);
+        await _notificationRepository.AddRangeAsync(notifications, cancellationToken);
     }
 }

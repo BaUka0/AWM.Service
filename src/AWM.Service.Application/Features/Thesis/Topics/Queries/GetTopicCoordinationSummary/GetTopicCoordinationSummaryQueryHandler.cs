@@ -59,6 +59,14 @@ public sealed class GetTopicCoordinationSummaryQueryHandler
         var allApplications = await _applicationRepository.GetByTopicIdsAsync(topicIds, cancellationToken);
         var applicationsByTopicId = allApplications.GroupBy(a => a.TopicId)
             .ToDictionary(g => g.Key, g => g.ToList());
+        var supervisors = await _staffRepository.GetByIdsAsync(
+            topics.Select(t => t.SupervisorId).Distinct(),
+            cancellationToken);
+        var supervisorsById = supervisors.ToDictionary(s => s.Id);
+        var supervisorUsers = await _userRepository.GetByIdsAsync(
+            supervisors.Select(s => s.UserId).Distinct(),
+            cancellationToken);
+        var supervisorUsersById = supervisorUsers.ToDictionary(u => u.Id);
 
         foreach (var topic in topics)
         {
@@ -66,11 +74,11 @@ public sealed class GetTopicCoordinationSummaryQueryHandler
             var accepted = applications.Count(a => a.Status == ApplicationStatus.Accepted);
             var pending = applications.Count(a => a.Status == ApplicationStatus.Submitted);
             var rejected = applications.Count(a => a.Status == ApplicationStatus.Rejected);
-            var available = topic.GetAvailableSpots();
-            var supervisor = await _staffRepository.GetByIdAsync(topic.SupervisorId, cancellationToken);
+            var available = Math.Max(0, topic.MaxParticipants - accepted);
+            var supervisor = supervisorsById.GetValueOrDefault(topic.SupervisorId);
             var supervisorUser = supervisor is null
                 ? null
-                : await _userRepository.GetByIdAsync(supervisor.UserId, cancellationToken);
+                : supervisorUsersById.GetValueOrDefault(supervisor.UserId);
 
             topicItems.Add(new TopicCoordinationItemDto
             {

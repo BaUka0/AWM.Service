@@ -73,7 +73,20 @@ public sealed class GetMyWorkProgressQueryHandler
             ? await _topicRepository.GetByIdAsync(detailedWork.TopicId.Value, cancellationToken)
             : null;
 
-        var state = await _workflowRepository.GetStateByIdAsync(detailedWork.CurrentStateId, cancellationToken);
+        var transitions = await _workflowRepository.GetTransitionsFromStateAsync(
+            detailedWork.CurrentStateId,
+            cancellationToken);
+        var stateIds = detailedWork.WorkflowHistory
+            .SelectMany(history => history.FromStateId.HasValue
+                ? new[] { history.FromStateId.Value, history.ToStateId }
+                : new[] { history.ToStateId })
+            .Concat(transitions.Select(t => t.ToStateId))
+            .Append(detailedWork.CurrentStateId)
+            .Distinct()
+            .ToList();
+        var states = await _workflowRepository.GetStatesByIdsAsync(stateIds, cancellationToken);
+        var statesById = states.ToDictionary(s => s.Id);
+        var state = statesById.GetValueOrDefault(detailedWork.CurrentStateId);
         var workType = topic is not null
             ? await _workflowRepository.GetWorkTypeByIdAsync(topic.WorkTypeId, cancellationToken)
             : null;
@@ -107,12 +120,21 @@ public sealed class GetMyWorkProgressQueryHandler
             }
         }
 
+        var participantStudents = await _studentRepository.GetByIdsAsync(
+            detailedWork.Participants.Select(p => p.StudentId).Distinct(),
+            cancellationToken);
+        var participantStudentsById = participantStudents.ToDictionary(s => s.Id);
+        var participantUsers = await _userRepository.GetByIdsAsync(
+            participantStudents.Select(s => s.UserId).Distinct(),
+            cancellationToken);
+        var participantUsersById = participantUsers.ToDictionary(u => u.Id);
+
         var participants = new List<WorkProgressParticipantDto>();
         foreach (var participant in detailedWork.Participants)
         {
-            var studentEntity = await _studentRepository.GetByIdAsync(participant.StudentId, cancellationToken);
+            var studentEntity = participantStudentsById.GetValueOrDefault(participant.StudentId);
             var studentUser = studentEntity is not null
-                ? await _userRepository.GetByIdAsync(studentEntity.UserId, cancellationToken)
+                ? participantUsersById.GetValueOrDefault(studentEntity.UserId)
                 : null;
             var name = studentUser?.Login ?? studentUser?.Email;
 
@@ -152,9 +174,9 @@ public sealed class GetMyWorkProgressQueryHandler
         foreach (var history in detailedWork.WorkflowHistory.OrderBy(h => h.TransitionDate))
         {
             var fromState = history.FromStateId.HasValue
-                ? await _workflowRepository.GetStateByIdAsync(history.FromStateId.Value, cancellationToken)
+                ? statesById.GetValueOrDefault(history.FromStateId.Value)
                 : null;
-            var toState = await _workflowRepository.GetStateByIdAsync(history.ToStateId, cancellationToken);
+            var toState = statesById.GetValueOrDefault(history.ToStateId);
 
             timeline.Add(new WorkProgressTimelineItemDto
             {
@@ -183,10 +205,9 @@ public sealed class GetMyWorkProgressQueryHandler
         var nextActions = new List<WorkProgressNextActionDto>();
         if (state is not null)
         {
-            var transitions = await _workflowRepository.GetTransitionsFromStateAsync(state.Id, cancellationToken);
             foreach (var transition in transitions)
             {
-                var toState = await _workflowRepository.GetStateByIdAsync(transition.ToStateId, cancellationToken);
+                var toState = statesById.GetValueOrDefault(transition.ToStateId);
                 nextActions.Add(new WorkProgressNextActionDto
                 {
                     TransitionId = transition.Id,

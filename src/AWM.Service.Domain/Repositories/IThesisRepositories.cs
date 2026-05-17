@@ -43,9 +43,12 @@ public interface ITopicRepository
 public interface IStudentWorkRepository
 {
     Task<StudentWork?> GetByIdAsync(long id, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<StudentWork>> GetByIdsAsync(IEnumerable<long> ids, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<StudentWork>> GetByIdsWithDetailsAsync(IEnumerable<long> ids, CancellationToken cancellationToken = default);
     Task<StudentWork?> GetByIdWithDetailsAsync(long id, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<StudentWork>> GetByStudentAsync(int studentId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<StudentWork>> GetByDepartmentAsync(int departmentId, int academicYearId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<StudentWork>> GetByDepartmentWithParticipantsAndQualityChecksAsync(int departmentId, int academicYearId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<StudentWork>> GetBySupervisorAsync(int supervisorId, int academicYearId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<StudentWork>> GetByStateAsync(int stateId, int departmentId, CancellationToken cancellationToken = default);
 

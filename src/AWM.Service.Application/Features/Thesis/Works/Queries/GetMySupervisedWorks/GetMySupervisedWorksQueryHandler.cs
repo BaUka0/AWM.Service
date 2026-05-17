@@ -58,28 +58,54 @@ public sealed class GetMySupervisedWorksQueryHandler
         }
 
         var works = await _workRepository.GetBySupervisorAsync(staff.Id, request.AcademicYearId ?? 0, cancellationToken);
+        var workIds = works.Select(w => w.Id).ToList();
+        var detailedWorks = await _workRepository.GetByIdsWithDetailsAsync(workIds, cancellationToken);
+        var detailedWorksById = detailedWorks.ToDictionary(w => w.Id);
+        var topics = await _topicRepository.GetByIdsAsync(
+            detailedWorks.Where(w => w.TopicId.HasValue).Select(w => w.TopicId!.Value).Distinct(),
+            cancellationToken);
+        var topicsById = topics.ToDictionary(t => t.Id);
+        var states = await _workflowRepository.GetStatesByIdsAsync(
+            detailedWorks.Select(w => w.CurrentStateId).Distinct(),
+            cancellationToken);
+        var statesById = states.ToDictionary(s => s.Id);
+        var directions = await _directionRepository.GetByIdsAsync(
+            topics.Where(t => t.DirectionId.HasValue).Select(t => t.DirectionId!.Value).Distinct(),
+            cancellationToken);
+        var directionsById = directions.ToDictionary(d => d.Id);
+        var workTypes = await _workflowRepository.GetWorkTypesByIdsAsync(
+            topics.Select(t => t.WorkTypeId).Distinct(),
+            cancellationToken);
+        var workTypesById = workTypes.ToDictionary(w => w.Id);
+        var studentEntities = await _studentRepository.GetByIdsAsync(
+            detailedWorks.SelectMany(w => w.Participants.Select(p => p.StudentId)).Distinct(),
+            cancellationToken);
+        var studentsById = studentEntities.ToDictionary(s => s.Id);
+        var users = await _userRepository.GetByIdsAsync(
+            studentEntities.Select(s => s.UserId).Distinct(),
+            cancellationToken);
+        var usersById = users.ToDictionary(u => u.Id);
 
         var dtos = new List<SupervisedWorkDto>();
 
         foreach (var work in works)
         {
-            var detailedWork = await _workRepository.GetByIdWithDetailsAsync(work.Id, cancellationToken);
-            if (detailedWork is null)
+            if (!detailedWorksById.TryGetValue(work.Id, out var detailedWork))
                 continue;
 
             var topic = detailedWork.TopicId.HasValue
-                ? await _topicRepository.GetByIdAsync(detailedWork.TopicId.Value, cancellationToken)
+                ? topicsById.GetValueOrDefault(detailedWork.TopicId.Value)
                 : null;
 
-            var state = await _workflowRepository.GetStateByIdAsync(detailedWork.CurrentStateId, cancellationToken);
+            var state = statesById.GetValueOrDefault(detailedWork.CurrentStateId);
             var workType = topic is not null
-                ? await _workflowRepository.GetWorkTypeByIdAsync(topic.WorkTypeId, cancellationToken)
+                ? workTypesById.GetValueOrDefault(topic.WorkTypeId)
                 : null;
 
             LocalizedTextDto? directionTitle = null;
             if (topic?.DirectionId.HasValue == true)
             {
-                var direction = await _directionRepository.GetByIdAsync(topic.DirectionId.Value, cancellationToken);
+                var direction = directionsById.GetValueOrDefault(topic.DirectionId.Value);
                 if (direction is not null)
                 {
                     directionTitle = new LocalizedTextDto
@@ -94,9 +120,9 @@ public sealed class GetMySupervisedWorksQueryHandler
             var students = new List<SupervisedStudentDto>();
             foreach (var participant in detailedWork.Participants)
             {
-                var student = await _studentRepository.GetByIdAsync(participant.StudentId, cancellationToken);
+                var student = studentsById.GetValueOrDefault(participant.StudentId);
                 var studentUser = student is not null
-                    ? await _userRepository.GetByIdAsync(student.UserId, cancellationToken)
+                    ? usersById.GetValueOrDefault(student.UserId)
                     : null;
 
                 students.Add(new SupervisedStudentDto

@@ -83,6 +83,19 @@ public sealed class WorkflowRepository : IWorkflowRepository
     }
 
     /// <inheritdoc />
+    public async Task<IReadOnlyList<State>> GetStatesByIdsAsync(IEnumerable<int> ids, CancellationToken cancellationToken = default)
+    {
+        var distinctIds = ids.Distinct().ToList();
+        if (distinctIds.Count == 0)
+            return [];
+
+        return await _context.States
+            .AsNoTracking()
+            .Where(s => distinctIds.Contains(s.Id))
+            .ToListAsync(cancellationToken);
+    }
+
+    /// <inheritdoc />
     public async Task<State?> GetStateBySystemNameAsync(int workTypeId, string systemName, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(systemName))

@@ -35,22 +35,29 @@ public sealed class GetDefenseReadinessQueryHandler
             if (!userId.HasValue)
                 return Result.Failure<DefenseReadinessDto>(new Error("401", "User ID is not available."));
 
-            var works = await _workRepository.GetByDepartmentAsync(
+            var works = await _workRepository.GetByDepartmentWithParticipantsAndQualityChecksAsync(
                 request.DepartmentId, request.AcademicYearId, cancellationToken);
+            var workIds = works.Select(w => w.Id).ToList();
+            var attempts = await _attemptRepository.GetByWorkIdsAsync(workIds, cancellationToken);
+            var attemptsByWorkId = attempts.GroupBy(a => a.WorkId)
+                .ToDictionary(g => g.Key, g => g.ToList());
+            var reviews = await _reviewRepository.GetByWorkIdsAsync(workIds, cancellationToken);
+            var reviewsByWorkId = reviews.GroupBy(r => r.WorkId)
+                .ToDictionary(g => g.Key, g => g.ToList());
 
             var items = new List<StudentReadinessItem>();
 
             foreach (var work in works)
             {
-                var attempts = await _attemptRepository.GetByWorkIdAsync(work.Id, cancellationToken);
-                var preDefensePassed = attempts.Any(a => a.IsPassed);
+                var workAttempts = attemptsByWorkId.GetValueOrDefault(work.Id, []);
+                var preDefensePassed = workAttempts.Any(a => a.IsPassed);
 
                 var normPassed = work.HasPassedCheck(CheckType.NormControl);
                 var softwarePassed = work.HasPassedCheck(CheckType.SoftwareCheck);
                 var plagiarismPassed = work.HasPassedCheck(CheckType.AntiPlagiarism);
 
-                var reviews = await _reviewRepository.GetByWorkIdAsync(work.Id, cancellationToken);
-                var hasReview = reviews.Any(r => r.IsUploaded);
+                var workReviews = reviewsByWorkId.GetValueOrDefault(work.Id, []);
+                var hasReview = workReviews.Any(r => r.IsUploaded);
 
                 var isReady = preDefensePassed && normPassed && softwarePassed && plagiarismPassed && hasReview;
 

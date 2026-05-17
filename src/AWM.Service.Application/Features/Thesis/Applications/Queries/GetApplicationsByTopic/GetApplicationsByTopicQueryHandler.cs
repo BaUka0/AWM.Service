@@ -93,18 +93,47 @@ public sealed class GetApplicationsByTopicQueryHandler
                 .ToList();
         }
 
-        var dtos = new List<TopicApplicationDto>();
-        foreach (var application in applications.Where(a => !a.IsDeleted))
+        var activeApplications = applications.Where(a => !a.IsDeleted).ToList();
+        if (activeApplications.Count == 0)
         {
-            dtos.Add(await TopicApplicationDtoFactory.CreateAsync(
+            return Result.Success<IReadOnlyList<TopicApplicationDto>>([]);
+        }
+
+        var students = await _studentRepository.GetByIdsAsync(
+            activeApplications.Select(a => a.StudentId).Distinct(),
+            cancellationToken);
+        var studentsById = students.ToDictionary(s => s.Id);
+        var direction = topic.DirectionId.HasValue
+            ? await _directionRepository.GetByIdAsync(topic.DirectionId.Value, cancellationToken)
+            : null;
+        var workType = await _workflowRepository.GetWorkTypeByIdAsync(topic.WorkTypeId, cancellationToken);
+        var userIds = students.Select(s => s.UserId)
+            .Append(currentStaff.UserId)
+            .Distinct()
+            .ToList();
+        var users = await _userRepository.GetByIdsAsync(userIds, cancellationToken);
+        var usersById = users.ToDictionary(u => u.Id);
+        var supervisorUser = usersById.GetValueOrDefault(currentStaff.UserId);
+        var availableSpots = topic.GetAvailableSpots();
+
+        var dtos = new List<TopicApplicationDto>();
+        foreach (var application in activeApplications)
+        {
+            var applicationStudent = studentsById.GetValueOrDefault(application.StudentId);
+            var studentUser = applicationStudent is not null
+                ? usersById.GetValueOrDefault(applicationStudent.UserId)
+                : null;
+
+            dtos.Add(TopicApplicationDtoFactory.Create(
                 application,
                 topic,
-                _studentRepository,
-                _staffRepository,
-                _userRepository,
-                _directionRepository,
-                _workflowRepository,
-                cancellationToken));
+                applicationStudent,
+                studentUser,
+                currentStaff,
+                supervisorUser,
+                direction,
+                workType,
+                availableSpots));
         }
 
         return Result.Success<IReadOnlyList<TopicApplicationDto>>(dtos);

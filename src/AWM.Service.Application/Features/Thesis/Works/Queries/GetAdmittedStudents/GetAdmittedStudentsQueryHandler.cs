@@ -39,27 +39,38 @@ public sealed class GetAdmittedStudentsQueryHandler
                 return Result.Failure<IReadOnlyList<AdmittedStudentDto>>(
                     new Error("401", "User ID is not available."));
 
-            var works = await _workRepository.GetByDepartmentAsync(
+            var works = await _workRepository.GetByDepartmentWithParticipantsAndQualityChecksAsync(
                 request.DepartmentId, request.AcademicYearId, cancellationToken);
+            var workIds = works.Select(w => w.Id).ToList();
+            var attempts = await _attemptRepository.GetByWorkIdsAsync(workIds, cancellationToken);
+            var attemptsByWorkId = attempts.GroupBy(a => a.WorkId)
+                .ToDictionary(g => g.Key, g => g.ToList());
+            var reviews = await _reviewRepository.GetByWorkIdsAsync(workIds, cancellationToken);
+            var reviewsByWorkId = reviews.GroupBy(r => r.WorkId)
+                .ToDictionary(g => g.Key, g => g.ToList());
+            var students = await _studentRepository.GetByIdsAsync(
+                works.SelectMany(w => w.Participants.Select(p => p.StudentId)).Distinct(),
+                cancellationToken);
+            var studentsById = students.ToDictionary(s => s.Id);
 
             var admitted = new List<AdmittedStudentDto>();
 
             foreach (var work in works)
             {
-                var attempts = await _attemptRepository.GetByWorkIdAsync(work.Id, cancellationToken);
-                if (!attempts.Any(a => a.IsPassed)) continue;
+                var workAttempts = attemptsByWorkId.GetValueOrDefault(work.Id, []);
+                if (!workAttempts.Any(a => a.IsPassed)) continue;
                 if (!work.HasPassedCheck(CheckType.NormControl)) continue;
                 if (!work.HasPassedCheck(CheckType.SoftwareCheck)) continue;
                 if (!work.HasPassedCheck(CheckType.AntiPlagiarism)) continue;
 
-                var reviews = await _reviewRepository.GetByWorkIdAsync(work.Id, cancellationToken);
-                if (!reviews.Any(r => r.IsUploaded)) continue;
+                var workReviews = reviewsByWorkId.GetValueOrDefault(work.Id, []);
+                if (!workReviews.Any(r => r.IsUploaded)) continue;
 
                 // All checks passed — student is admitted
                 var leader = work.GetLeader();
                 if (leader is null) continue;
 
-                var student = await _studentRepository.GetByIdAsync(leader.StudentId, cancellationToken);
+                var student = studentsById.GetValueOrDefault(leader.StudentId);
                 if (student is null) continue;
 
                 admitted.Add(new AdmittedStudentDto

@@ -122,6 +122,11 @@ public interface IOrganizationLookupRepository
     Task<Department?> GetDepartmentByIdAsync(int id, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Gets departments by their IDs.
+    /// </summary>
+    Task<IReadOnlyList<Department>> GetDepartmentsByIdsAsync(IEnumerable<int> ids, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Gets an institute by ID.
     /// </summary>
     Task<Institute?> GetInstituteByIdAsync(int id, CancellationToken cancellationToken = default);

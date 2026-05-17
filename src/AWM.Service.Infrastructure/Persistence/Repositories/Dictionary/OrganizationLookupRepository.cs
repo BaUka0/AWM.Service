@@ -61,6 +61,19 @@ public sealed class OrganizationLookupRepository : IOrganizationLookupRepository
     }
 
     /// <inheritdoc />
+    public async Task<IReadOnlyList<Department>> GetDepartmentsByIdsAsync(IEnumerable<int> ids, CancellationToken cancellationToken = default)
+    {
+        var departmentIds = ids.Distinct().ToList();
+        if (departmentIds.Count == 0)
+            return [];
+
+        return await _context.Departments
+            .AsNoTracking()
+            .Where(d => !d.IsDeleted && departmentIds.Contains(d.Id))
+            .ToListAsync(cancellationToken);
+    }
+
+    /// <inheritdoc />
     public async Task<Institute?> GetInstituteByIdAsync(int id, CancellationToken cancellationToken = default)
     {
         return await _context.Institutes

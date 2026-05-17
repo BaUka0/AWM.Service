@@ -21,6 +21,7 @@ public sealed class DistributeStudentsToCommissionsCommandHandler
     private readonly ICommissionRepository _commissionRepository;
     private readonly IScheduleRepository _scheduleRepository;
     private readonly IPreDefenseAttemptRepository _attemptRepository;
+    private readonly IStudentRepository _studentRepository;
     private readonly IPeriodValidationService _periodValidationService;
     private readonly INotificationService _notificationService;
     private readonly ICurrentUserProvider _currentUserProvider;
@@ -32,6 +33,7 @@ public sealed class DistributeStudentsToCommissionsCommandHandler
         ICommissionRepository commissionRepository,
         IScheduleRepository scheduleRepository,
         IPreDefenseAttemptRepository attemptRepository,
+        IStudentRepository studentRepository,
         IPeriodValidationService periodValidationService,
         INotificationService notificationService,
         ICurrentUserProvider currentUserProvider,
@@ -42,6 +44,7 @@ public sealed class DistributeStudentsToCommissionsCommandHandler
         _commissionRepository = commissionRepository ?? throw new ArgumentNullException(nameof(commissionRepository));
         _scheduleRepository = scheduleRepository ?? throw new ArgumentNullException(nameof(scheduleRepository));
         _attemptRepository = attemptRepository ?? throw new ArgumentNullException(nameof(attemptRepository));
+        _studentRepository = studentRepository ?? throw new ArgumentNullException(nameof(studentRepository));
         _periodValidationService = periodValidationService ?? throw new ArgumentNullException(nameof(periodValidationService));
         _notificationService = notificationService ?? throw new ArgumentNullException(nameof(notificationService));
         _currentUserProvider = currentUserProvider ?? throw new ArgumentNullException(nameof(currentUserProvider));
@@ -85,16 +88,18 @@ public sealed class DistributeStudentsToCommissionsCommandHandler
             // Get all student works in department
             var allWorks = await _workRepository.GetByDepartmentAsync(
                 request.DepartmentId, request.AcademicYearId, cancellationToken);
+            var attempts = await _attemptRepository.GetByWorkIdsAsync(
+                allWorks.Select(w => w.Id),
+                cancellationToken);
+            var attemptedWorkIdsForRound = attempts
+                .Where(a => a.PreDefenseNumber == request.PreDefenseNumber)
+                .Select(a => a.WorkId)
+                .ToHashSet();
 
             // Filter: only works not yet scheduled for this pre-defense round
-            var worksToDistribute = new List<Domain.Thesis.Entities.StudentWork>();
-            foreach (var work in allWorks)
-            {
-                var attempts = await _attemptRepository.GetByWorkIdAsync(work.Id, cancellationToken);
-                var hasAttemptForRound = attempts.Any(a => a.PreDefenseNumber == request.PreDefenseNumber);
-                if (!hasAttemptForRound)
-                    worksToDistribute.Add(work);
-            }
+            var worksToDistribute = allWorks
+                .Where(work => !attemptedWorkIdsForRound.Contains(work.Id))
+                .ToList();
 
             if (!worksToDistribute.Any())
                 return Result.Success(0);
@@ -130,8 +135,13 @@ public sealed class DistributeStudentsToCommissionsCommandHandler
             }
 
             // Notify students about their assigned commission
-            var studentUserIds = worksToDistribute
+            var studentIds = worksToDistribute
                 .SelectMany(w => w.Participants.Select(p => p.StudentId))
+                .Distinct()
+                .ToList();
+            var students = await _studentRepository.GetByIdsAsync(studentIds, cancellationToken);
+            var studentUserIds = students
+                .Select(s => s.UserId)
                 .Distinct()
                 .ToList();
 

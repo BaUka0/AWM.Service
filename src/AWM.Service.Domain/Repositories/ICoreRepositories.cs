@@ -26,6 +26,7 @@ public interface IUserRepository
 {
     Task<User?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
     Task<User?> GetByLoginAsync(string login, CancellationToken cancellationToken = default);
+    Task<User?> GetByLoginWithRoleAssignmentsAsync(string login, CancellationToken cancellationToken = default);
     Task<User?> GetByRefreshTokenAsync(string refreshToken, CancellationToken cancellationToken = default);
     Task<User?> GetByExternalIdAsync(string externalId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<User>> GetByUniversityAsync(int universityId, CancellationToken cancellationToken = default);
@@ -52,6 +53,7 @@ public interface IStudentRepository
     Task<IReadOnlyList<Student>> GetByIdsAsync(IEnumerable<int> ids, CancellationToken cancellationToken = default);
     Task<Student?> GetByUserIdAsync(int userId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Student>> GetByProgramAsync(int programId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<Student>> GetByProgramIdsAsync(IEnumerable<int> programIds, CancellationToken cancellationToken = default);
     Task AddAsync(Student student, CancellationToken cancellationToken = default);
     Task UpdateAsync(Student student, CancellationToken cancellationToken = default);
 }

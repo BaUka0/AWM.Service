@@ -69,14 +69,13 @@ public sealed class FinalizeDefenseCommandHandler : IRequestHandler<FinalizeDefe
                     await _workRepository.UpdateAsync(work, cancellationToken);
 
                     // Notify participants about defense result
-                    var studentUserIds = new List<int>();
-                    foreach (var participant in work.Participants)
-                    {
-                        var student = await _studentRepository.GetByIdAsync(
-                            participant.StudentId, cancellationToken);
-                        if (student is not null)
-                            studentUserIds.Add(student.UserId);
-                    }
+                    var students = await _studentRepository.GetByIdsAsync(
+                        work.Participants.Select(p => p.StudentId).Distinct(),
+                        cancellationToken);
+                    var studentUserIds = students
+                        .Select(s => s.UserId)
+                        .Distinct()
+                        .ToList();
 
                     if (studentUserIds.Count > 0)
                     {
