@@ -1,4 +1,4 @@
-namespace AWM.Service.Application.Features.Common.Periods.Commands.ApproveInitialPeriods;
+namespace AWM.Service.Application.Features.Common.Stages.Commands.ApproveInitialStages;
 
 using System;
 using System.Linq;
@@ -6,38 +6,34 @@ using System.Threading;
 using System.Threading.Tasks;
 using AWM.Service.Domain.Common;
 using AWM.Service.Domain.CommonDomain.Entities;
-using AWM.Service.Domain.CommonDomain.Enums;
 using AWM.Service.Domain.Repositories;
 using AWM.Service.Domain.CommonDomain.Services;
 using KDS.Primitives.FluentResult;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
-public sealed class ApproveInitialPeriodsCommandHandler : IRequestHandler<ApproveInitialPeriodsCommand, Result>
+public sealed class ApproveInitialStagesCommandHandler : IRequestHandler<ApproveInitialStagesCommand, Result>
 {
-    private readonly IPeriodRepository _periodRepository;
-    private readonly IAcademicYearRepository _academicYearRepository;
+    private readonly IStageRepository _stageRepository;
     private readonly IStaffRepository _staffRepository;
     private readonly IAcademicProgramRepository _academicProgramRepository;
     private readonly IStudentRepository _studentRepository;
     private readonly ICurrentUserProvider _currentUserProvider;
     private readonly INotificationService _notificationService;
     private readonly IUnitOfWork _unitOfWork;
-    private readonly ILogger<ApproveInitialPeriodsCommandHandler> _logger;
+    private readonly ILogger<ApproveInitialStagesCommandHandler> _logger;
 
-    public ApproveInitialPeriodsCommandHandler(
-        IPeriodRepository periodRepository,
-        IAcademicYearRepository academicYearRepository,
+    public ApproveInitialStagesCommandHandler(
+        IStageRepository stageRepository,
         IStaffRepository staffRepository,
         IAcademicProgramRepository academicProgramRepository,
         IStudentRepository studentRepository,
         ICurrentUserProvider currentUserProvider,
         INotificationService notificationService,
         IUnitOfWork unitOfWork,
-        ILogger<ApproveInitialPeriodsCommandHandler> logger)
+        ILogger<ApproveInitialStagesCommandHandler> logger)
     {
-        _periodRepository = periodRepository ?? throw new ArgumentNullException(nameof(periodRepository));
-        _academicYearRepository = academicYearRepository ?? throw new ArgumentNullException(nameof(academicYearRepository));
+        _stageRepository = stageRepository ?? throw new ArgumentNullException(nameof(stageRepository));
         _staffRepository = staffRepository ?? throw new ArgumentNullException(nameof(staffRepository));
         _academicProgramRepository = academicProgramRepository ?? throw new ArgumentNullException(nameof(academicProgramRepository));
         _studentRepository = studentRepository ?? throw new ArgumentNullException(nameof(studentRepository));
@@ -47,59 +43,55 @@ public sealed class ApproveInitialPeriodsCommandHandler : IRequestHandler<Approv
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task<Result> Handle(ApproveInitialPeriodsCommand request, CancellationToken cancellationToken)
+    public async Task<Result> Handle(ApproveInitialStagesCommand request, CancellationToken cancellationToken)
     {
         try
         {
             var userId = _currentUserProvider.UserId;
-            _logger.LogInformation("Attempting to ApproveInitialPeriods for Dept={DeptId}, Year={YearId} by User={UserId}",
-                request.DepartmentId, request.AcademicYearId, userId);
+            _logger.LogInformation("Attempting to ApproveInitialStages for Dept={DeptId}, Year={YearId} by User={UserId}",
+                request.DepartmentId, request.SemesterId, userId);
 
             if (!userId.HasValue)
             {
-                _logger.LogWarning("ApproveInitialPeriods failed: User ID is not available.");
+                _logger.LogWarning("ApproveInitialStages failed: User ID is not available.");
                 return Result.Failure(new Error("401", "User ID is not available."));
             }
 
-            var academicYear = await _academicYearRepository.GetByIdAsync(request.AcademicYearId, cancellationToken);
-            if (academicYear is null)
-                return Result.Failure(new Error("404", $"Academic year with ID {request.AcademicYearId} not found."));
+            var existingStages = await _stageRepository.GetTrackedByDepartmentAsync(request.DepartmentId, request.SemesterId, cancellationToken);
+            var activeStages = existingStages.Where(p => !p.IsDeleted).ToList();
 
-            var existingPeriods = await _periodRepository.GetTrackedByDepartmentAsync(request.DepartmentId, request.AcademicYearId, cancellationToken);
-            var activePeriods = existingPeriods.Where(p => !p.IsDeleted).ToList();
-
-            // Group by WorkflowStage to handle potential duplicates in the request payload
-            var groupedRequestedPeriods = request.Periods
-                .GroupBy(p => p.WorkflowStage)
+            // Group by WorkflowStageId to handle potential duplicates in the request payload
+            var groupedRequestedStages = request.Stages
+                .GroupBy(p => p.WorkflowStageId)
                 .Select(g => g.First())
                 .ToList();
 
-            foreach (var requestedPeriod in groupedRequestedPeriods)
+            foreach (var requestedStage in groupedRequestedStages)
             {
-                var existing = activePeriods.FirstOrDefault(p => p.WorkflowStage == requestedPeriod.WorkflowStage);
+                var existing = activeStages.FirstOrDefault(p => p.WorkflowStageId == requestedStage.WorkflowStageId);
                 if (existing != null)
                 {
-                    existing.UpdateDates(requestedPeriod.StartDate, requestedPeriod.EndDate, userId.Value);
-                    await _periodRepository.UpdateAsync(existing, cancellationToken);
+                    existing.UpdateDates(requestedStage.StartDate, requestedStage.EndDate, userId.Value);
+                    await _stageRepository.UpdateAsync(existing, cancellationToken);
                 }
                 else
                 {
-                    _logger.LogDebug("Creating new period for Stage={Stage} in Dept={DeptId}", requestedPeriod.WorkflowStage, request.DepartmentId);
-                    var newPeriod = new Period(
+                    _logger.LogDebug("Creating new stage for Stage={Stage} in Dept={DeptId}", requestedStage.WorkflowStageId, request.DepartmentId);
+                    var newStage = new Stage(
                         request.DepartmentId,
-                        request.AcademicYearId,
-                        requestedPeriod.WorkflowStage,
-                        requestedPeriod.StartDate,
-                        requestedPeriod.EndDate,
+                        request.SemesterId,
+                        requestedStage.WorkflowStageId,
+                        requestedStage.StartDate,
+                        requestedStage.EndDate,
                         userId.Value);
-                    await _periodRepository.AddAsync(newPeriod, cancellationToken);
+                    await _stageRepository.AddAsync(newStage, cancellationToken);
                 }
             }
-            _logger.LogInformation("Processed {PeriodCount} periods for Dept={DeptId}", groupedRequestedPeriods.Count, request.DepartmentId);
+            _logger.LogInformation("Processed {StageCount} stages for Dept={DeptId}", groupedRequestedStages.Count, request.DepartmentId);
 
             // 1. Notify Supervisors about Direction Submission
-            var directionPeriod = request.Periods.FirstOrDefault(p => p.WorkflowStage == WorkflowStage.DirectionSubmission);
-            if (directionPeriod != null)
+            var directionStage = request.Stages.FirstOrDefault(p => p.WorkflowStageId == 1);
+            if (directionStage != null)
             {
                 var supervisors = await _staffRepository.GetSupervisorsWithCapacityAsync(request.DepartmentId, cancellationToken);
                 var supervisorUserIds = supervisors.Select(s => s.UserId).ToList();
@@ -107,7 +99,7 @@ public sealed class ApproveInitialPeriodsCommandHandler : IRequestHandler<Approv
                 if (supervisorUserIds.Any())
                 {
                     var title = "Начало периода формирования направлений";
-                    var body = $"Период формирования направлений и тем утвержден. Сроки: {directionPeriod.StartDate:dd.MM.yyyy} - {directionPeriod.EndDate:dd.MM.yyyy}. Желательно сформировать направления и темы в срок.";
+                    var body = $"Период формирования направлений и тем утвержден. Сроки: {directionStage.StartDate:dd.MM.yyyy} - {directionStage.EndDate:dd.MM.yyyy}. Желательно сформировать направления и темы в срок.";
 
                     _logger.LogInformation("Sending DirectionSubmission notifications to {SupervisorCount} supervisors", supervisorUserIds.Count);
                     await _notificationService.SendToManyAsync(
@@ -124,8 +116,8 @@ public sealed class ApproveInitialPeriodsCommandHandler : IRequestHandler<Approv
             }
 
             // 2. Notify Students about Topic Selection
-            var selectionPeriod = request.Periods.FirstOrDefault(p => p.WorkflowStage == WorkflowStage.TopicSelection);
-            if (selectionPeriod != null)
+            var selectionStage = request.Stages.FirstOrDefault(p => p.WorkflowStageId == 3);
+            if (selectionStage != null)
             {
                 var programs = await _academicProgramRepository.GetByDepartmentAsync(request.DepartmentId, cancellationToken);
                 var students = await _studentRepository.GetByProgramIdsAsync(
@@ -139,7 +131,7 @@ public sealed class ApproveInitialPeriodsCommandHandler : IRequestHandler<Approv
                 if (studentUserIds.Any())
                 {
                     var title = "Сроки выбора тем дипломных работ";
-                    var body = $"Внимание! Выбор тем дипломных будет проходить в период: {selectionPeriod.StartDate:dd.MM.yyyy} - {selectionPeriod.EndDate:dd.MM.yyyy}. Пожалуйста, осуществите выбор вовремя, иначе тема будет назначена случайным образом.";
+                    var body = $"Внимание! Выбор тем дипломных будет проходить в период: {selectionStage.StartDate:dd.MM.yyyy} - {selectionStage.EndDate:dd.MM.yyyy}. Пожалуйста, осуществите выбор вовремя, иначе тема будет назначена случайным образом.";
 
                     _logger.LogInformation("Sending TopicSelection notifications to {StudentCount} students", studentUserIds.Count);
                     await _notificationService.SendToManyAsync(
@@ -161,13 +153,13 @@ public sealed class ApproveInitialPeriodsCommandHandler : IRequestHandler<Approv
         }
         catch (ArgumentException argEx)
         {
-            _logger.LogWarning(argEx, "ApproveInitialPeriods validation failed: {Message}", argEx.Message);
+            _logger.LogWarning(argEx, "ApproveInitialStages validation failed: {Message}", argEx.Message);
             return Result.Failure(new Error("400", argEx.Message));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "ApproveInitialPeriods failed for Dept={DeptId}", request.DepartmentId);
-            return Result.Failure(new Error("500", $"An error occurred while approving the Periods: {ex.Message}"));
+            _logger.LogError(ex, "ApproveInitialStages failed for Dept={DeptId}", request.DepartmentId);
+            return Result.Failure(new Error("500", $"An error occurred while approving the Stages: {ex.Message}"));
         }
     }
 }

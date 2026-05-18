@@ -1,24 +1,22 @@
 namespace AWM.Service.Domain.CommonDomain.Services;
 
-using AWM.Service.Domain.CommonDomain.Enums;
-
 /// <summary>
-/// Domain service interface for validating period-based operations.
+/// Domain service interface for validating stage-based operations.
 /// </summary>
-public interface IPeriodValidationService
+public interface IStageValidationService
 {
     /// <summary>
     /// Checks if a specific workflow stage is currently open for a department.
     /// </summary>
-    Task<bool> IsStageOpenAsync(int departmentId, int academicYearId, WorkflowStage stage, CancellationToken cancellationToken = default);
+    Task<bool> IsStageOpenAsync(int departmentId, int semesterId, int workflowStageId, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Validates that an operation is allowed in the current period.
-    /// Throws or returns error if the period is closed.
+    /// Validates that an operation is allowed in the current stage.
+    /// Throws or returns error if the stage is closed.
     /// </summary>
-    Task<(bool IsAllowed, string? ErrorMessage)> ValidateOperationInPeriodAsync(
+    Task<(bool IsAllowed, string? ErrorMessage)> ValidateOperationInStageAsync(
         int departmentId,
-        int academicYearId,
-        WorkflowStage requiredStage,
+        int semesterId,
+        int workflowStageId,
         CancellationToken cancellationToken = default);
 }

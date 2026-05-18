@@ -7,18 +7,18 @@ using AWM.Service.Domain.Org.Entities;
 using AWM.Service.Infrastructure.Persistence.Configurations.Base;
 
 /// <summary>
-/// EF Core configuration for Period entity.
-/// Maps to [Common].[Periods] table.
+/// EF Core configuration for Stage entity (formerly Period).
+/// Maps to [Common].[Stages].
 /// </summary>
-public class PeriodConfiguration : SoftDeletableEntityConfiguration<Period, int>
+public class StageConfiguration : SoftDeletableEntityConfiguration<Stage, int>
 {
-    public override void Configure(EntityTypeBuilder<Period> builder)
+    public override void Configure(EntityTypeBuilder<Stage> builder)
     {
         base.Configure(builder);
 
-        builder.ToTable("Periods", "Common", t =>
+        builder.ToTable("Stages", "Common", t =>
         {
-            t.HasCheckConstraint("Check_Period_Dates", "[EndDate] > [StartDate]");
+            t.HasCheckConstraint("Check_Stage_Dates", "[EndDate] > [StartDate]");
         });
 
         builder.Property(e => e.Id)
@@ -27,13 +27,11 @@ public class PeriodConfiguration : SoftDeletableEntityConfiguration<Period, int>
         builder.Property(e => e.DepartmentId)
             .IsRequired();
 
-        builder.Property(e => e.AcademicYearId)
+        builder.Property(e => e.SemesterId)
             .IsRequired();
 
-        builder.Property(e => e.WorkflowStage)
-            .IsRequired()
-            .HasConversion<string>()
-            .HasMaxLength(100);
+        builder.Property(e => e.WorkflowStageId)
+            .IsRequired();
 
         builder.Property(e => e.StartDate)
             .IsRequired()
@@ -51,18 +49,24 @@ public class PeriodConfiguration : SoftDeletableEntityConfiguration<Period, int>
         builder.HasOne<Department>()
             .WithMany()
             .HasForeignKey(e => e.DepartmentId)
-            .HasConstraintName("FK_Periods_Dept")
+            .HasConstraintName("FK_Stages_Dept")
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne<AcademicYear>()
+        builder.HasOne<Semester>()
             .WithMany()
-            .HasForeignKey(e => e.AcademicYearId)
-            .HasConstraintName("FK_Periods_Year")
+            .HasForeignKey(e => e.SemesterId)
+            .HasConstraintName("FK_Stages_Semester")
             .OnDelete(DeleteBehavior.Restrict);
 
-        // Index for active periods
-        builder.HasIndex(e => new { e.DepartmentId, e.AcademicYearId, e.WorkflowStage })
-            .HasDatabaseName("IX_Periods_Active")
+        builder.HasOne<WorkflowStage>()
+            .WithMany()
+            .HasForeignKey(e => e.WorkflowStageId)
+            .HasConstraintName("FK_Stages_WorkflowStage")
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Index for active stages
+        builder.HasIndex(e => new { e.DepartmentId, e.SemesterId, e.WorkflowStageId })
+            .HasDatabaseName("IX_Stages_Active")
             .HasFilter("[IsActive] = 1");
     }
 }

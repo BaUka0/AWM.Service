@@ -1,58 +1,58 @@
-namespace AWM.Service.Application.Features.Common.Periods.Queries.GetActivePeriod;
+namespace AWM.Service.Application.Features.Common.Stages.Queries.GetActiveStage;
 
-using AWM.Service.Application.Features.Common.Periods.DTOs;
+using AWM.Service.Application.Features.Common.Stages.DTOs;
 using AWM.Service.Domain.Repositories;
 using KDS.Primitives.FluentResult;
 using MediatR;
 
-public sealed class GetActivePeriodQueryHandler : IRequestHandler<GetActivePeriodQuery, Result<PeriodDto?>>
+public sealed class GetActiveStageQueryHandler : IRequestHandler<GetActiveStageQuery, Result<StageDto?>>
 {
-    private readonly IPeriodRepository _periodRepository;
+    private readonly IStageRepository _stageRepository;
 
-    public GetActivePeriodQueryHandler(IPeriodRepository periodRepository)
+    public GetActiveStageQueryHandler(IStageRepository stageRepository)
     {
-        _periodRepository = periodRepository ?? throw new ArgumentNullException(nameof(periodRepository));
+        _stageRepository = stageRepository ?? throw new ArgumentNullException(nameof(stageRepository));
     }
 
-    public async Task<Result<PeriodDto?>> Handle(GetActivePeriodQuery request, CancellationToken cancellationToken)
+    public async Task<Result<StageDto?>> Handle(GetActiveStageQuery request, CancellationToken cancellationToken)
     {
         try
         {
-            var period = request.WorkflowStage.HasValue
-                ? await _periodRepository.GetActiveByStageAsync(
+            var stage = request.WorkflowStageId.HasValue
+                ? await _stageRepository.GetActiveByStageAsync(
                     request.DepartmentId,
-                    request.AcademicYearId,
-                    request.WorkflowStage.Value,
+                    request.SemesterId,
+                    request.WorkflowStageId.Value,
                     cancellationToken)
-                : await _periodRepository.GetActivePeriodAsync(
+                : await _stageRepository.GetActiveStageAsync(
                     request.DepartmentId,
-                    request.AcademicYearId,
+                    request.SemesterId,
                     cancellationToken);
 
-            if (period is null || period.IsDeleted)
-                return Result.Success<PeriodDto?>(null);
+            if (stage is null || stage.IsDeleted)
+                return Result.Success<StageDto?>(null);
 
-            var dto = new PeriodDto
+            var dto = new StageDto
             {
-                Id = period.Id,
-                DepartmentId = period.DepartmentId,
-                AcademicYearId = period.AcademicYearId,
-                WorkflowStage = period.WorkflowStage.ToString(),
-                StartDate = period.StartDate,
-                EndDate = period.EndDate,
-                IsActive = period.IsActive,
-                IsCurrentlyOpen = period.IsCurrentlyOpen(),
-                CreatedAt = period.CreatedAt,
-                CreatedBy = period.CreatedBy,
-                LastModifiedAt = period.LastModifiedAt,
-                LastModifiedBy = period.LastModifiedBy
+                Id = stage.Id,
+                DepartmentId = stage.DepartmentId,
+                SemesterId = stage.SemesterId,
+                WorkflowStageId = stage.WorkflowStageId,
+                StartDate = stage.StartDate,
+                EndDate = stage.EndDate,
+                IsActive = stage.IsActive,
+                IsCurrentlyOpen = stage.IsCurrentlyOpen(),
+                CreatedAt = stage.CreatedAt,
+                CreatedBy = stage.CreatedBy,
+                LastModifiedAt = stage.LastModifiedAt,
+                LastModifiedBy = stage.LastModifiedBy
             };
 
-            return Result.Success<PeriodDto?>(dto);
+            return Result.Success<StageDto?>(dto);
         }
         catch (Exception ex)
         {
-            return Result.Failure<PeriodDto?>(new Error("500", $"An error occurred: {ex.Message}"));
+            return Result.Failure<StageDto?>(new Error("500", $"An error occurred: {ex.Message}"));
         }
     }
 }

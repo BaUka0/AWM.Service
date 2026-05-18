@@ -28,7 +28,7 @@ public static class DependencyInjection
         services.AddValidatorsFromAssembly(applicationAssembly);
 
         services.AddScoped<IStateMachine, WorkflowService>();
-        services.AddScoped<IPeriodValidationService, PeriodValidationService>();
+        services.AddScoped<IStageValidationService, StageValidationService>();
         services.AddScoped<INotificationService, NotificationService>();
 
         return services;

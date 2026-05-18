@@ -1,13 +1,12 @@
-namespace AWM.Service.Application.Features.Common.Periods.Queries.GetActivePeriod;
+namespace AWM.Service.Application.Features.Common.Stages.Queries.GetActiveStage;
 
-using AWM.Service.Application.Features.Common.Periods.DTOs;
-using AWM.Service.Domain.CommonDomain.Enums;
+using AWM.Service.Application.Features.Common.Stages.DTOs;
 using KDS.Primitives.FluentResult;
 using MediatR;
 
-public sealed record GetActivePeriodQuery : IRequest<Result<PeriodDto?>>
+public sealed record GetActiveStageQuery : IRequest<Result<StageDto?>>
 {
     public int DepartmentId { get; init; }
-    public int AcademicYearId { get; init; }
-    public WorkflowStage? WorkflowStage { get; init; }
+    public int SemesterId { get; init; }
+    public int? WorkflowStageId { get; init; }
 }

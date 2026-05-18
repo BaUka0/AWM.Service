@@ -1,79 +1,81 @@
 namespace AWM.Service.Domain.Repositories;
 
 using AWM.Service.Domain.CommonDomain.Entities;
-using AWM.Service.Domain.CommonDomain.Enums;
 
 /// <summary>
-/// Repository for AcademicYear aggregate - critical for all system operations.
+/// Repository for SemesterType reference data.
 /// </summary>
-public interface IAcademicYearRepository
+public interface ISemesterTypeRepository
 {
-    /// <summary>
-    /// Gets an academic year by ID.
-    /// </summary>
-    Task<AcademicYear?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Gets the current academic year.
-    /// </summary>
-    Task<AcademicYear?> GetCurrentAsync(CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Gets an academic year that contains the specified date.
-    /// </summary>
-    Task<AcademicYear?> GetByDateAsync(DateTime date, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Gets all academic years.
-    /// </summary>
-    Task<IReadOnlyList<AcademicYear>> GetAllAsync(CancellationToken cancellationToken = default);
-
-    Task AddAsync(AcademicYear academicYear, CancellationToken cancellationToken = default);
-    Task UpdateAsync(AcademicYear academicYear, CancellationToken cancellationToken = default);
+    Task<SemesterType?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<SemesterType>> GetAllAsync(CancellationToken cancellationToken = default);
+    Task AddAsync(SemesterType semesterType, CancellationToken cancellationToken = default);
 }
 
 /// <summary>
-/// Repository for Period - workflow stage time constraints.
+/// Repository for Semester aggregate.
 /// </summary>
-public interface IPeriodRepository
+public interface ISemesterRepository
+{
+    Task<Semester?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<Semester>> GetAllAsync(CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<Semester>> GetByStudyYearAsync(int studyYear, CancellationToken cancellationToken = default);
+    Task AddAsync(Semester semester, CancellationToken cancellationToken = default);
+    Task UpdateAsync(Semester semester, CancellationToken cancellationToken = default);
+}
+
+/// <summary>
+/// Repository for WorkflowStage reference data.
+/// </summary>
+public interface IWorkflowStageRepository
+{
+    Task<WorkflowStage?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<WorkflowStage>> GetAllAsync(CancellationToken cancellationToken = default);
+    Task AddAsync(WorkflowStage workflowStage, CancellationToken cancellationToken = default);
+}
+
+/// <summary>
+/// Repository for Stage - workflow stage time constraints.
+/// </summary>
+public interface IStageRepository
 {
     /// <summary>
-    /// Gets a period by ID.
+    /// Gets a stage by ID.
     /// </summary>
-    Task<Period?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
+    Task<Stage?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Gets the active period for a specific workflow stage in a department.
+    /// Gets the active stage for a specific workflow stage in a department.
     /// </summary>
-    Task<Period?> GetActiveByStageAsync(
+    Task<Stage?> GetActiveByStageAsync(
         int departmentId,
-        int academicYearId,
-        WorkflowStage stage,
+        int semesterId,
+        int workflowStageId,
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Gets all periods for a department in an academic year.
+    /// Gets all stages for a department in a semester.
     /// </summary>
-    Task<IReadOnlyList<Period>> GetByDepartmentAsync(
+    Task<IReadOnlyList<Stage>> GetByDepartmentAsync(
         int departmentId,
-        int academicYearId,
+        int semesterId,
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Gets all periods for a department in an academic year, with tracking.
+    /// Gets all stages for a department in a semester, with tracking.
     /// Used for updates to avoid tracking conflicts.
     /// </summary>
-    Task<IReadOnlyList<Period>> GetTrackedByDepartmentAsync(
+    Task<IReadOnlyList<Stage>> GetTrackedByDepartmentAsync(
         int departmentId,
-        int academicYearId,
+        int semesterId,
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Gets any currently active period for the department and year.
+    /// Gets any currently active stage for the department and semester.
     /// </summary>
-    Task<Period?> GetActivePeriodAsync(
+    Task<Stage?> GetActiveStageAsync(
         int departmentId,
-        int academicYearId,
+        int semesterId,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -81,10 +83,10 @@ public interface IPeriodRepository
     /// </summary>
     Task<bool> IsStageOpenAsync(
         int departmentId,
-        int academicYearId,
-        WorkflowStage stage,
+        int semesterId,
+        int workflowStageId,
         CancellationToken cancellationToken = default);
 
-    Task AddAsync(Period period, CancellationToken cancellationToken = default);
-    Task UpdateAsync(Period period, CancellationToken cancellationToken = default);
+    Task AddAsync(Stage stage, CancellationToken cancellationToken = default);
+    Task UpdateAsync(Stage stage, CancellationToken cancellationToken = default);
 }

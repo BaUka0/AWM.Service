@@ -1,6 +1,6 @@
 namespace AWM.Service.WebAPI.Common.Contracts.Requests.Common;
 
-public record UpdatePeriodRequest
+public record UpdateStageRequest
 {
     public DateTime? StartDate { get; init; }
     public DateTime? EndDate { get; init; }

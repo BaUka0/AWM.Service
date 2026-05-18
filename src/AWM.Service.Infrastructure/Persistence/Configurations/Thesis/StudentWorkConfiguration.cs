@@ -60,12 +60,6 @@ public class StudentWorkConfiguration : SoftDeletableEntityConfiguration<Student
             .HasConstraintName("FK_Works_Topic")
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne<AcademicYear>()
-            .WithMany()
-            .HasForeignKey(e => e.AcademicYearId)
-            .HasConstraintName("FK_Works_Year")
-            .OnDelete(DeleteBehavior.Restrict);
-
         builder.HasOne<Department>()
             .WithMany()
             .HasForeignKey(e => e.DepartmentId)

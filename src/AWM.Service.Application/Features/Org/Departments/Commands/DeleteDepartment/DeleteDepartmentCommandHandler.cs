@@ -16,16 +16,13 @@ public sealed class DeleteDepartmentCommandHandler : IRequestHandler<DeleteDepar
     private readonly IStaffRepository _staffRepository;
     private readonly IAcademicProgramRepository _academicProgramRepository;
     private readonly ITopicRepository _topicRepository;
-    private readonly IAcademicYearRepository _academicYearRepository;
-
     public DeleteDepartmentCommandHandler(
         IOrganizationLookupRepository organizationLookupRepository,
         IUnitOfWork unitOfWork,
         ICurrentUserProvider currentUserProvider,
         IStaffRepository staffRepository,
         IAcademicProgramRepository academicProgramRepository,
-        ITopicRepository topicRepository,
-        IAcademicYearRepository academicYearRepository)
+        ITopicRepository topicRepository)
     {
         _organizationLookupRepository = organizationLookupRepository ?? throw new ArgumentNullException(nameof(organizationLookupRepository));
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
@@ -33,7 +30,6 @@ public sealed class DeleteDepartmentCommandHandler : IRequestHandler<DeleteDepar
         _staffRepository = staffRepository ?? throw new ArgumentNullException(nameof(staffRepository));
         _academicProgramRepository = academicProgramRepository ?? throw new ArgumentNullException(nameof(academicProgramRepository));
         _topicRepository = topicRepository ?? throw new ArgumentNullException(nameof(topicRepository));
-        _academicYearRepository = academicYearRepository ?? throw new ArgumentNullException(nameof(academicYearRepository));
     }
 
     public async Task<Result> Handle(DeleteDepartmentCommand request, CancellationToken cancellationToken)
@@ -63,19 +59,6 @@ public sealed class DeleteDepartmentCommandHandler : IRequestHandler<DeleteDepar
                 return Result.Failure(new Error(
                     "409",
                     "Cannot delete Department with active Academic Programs. Please delete Programs first."));
-            }
-
-            // 3. Check for active topics in current academic year
-            var currentYear = await _academicYearRepository.GetCurrentAsync(cancellationToken);
-            if (currentYear != null)
-            {
-                var topics = await _topicRepository.GetByDepartmentAsync(request.DepartmentId, currentYear.Id, cancellationToken);
-                if (topics.Any(t => !t.IsDeleted))
-                {
-                    return Result.Failure(new Error(
-                        "409",
-                        "Cannot delete Department with active Topics in the current academic year."));
-                }
             }
 
             var userId = _currentUserProvider.UserId;

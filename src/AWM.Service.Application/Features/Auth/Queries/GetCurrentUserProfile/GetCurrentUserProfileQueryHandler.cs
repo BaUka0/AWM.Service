@@ -17,7 +17,6 @@ public sealed class GetCurrentUserProfileQueryHandler
     private readonly IStudentRepository _studentRepository;
     private readonly IStaffRepository _staffRepository;
     private readonly IReviewerRepository _reviewerRepository;
-    private readonly IAcademicYearRepository _academicYearRepository;
     private readonly IOrganizationLookupRepository _orgLookupRepository;
 
     public GetCurrentUserProfileQueryHandler(
@@ -25,14 +24,12 @@ public sealed class GetCurrentUserProfileQueryHandler
         IStudentRepository studentRepository,
         IStaffRepository staffRepository,
         IReviewerRepository reviewerRepository,
-        IAcademicYearRepository academicYearRepository,
         IOrganizationLookupRepository orgLookupRepository)
     {
         _userRepository = userRepository;
         _studentRepository = studentRepository;
         _staffRepository = staffRepository;
         _reviewerRepository = reviewerRepository;
-        _academicYearRepository = academicYearRepository;
         _orgLookupRepository = orgLookupRepository;
     }
 
@@ -61,10 +58,8 @@ public sealed class GetCurrentUserProfileQueryHandler
         string? departmentName = null;
         string? instituteName = null;
 
-        // 5. Resolve current academic year
-        var currentYear = await _academicYearRepository.GetCurrentAsync(cancellationToken);
+        // 5. Load staff profile if user has a staff-related role
 
-        // 6. Load staff profile if user has a staff-related role
         int? staffId = null;
         string? position = null;
         string? academicDegree = null;
@@ -135,8 +130,8 @@ public sealed class GetCurrentUserProfileQueryHandler
             DepartmentName = departmentName,
             InstituteId = instituteId,
             InstituteName = instituteName,
-            CurrentAcademicYearId = currentYear?.Id,
-            CurrentAcademicYearName = currentYear?.Name,
+            CurrentAcademicYearId = null,
+            CurrentAcademicYearName = null,
             StaffId = staffId,
             Position = position,
             AcademicDegree = academicDegree,

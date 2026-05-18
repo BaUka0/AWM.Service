@@ -1,4 +1,4 @@
-namespace AWM.Service.Application.Features.Common.Periods.Commands.ApproveDefensePeriods;
+namespace AWM.Service.Application.Features.Common.Stages.Commands.ApproveDefenseStages;
 
 using System;
 using System.Collections.Generic;
@@ -7,38 +7,34 @@ using System.Threading;
 using System.Threading.Tasks;
 using AWM.Service.Domain.Common;
 using AWM.Service.Domain.CommonDomain.Entities;
-using AWM.Service.Domain.CommonDomain.Enums;
 using AWM.Service.Domain.CommonDomain.Services;
 using AWM.Service.Domain.Repositories;
 using KDS.Primitives.FluentResult;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
-public sealed class ApproveDefensePeriodsCommandHandler : IRequestHandler<ApproveDefensePeriodsCommand, Result>
+public sealed class ApproveDefenseStagesCommandHandler : IRequestHandler<ApproveDefenseStagesCommand, Result>
 {
-    private readonly IPeriodRepository _periodRepository;
-    private readonly IAcademicYearRepository _academicYearRepository;
+    private readonly IStageRepository _stageRepository;
     private readonly ICommissionRepository _commissionRepository;
     private readonly IStudentWorkRepository _studentWorkRepository;
     private readonly IStudentRepository _studentRepository;
     private readonly ICurrentUserProvider _currentUserProvider;
     private readonly INotificationService _notificationService;
     private readonly IUnitOfWork _unitOfWork;
-    private readonly ILogger<ApproveDefensePeriodsCommandHandler> _logger;
+    private readonly ILogger<ApproveDefenseStagesCommandHandler> _logger;
 
-    public ApproveDefensePeriodsCommandHandler(
-        IPeriodRepository periodRepository,
-        IAcademicYearRepository academicYearRepository,
+    public ApproveDefenseStagesCommandHandler(
+        IStageRepository stageRepository,
         ICommissionRepository commissionRepository,
         IStudentWorkRepository studentWorkRepository,
         IStudentRepository studentRepository,
         ICurrentUserProvider currentUserProvider,
         INotificationService notificationService,
         IUnitOfWork unitOfWork,
-        ILogger<ApproveDefensePeriodsCommandHandler> logger)
+        ILogger<ApproveDefenseStagesCommandHandler> logger)
     {
-        _periodRepository = periodRepository ?? throw new ArgumentNullException(nameof(periodRepository));
-        _academicYearRepository = academicYearRepository ?? throw new ArgumentNullException(nameof(academicYearRepository));
+        _stageRepository = stageRepository ?? throw new ArgumentNullException(nameof(stageRepository));
         _commissionRepository = commissionRepository ?? throw new ArgumentNullException(nameof(commissionRepository));
         _studentWorkRepository = studentWorkRepository ?? throw new ArgumentNullException(nameof(studentWorkRepository));
         _studentRepository = studentRepository ?? throw new ArgumentNullException(nameof(studentRepository));
@@ -48,75 +44,71 @@ public sealed class ApproveDefensePeriodsCommandHandler : IRequestHandler<Approv
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    private static readonly HashSet<WorkflowStage> DefenseStages = new()
+    private static readonly HashSet<int> DefenseStages = new()
     {
-        WorkflowStage.PreDefense1,
-        WorkflowStage.PreDefense2,
-        WorkflowStage.PreDefense3,
-        WorkflowStage.FinalDefense
+        4, // PreDefense1
+        5, // PreDefense2
+        6, // PreDefense3
+        7  // FinalDefense
     };
 
-    public async Task<Result> Handle(ApproveDefensePeriodsCommand request, CancellationToken cancellationToken)
+    public async Task<Result> Handle(ApproveDefenseStagesCommand request, CancellationToken cancellationToken)
     {
         try
         {
             var userId = _currentUserProvider.UserId;
-            _logger.LogInformation("ApproveDefensePeriods for Dept={DeptId}, Year={YearId} by User={UserId}",
-                request.DepartmentId, request.AcademicYearId, userId);
+            _logger.LogInformation("ApproveDefenseStages for Dept={DeptId}, Year={YearId} by User={UserId}",
+                request.DepartmentId, request.SemesterId, userId);
 
             if (!userId.HasValue)
                 return Result.Failure(new Error("401", "User ID is not available."));
 
-            var academicYear = await _academicYearRepository.GetByIdAsync(request.AcademicYearId, cancellationToken);
-            if (academicYear is null)
-                return Result.Failure(new Error("404", $"Academic year with ID {request.AcademicYearId} not found."));
-
             // Validate that only defense stages are submitted
-            var invalidStages = request.Periods
-                .Where(p => !DefenseStages.Contains(p.WorkflowStage))
-                .Select(p => p.WorkflowStage)
+            var invalidStages = request.Stages
+                .Where(p => !DefenseStages.Contains(p.WorkflowStageId))
+                .Select(p => p.WorkflowStageId)
                 .ToList();
 
             if (invalidStages.Any())
                 return Result.Failure(new Error("400",
-                    $"Invalid stages for defense period approval: {string.Join(", ", invalidStages)}. Only PreDefense1/2/3 and FinalDefense are allowed."));
+                    $"Invalid stages for defense stage approval: {string.Join(", ", invalidStages)}. Only PreDefense1/2/3 and FinalDefense are allowed."));
 
-            var existingPeriods = await _periodRepository.GetTrackedByDepartmentAsync(
-                request.DepartmentId, request.AcademicYearId, cancellationToken);
-            var activePeriods = existingPeriods.Where(p => !p.IsDeleted).ToList();
+            var existingStages = await _stageRepository.GetTrackedByDepartmentAsync(
+                request.DepartmentId, request.SemesterId, cancellationToken);
+            var activeStages = existingStages.Where(p => !p.IsDeleted).ToList();
 
-            var groupedPeriods = request.Periods
-                .GroupBy(p => p.WorkflowStage)
+            var groupedStages = request.Stages
+                .GroupBy(p => p.WorkflowStageId)
                 .Select(g => g.First())
                 .ToList();
 
-            foreach (var requestedPeriod in groupedPeriods)
+            foreach (var requestedStage in groupedStages)
             {
-                var existing = activePeriods.FirstOrDefault(p => p.WorkflowStage == requestedPeriod.WorkflowStage);
+                var existing = activeStages.FirstOrDefault(p => p.WorkflowStageId == requestedStage.WorkflowStageId);
                 if (existing != null)
                 {
-                    existing.UpdateDates(requestedPeriod.StartDate, requestedPeriod.EndDate, userId.Value);
-                    await _periodRepository.UpdateAsync(existing, cancellationToken);
+                    existing.UpdateDates(requestedStage.StartDate, requestedStage.EndDate, userId.Value);
+                    await _stageRepository.UpdateAsync(existing, cancellationToken);
                 }
                 else
                 {
-                    var newPeriod = new Period(
+                    var newStage = new Stage(
                         request.DepartmentId,
-                        request.AcademicYearId,
-                        requestedPeriod.WorkflowStage,
-                        requestedPeriod.StartDate,
-                        requestedPeriod.EndDate,
+                        request.SemesterId,
+                        requestedStage.WorkflowStageId,
+                        requestedStage.StartDate,
+                        requestedStage.EndDate,
                         userId.Value);
-                    await _periodRepository.AddAsync(newPeriod, cancellationToken);
+                    await _stageRepository.AddAsync(newStage, cancellationToken);
                 }
             }
 
             // Notify students about pre-defense schedule
-            var preDefensePeriod = request.Periods.FirstOrDefault(p => p.WorkflowStage == WorkflowStage.PreDefense1);
-            if (preDefensePeriod != null)
+            var preDefenseStage = request.Stages.FirstOrDefault(p => p.WorkflowStageId == 4);
+            if (preDefenseStage != null)
             {
                 var works = await _studentWorkRepository.GetByDepartmentAsync(
-                    request.DepartmentId, request.AcademicYearId, cancellationToken);
+                    request.DepartmentId, request.SemesterId, cancellationToken);
                 var students = await _studentRepository.GetByIdsAsync(
                     works
                         .SelectMany(w => w.Participants.Select(p => p.StudentId))
@@ -133,14 +125,14 @@ public sealed class ApproveDefensePeriodsCommandHandler : IRequestHandler<Approv
                         studentUserIds,
                         "Расписание предзащит утверждено",
                         userId.Value,
-                        $"Период предзащит утвержден. Первая предзащита: {preDefensePeriod.StartDate:dd.MM.yyyy} - {preDefensePeriod.EndDate:dd.MM.yyyy}.",
+                        $"Период предзащит утвержден. Первая предзащита: {preDefenseStage.StartDate:dd.MM.yyyy} - {preDefenseStage.EndDate:dd.MM.yyyy}.",
                         cancellationToken: cancellationToken);
                 }
             }
 
             // Notify commission members
             var commissions = await _commissionRepository.GetByDepartmentAsync(
-                request.DepartmentId, request.AcademicYearId, cancellationToken);
+                request.DepartmentId, request.SemesterId, cancellationToken);
             var memberUserIds = commissions
                 .SelectMany(c => c.Members.Select(m => m.UserId))
                 .Distinct()
@@ -161,12 +153,12 @@ public sealed class ApproveDefensePeriodsCommandHandler : IRequestHandler<Approv
         }
         catch (ArgumentException argEx)
         {
-            _logger.LogWarning(argEx, "ApproveDefensePeriods validation failed: {Message}", argEx.Message);
+            _logger.LogWarning(argEx, "ApproveDefenseStages validation failed: {Message}", argEx.Message);
             return Result.Failure(new Error("400", argEx.Message));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "ApproveDefensePeriods failed for Dept={DeptId}", request.DepartmentId);
+            _logger.LogError(ex, "ApproveDefenseStages failed for Dept={DeptId}", request.DepartmentId);
             return Result.Failure(new Error("500", $"An error occurred: {ex.Message}"));
         }
     }

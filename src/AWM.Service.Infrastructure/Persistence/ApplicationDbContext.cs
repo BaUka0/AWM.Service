@@ -42,8 +42,10 @@ public sealed class ApplicationDbContext : DbContext
     #endregion
 
     #region Common Schema
-    public DbSet<AcademicYear> AcademicYears => Set<AcademicYear>();
-    public DbSet<Period> Periods => Set<Period>();
+    public DbSet<SemesterType> SemesterTypes => Set<SemesterType>();
+    public DbSet<Semester> Semesters => Set<Semester>();
+    public DbSet<WorkflowStage> WorkflowStages => Set<WorkflowStage>();
+    public DbSet<Stage> Stages => Set<Stage>();
     public DbSet<NotificationTemplate> NotificationTemplates => Set<NotificationTemplate>();
     public DbSet<Notification> Notifications => Set<Notification>();
     #endregion

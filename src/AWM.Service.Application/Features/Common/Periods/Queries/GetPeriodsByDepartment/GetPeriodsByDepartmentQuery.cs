@@ -1,11 +1,11 @@
-namespace AWM.Service.Application.Features.Common.Periods.Queries.GetPeriodsByDepartment;
+namespace AWM.Service.Application.Features.Common.Stages.Queries.GetStagesByDepartment;
 
-using AWM.Service.Application.Features.Common.Periods.DTOs;
+using AWM.Service.Application.Features.Common.Stages.DTOs;
 using KDS.Primitives.FluentResult;
 using MediatR;
 
-public sealed record GetPeriodsByDepartmentQuery : IRequest<Result<IReadOnlyList<PeriodDto>>>
+public sealed record GetStagesByDepartmentQuery : IRequest<Result<IReadOnlyList<StageDto>>>
 {
     public int DepartmentId { get; init; }
-    public int AcademicYearId { get; init; }
+    public int SemesterId { get; init; }
 }

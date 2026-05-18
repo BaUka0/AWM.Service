@@ -1,13 +1,13 @@
-namespace AWM.Service.Application.Features.Common.Periods.Commands.UpdatePeriod;
+namespace AWM.Service.Application.Features.Common.Stages.Commands.UpdateStage;
 
 using FluentValidation;
 
-public sealed class UpdatePeriodCommandValidator : AbstractValidator<UpdatePeriodCommand>
+public sealed class UpdateStageCommandValidator : AbstractValidator<UpdateStageCommand>
 {
-    public UpdatePeriodCommandValidator()
+    public UpdateStageCommandValidator()
     {
-        RuleFor(x => x.PeriodId)
-            .GreaterThan(0).WithMessage("Period ID must be greater than 0.");
+        RuleFor(x => x.StageId)
+            .GreaterThan(0).WithMessage("Stage ID must be greater than 0.");
 
         RuleFor(x => x.EndDate)
             .GreaterThan(x => x.StartDate).WithMessage("End date must be after start date.")

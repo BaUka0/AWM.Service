@@ -91,12 +91,6 @@ public class TopicConfiguration : SoftDeletableEntityConfiguration<Topic, long>
             .HasConstraintName("FK_Topics_Direction")
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne<AcademicYear>()
-            .WithMany()
-            .HasForeignKey(e => e.AcademicYearId)
-            .HasConstraintName("FK_Topics_Year")
-            .OnDelete(DeleteBehavior.Restrict);
-
         builder.HasOne<Department>()
             .WithMany()
             .HasForeignKey(e => e.DepartmentId)

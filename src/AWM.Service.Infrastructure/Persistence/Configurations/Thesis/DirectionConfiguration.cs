@@ -91,12 +91,6 @@ public class DirectionConfiguration : SoftDeletableEntityConfiguration<Direction
             .HasConstraintName("FK_Directions_Supervisor")
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne<AcademicYear>()
-            .WithMany()
-            .HasForeignKey(e => e.AcademicYearId)
-            .HasConstraintName("FK_Directions_Year")
-            .OnDelete(DeleteBehavior.Restrict);
-
         builder.HasOne<WorkType>()
             .WithMany()
             .HasForeignKey(e => e.WorkTypeId)

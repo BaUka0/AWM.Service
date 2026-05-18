@@ -2,7 +2,6 @@ namespace AWM.Service.Application.Features.Thesis.Applications.Commands.CreateAp
 
 using AWM.Service.Domain.Repositories;
 using AWM.Service.Domain.Common;
-using AWM.Service.Domain.CommonDomain.Enums;
 using AWM.Service.Domain.CommonDomain.Services;
 using AWM.Service.Domain.Thesis.Entities;
 using KDS.Primitives.FluentResult;
@@ -20,7 +19,7 @@ public sealed class CreateApplicationCommandHandler : IRequestHandler<CreateAppl
     private readonly IStudentRepository _studentRepository;
     private readonly IStaffRepository _staffRepository;
     private readonly ICurrentUserProvider _currentUserProvider;
-    private readonly IPeriodValidationService _periodValidationService;
+    private readonly IStageValidationService _stageValidationService;
     private readonly INotificationService _notificationService;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<CreateApplicationCommandHandler> _logger;
@@ -31,7 +30,7 @@ public sealed class CreateApplicationCommandHandler : IRequestHandler<CreateAppl
         IStudentRepository studentRepository,
         IStaffRepository staffRepository,
         ICurrentUserProvider currentUserProvider,
-        IPeriodValidationService periodValidationService,
+        IStageValidationService stageValidationService,
         INotificationService notificationService,
         IUnitOfWork unitOfWork,
         ILogger<CreateApplicationCommandHandler> logger)
@@ -41,7 +40,7 @@ public sealed class CreateApplicationCommandHandler : IRequestHandler<CreateAppl
         _studentRepository = studentRepository;
         _staffRepository = staffRepository;
         _currentUserProvider = currentUserProvider;
-        _periodValidationService = periodValidationService;
+        _stageValidationService = stageValidationService;
         _notificationService = notificationService;
         _unitOfWork = unitOfWork;
         _logger = logger;
@@ -90,10 +89,10 @@ public sealed class CreateApplicationCommandHandler : IRequestHandler<CreateAppl
             return Result.Failure<long>(new Error("Topic.NotApproved", "This topic is not yet approved for student applications."));
         }
 
-        // 3a. Validate that TopicSelection period is open
-        var (isAllowed, errorMessage) = await _periodValidationService
-            .ValidateOperationInPeriodAsync(topic.DepartmentId, topic.AcademicYearId,
-                WorkflowStage.TopicSelection, cancellationToken);
+        // 3a. Validate that TopicSelection stage is open
+        var (isAllowed, errorMessage) = await _stageValidationService
+            .ValidateOperationInStageAsync(topic.DepartmentId, topic.AcademicYearId,
+                3, cancellationToken);
 
         if (!isAllowed)
         {

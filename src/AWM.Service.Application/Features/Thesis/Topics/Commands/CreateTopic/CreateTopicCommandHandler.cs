@@ -1,7 +1,6 @@
 namespace AWM.Service.Application.Features.Thesis.Topics.Commands.CreateTopic;
 
 using AWM.Service.Domain.Common;
-using AWM.Service.Domain.CommonDomain.Enums;
 using AWM.Service.Domain.CommonDomain.Services;
 using AWM.Service.Domain.Repositories;
 using AWM.Service.Domain.Thesis.Entities;
@@ -17,7 +16,7 @@ public sealed class CreateTopicCommandHandler : IRequestHandler<CreateTopicComma
     private readonly ITopicRepository _topicRepository;
     private readonly IDirectionRepository _directionRepository;
     private readonly IStaffRepository _staffRepository;
-    private readonly IPeriodValidationService _periodValidationService;
+    private readonly IStageValidationService _stageValidationService;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICurrentUserProvider _currentUserProvider;
     private readonly ILogger<CreateTopicCommandHandler> _logger;
@@ -26,7 +25,7 @@ public sealed class CreateTopicCommandHandler : IRequestHandler<CreateTopicComma
         ITopicRepository topicRepository,
         IDirectionRepository directionRepository,
         IStaffRepository staffRepository,
-        IPeriodValidationService periodValidationService,
+        IStageValidationService stageValidationService,
         IUnitOfWork unitOfWork,
         ICurrentUserProvider currentUserProvider,
         ILogger<CreateTopicCommandHandler> logger)
@@ -34,7 +33,7 @@ public sealed class CreateTopicCommandHandler : IRequestHandler<CreateTopicComma
         _topicRepository = topicRepository ?? throw new ArgumentNullException(nameof(topicRepository));
         _directionRepository = directionRepository ?? throw new ArgumentNullException(nameof(directionRepository));
         _staffRepository = staffRepository ?? throw new ArgumentNullException(nameof(staffRepository));
-        _periodValidationService = periodValidationService ?? throw new ArgumentNullException(nameof(periodValidationService));
+        _stageValidationService = stageValidationService ?? throw new ArgumentNullException(nameof(stageValidationService));
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
         _currentUserProvider = currentUserProvider ?? throw new ArgumentNullException(nameof(currentUserProvider));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -54,10 +53,10 @@ public sealed class CreateTopicCommandHandler : IRequestHandler<CreateTopicComma
                 return Result.Failure<long>(new Error("401", "User ID is not available."));
             }
 
-            // Validate that TopicCreation period is open
-            var (isAllowed, errorMessage) = await _periodValidationService
-                .ValidateOperationInPeriodAsync(request.DepartmentId, request.AcademicYearId,
-                    WorkflowStage.TopicCreation, cancellationToken);
+            // Validate that TopicCreation stage is open
+            var (isAllowed, errorMessage) = await _stageValidationService
+                .ValidateOperationInStageAsync(request.DepartmentId, request.AcademicYearId,
+                    2, cancellationToken);
 
             if (!isAllowed)
             {

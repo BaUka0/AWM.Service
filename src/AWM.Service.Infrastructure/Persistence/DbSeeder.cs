@@ -5,7 +5,6 @@ using AWM.Service.Domain.Auth.Entities;
 using AWM.Service.Domain.Auth.RbacPlus.Entities;
 using AWM.Service.Domain.Auth.Interfaces;
 using AWM.Service.Domain.CommonDomain.Entities;
-using AWM.Service.Domain.CommonDomain.Enums;
 using AWM.Service.Domain.Edu.Entities;
 using AWM.Service.Domain.Org.Entities;
 using AWM.Service.Domain.Thesis.Entities;
@@ -318,22 +317,7 @@ public static class DbSeeder
         var userStudent2 = await db.Users.FirstAsync(u => u.Login == "student2");
         var userStudent3 = await db.Users.FirstAsync(u => u.Login == "student3");
 
-        // =======================================================
-        // 6. COMMON: Academic Year (current, 2025-2026)
-        // =======================================================
-        if (!await db.AcademicYears.AnyAsync())
-        {
-            var year = new AcademicYear(
-                "2025-2026",
-                new DateTime(2025, 9, 1, 0, 0, 0, DateTimeKind.Utc),
-                new DateTime(2026, 6, 30, 23, 59, 59, DateTimeKind.Utc),
-                userAdmin.Id);
-            year.SetAsCurrent(userAdmin.Id);
-            db.AcademicYears.Add(year);
-            await db.SaveChangesAsync();
-        }
 
-        var academicYear = await db.AcademicYears.FirstAsync(y => y.Name == "2025-2026");
 
         // =======================================================
         // 7. AUTH: User Access Assignments (RBAC+)
@@ -446,25 +430,70 @@ public static class DbSeeder
         var student3 = await db.Students.FirstAsync(s => s.UserId == userStudent3.Id);
 
         // =======================================================
-        // 12. COMMON: Periods (all WorkflowStages for CS dept)
+        // 6. COMMON: Semester Types
         // =======================================================
-        if (!await db.Periods.AnyAsync())
+        if (!await db.SemesterTypes.AnyAsync())
+        {
+            db.SemesterTypes.AddRange(
+                new SemesterType("Весна", 0),
+                new SemesterType("Лето", 0),
+                new SemesterType("Осень", 0),
+                new SemesterType("Зима", 0)
+            );
+            await db.SaveChangesAsync();
+        }
+
+        // =======================================================
+        // 7. COMMON: Workflow Stages
+        // =======================================================
+        if (!await db.WorkflowStages.AnyAsync())
+        {
+            db.WorkflowStages.AddRange(
+                new WorkflowStage("DirectionSubmission", 1),
+                new WorkflowStage("TopicCreation", 2),
+                new WorkflowStage("TopicSelection", 3),
+                new WorkflowStage("PreDefense1", 4),
+                new WorkflowStage("PreDefense2", 5),
+                new WorkflowStage("PreDefense3", 6),
+                new WorkflowStage("FinalDefense", 7)
+            );
+            await db.SaveChangesAsync();
+        }
+
+        // =======================================================
+        // 8. COMMON: Semesters
+        // =======================================================
+        if (!await db.Semesters.AnyAsync())
+        {
+            db.Semesters.AddRange(
+                new Semester(3, "Осень 2025", new DateTime(2025, 9, 1, 0, 0, 0, DateTimeKind.Utc), new DateTime(2026, 1, 31, 23, 59, 59, DateTimeKind.Utc), 2025, userAdmin.Id),
+                new Semester(1, "Весна 2026", new DateTime(2026, 2, 1, 0, 0, 0, DateTimeKind.Utc), new DateTime(2026, 6, 30, 23, 59, 59, DateTimeKind.Utc), 2025, userAdmin.Id)
+            );
+            await db.SaveChangesAsync();
+        }
+
+        var semester = await db.Semesters.FirstAsync();
+
+        // =======================================================
+        // 9. COMMON: Stages (all WorkflowStages for CS dept)
+        // =======================================================
+        if (!await db.Stages.AnyAsync())
         {
             var now = DateTime.UtcNow;
-            db.Periods.AddRange(
-                new Period(departmentCS.Id, academicYear.Id, WorkflowStage.DirectionSubmission,
+            db.Stages.AddRange(
+                new Stage(departmentCS.Id, semester.Id, 1,
                     now.AddMonths(-2), now.AddMonths(1), userAdmin.Id),
-                new Period(departmentCS.Id, academicYear.Id, WorkflowStage.TopicCreation,
+                new Stage(departmentCS.Id, semester.Id, 2,
                     now.AddMonths(-1), now.AddMonths(2), userAdmin.Id),
-                new Period(departmentCS.Id, academicYear.Id, WorkflowStage.TopicSelection,
+                new Stage(departmentCS.Id, semester.Id, 3,
                     now.AddDays(-15), now.AddMonths(3), userAdmin.Id),
-                new Period(departmentCS.Id, academicYear.Id, WorkflowStage.PreDefense1,
+                new Stage(departmentCS.Id, semester.Id, 4,
                     now.AddMonths(3), now.AddMonths(4), userAdmin.Id),
-                new Period(departmentCS.Id, academicYear.Id, WorkflowStage.PreDefense2,
+                new Stage(departmentCS.Id, semester.Id, 5,
                     now.AddMonths(4), now.AddMonths(5), userAdmin.Id),
-                new Period(departmentCS.Id, academicYear.Id, WorkflowStage.PreDefense3,
+                new Stage(departmentCS.Id, semester.Id, 6,
                     now.AddMonths(5), now.AddMonths(6), userAdmin.Id),
-                new Period(departmentCS.Id, academicYear.Id, WorkflowStage.FinalDefense,
+                new Stage(departmentCS.Id, semester.Id, 7,
                     now.AddMonths(6), now.AddMonths(7), userAdmin.Id)
             );
             await db.SaveChangesAsync();
@@ -569,7 +598,7 @@ public static class DbSeeder
         {
             // Direction in Draft state
             var dirDraft = new Direction(
-                departmentCS.Id, staffSupervisor1.Id, academicYear.Id, workTypeDiploma.Id,
+                departmentCS.Id, staffSupervisor1.Id, semester.Id, workTypeDiploma.Id,
                 "Искусственный интеллект в обработке данных",
                 stateDirDraft.Id,
                 titleKz: "Мәліметтерді өңдеуде жасанды интеллект",
@@ -578,7 +607,7 @@ public static class DbSeeder
 
             // Direction that went through workflow → Approved
             var dirApproved = new Direction(
-                departmentCS.Id, staffSupervisor1.Id, academicYear.Id, workTypeDiploma.Id,
+                departmentCS.Id, staffSupervisor1.Id, semester.Id, workTypeDiploma.Id,
                 "Разработка web-приложений с использованием микросервисов",
                 stateDirApproved.Id,
                 titleKz: "Микросервистерді қолдана отырып web-қосымшаларды әзірлеу",
@@ -597,7 +626,7 @@ public static class DbSeeder
         if (!await db.Topics.AnyAsync())
         {
             var topicIndividual = new Topic(
-                departmentCS.Id, staffSupervisor1.Id, academicYear.Id, workTypeDiploma.Id,
+                departmentCS.Id, staffSupervisor1.Id, semester.Id, workTypeDiploma.Id,
                 "Разработка системы рекомендаций на основе collaborative filtering",
                 directionApproved.Id,
                 titleKz: "Collaborative filtering негізінде ұсыныс жүйесін әзірлеу",
@@ -607,7 +636,7 @@ public static class DbSeeder
             topicIndividual.Approve(); // Approve for student selection
 
             var topicTeam = new Topic(
-                departmentCS.Id, staffSupervisor1.Id, academicYear.Id, workTypeDiploma.Id,
+                departmentCS.Id, staffSupervisor1.Id, semester.Id, workTypeDiploma.Id,
                 "Разработка платформы для управления дипломными работами",
                 directionApproved.Id,
                 titleKz: "Дипломдық жұмыстарды басқару платформасын әзірлеу",
@@ -645,7 +674,7 @@ public static class DbSeeder
         if (!await db.StudentWorks.AnyAsync())
         {
             var work = new StudentWork(
-                academicYear.Id, departmentCS.Id, stateWorkDraft.Id, userStudent1.Id,
+                semester.Id, departmentCS.Id, stateWorkDraft.Id, userStudent1.Id,
                 topicForApplication.Id);
 
             work.AddParticipant(student1.Id, ParticipantRole.Leader);

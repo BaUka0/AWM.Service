@@ -1,7 +1,6 @@
 namespace AWM.Service.Application.Features.Thesis.Directions.Commands.SubmitDirection;
 
 using AWM.Service.Domain.Common;
-using AWM.Service.Domain.CommonDomain.Enums;
 using AWM.Service.Domain.CommonDomain.Services;
 using AWM.Service.Domain.Repositories;
 using AWM.Service.Domain.Wf.Entities;
@@ -19,7 +18,7 @@ public sealed class SubmitDirectionCommandHandler
     private readonly IWorkflowRepository _workflowRepository;
     private readonly IStaffRepository _staffRepository;
     private readonly ICurrentUserProvider _currentUserProvider;
-    private readonly IPeriodValidationService _periodValidationService;
+    private readonly IStageValidationService _stageValidationService;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<SubmitDirectionCommandHandler> _logger;
 
@@ -28,7 +27,7 @@ public sealed class SubmitDirectionCommandHandler
         IWorkflowRepository workflowRepository,
         IStaffRepository staffRepository,
         ICurrentUserProvider currentUserProvider,
-        IPeriodValidationService periodValidationService,
+        IStageValidationService stageValidationService,
         IUnitOfWork unitOfWork,
         ILogger<SubmitDirectionCommandHandler> logger)
     {
@@ -36,7 +35,7 @@ public sealed class SubmitDirectionCommandHandler
         _workflowRepository = workflowRepository;
         _staffRepository = staffRepository;
         _currentUserProvider = currentUserProvider;
-        _periodValidationService = periodValidationService;
+        _stageValidationService = stageValidationService;
         _unitOfWork = unitOfWork;
         _logger = logger;
     }
@@ -69,10 +68,10 @@ public sealed class SubmitDirectionCommandHandler
                 $"Direction with ID {request.Id} has been deleted."));
         }
 
-        // Validate that DirectionSubmission period is open
-        var (isAllowed, errorMessage) = await _periodValidationService
-            .ValidateOperationInPeriodAsync(direction.DepartmentId, direction.AcademicYearId,
-                WorkflowStage.DirectionSubmission, cancellationToken);
+        // Validate that DirectionSubmission stage is open
+        var (isAllowed, errorMessage) = await _stageValidationService
+            .ValidateOperationInStageAsync(direction.DepartmentId, direction.AcademicYearId,
+                1, cancellationToken);
 
         if (!isAllowed)
         {

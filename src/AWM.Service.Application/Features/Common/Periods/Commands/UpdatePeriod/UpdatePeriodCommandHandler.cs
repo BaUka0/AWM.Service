@@ -1,4 +1,4 @@
-namespace AWM.Service.Application.Features.Common.Periods.Commands.UpdatePeriod;
+namespace AWM.Service.Application.Features.Common.Stages.Commands.UpdateStage;
 
 using AWM.Service.Domain.Common;
 using AWM.Service.Domain.Repositories;
@@ -6,81 +6,81 @@ using KDS.Primitives.FluentResult;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
-public sealed class UpdatePeriodCommandHandler : IRequestHandler<UpdatePeriodCommand, Result>
+public sealed class UpdateStageCommandHandler : IRequestHandler<UpdateStageCommand, Result>
 {
-    private readonly IPeriodRepository _periodRepository;
+    private readonly IStageRepository _stageRepository;
     private readonly ICurrentUserProvider _currentUserProvider;
     private readonly IUnitOfWork _unitOfWork;
-    private readonly ILogger<UpdatePeriodCommandHandler> _logger;
+    private readonly ILogger<UpdateStageCommandHandler> _logger;
 
-    public UpdatePeriodCommandHandler(
-        IPeriodRepository periodRepository,
+    public UpdateStageCommandHandler(
+        IStageRepository stageRepository,
         ICurrentUserProvider currentUserProvider,
         IUnitOfWork unitOfWork,
-        ILogger<UpdatePeriodCommandHandler> logger)
+        ILogger<UpdateStageCommandHandler> logger)
     {
-        _periodRepository = periodRepository ?? throw new ArgumentNullException(nameof(periodRepository));
+        _stageRepository = stageRepository ?? throw new ArgumentNullException(nameof(stageRepository));
         _currentUserProvider = currentUserProvider ?? throw new ArgumentNullException(nameof(currentUserProvider));
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task<Result> Handle(UpdatePeriodCommand request, CancellationToken cancellationToken)
+    public async Task<Result> Handle(UpdateStageCommand request, CancellationToken cancellationToken)
     {
         try
         {
             var userId = _currentUserProvider.UserId;
-            _logger.LogInformation("Attempting to update period ID={PeriodId} by User={UserId}", request.PeriodId, userId);
+            _logger.LogInformation("Attempting to update stage ID={StageId} by User={UserId}", request.StageId, userId);
 
-            var period = await _periodRepository.GetByIdAsync(request.PeriodId, cancellationToken);
-            if (period is null || period.IsDeleted)
+            var stage = await _stageRepository.GetByIdAsync(request.StageId, cancellationToken);
+            if (stage is null || stage.IsDeleted)
             {
-                _logger.LogWarning("UpdatePeriod failed: Period ID={PeriodId} not found.", request.PeriodId);
-                return Result.Failure(new Error("404", $"Period with ID {request.PeriodId} not found."));
+                _logger.LogWarning("UpdateStage failed: Stage ID={StageId} not found.", request.StageId);
+                return Result.Failure(new Error("404", $"Stage with ID {request.StageId} not found."));
             }
 
             if (!userId.HasValue)
             {
-                _logger.LogWarning("UpdatePeriod failed: User ID is not available.");
+                _logger.LogWarning("UpdateStage failed: User ID is not available.");
                 return Result.Failure(new Error("401", "User ID is not available."));
             }
 
             if (request.StartDate.HasValue && request.EndDate.HasValue)
             {
-                period.UpdateDates(request.StartDate.Value, request.EndDate.Value, userId.Value);
+                stage.UpdateDates(request.StartDate.Value, request.EndDate.Value, userId.Value);
             }
             else if (request.StartDate.HasValue)
             {
-                period.UpdateDates(request.StartDate.Value, period.EndDate, userId.Value);
+                stage.UpdateDates(request.StartDate.Value, stage.EndDate, userId.Value);
             }
             else if (request.EndDate.HasValue)
             {
-                period.UpdateDates(period.StartDate, request.EndDate.Value, userId.Value);
+                stage.UpdateDates(stage.StartDate, request.EndDate.Value, userId.Value);
             }
 
             if (request.IsActive.HasValue)
             {
                 if (request.IsActive.Value)
-                    period.Activate(userId.Value);
+                    stage.Activate(userId.Value);
                 else
-                    period.Deactivate(userId.Value);
+                    stage.Deactivate(userId.Value);
             }
 
-            await _periodRepository.UpdateAsync(period, cancellationToken);
+            await _stageRepository.UpdateAsync(stage, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-            _logger.LogInformation("Successfully updated period ID={PeriodId}", request.PeriodId);
+            _logger.LogInformation("Successfully updated stage ID={StageId}", request.StageId);
             return Result.Success();
         }
         catch (ArgumentException argEx)
         {
-            _logger.LogWarning(argEx, "UpdatePeriod validation failed for ID={PeriodId}: {Message}", request.PeriodId, argEx.Message);
+            _logger.LogWarning(argEx, "UpdateStage validation failed for ID={StageId}: {Message}", request.StageId, argEx.Message);
             return Result.Failure(new Error("400", argEx.Message));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "UpdatePeriod failed for ID={PeriodId}", request.PeriodId);
-            return Result.Failure(new Error("500", $"An error occurred while updating the Period: {ex.Message}"));
+            _logger.LogError(ex, "UpdateStage failed for ID={StageId}", request.StageId);
+            return Result.Failure(new Error("500", $"An error occurred while updating the Stage: {ex.Message}"));
         }
     }
 }

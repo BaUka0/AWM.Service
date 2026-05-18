@@ -1,27 +1,27 @@
-namespace AWM.Service.Application.Features.Common.Periods.Commands.ApproveInitialPeriods;
+namespace AWM.Service.Application.Features.Common.Stages.Commands.ApproveInitialStages;
 
 using FluentValidation;
 
-public sealed class ApproveInitialPeriodsCommandValidator : AbstractValidator<ApproveInitialPeriodsCommand>
+public sealed class ApproveInitialStagesCommandValidator : AbstractValidator<ApproveInitialStagesCommand>
 {
-    public ApproveInitialPeriodsCommandValidator()
+    public ApproveInitialStagesCommandValidator()
     {
         RuleFor(x => x.DepartmentId)
             .GreaterThan(0)
             .WithMessage("Department ID must be specified.");
 
-        RuleFor(x => x.AcademicYearId)
+        RuleFor(x => x.SemesterId)
             .GreaterThan(0)
-            .WithMessage("Academic Year ID must be specified.");
+            .WithMessage("Semester ID must be specified.");
 
-        RuleFor(x => x.Periods)
+        RuleFor(x => x.Stages)
             .NotEmpty()
-            .WithMessage("At least one period must be provided.");
+            .WithMessage("At least one stage must be provided.");
 
-        RuleForEach(x => x.Periods).ChildRules(period =>
+        RuleForEach(x => x.Stages).ChildRules(stage =>
         {
-            period.RuleFor(p => p.EndDate)
-                .GreaterThan(p => p.StartDate)
+            stage.RuleFor(s => s.EndDate)
+                .GreaterThan(s => s.StartDate)
                 .WithMessage("End date must be after start date.");
         });
     }

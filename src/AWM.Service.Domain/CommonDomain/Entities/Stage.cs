@@ -1,22 +1,22 @@
 namespace AWM.Service.Domain.CommonDomain.Entities;
 
 using AWM.Service.Domain.Common;
-using AWM.Service.Domain.CommonDomain.Enums;
+using AWM.Service.Domain.Org.Entities;
 using AWM.Service.Domain.Primitives;
 
 /// <summary>
-/// Period entity for managing workflow stage time ranges.
-/// Blocks actions outside of configured periods.
+/// Stage entity (formerly Period) for managing workflow stage time ranges.
+/// Maps to [Common].[Stages].
 /// </summary>
-public class Period : Entity<int>, IAuditable, ISoftDeletable
+public class Stage : Entity<int>, IAuditable, ISoftDeletable
 {
     public int DepartmentId { get; private set; }
-    public int AcademicYearId { get; private set; }
-    public WorkflowStage WorkflowStage { get; private set; }
+    public int SemesterId { get; private set; }
+    public int WorkflowStageId { get; private set; }
     public DateTime StartDate { get; private set; }
     public DateTime EndDate { get; private set; }
     public bool IsActive { get; private set; }
-    
+
     public DateTime CreatedAt { get; private set; }
     public int CreatedBy { get; private set; }
     public DateTime? LastModifiedAt { get; private set; }
@@ -26,34 +26,25 @@ public class Period : Entity<int>, IAuditable, ISoftDeletable
     public DateTime? DeletedAt { get; private set; }
     public int? DeletedBy { get; private set; }
 
-    private Period() { }
+    private Stage() { }
 
-    public Period(
-        int departmentId,
-        int academicYearId,
-        WorkflowStage workflowStage,
-        DateTime startDate,
-        DateTime endDate,
-        int createdBy)
+    public Stage(int departmentId, int semesterId, int workflowStageId, DateTime startDate, DateTime endDate, int createdBy)
     {
         if (endDate <= startDate)
             throw new ArgumentException("End date must be after start date.", nameof(endDate));
 
         DepartmentId = departmentId;
-        AcademicYearId = academicYearId;
-        WorkflowStage = workflowStage;
+        SemesterId = semesterId;
+        WorkflowStageId = workflowStageId;
         StartDate = startDate;
         EndDate = endDate;
         IsActive = true;
-        
+
         CreatedAt = DateTime.UtcNow;
         CreatedBy = createdBy;
         IsDeleted = false;
     }
 
-    /// <summary>
-    /// Updates the period dates.
-    /// </summary>
     public void UpdateDates(DateTime startDate, DateTime endDate, int modifiedBy)
     {
         if (endDate <= startDate)
@@ -61,23 +52,16 @@ public class Period : Entity<int>, IAuditable, ISoftDeletable
 
         StartDate = startDate;
         EndDate = endDate;
-        
         LastModifiedAt = DateTime.UtcNow;
         LastModifiedBy = modifiedBy;
     }
 
-    /// <summary>
-    /// Checks if the current date is within this period.
-    /// </summary>
     public bool IsCurrentlyOpen()
     {
         var now = DateTime.UtcNow;
         return IsActive && !IsDeleted && now >= StartDate && now <= EndDate;
     }
 
-    /// <summary>
-    /// Deactivates the period.
-    /// </summary>
     public void Deactivate(int modifiedBy)
     {
         IsActive = false;
@@ -85,9 +69,6 @@ public class Period : Entity<int>, IAuditable, ISoftDeletable
         LastModifiedBy = modifiedBy;
     }
 
-    /// <summary>
-    /// Activates the period.
-    /// </summary>
     public void Activate(int modifiedBy)
     {
         IsActive = true;
@@ -95,9 +76,6 @@ public class Period : Entity<int>, IAuditable, ISoftDeletable
         LastModifiedBy = modifiedBy;
     }
 
-    /// <summary>
-    /// Soft deletes the period.
-    /// </summary>
     public void Delete(int deletedBy)
     {
         IsDeleted = true;
@@ -106,9 +84,6 @@ public class Period : Entity<int>, IAuditable, ISoftDeletable
         IsActive = false;
     }
 
-    /// <summary>
-    /// Gets the date range of this period.
-    /// </summary>
     public DateRange GetDateRange()
     {
         return DateRange.Create(StartDate, EndDate);

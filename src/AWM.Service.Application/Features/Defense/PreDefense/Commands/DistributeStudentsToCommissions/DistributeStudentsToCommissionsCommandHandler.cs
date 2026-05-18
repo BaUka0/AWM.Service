@@ -5,7 +5,6 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using AWM.Service.Domain.Common;
-using AWM.Service.Domain.CommonDomain.Enums;
 using AWM.Service.Domain.CommonDomain.Services;
 using AWM.Service.Domain.Defense.Entities;
 using AWM.Service.Domain.Defense.Enums;
@@ -22,7 +21,8 @@ public sealed class DistributeStudentsToCommissionsCommandHandler
     private readonly IScheduleRepository _scheduleRepository;
     private readonly IPreDefenseAttemptRepository _attemptRepository;
     private readonly IStudentRepository _studentRepository;
-    private readonly IPeriodValidationService _periodValidationService;
+    private readonly IStageValidationService _stageValidationService;
+
     private readonly INotificationService _notificationService;
     private readonly ICurrentUserProvider _currentUserProvider;
     private readonly IUnitOfWork _unitOfWork;
@@ -34,7 +34,8 @@ public sealed class DistributeStudentsToCommissionsCommandHandler
         IScheduleRepository scheduleRepository,
         IPreDefenseAttemptRepository attemptRepository,
         IStudentRepository studentRepository,
-        IPeriodValidationService periodValidationService,
+        IStageValidationService stageValidationService,
+
         INotificationService notificationService,
         ICurrentUserProvider currentUserProvider,
         IUnitOfWork unitOfWork,
@@ -45,7 +46,8 @@ public sealed class DistributeStudentsToCommissionsCommandHandler
         _scheduleRepository = scheduleRepository ?? throw new ArgumentNullException(nameof(scheduleRepository));
         _attemptRepository = attemptRepository ?? throw new ArgumentNullException(nameof(attemptRepository));
         _studentRepository = studentRepository ?? throw new ArgumentNullException(nameof(studentRepository));
-        _periodValidationService = periodValidationService ?? throw new ArgumentNullException(nameof(periodValidationService));
+        _stageValidationService = stageValidationService ?? throw new ArgumentNullException(nameof(stageValidationService));
+
         _notificationService = notificationService ?? throw new ArgumentNullException(nameof(notificationService));
         _currentUserProvider = currentUserProvider ?? throw new ArgumentNullException(nameof(currentUserProvider));
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
@@ -60,17 +62,17 @@ public sealed class DistributeStudentsToCommissionsCommandHandler
             if (!userId.HasValue)
                 return Result.Failure<int>(new Error("401", "User ID is not available."));
 
-            // Validate pre-defense period is open
-            var stage = request.PreDefenseNumber switch
+            // Validate pre-defense stage is open
+            var workflowStageId = request.PreDefenseNumber switch
             {
-                1 => WorkflowStage.PreDefense1,
-                2 => WorkflowStage.PreDefense2,
-                3 => WorkflowStage.PreDefense3,
-                _ => WorkflowStage.PreDefense1
+                1 => 4,
+                2 => 5,
+                3 => 6,
+                _ => 4
             };
 
-            var (isAllowed, errorMessage) = await _periodValidationService.ValidateOperationInPeriodAsync(
-                request.DepartmentId, request.AcademicYearId, stage, cancellationToken);
+            var (isAllowed, errorMessage) = await _stageValidationService.ValidateOperationInStageAsync(
+                request.DepartmentId, request.AcademicYearId, workflowStageId, cancellationToken);
             if (!isAllowed)
                 return Result.Failure<int>(new Error("400", errorMessage!));
 

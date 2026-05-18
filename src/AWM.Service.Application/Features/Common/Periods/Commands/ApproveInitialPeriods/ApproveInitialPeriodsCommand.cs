@@ -1,14 +1,13 @@
-namespace AWM.Service.Application.Features.Common.Periods.Commands.ApproveInitialPeriods;
+namespace AWM.Service.Application.Features.Common.Stages.Commands.ApproveInitialStages;
 
 using System;
 using System.Collections.Generic;
-using AWM.Service.Domain.CommonDomain.Enums;
 using KDS.Primitives.FluentResult;
 using MediatR;
 
-public record PeriodSettingsDto(WorkflowStage WorkflowStage, DateTime StartDate, DateTime EndDate);
+public record StageSettingsDto(int WorkflowStageId, DateTime StartDate, DateTime EndDate);
 
-public record ApproveInitialPeriodsCommand(
+public record ApproveInitialStagesCommand(
     int DepartmentId,
-    int AcademicYearId,
-    IReadOnlyList<PeriodSettingsDto> Periods) : IRequest<Result>;
+    int SemesterId,
+    IReadOnlyList<StageSettingsDto> Stages) : IRequest<Result>;

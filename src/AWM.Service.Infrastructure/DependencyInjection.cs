@@ -65,8 +65,10 @@ public static class DependencyInjection
         services.AddScoped<IUnitOfWork, UnitOfWork>();
 
         // Register Common Repositories (Critical)
-        services.AddScoped<IAcademicYearRepository, AcademicYearRepository>();
-        services.AddScoped<IPeriodRepository, PeriodRepository>();
+        services.AddScoped<ISemesterTypeRepository, SemesterTypeRepository>();
+        services.AddScoped<ISemesterRepository, SemesterRepository>();
+        services.AddScoped<IWorkflowStageRepository, WorkflowStageRepository>();
+        services.AddScoped<IStageRepository, StageRepository>();
         services.AddScoped<INotificationRepository, NotificationRepository>();
         services.AddScoped<INotificationTemplateRepository, NotificationTemplateRepository>();
 

@@ -19,7 +19,6 @@ public sealed class GetAvailableTopicsQueryHandler
     private readonly IUserRepository _userRepository;
     private readonly IStaffRepository _staffRepository;
     private readonly IWorkflowRepository _workflowRepository;
-    private readonly IAcademicYearRepository _academicYearRepository;
 
     public GetAvailableTopicsQueryHandler(
         ITopicRepository topicRepository,
@@ -27,8 +26,7 @@ public sealed class GetAvailableTopicsQueryHandler
         IDirectionRepository directionRepository,
         IUserRepository userRepository,
         IStaffRepository staffRepository,
-        IWorkflowRepository workflowRepository,
-        IAcademicYearRepository academicYearRepository)
+        IWorkflowRepository workflowRepository)
     {
         _topicRepository = topicRepository ?? throw new ArgumentNullException(nameof(topicRepository));
         _applicationRepository = applicationRepository ?? throw new ArgumentNullException(nameof(applicationRepository));
@@ -36,8 +34,8 @@ public sealed class GetAvailableTopicsQueryHandler
         _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
         _staffRepository = staffRepository ?? throw new ArgumentNullException(nameof(staffRepository));
         _workflowRepository = workflowRepository ?? throw new ArgumentNullException(nameof(workflowRepository));
-        _academicYearRepository = academicYearRepository ?? throw new ArgumentNullException(nameof(academicYearRepository));
     }
+
 
     public async Task<Result<IReadOnlyList<TopicDto>>> Handle(
         GetAvailableTopicsQuery request,
@@ -54,18 +52,12 @@ public sealed class GetAvailableTopicsQueryHandler
                     new Error("400", "Не удалось определить кафедру. Укажите departmentId или убедитесь, что у вас есть привязка к кафедре."));
             }
 
-            // Resolve AcademicYearId — use explicit value or auto-resolve from current active year
+            // AcademicYearId is required
             var academicYearId = request.AcademicYearId;
             if (!academicYearId.HasValue)
             {
-                var currentYear = await _academicYearRepository.GetCurrentAsync(cancellationToken);
-                academicYearId = currentYear?.Id;
-            }
-
-            if (!academicYearId.HasValue)
-            {
                 return Result.Failure<IReadOnlyList<TopicDto>>(
-                    new Error("400", "Не удалось определить учебный год. Укажите academicYearId или убедитесь, что в системе задан текущий учебный год."));
+                    new Error("400", "Academic year ID is required."));
             }
 
             // Retrieve available topics

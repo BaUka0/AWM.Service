@@ -1,14 +1,13 @@
-namespace AWM.Service.Application.Features.Common.Periods.Commands.CreatePeriod;
+namespace AWM.Service.Application.Features.Common.Stages.Commands.CreateStage;
 
-using AWM.Service.Domain.CommonDomain.Enums;
 using KDS.Primitives.FluentResult;
 using MediatR;
 
-public sealed record CreatePeriodCommand : IRequest<Result<int>>
+public sealed record CreateStageCommand : IRequest<Result<int>>
 {
     public int DepartmentId { get; init; }
-    public int AcademicYearId { get; init; }
-    public WorkflowStage WorkflowStage { get; init; }
+    public int SemesterId { get; init; }
+    public int WorkflowStageId { get; init; }
     public DateTime StartDate { get; init; }
     public DateTime EndDate { get; init; }
 }

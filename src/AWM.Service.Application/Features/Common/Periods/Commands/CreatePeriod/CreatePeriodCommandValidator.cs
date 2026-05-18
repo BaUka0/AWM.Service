@@ -1,19 +1,19 @@
-namespace AWM.Service.Application.Features.Common.Periods.Commands.CreatePeriod;
+namespace AWM.Service.Application.Features.Common.Stages.Commands.CreateStage;
 
 using FluentValidation;
 
-public sealed class CreatePeriodCommandValidator : AbstractValidator<CreatePeriodCommand>
+public sealed class CreateStageCommandValidator : AbstractValidator<CreateStageCommand>
 {
-    public CreatePeriodCommandValidator()
+    public CreateStageCommandValidator()
     {
         RuleFor(x => x.DepartmentId)
             .GreaterThan(0).WithMessage("Department ID must be greater than 0.");
 
-        RuleFor(x => x.AcademicYearId)
-            .GreaterThan(0).WithMessage("Academic Year ID must be greater than 0.");
+        RuleFor(x => x.SemesterId)
+            .GreaterThan(0).WithMessage("Semester ID must be greater than 0.");
 
-        RuleFor(x => x.WorkflowStage)
-            .IsInEnum().WithMessage("Invalid workflow stage.");
+        RuleFor(x => x.WorkflowStageId)
+            .GreaterThan(0).WithMessage("Invalid workflow stage.");
 
         RuleFor(x => x.StartDate)
             .NotEmpty().WithMessage("Start date is required.");

@@ -1,33 +1,33 @@
-namespace AWM.Service.Application.Features.Common.Periods.Queries.GetPeriodsByDepartment;
+namespace AWM.Service.Application.Features.Common.Stages.Queries.GetStagesByDepartment;
 
-using AWM.Service.Application.Features.Common.Periods.DTOs;
+using AWM.Service.Application.Features.Common.Stages.DTOs;
 using AWM.Service.Domain.Repositories;
 using KDS.Primitives.FluentResult;
 using MediatR;
 
-public sealed class GetPeriodsByDepartmentQueryHandler : IRequestHandler<GetPeriodsByDepartmentQuery, Result<IReadOnlyList<PeriodDto>>>
+public sealed class GetStagesByDepartmentQueryHandler : IRequestHandler<GetStagesByDepartmentQuery, Result<IReadOnlyList<StageDto>>>
 {
-    private readonly IPeriodRepository _periodRepository;
+    private readonly IStageRepository _stageRepository;
 
-    public GetPeriodsByDepartmentQueryHandler(IPeriodRepository periodRepository)
+    public GetStagesByDepartmentQueryHandler(IStageRepository stageRepository)
     {
-        _periodRepository = periodRepository ?? throw new ArgumentNullException(nameof(periodRepository));
+        _stageRepository = stageRepository ?? throw new ArgumentNullException(nameof(stageRepository));
     }
 
-    public async Task<Result<IReadOnlyList<PeriodDto>>> Handle(GetPeriodsByDepartmentQuery request, CancellationToken cancellationToken)
+    public async Task<Result<IReadOnlyList<StageDto>>> Handle(GetStagesByDepartmentQuery request, CancellationToken cancellationToken)
     {
         try
         {
-            var periods = await _periodRepository.GetByDepartmentAsync(request.DepartmentId, request.AcademicYearId, cancellationToken);
+            var stages = await _stageRepository.GetByDepartmentAsync(request.DepartmentId, request.SemesterId, cancellationToken);
 
-            var dtos = periods
+            var dtos = stages
                 .Where(p => !p.IsDeleted)
-                .Select(p => new PeriodDto
+                .Select(p => new StageDto
                 {
                     Id = p.Id,
                     DepartmentId = p.DepartmentId,
-                    AcademicYearId = p.AcademicYearId,
-                    WorkflowStage = p.WorkflowStage.ToString(),
+                    SemesterId = p.SemesterId,
+                    WorkflowStageId = p.WorkflowStageId,
                     StartDate = p.StartDate,
                     EndDate = p.EndDate,
                     IsActive = p.IsActive,
@@ -39,11 +39,11 @@ public sealed class GetPeriodsByDepartmentQueryHandler : IRequestHandler<GetPeri
                 })
                 .ToList();
 
-            return Result.Success<IReadOnlyList<PeriodDto>>(dtos);
+            return Result.Success<IReadOnlyList<StageDto>>(dtos);
         }
         catch (Exception ex)
         {
-            return Result.Failure<IReadOnlyList<PeriodDto>>(new Error("500", $"An error occurred: {ex.Message}"));
+            return Result.Failure<IReadOnlyList<StageDto>>(new Error("500", $"An error occurred: {ex.Message}"));
         }
     }
 }
