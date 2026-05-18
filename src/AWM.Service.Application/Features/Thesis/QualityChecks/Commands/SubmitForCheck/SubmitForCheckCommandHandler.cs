@@ -2,7 +2,6 @@ namespace AWM.Service.Application.Features.Thesis.QualityChecks.Commands.SubmitF
 
 using AWM.Service.Domain.Common;
 using AWM.Service.Domain.Repositories;
-using AWM.Service.Domain.Thesis.Enums;
 using KDS.Primitives.FluentResult;
 using MediatR;
 
@@ -56,9 +55,9 @@ public sealed class SubmitForCheckCommandHandler : IRequestHandler<SubmitForChec
             }
 
             // Validate check sequence: AntiPlagiarism requires NormControl to be passed
-            if (request.CheckType == CheckType.AntiPlagiarism)
+            if (request.CheckTypeId == 3)
             {
-                if (!work.HasPassedCheck(CheckType.NormControl))
+                if (!work.HasPassedCheck(1))
                 {
                     return Result.Failure<long>(new Error("BusinessRule.QualityCheck",
                         "NormControl must be passed before submitting for AntiPlagiarism check."));
@@ -66,8 +65,8 @@ public sealed class SubmitForCheckCommandHandler : IRequestHandler<SubmitForChec
 
                 // Rework cycle: if a previous AntiPlagiarism check failed, NormControl must be re-passed
                 // (latest passed NormControl must be newer than latest failed AntiPlagiarism)
-                var latestFailedPlagiarism = work.GetLatestCheck(CheckType.AntiPlagiarism);
-                var latestNormControl = work.GetLatestCheck(CheckType.NormControl);
+                var latestFailedPlagiarism = work.GetLatestCheck(3);
+                var latestNormControl = work.GetLatestCheck(1);
 
                 if (latestFailedPlagiarism is not null && !latestFailedPlagiarism.IsPassed
                     && latestNormControl is not null
@@ -82,7 +81,7 @@ public sealed class SubmitForCheckCommandHandler : IRequestHandler<SubmitForChec
             // Submit = create a "pending" check record (isPassed: false until expert reviews)
             // The expert will update the result later via RecordCheckResult
             var check = work.AddQualityCheck(
-                checkType: request.CheckType,
+                checkTypeId: request.CheckTypeId,
                 isPassed: false,
                 expertId: null,
                 comment: request.Comment);

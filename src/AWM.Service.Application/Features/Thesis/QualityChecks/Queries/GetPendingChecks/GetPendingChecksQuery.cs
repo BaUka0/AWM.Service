@@ -1,7 +1,6 @@
 namespace AWM.Service.Application.Features.Thesis.QualityChecks.Queries.GetPendingChecks;
 
 using AWM.Service.Application.Features.Thesis.QualityChecks.DTOs;
-using AWM.Service.Domain.Thesis.Enums;
 using KDS.Primitives.FluentResult;
 using MediatR;
 
@@ -24,5 +23,5 @@ public sealed record GetPendingChecksQuery : IRequest<Result<IReadOnlyList<Quali
     /// <summary>
     /// Optional check type filter. If null, returns all types.
     /// </summary>
-    public CheckType? CheckType { get; init; }
+    public int? CheckTypeId { get; init; }
 }

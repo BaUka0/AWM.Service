@@ -1,7 +1,6 @@
 namespace AWM.Service.WebAPI.Common.Contracts.Requests.Thesis;
 
 using System.Collections.Generic;
-using AWM.Service.Domain.Thesis.Enums;
 
 /// <summary>
 /// Request contract for assigning experts to quality check types.
@@ -29,8 +28,8 @@ public sealed record ExpertAssignmentItem
     public int UserId { get; init; }
 
     /// <summary>
-    /// Type of expertise (0=NormControl, 1=SoftwareCheck, 2=AntiPlagiarism).
+    /// Type of expertise (1=NormControl, 2=SoftwareCheck, 3=AntiPlagiarism).
     /// </summary>
-    /// <example>0</example>
-    public ExpertiseType ExpertiseType { get; init; }
+    /// <example>1</example>
+    public int ExpertiseType { get; init; }
 }

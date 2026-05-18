@@ -35,13 +35,13 @@ public sealed class GetPendingChecksQueryHandler
             var pendingChecks = works
                 .SelectMany(w => w.QualityChecks)
                 .Where(c => c.AssignedExpertId is null)
-                .Where(c => !request.CheckType.HasValue || c.CheckType == request.CheckType)
+                .Where(c => !request.CheckTypeId.HasValue || c.CheckTypeId == request.CheckTypeId)
                 .OrderBy(c => c.CheckedAt)
                 .Select(c => new QualityCheckDto
                 {
                     Id = c.Id,
                     WorkId = c.WorkId,
-                    CheckType = c.CheckType.ToString(),
+                    CheckType = c.CheckTypeId.ToString(),
                     AttemptNumber = c.AttemptNumber,
                     IsPassed = c.IsPassed,
                     ResultValue = c.ResultValue,

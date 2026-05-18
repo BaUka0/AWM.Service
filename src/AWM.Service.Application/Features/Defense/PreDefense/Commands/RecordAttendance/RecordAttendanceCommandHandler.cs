@@ -1,7 +1,6 @@
 namespace AWM.Service.Application.Features.Defense.PreDefense.Commands.RecordAttendance;
 
 using AWM.Service.Domain.Common;
-using AWM.Service.Domain.Defense.Enums;
 using AWM.Service.Domain.Repositories;
 using KDS.Primitives.FluentResult;
 using MediatR;
@@ -40,7 +39,7 @@ public sealed class RecordAttendanceCommandHandler : IRequestHandler<RecordAtten
                     $"PreDefenseAttempt with ID {request.AttemptId} not found."));
 
             // Determine action based on attendance status
-            if (request.AttendanceStatus == AttendanceStatus.Attended)
+            if (request.AttendanceStatusId == 1)
             {
                 // No-op: default status is Attended; no state changes needed.
                 return Result.Success();

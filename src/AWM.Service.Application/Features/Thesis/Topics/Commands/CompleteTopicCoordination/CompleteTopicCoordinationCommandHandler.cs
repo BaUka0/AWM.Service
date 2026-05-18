@@ -3,7 +3,6 @@ namespace AWM.Service.Application.Features.Thesis.Topics.Commands.CompleteTopicC
 using AWM.Service.Domain.Common;
 using AWM.Service.Domain.CommonDomain.Services;
 using AWM.Service.Domain.Repositories;
-using AWM.Service.Domain.Thesis.Enums;
 using KDS.Primitives.FluentResult;
 using MediatR;
 using Microsoft.Extensions.Logging;
@@ -75,7 +74,7 @@ public sealed class CompleteTopicCoordinationCommandHandler
             cancellationToken);
         var supervisorsById = supervisors.ToDictionary(s => s.Id);
         var pendingApplications = topics
-            .SelectMany(t => t.Applications.Where(a => a.Status == ApplicationStatus.Submitted))
+            .SelectMany(t => t.Applications.Where(a => a.StatusId == 1))
             .ToList();
         var studentsById = (await _studentRepository.GetByIdsAsync(
                 pendingApplications.Select(a => a.StudentId).Distinct(),
@@ -103,7 +102,7 @@ public sealed class CompleteTopicCoordinationCommandHandler
             // Reject all pending applications
             foreach (var app in topic.Applications)
             {
-                if (app.Status == ApplicationStatus.Submitted)
+                if (app.StatusId == 1)
                 {
                     // ReviewedBy: use JWT userId (admin audit, not a domain Staff FK)
                     app.Reject(userId.Value, "Этап согласования тем завершён.");

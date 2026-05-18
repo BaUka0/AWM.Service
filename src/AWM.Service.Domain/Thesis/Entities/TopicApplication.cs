@@ -1,7 +1,6 @@
 namespace AWM.Service.Domain.Thesis.Entities;
 
 using AWM.Service.Domain.Common;
-using AWM.Service.Domain.Thesis.Enums;
 
 /// <summary>
 /// Topic application entity - student's application to a topic.
@@ -12,7 +11,7 @@ public class TopicApplication : Entity<long>, IAuditable, ISoftDeletable
     public int StudentId { get; private set; }
     public string? MotivationLetter { get; private set; }
     public DateTime AppliedAt { get; private set; }
-    public ApplicationStatus Status { get; private set; }
+    public int StatusId { get; private set; }
     public DateTime? ReviewedAt { get; private set; }
     public int? ReviewedBy { get; private set; }
     public string? ReviewComment { get; private set; }
@@ -26,6 +25,11 @@ public class TopicApplication : Entity<long>, IAuditable, ISoftDeletable
     public DateTime? DeletedAt { get; private set; }
     public int? DeletedBy { get; private set; }
 
+    // Seeded reference IDs
+    private const int StatusSubmitted = 1;
+    private const int StatusAccepted = 2;
+    private const int StatusRejected = 3;
+
     private TopicApplication() { }
 
     public TopicApplication(long topicId, int studentId, string? motivationLetter = null)
@@ -34,7 +38,7 @@ public class TopicApplication : Entity<long>, IAuditable, ISoftDeletable
         StudentId = studentId;
         MotivationLetter = motivationLetter;
         AppliedAt = DateTime.UtcNow;
-        Status = ApplicationStatus.Submitted;
+        StatusId = StatusSubmitted;
 
         CreatedAt = AppliedAt;
         CreatedBy = studentId; // Student is the creator
@@ -46,10 +50,10 @@ public class TopicApplication : Entity<long>, IAuditable, ISoftDeletable
     /// </summary>
     public void Accept(int reviewedBy)
     {
-        if (Status != ApplicationStatus.Submitted)
+        if (StatusId != StatusSubmitted)
             throw new InvalidOperationException("Only submitted applications can be accepted.");
 
-        Status = ApplicationStatus.Accepted;
+        StatusId = StatusAccepted;
         ReviewedAt = DateTime.UtcNow;
         ReviewedBy = reviewedBy;
         ReviewComment = null;
@@ -63,10 +67,10 @@ public class TopicApplication : Entity<long>, IAuditable, ISoftDeletable
     /// </summary>
     public void Reject(int reviewedBy, string? comment = null)
     {
-        if (Status != ApplicationStatus.Submitted)
+        if (StatusId != StatusSubmitted)
             throw new InvalidOperationException("Only submitted applications can be rejected.");
 
-        Status = ApplicationStatus.Rejected;
+        StatusId = StatusRejected;
         ReviewedAt = DateTime.UtcNow;
         ReviewedBy = reviewedBy;
         ReviewComment = comment;
@@ -88,10 +92,10 @@ public class TopicApplication : Entity<long>, IAuditable, ISoftDeletable
     /// <summary>
     /// Checks if the application is pending review.
     /// </summary>
-    public bool IsPending => Status == ApplicationStatus.Submitted;
+    public bool IsPending => StatusId == StatusSubmitted;
 
     /// <summary>
     /// Checks if the application was accepted.
     /// </summary>
-    public bool IsAccepted => Status == ApplicationStatus.Accepted;
+    public bool IsAccepted => StatusId == StatusAccepted;
 }

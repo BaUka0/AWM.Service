@@ -1,7 +1,5 @@
 namespace AWM.Service.WebAPI.Common.Contracts.Requests.Defense;
 
-using AWM.Service.Domain.Defense.Enums;
-
 /// <summary>
 /// Request contract for creating a defense commission.
 /// </summary>
@@ -20,10 +18,10 @@ public sealed record CreateCommissionRequest
     public int AcademicYearId { get; init; }
 
     /// <summary>
-    /// Type of commission (0 = PreDefense, 1 = GAK).
+    /// Type of commission (1 = PreDefense, 2 = GAK).
     /// </summary>
-    /// <example>0</example>
-    public CommissionType CommissionType { get; init; }
+    /// <example>1</example>
+    public int CommissionType { get; init; }
 
     /// <summary>
     /// Custom name for the commission (optional — auto-generated if omitted).
@@ -46,5 +44,5 @@ public sealed record CreateCommissionRequest
 public record CreateCommissionMemberRequest
 {
     public int UserId { get; init; }
-    public RoleInCommission Role { get; init; }
+    public int Role { get; init; }
 }

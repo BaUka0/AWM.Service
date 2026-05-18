@@ -5,7 +5,6 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using AWM.Service.Domain.Common;
-using AWM.Service.Domain.Defense.Enums;
 using AWM.Service.Domain.Repositories;
 using KDS.Primitives.FluentResult;
 using MediatR;
@@ -51,7 +50,7 @@ public sealed class GeneratePreDefenseSlotsCommandHandler
                 return Result.Failure<int>(new Error("NotFound.Commission",
                     $"Commission with ID {request.CommissionId} not found."));
 
-            if (commission.CommissionType != CommissionType.PreDefense)
+            if (commission.CommissionTypeId != 1)
                 return Result.Failure<int>(new Error("BusinessRule.Commission",
                     "The specified commission is not a PreDefense commission."));
 

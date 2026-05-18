@@ -1,7 +1,6 @@
 namespace AWM.Service.Infrastructure.Persistence.Repositories.Defense;
 
 using AWM.Service.Domain.Defense.Entities;
-using AWM.Service.Domain.Defense.Enums;
 using AWM.Service.Domain.Repositories;
 using AWM.Service.Infrastructure.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -32,7 +31,7 @@ public sealed class CommissionRepository : RepositoryBase<Commission, int>, ICom
             .Include(c => c.Members)
             .Where(c => c.DepartmentId == departmentId &&
                         c.AcademicYearId == academicYearId)
-            .OrderBy(c => c.CommissionType)
+            .OrderBy(c => c.CommissionTypeId)
             .ThenBy(c => c.PreDefenseNumber)
             .ToListAsync(cancellationToken);
     }
@@ -41,7 +40,7 @@ public sealed class CommissionRepository : RepositoryBase<Commission, int>, ICom
     public async Task<IReadOnlyList<Commission>> GetByTypeAsync(
         int departmentId,
         int academicYearId,
-        CommissionType type,
+        int commissionTypeId,
         CancellationToken cancellationToken = default)
     {
         return await Context.Commissions
@@ -49,7 +48,7 @@ public sealed class CommissionRepository : RepositoryBase<Commission, int>, ICom
             .Include(c => c.Members)
             .Where(c => c.DepartmentId == departmentId &&
                         c.AcademicYearId == academicYearId &&
-                        c.CommissionType == type)
+                        c.CommissionTypeId == commissionTypeId)
             .OrderBy(c => c.PreDefenseNumber)
             .ToListAsync(cancellationToken);
     }

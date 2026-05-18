@@ -1,7 +1,5 @@
 namespace AWM.Service.WebAPI.Common.Contracts.Requests.Defense;
 
-using AWM.Service.Domain.Defense.Enums;
-
 /// <summary>
 /// Request contract for adding a member to a commission.
 /// </summary>
@@ -14,8 +12,8 @@ public sealed record AddCommissionMemberRequest
     public int UserId { get; init; }
 
     /// <summary>
-    /// Role of the member in the commission (0 = Member, 1 = Chairman, 2 = Secretary).
+    /// Role of the member in the commission (1 = Chairman, 2 = Secretary, 3 = Member).
     /// </summary>
     /// <example>1</example>
-    public RoleInCommission RoleInCommission { get; init; }
+    public int RoleInCommission { get; init; }
 }

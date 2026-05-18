@@ -4,7 +4,6 @@ using AWM.Service.Application.Features.Thesis.Applications.DTOs;
 
 using AWM.Service.Domain.Repositories;
 using AWM.Service.Domain.Common;
-using AWM.Service.Domain.Thesis.Enums;
 using KDS.Primitives.FluentResult;
 using MediatR;
 
@@ -87,9 +86,8 @@ public sealed class GetApplicationsByTopicQueryHandler
         // 4. Apply status filter if provided
         if (request.StatusFilter.HasValue)
         {
-            var statusEnum = (ApplicationStatus)request.StatusFilter.Value;
             applications = applications
-                .Where(a => a.Status == statusEnum)
+                .Where(a => a.StatusId == request.StatusFilter.Value)
                 .ToList();
         }
 

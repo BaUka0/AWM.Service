@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 using AWM.Service.Domain.Common;
 using AWM.Service.Domain.CommonDomain.Services;
 using AWM.Service.Domain.Defense.Entities;
-using AWM.Service.Domain.Defense.Enums;
 using AWM.Service.Domain.Repositories;
 using KDS.Primitives.FluentResult;
 using MediatR;
@@ -78,7 +77,7 @@ public sealed class DistributeStudentsToCommissionsCommandHandler
 
             // Get all PreDefense commissions for this round
             var commissions = await _commissionRepository.GetByTypeAsync(
-                request.DepartmentId, request.AcademicYearId, CommissionType.PreDefense, cancellationToken);
+                request.DepartmentId, request.AcademicYearId, 1, cancellationToken);
             var targetCommissions = commissions
                 .Where(c => c.PreDefenseNumber == request.PreDefenseNumber)
                 .ToList();

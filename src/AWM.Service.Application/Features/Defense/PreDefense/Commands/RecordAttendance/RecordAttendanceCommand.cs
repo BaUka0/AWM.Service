@@ -1,6 +1,5 @@
 namespace AWM.Service.Application.Features.Defense.PreDefense.Commands.RecordAttendance;
 
-using AWM.Service.Domain.Defense.Enums;
 using KDS.Primitives.FluentResult;
 using MediatR;
 
@@ -17,7 +16,7 @@ public sealed record RecordAttendanceCommand : IRequest<Result>
     /// <summary>
     /// Attendance status to record.
     /// </summary>
-    public AttendanceStatus AttendanceStatus { get; init; }
+    public int AttendanceStatusId { get; init; }
 
     /// <summary>
     /// If absent, whether the absence is excused.

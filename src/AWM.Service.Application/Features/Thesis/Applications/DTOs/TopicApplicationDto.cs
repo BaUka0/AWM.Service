@@ -1,8 +1,6 @@
 namespace AWM.Service.Application.Features.Thesis.Applications.DTOs;
 
 using AWM.Service.Domain.Thesis.Entities;
-using AWM.Service.Domain.Thesis.Enums;
-
 /// <summary>
 /// Data transfer object for topic applications.
 /// </summary>
@@ -36,9 +34,9 @@ public sealed record TopicApplicationDto
     public DateTime AppliedAt { get; init; }
 
     /// <summary>
-    /// Current status of the application.
+    /// Current status ID of the application (FK to Thesis.ApplicationStatuses).
     /// </summary>
-    public ApplicationStatus Status { get; init; }
+    public int StatusId { get; init; }
 
     /// <summary>
     /// Status as string for easier display.
@@ -101,8 +99,8 @@ public sealed record TopicApplicationDto
             StudentId = entity.StudentId,
             MotivationLetter = entity.MotivationLetter,
             AppliedAt = entity.AppliedAt,
-            Status = entity.Status,
-            StatusText = entity.Status.ToString(),
+            StatusId = entity.StatusId,
+            StatusText = entity.StatusId.ToString(),
             ReviewedAt = entity.ReviewedAt,
             ReviewedBy = entity.ReviewedBy,
             ReviewComment = entity.ReviewComment,

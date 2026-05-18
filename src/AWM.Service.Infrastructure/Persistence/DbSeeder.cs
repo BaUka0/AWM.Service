@@ -8,7 +8,7 @@ using AWM.Service.Domain.CommonDomain.Entities;
 using AWM.Service.Domain.Edu.Entities;
 using AWM.Service.Domain.Org.Entities;
 using AWM.Service.Domain.Thesis.Entities;
-using AWM.Service.Domain.Thesis.Enums;
+using AWM.Service.Domain.Defense.Entities;
 using AWM.Service.Domain.Wf.Entities;
 
 /// <summary>
@@ -410,6 +410,92 @@ public static class DbSeeder
         var staffSupervisor2 = await db.Staff.FirstAsync(s => s.UserId == userSupervisor2.Id);
 
         // =======================================================
+        // 10b. THESIS + DEFENSE + EDU: Reference tables (replacing enums)
+        // =======================================================
+        if (!await db.ApplicationStatuses.AnyAsync())
+        {
+            db.ApplicationStatuses.AddRange(
+                new ApplicationStatus(1, "Submitted"),
+                new ApplicationStatus(2, "Accepted"),
+                new ApplicationStatus(3, "Rejected")
+            );
+            await db.SaveChangesAsync();
+        }
+
+        if (!await db.ParticipantRoles.AnyAsync())
+        {
+            db.ParticipantRoles.AddRange(
+                new ParticipantRole(1, "Leader"),
+                new ParticipantRole(2, "Member")
+            );
+            await db.SaveChangesAsync();
+        }
+
+        if (!await db.AttachmentTypes.AnyAsync())
+        {
+            db.AttachmentTypes.AddRange(
+                new AttachmentType(1, "Draft"),
+                new AttachmentType(2, "Final"),
+                new AttachmentType(3, "Presentation"),
+                new AttachmentType(4, "Software"),
+                new AttachmentType(5, "Demo"),
+                new AttachmentType(6, "Handout")
+            );
+            await db.SaveChangesAsync();
+        }
+
+        if (!await db.CheckTypes.AnyAsync())
+        {
+            db.CheckTypes.AddRange(
+                new CheckType(1, "NormControl"),
+                new CheckType(2, "SoftwareCheck"),
+                new CheckType(3, "AntiPlagiarism")
+            );
+            await db.SaveChangesAsync();
+        }
+
+        if (!await db.CommissionTypes.AnyAsync())
+        {
+            db.CommissionTypes.AddRange(
+                new CommissionType(1, "PreDefense"),
+                new CommissionType(2, "GAK")
+            );
+            await db.SaveChangesAsync();
+        }
+
+        if (!await db.CommissionRoles.AnyAsync())
+        {
+            db.CommissionRoles.AddRange(
+                new CommissionRole(1, "Chairman"),
+                new CommissionRole(2, "Secretary"),
+                new CommissionRole(3, "Member")
+            );
+            await db.SaveChangesAsync();
+        }
+
+        if (!await db.AttendanceStatuses.AnyAsync())
+        {
+            db.AttendanceStatuses.AddRange(
+                new AttendanceStatus(1, "Attended"),
+                new AttendanceStatus(2, "Absent"),
+                new AttendanceStatus(3, "Excused")
+            );
+            await db.SaveChangesAsync();
+        }
+
+        if (!await db.StudentStatuses.AnyAsync())
+        {
+            db.StudentStatuses.AddRange(
+                new StudentStatus(1, "Active"),
+                new StudentStatus(2, "Graduated"),
+                new StudentStatus(3, "OnLeave"),
+                new StudentStatus(4, "Expelled"),
+                new StudentStatus(5, "Transferred")
+            );
+            await db.SaveChangesAsync();
+        }
+
+        // =======================================================
         // 11. EDU: Students
         // =======================================================
         if (!await db.Students.AnyAsync())
@@ -677,7 +763,7 @@ public static class DbSeeder
                 semester.Id, departmentCS.Id, stateWorkDraft.Id, userStudent1.Id,
                 topicForApplication.Id);
 
-            work.AddParticipant(student1.Id, ParticipantRole.Leader);
+            work.AddParticipant(student1.Id, 1); // Leader = 1
 
             db.StudentWorks.Add(work);
             await db.SaveChangesAsync();

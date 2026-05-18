@@ -1,7 +1,6 @@
 namespace AWM.Service.Domain.Edu.Entities;
 
 using AWM.Service.Domain.Common;
-using AWM.Service.Domain.Edu.Enums;
 
 /// <summary>
 /// Student entity - educational profile of a student.
@@ -13,7 +12,7 @@ public class Student : AggregateRoot<int>, IAuditable, ISoftDeletable
     public int AdmissionYear { get; private set; }
     public int CurrentCourse { get; private set; }
     public string? GroupCode { get; private set; }
-    public StudentStatus Status { get; private set; }
+    public int StatusId { get; private set; }
 
     public DateTime CreatedAt { get; private set; }
     public int CreatedBy { get; private set; }
@@ -23,6 +22,12 @@ public class Student : AggregateRoot<int>, IAuditable, ISoftDeletable
     public bool IsDeleted { get; private set; }
     public DateTime? DeletedAt { get; private set; }
     public int? DeletedBy { get; private set; }
+
+    // Seeded reference IDs
+    private const int StatusActive = 1;
+    private const int StatusGraduated = 2;
+    private const int StatusOnLeave = 3;
+    private const int StatusExpelled = 4;
 
     private Student() { }
 
@@ -36,7 +41,7 @@ public class Student : AggregateRoot<int>, IAuditable, ISoftDeletable
         AdmissionYear = admissionYear;
         CurrentCourse = currentCourse;
         GroupCode = groupCode;
-        Status = StudentStatus.Active;
+        StatusId = StatusActive;
         
         CreatedAt = DateTime.UtcNow;
         CreatedBy = createdBy;
@@ -50,7 +55,7 @@ public class Student : AggregateRoot<int>, IAuditable, ISoftDeletable
     {
         if (course <= CurrentCourse)
             throw new ArgumentException("New course must be higher than current.", nameof(course));
-        if (Status != StudentStatus.Active)
+        if (StatusId != StatusActive)
             throw new InvalidOperationException("Only active students can be promoted.");
 
         CurrentCourse = course;
@@ -63,10 +68,10 @@ public class Student : AggregateRoot<int>, IAuditable, ISoftDeletable
     /// </summary>
     public void Graduate(int modifiedBy)
     {
-        if (Status != StudentStatus.Active)
+        if (StatusId != StatusActive)
             throw new InvalidOperationException("Only active students can graduate.");
 
-        Status = StudentStatus.Graduated;
+        StatusId = StatusGraduated;
         LastModifiedAt = DateTime.UtcNow;
         LastModifiedBy = modifiedBy;
     }
@@ -76,10 +81,10 @@ public class Student : AggregateRoot<int>, IAuditable, ISoftDeletable
     /// </summary>
     public void TakeLeave(int modifiedBy)
     {
-        if (Status != StudentStatus.Active)
+        if (StatusId != StatusActive)
             throw new InvalidOperationException("Only active students can take leave.");
 
-        Status = StudentStatus.OnLeave;
+        StatusId = StatusOnLeave;
         LastModifiedAt = DateTime.UtcNow;
         LastModifiedBy = modifiedBy;
     }
@@ -89,10 +94,10 @@ public class Student : AggregateRoot<int>, IAuditable, ISoftDeletable
     /// </summary>
     public void ReturnFromLeave(int modifiedBy)
     {
-        if (Status != StudentStatus.OnLeave)
+        if (StatusId != StatusOnLeave)
             throw new InvalidOperationException("Only students on leave can return.");
 
-        Status = StudentStatus.Active;
+        StatusId = StatusActive;
         LastModifiedAt = DateTime.UtcNow;
         LastModifiedBy = modifiedBy;
     }
@@ -102,7 +107,7 @@ public class Student : AggregateRoot<int>, IAuditable, ISoftDeletable
     /// </summary>
     public void Expel(int modifiedBy)
     {
-        Status = StudentStatus.Expelled;
+        StatusId = StatusExpelled;
         LastModifiedAt = DateTime.UtcNow;
         LastModifiedBy = modifiedBy;
     }
@@ -119,7 +124,7 @@ public class Student : AggregateRoot<int>, IAuditable, ISoftDeletable
 
     public bool IsEligibleForDefense(int programDurationYears)
     {
-        return Status == StudentStatus.Active && CurrentCourse >= programDurationYears;
+        return StatusId == StatusActive && CurrentCourse >= programDurationYears;
     }
 
     /// <summary>
@@ -130,6 +135,6 @@ public class Student : AggregateRoot<int>, IAuditable, ISoftDeletable
         IsDeleted = true;
         DeletedAt = DateTime.UtcNow;
         DeletedBy = deletedBy;
-        Status = StudentStatus.Expelled;
+        StatusId = StatusExpelled;
     }
 }

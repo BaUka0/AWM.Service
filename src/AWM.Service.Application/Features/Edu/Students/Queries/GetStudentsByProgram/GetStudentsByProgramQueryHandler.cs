@@ -50,7 +50,7 @@ public sealed class GetStudentsByProgramQueryHandler : IRequestHandler<GetStuden
                     ProgramId = student.ProgramId,
                     AdmissionYear = student.AdmissionYear,
                     CurrentCourse = student.CurrentCourse,
-                    Status = student.Status.ToString(),
+                    Status = student.StatusId.ToString(),
                     CreatedAt = student.CreatedAt,
                     CreatedBy = student.CreatedBy,
                     LastModifiedAt = student.LastModifiedAt,

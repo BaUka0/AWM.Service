@@ -98,7 +98,7 @@ public sealed class TopicApplicationRepository : RepositoryBase<TopicApplication
                            !x.Topic.IsDeleted &&
                            x.App.StudentId == studentId &&
                            x.Topic.AcademicYearId == academicYearId &&
-                           x.App.Status == Domain.Thesis.Enums.ApplicationStatus.Accepted,
+                            x.App.StatusId == 2,
                            cancellationToken);
     }
 

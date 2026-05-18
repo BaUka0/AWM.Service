@@ -13,8 +13,8 @@ public sealed class RecordAttendanceCommandValidator : AbstractValidator<RecordA
             .GreaterThan(0)
             .WithMessage("Attempt ID must be greater than 0.");
 
-        RuleFor(x => x.AttendanceStatus)
-            .IsInEnum()
-            .WithMessage("Attendance status must be a valid value (Attended, Absent, Excused).");
+        RuleFor(x => x.AttendanceStatusId)
+            .InclusiveBetween(1, 3)
+            .WithMessage("Attendance status must be a valid value (1 = Attended, 2 = Absent, 3 = Excused).");
     }
 }

@@ -19,8 +19,8 @@ public sealed class UploadAttachmentCommandValidator : AbstractValidator<UploadA
         RuleFor(x => x.WorkId)
             .GreaterThan(0).WithMessage("Work ID must be greater than 0.");
 
-        RuleFor(x => x.AttachmentType)
-            .IsInEnum().WithMessage("Invalid attachment type.");
+        RuleFor(x => x.AttachmentTypeId)
+            .InclusiveBetween(1, 6).WithMessage("Invalid attachment type (1 = Draft, 2 = Final, 3 = Presentation, 4 = Software, 5 = Demo, 6 = Handout).");
 
         RuleFor(x => x.File)
             .NotNull().WithMessage("A file must be provided.");

@@ -3,7 +3,6 @@ namespace AWM.Service.Infrastructure.Persistence.Configurations.Defense;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using AWM.Service.Domain.Defense.Entities;
-using AWM.Service.Domain.Defense.Enums;
 using AWM.Service.Domain.Org.Entities;
 using AWM.Service.Domain.CommonDomain.Entities;
 using AWM.Service.Infrastructure.Persistence.Configurations.Base;
@@ -36,10 +35,8 @@ public class CommissionConfiguration : SoftDeletableEntityConfiguration<Commissi
         builder.Property(e => e.Name)
             .HasMaxLength(255);
 
-        builder.Property(e => e.CommissionType)
-            .IsRequired()
-            .HasConversion<string>()
-            .HasMaxLength(50);
+        builder.Property(e => e.CommissionTypeId)
+            .IsRequired();
 
         builder.Property(e => e.PreDefenseNumber);
 
@@ -48,6 +45,12 @@ public class CommissionConfiguration : SoftDeletableEntityConfiguration<Commissi
             .WithMany()
             .HasForeignKey(e => e.DepartmentId)
             .HasConstraintName("FK_Commissions_Dept")
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne<CommissionType>()
+            .WithMany()
+            .HasForeignKey(e => e.CommissionTypeId)
+            .HasConstraintName("FK_Commissions_Type")
             .OnDelete(DeleteBehavior.Restrict);
 
         // Navigation to members

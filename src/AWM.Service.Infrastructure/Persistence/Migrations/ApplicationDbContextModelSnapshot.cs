@@ -741,6 +741,24 @@ namespace AWM.Service.Infrastructure.Persistence.Migrations
                     b.ToTable("WorkflowStages", "Common");
                 });
 
+            modelBuilder.Entity("AWM.Service.Domain.Defense.Entities.AttendanceStatus", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("AttendanceStatuses", "Defense");
+                });
+
             modelBuilder.Entity("AWM.Service.Domain.Defense.Entities.Commission", b =>
                 {
                     b.Property<int>("Id")
@@ -752,10 +770,8 @@ namespace AWM.Service.Infrastructure.Persistence.Migrations
                     b.Property<int>("AcademicYearId")
                         .HasColumnType("int");
 
-                    b.Property<string>("CommissionType")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                    b.Property<int>("CommissionTypeId")
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
@@ -792,6 +808,8 @@ namespace AWM.Service.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CommissionTypeId");
+
                     b.HasIndex("DepartmentId");
 
                     b.ToTable("Commissions", "Defense", t =>
@@ -811,6 +829,9 @@ namespace AWM.Service.Infrastructure.Persistence.Migrations
                     b.Property<int>("CommissionId")
                         .HasColumnType("int");
 
+                    b.Property<int>("CommissionRoleId")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
@@ -823,15 +844,12 @@ namespace AWM.Service.Infrastructure.Persistence.Migrations
                     b.Property<int?>("LastModifiedBy")
                         .HasColumnType("int");
 
-                    b.Property<string>("RoleInCommission")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
                     b.Property<int>("UserId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CommissionRoleId");
 
                     b.HasIndex("UserId");
 
@@ -840,6 +858,42 @@ namespace AWM.Service.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("UQ_CommMember_Commission_User");
 
                     b.ToTable("CommissionMembers", "Defense");
+                });
+
+            modelBuilder.Entity("AWM.Service.Domain.Defense.Entities.CommissionRole", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("CommissionRoles", "Defense");
+                });
+
+            modelBuilder.Entity("AWM.Service.Domain.Defense.Entities.CommissionType", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("CommissionTypes", "Defense");
                 });
 
             modelBuilder.Entity("AWM.Service.Domain.Defense.Entities.EvaluationCriteria", b =>
@@ -984,12 +1038,10 @@ namespace AWM.Service.Infrastructure.Persistence.Migrations
                     b.Property<DateTime>("AttemptDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("AttendanceStatus")
-                        .IsRequired()
+                    b.Property<int>("AttendanceStatusId")
                         .ValueGeneratedOnAdd()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)")
-                        .HasDefaultValue("Attended");
+                        .HasColumnType("int")
+                        .HasDefaultValue(1);
 
                     b.Property<decimal?>("AverageScore")
                         .HasColumnType("decimal(5,2)");
@@ -1022,6 +1074,8 @@ namespace AWM.Service.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("AttendanceStatusId");
+
                     b.HasIndex("ScheduleId");
 
                     b.HasIndex("WorkId", "PreDefenseNumber")
@@ -1030,8 +1084,6 @@ namespace AWM.Service.Infrastructure.Persistence.Migrations
 
                     b.ToTable("PreDefenseAttempts", "Defense", t =>
                         {
-                            t.HasCheckConstraint("Check_PreDef_Attendance", "[AttendanceStatus] IN ('Attended', 'Absent', 'Excused')");
-
                             t.HasCheckConstraint("Check_PreDef_Num", "[PreDefenseNumber] BETWEEN 1 AND 3");
                         });
                 });
@@ -1369,10 +1421,8 @@ namespace AWM.Service.Infrastructure.Persistence.Migrations
                     b.Property<int>("ProgramId")
                         .HasColumnType("int");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                    b.Property<int>("StatusId")
+                        .HasColumnType("int");
 
                     b.Property<int>("UserId")
                         .HasColumnType("int");
@@ -1381,11 +1431,31 @@ namespace AWM.Service.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("ProgramId");
 
+                    b.HasIndex("StatusId");
+
                     b.HasIndex("UserId")
                         .IsUnique()
                         .HasDatabaseName("UQ_Student_User");
 
                     b.ToTable("Students", "Edu");
+                });
+
+            modelBuilder.Entity("AWM.Service.Domain.Edu.Entities.StudentStatus", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("StudentStatuses", "Edu");
                 });
 
             modelBuilder.Entity("AWM.Service.Domain.Org.Entities.Department", b =>
@@ -1483,6 +1553,24 @@ namespace AWM.Service.Infrastructure.Persistence.Migrations
                     b.ToTable("Institutes", "Org");
                 });
 
+            modelBuilder.Entity("AWM.Service.Domain.Thesis.Entities.ApplicationStatus", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ApplicationStatuses", "Thesis");
+                });
+
             modelBuilder.Entity("AWM.Service.Domain.Thesis.Entities.Attachment", b =>
                 {
                     b.Property<long>("Id")
@@ -1491,10 +1579,8 @@ namespace AWM.Service.Infrastructure.Persistence.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
-                    b.Property<string>("AttachmentType")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                    b.Property<int>("AttachmentTypeId")
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
@@ -1531,6 +1617,8 @@ namespace AWM.Service.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("AttachmentTypeId");
+
                     b.HasIndex("FileHash")
                         .HasDatabaseName("IX_Attach_Hash");
 
@@ -1540,6 +1628,42 @@ namespace AWM.Service.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("IX_Attach_Work");
 
                     b.ToTable("Attachments", "Thesis");
+                });
+
+            modelBuilder.Entity("AWM.Service.Domain.Thesis.Entities.AttachmentType", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("AttachmentTypes", "Thesis");
+                });
+
+            modelBuilder.Entity("AWM.Service.Domain.Thesis.Entities.CheckType", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("CheckTypes", "Thesis");
                 });
 
             modelBuilder.Entity("AWM.Service.Domain.Thesis.Entities.Direction", b =>
@@ -1665,6 +1789,9 @@ namespace AWM.Service.Infrastructure.Persistence.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("CheckTypeId")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
@@ -1679,11 +1806,6 @@ namespace AWM.Service.Infrastructure.Persistence.Migrations
 
                     b.Property<int>("DepartmentId")
                         .HasColumnType("int");
-
-                    b.Property<string>("ExpertiseType")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
 
                     b.Property<bool>("IsActive")
                         .ValueGeneratedOnAdd()
@@ -1706,16 +1828,33 @@ namespace AWM.Service.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CheckTypeId");
+
                     b.HasIndex("UserId");
 
-                    b.HasIndex("DepartmentId", "ExpertiseType")
+                    b.HasIndex("DepartmentId", "CheckTypeId")
                         .HasDatabaseName("IX_Experts_Type")
                         .HasFilter("[IsActive] = 1");
 
-                    b.ToTable("Experts", "Thesis", t =>
-                        {
-                            t.HasCheckConstraint("Check_Expert_Type", "[ExpertiseType] IN ('NormControl', 'SoftwareCheck', 'AntiPlagiarism')");
-                        });
+                    b.ToTable("Experts", "Thesis");
+                });
+
+            modelBuilder.Entity("AWM.Service.Domain.Thesis.Entities.ParticipantRole", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ParticipantRoles", "Thesis");
                 });
 
             modelBuilder.Entity("AWM.Service.Domain.Thesis.Entities.QualityCheck", b =>
@@ -1734,10 +1873,8 @@ namespace AWM.Service.Infrastructure.Persistence.Migrations
                         .HasColumnType("int")
                         .HasDefaultValue(1);
 
-                    b.Property<string>("CheckType")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                    b.Property<int>("CheckTypeId")
+                        .HasColumnType("int");
 
                     b.Property<string>("Comment")
                         .HasColumnType("nvarchar(max)");
@@ -1773,7 +1910,9 @@ namespace AWM.Service.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("AssignedExpertId");
 
-                    b.HasIndex("WorkId", "CheckType", "AttemptNumber")
+                    b.HasIndex("CheckTypeId");
+
+                    b.HasIndex("WorkId", "CheckTypeId", "AttemptNumber")
                         .HasDatabaseName("IX_QualityChecks_Work");
 
                     b.ToTable("QualityChecks", "Thesis");
@@ -2219,12 +2358,10 @@ namespace AWM.Service.Infrastructure.Persistence.Migrations
                     b.Property<int?>("ReviewedBy")
                         .HasColumnType("int");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
+                    b.Property<int>("StatusId")
                         .ValueGeneratedOnAdd()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)")
-                        .HasDefaultValue("Submitted");
+                        .HasColumnType("int")
+                        .HasDefaultValue(1);
 
                     b.Property<int>("StudentId")
                         .HasColumnType("int");
@@ -2236,16 +2373,13 @@ namespace AWM.Service.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("TopicId");
 
-                    b.HasIndex("Status", "TopicId")
+                    b.HasIndex("StatusId", "TopicId")
                         .HasDatabaseName("IX_Applications_Status");
 
-                    b.HasIndex("StudentId", "Status")
+                    b.HasIndex("StudentId", "StatusId")
                         .HasDatabaseName("IX_Applications_Student");
 
-                    b.ToTable("TopicApplications", "Thesis", t =>
-                        {
-                            t.HasCheckConstraint("Check_Application_Status", "[Status] IN ('Submitted', 'Accepted', 'Rejected', 'Withdrawn')");
-                        });
+                    b.ToTable("TopicApplications", "Thesis");
                 });
 
             modelBuilder.Entity("AWM.Service.Domain.Thesis.Entities.WorkParticipant", b =>
@@ -2268,10 +2402,8 @@ namespace AWM.Service.Infrastructure.Persistence.Migrations
                     b.Property<int?>("LastModifiedBy")
                         .HasColumnType("int");
 
-                    b.Property<string>("Role")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                    b.Property<int>("RoleId")
+                        .HasColumnType("int");
 
                     b.Property<int>("StudentId")
                         .HasColumnType("int");
@@ -2280,6 +2412,8 @@ namespace AWM.Service.Infrastructure.Persistence.Migrations
                         .HasColumnType("bigint");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("RoleId");
 
                     b.HasIndex("StudentId")
                         .HasDatabaseName("IX_Participants_Student");
@@ -2615,6 +2749,13 @@ namespace AWM.Service.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("AWM.Service.Domain.Defense.Entities.Commission", b =>
                 {
+                    b.HasOne("AWM.Service.Domain.Defense.Entities.CommissionType", null)
+                        .WithMany()
+                        .HasForeignKey("CommissionTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FK_Commissions_Type");
+
                     b.HasOne("AWM.Service.Domain.Org.Entities.Department", null)
                         .WithMany()
                         .HasForeignKey("DepartmentId")
@@ -2631,6 +2772,13 @@ namespace AWM.Service.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("FK_CommMembers_Commission");
+
+                    b.HasOne("AWM.Service.Domain.Defense.Entities.CommissionRole", null)
+                        .WithMany()
+                        .HasForeignKey("CommissionRoleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FK_CommMembers_Role");
 
                     b.HasOne("AWM.Service.Domain.Auth.Entities.User", null)
                         .WithMany()
@@ -2682,6 +2830,13 @@ namespace AWM.Service.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("AWM.Service.Domain.Defense.Entities.PreDefenseAttempt", b =>
                 {
+                    b.HasOne("AWM.Service.Domain.Defense.Entities.AttendanceStatus", null)
+                        .WithMany()
+                        .HasForeignKey("AttendanceStatusId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FK_PreDef_AttendanceStatus");
+
                     b.HasOne("AWM.Service.Domain.Defense.Entities.Schedule", null)
                         .WithMany()
                         .HasForeignKey("ScheduleId")
@@ -2779,6 +2934,13 @@ namespace AWM.Service.Infrastructure.Persistence.Migrations
                         .IsRequired()
                         .HasConstraintName("FK_Students_Program");
 
+                    b.HasOne("AWM.Service.Domain.Edu.Entities.StudentStatus", null)
+                        .WithMany()
+                        .HasForeignKey("StatusId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FK_Students_Status");
+
                     b.HasOne("AWM.Service.Domain.Auth.Entities.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
@@ -2799,6 +2961,13 @@ namespace AWM.Service.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("AWM.Service.Domain.Thesis.Entities.Attachment", b =>
                 {
+                    b.HasOne("AWM.Service.Domain.Thesis.Entities.AttachmentType", null)
+                        .WithMany()
+                        .HasForeignKey("AttachmentTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FK_Attach_Type");
+
                     b.HasOne("AWM.Service.Domain.Wf.Entities.State", null)
                         .WithMany()
                         .HasForeignKey("StateId")
@@ -2846,6 +3015,13 @@ namespace AWM.Service.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("AWM.Service.Domain.Thesis.Entities.Expert", b =>
                 {
+                    b.HasOne("AWM.Service.Domain.Thesis.Entities.CheckType", null)
+                        .WithMany()
+                        .HasForeignKey("CheckTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FK_Experts_CheckType");
+
                     b.HasOne("AWM.Service.Domain.Org.Entities.Department", null)
                         .WithMany()
                         .HasForeignKey("DepartmentId")
@@ -2868,6 +3044,13 @@ namespace AWM.Service.Infrastructure.Persistence.Migrations
                         .HasForeignKey("AssignedExpertId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .HasConstraintName("FK_QChecks_Expert");
+
+                    b.HasOne("AWM.Service.Domain.Thesis.Entities.CheckType", null)
+                        .WithMany()
+                        .HasForeignKey("CheckTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FK_QChecks_Type");
 
                     b.HasOne("AWM.Service.Domain.Thesis.Entities.StudentWork", null)
                         .WithMany("QualityChecks")
@@ -2966,6 +3149,13 @@ namespace AWM.Service.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("AWM.Service.Domain.Thesis.Entities.TopicApplication", b =>
                 {
+                    b.HasOne("AWM.Service.Domain.Thesis.Entities.ApplicationStatus", null)
+                        .WithMany()
+                        .HasForeignKey("StatusId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FK_Applications_Status");
+
                     b.HasOne("AWM.Service.Domain.Edu.Entities.Student", null)
                         .WithMany()
                         .HasForeignKey("StudentId")
@@ -2983,6 +3173,13 @@ namespace AWM.Service.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("AWM.Service.Domain.Thesis.Entities.WorkParticipant", b =>
                 {
+                    b.HasOne("AWM.Service.Domain.Thesis.Entities.ParticipantRole", null)
+                        .WithMany()
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FK_Participants_Role");
+
                     b.HasOne("AWM.Service.Domain.Edu.Entities.Student", null)
                         .WithMany()
                         .HasForeignKey("StudentId")

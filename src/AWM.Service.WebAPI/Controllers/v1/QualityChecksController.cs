@@ -6,7 +6,7 @@ using AWM.Service.Application.Features.Thesis.QualityChecks.Commands.SubmitForCh
 using AWM.Service.Application.Features.Thesis.QualityChecks.DTOs;
 using AWM.Service.Application.Features.Thesis.QualityChecks.Queries.GetChecksByWork;
 using AWM.Service.Application.Features.Thesis.QualityChecks.Queries.GetPendingChecks;
-using AWM.Service.Domain.Thesis.Enums;
+
 using AWM.Service.WebAPI.Authorization;
 using AWM.Service.WebAPI.Common.Contracts.Requests.Thesis;
 using Mapster;
@@ -68,13 +68,13 @@ public class QualityChecksController : BaseController
     public async Task<IActionResult> GetPending(
         [FromQuery] int departmentId,
         [FromQuery] int academicYearId,
-        [FromQuery] CheckType? checkType = null)
+        [FromQuery] int? checkType = null)
     {
         var query = new GetPendingChecksQuery
         {
             DepartmentId = departmentId,
             AcademicYearId = academicYearId,
-            CheckType = checkType
+            CheckTypeId = checkType
         };
 
         var result = await _sender.Send(query);

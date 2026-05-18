@@ -3,7 +3,6 @@ namespace AWM.Service.Infrastructure.Persistence.Configurations.Thesis;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using AWM.Service.Domain.Thesis.Entities;
-using AWM.Service.Domain.Thesis.Enums;
 using AWM.Service.Domain.Edu.Entities;
 using AWM.Service.Infrastructure.Persistence.Configurations.Base;
 
@@ -17,11 +16,7 @@ public class TopicApplicationConfiguration : SoftDeletableEntityConfiguration<To
     {
         base.Configure(builder);
 
-        builder.ToTable("TopicApplications", "Thesis", t =>
-        {
-            t.HasCheckConstraint("Check_Application_Status", 
-                "[Status] IN ('Submitted', 'Accepted', 'Rejected', 'Withdrawn')");
-        });
+        builder.ToTable("TopicApplications", "Thesis");
 
         builder.Property(e => e.Id)
             .UseIdentityColumn();
@@ -39,11 +34,9 @@ public class TopicApplicationConfiguration : SoftDeletableEntityConfiguration<To
             .IsRequired()
             .HasColumnType("datetime2");
 
-        builder.Property(e => e.Status)
+        builder.Property(e => e.StatusId)
             .IsRequired()
-            .HasConversion<string>()
-            .HasMaxLength(50)
-            .HasDefaultValue(ApplicationStatus.Submitted);
+            .HasDefaultValue(1);
 
         builder.Property(e => e.ReviewedAt)
             .HasColumnType("datetime2");
@@ -66,11 +59,17 @@ public class TopicApplicationConfiguration : SoftDeletableEntityConfiguration<To
             .HasConstraintName("FK_Applications_Student")
             .OnDelete(DeleteBehavior.Restrict);
 
+        builder.HasOne<ApplicationStatus>()
+            .WithMany()
+            .HasForeignKey(e => e.StatusId)
+            .HasConstraintName("FK_Applications_Status")
+            .OnDelete(DeleteBehavior.Restrict);
+
         // Indexes
-        builder.HasIndex(e => new { e.Status, e.TopicId })
+        builder.HasIndex(e => new { e.StatusId, e.TopicId })
             .HasDatabaseName("IX_Applications_Status");
 
-        builder.HasIndex(e => new { e.StudentId, e.Status })
+        builder.HasIndex(e => new { e.StudentId, e.StatusId })
             .HasDatabaseName("IX_Applications_Student");
     }
 }

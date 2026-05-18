@@ -2,7 +2,6 @@ namespace AWM.Service.Application.Features.Thesis.Works.Queries.GetAdmittedStude
 
 using AWM.Service.Domain.Common;
 using AWM.Service.Domain.Repositories;
-using AWM.Service.Domain.Thesis.Enums;
 using KDS.Primitives.FluentResult;
 using MediatR;
 
@@ -59,9 +58,9 @@ public sealed class GetAdmittedStudentsQueryHandler
             {
                 var workAttempts = attemptsByWorkId.GetValueOrDefault(work.Id, []);
                 if (!workAttempts.Any(a => a.IsPassed)) continue;
-                if (!work.HasPassedCheck(CheckType.NormControl)) continue;
-                if (!work.HasPassedCheck(CheckType.SoftwareCheck)) continue;
-                if (!work.HasPassedCheck(CheckType.AntiPlagiarism)) continue;
+                if (!work.HasPassedCheck(1)) continue;
+                if (!work.HasPassedCheck(2)) continue;
+                if (!work.HasPassedCheck(3)) continue;
 
                 var workReviews = reviewsByWorkId.GetValueOrDefault(work.Id, []);
                 if (!workReviews.Any(r => r.IsUploaded)) continue;

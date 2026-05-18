@@ -1,6 +1,5 @@
 namespace AWM.Service.Application.Features.Defense.PreDefense.DTOs;
 
-using AWM.Service.Domain.Defense.Enums;
 
 /// <summary>
 /// DTO representing a single pre-defense attempt for a student work.

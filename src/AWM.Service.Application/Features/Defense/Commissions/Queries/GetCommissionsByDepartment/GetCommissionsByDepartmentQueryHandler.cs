@@ -45,15 +45,15 @@ public sealed class GetCommissionsByDepartmentQueryHandler
             var dtos = commissions
                 .Select(c =>
                 {
-                    var chairman = c.Members.FirstOrDefault(m => m.RoleInCommission == AWM.Service.Domain.Defense.Enums.RoleInCommission.Chairman);
-                    var secretary = c.Members.FirstOrDefault(m => m.RoleInCommission == AWM.Service.Domain.Defense.Enums.RoleInCommission.Secretary);
+                    var chairman = c.Members.FirstOrDefault(m => m.CommissionRoleId == 1);
+                    var secretary = c.Members.FirstOrDefault(m => m.CommissionRoleId == 2);
 
                     return new CommissionDto
                     {
                         Id = c.Id,
                         DepartmentId = c.DepartmentId,
                         AcademicYearId = c.AcademicYearId,
-                        CommissionType = c.CommissionType.ToString(),
+                        CommissionType = c.CommissionTypeId.ToString(),
                         Name = c.Name,
                         PreDefenseNumber = c.PreDefenseNumber,
                         MemberCount = c.Members.Count,

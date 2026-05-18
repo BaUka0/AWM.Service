@@ -3,7 +3,6 @@ namespace AWM.Service.Infrastructure.Persistence.Configurations.Thesis;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using AWM.Service.Domain.Thesis.Entities;
-using AWM.Service.Domain.Thesis.Enums;
 using AWM.Service.Domain.Wf.Entities;
 using AWM.Service.Infrastructure.Persistence.Configurations.Base;
 
@@ -27,10 +26,8 @@ public class AttachmentConfiguration : AuditableEntityConfiguration<Attachment, 
 
         builder.Property(e => e.StateId);
 
-        builder.Property(e => e.AttachmentType)
-            .IsRequired()
-            .HasConversion<string>()
-            .HasMaxLength(50);
+        builder.Property(e => e.AttachmentTypeId)
+            .IsRequired();
 
         builder.Property(e => e.FileName)
             .IsRequired()
@@ -59,6 +56,12 @@ public class AttachmentConfiguration : AuditableEntityConfiguration<Attachment, 
             .WithMany()
             .HasForeignKey(e => e.StateId)
             .HasConstraintName("FK_Attach_State")
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne<AttachmentType>()
+            .WithMany()
+            .HasForeignKey(e => e.AttachmentTypeId)
+            .HasConstraintName("FK_Attach_Type")
             .OnDelete(DeleteBehavior.Restrict);
 
         // Indexes

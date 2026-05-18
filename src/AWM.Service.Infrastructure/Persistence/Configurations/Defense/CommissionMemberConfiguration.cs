@@ -3,7 +3,6 @@ namespace AWM.Service.Infrastructure.Persistence.Configurations.Defense;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using AWM.Service.Domain.Defense.Entities;
-using AWM.Service.Domain.Defense.Enums;
 using AWM.Service.Domain.Auth.Entities;
 using AWM.Service.Infrastructure.Persistence.Configurations.Base;
 
@@ -28,10 +27,8 @@ public class CommissionMemberConfiguration : AuditableEntityConfiguration<Commis
         builder.Property(e => e.UserId)
             .IsRequired();
 
-        builder.Property(e => e.RoleInCommission)
-            .IsRequired()
-            .HasConversion<string>()
-            .HasMaxLength(50);
+        builder.Property(e => e.CommissionRoleId)
+            .IsRequired();
 
         // Foreign keys
         builder.HasOne<Commission>()
@@ -44,6 +41,12 @@ public class CommissionMemberConfiguration : AuditableEntityConfiguration<Commis
             .WithMany()
             .HasForeignKey(e => e.UserId)
             .HasConstraintName("FK_CommMembers_User")
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne<CommissionRole>()
+            .WithMany()
+            .HasForeignKey(e => e.CommissionRoleId)
+            .HasConstraintName("FK_CommMembers_Role")
             .OnDelete(DeleteBehavior.Restrict);
 
         // Unique constraint - one user per commission

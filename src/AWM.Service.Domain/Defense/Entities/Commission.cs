@@ -1,7 +1,6 @@
 namespace AWM.Service.Domain.Defense.Entities;
 
 using AWM.Service.Domain.Common;
-using AWM.Service.Domain.Defense.Enums;
 
 /// <summary>
 /// Commission entity - defense commission (PreDefense or GAK).
@@ -11,7 +10,7 @@ public class Commission : AggregateRoot<int>, IAuditable, ISoftDeletable
     public int DepartmentId { get; private set; }
     public int AcademicYearId { get; private set; }
     public string? Name { get; private set; }
-    public CommissionType CommissionType { get; private set; }
+    public int CommissionTypeId { get; private set; }
     public int? PreDefenseNumber { get; private set; }
 
     public DateTime CreatedAt { get; private set; }
@@ -23,6 +22,10 @@ public class Commission : AggregateRoot<int>, IAuditable, ISoftDeletable
     public DateTime? DeletedAt { get; private set; }
     public int? DeletedBy { get; private set; }
 
+    // Seeded reference IDs
+    private const int TypePreDefense = 1;
+    private const int TypeGAK = 2;
+
     private readonly List<CommissionMember> _members = new();
     public IReadOnlyCollection<CommissionMember> Members => _members.AsReadOnly();
 
@@ -31,12 +34,12 @@ public class Commission : AggregateRoot<int>, IAuditable, ISoftDeletable
     public Commission(
         int departmentId,
         int academicYearId,
-        CommissionType commissionType,
+        int commissionTypeId,
         int createdBy,
         string? name = null,
         int? preDefenseNumber = null)
     {
-        if (commissionType == CommissionType.PreDefense && preDefenseNumber.HasValue)
+        if (commissionTypeId == TypePreDefense && preDefenseNumber.HasValue)
         {
             if (preDefenseNumber < 1 || preDefenseNumber > 3)
                 throw new ArgumentException("Pre-defense number must be 1, 2, or 3.", nameof(preDefenseNumber));
@@ -44,8 +47,8 @@ public class Commission : AggregateRoot<int>, IAuditable, ISoftDeletable
 
         DepartmentId = departmentId;
         AcademicYearId = academicYearId;
-        CommissionType = commissionType;
-        Name = name ?? GetDefaultName(commissionType, preDefenseNumber);
+        CommissionTypeId = commissionTypeId;
+        Name = name ?? GetDefaultName(commissionTypeId, preDefenseNumber);
         PreDefenseNumber = preDefenseNumber;
 
         CreatedAt = DateTime.UtcNow;
@@ -53,12 +56,12 @@ public class Commission : AggregateRoot<int>, IAuditable, ISoftDeletable
         IsDeleted = false;
     }
 
-    private static string GetDefaultName(CommissionType type, int? preDefenseNumber)
+    private static string GetDefaultName(int typeId, int? preDefenseNumber)
     {
-        return type switch
+        return typeId switch
         {
-            CommissionType.PreDefense => $"Комиссия предзащиты №{preDefenseNumber ?? 1}",
-            CommissionType.GAK => "Государственная аттестационная комиссия",
+            TypePreDefense => $"Комиссия предзащиты №{preDefenseNumber ?? 1}",
+            TypeGAK => "Государственная аттестационная комиссия",
             _ => "Комиссия"
         };
     }
@@ -66,16 +69,20 @@ public class Commission : AggregateRoot<int>, IAuditable, ISoftDeletable
     /// <summary>
     /// Adds a member to the commission.
     /// </summary>
-    public CommissionMember AddMember(int userId, RoleInCommission role)
+    public CommissionMember AddMember(int userId, int commissionRoleId)
     {
+        // Seeded reference IDs
+        const int roleChairman = 1;
+        const int roleSecretary = 2;
+
         // Ensure only one chairman and one secretary
-        if (role == RoleInCommission.Chairman && _members.Any(m => m.RoleInCommission == RoleInCommission.Chairman))
+        if (commissionRoleId == roleChairman && _members.Any(m => m.CommissionRoleId == roleChairman))
             throw new InvalidOperationException("Commission already has a chairman.");
 
-        if (role == RoleInCommission.Secretary && _members.Any(m => m.RoleInCommission == RoleInCommission.Secretary))
+        if (commissionRoleId == roleSecretary && _members.Any(m => m.CommissionRoleId == roleSecretary))
             throw new InvalidOperationException("Commission already has a secretary.");
 
-        var member = new CommissionMember(Id, userId, role);
+        var member = new CommissionMember(Id, userId, commissionRoleId);
         _members.Add(member);
 
         LastModifiedAt = DateTime.UtcNow;
@@ -87,7 +94,8 @@ public class Commission : AggregateRoot<int>, IAuditable, ISoftDeletable
     /// </summary>
     public CommissionMember? GetChairman()
     {
-        return _members.FirstOrDefault(m => m.RoleInCommission == RoleInCommission.Chairman);
+        const int roleChairman = 1;
+        return _members.FirstOrDefault(m => m.CommissionRoleId == roleChairman);
     }
 
     /// <summary>
@@ -95,7 +103,8 @@ public class Commission : AggregateRoot<int>, IAuditable, ISoftDeletable
     /// </summary>
     public CommissionMember? GetSecretary()
     {
-        return _members.FirstOrDefault(m => m.RoleInCommission == RoleInCommission.Secretary);
+        const int roleSecretary = 2;
+        return _members.FirstOrDefault(m => m.CommissionRoleId == roleSecretary);
     }
 
     /// <summary>

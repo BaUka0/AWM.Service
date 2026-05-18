@@ -2,7 +2,6 @@ namespace AWM.Service.Domain.Thesis.Entities;
 
 using AWM.Service.Domain.Common;
 using AWM.Service.Domain.Primitives;
-using AWM.Service.Domain.Thesis.Enums;
 
 /// <summary>
 /// Attachment entity - file metadata for work attachments.
@@ -12,7 +11,7 @@ public class Attachment : Entity<long>, IAuditable
 {
     public long WorkId { get; private set; }
     public int? StateId { get; private set; }
-    public AttachmentType AttachmentType { get; private set; }
+    public int AttachmentTypeId { get; private set; }
     public string FileName { get; private set; } = null!;
     public string FileStoragePath { get; private set; } = null!;
     public string FileHash { get; private set; } = null!;
@@ -31,7 +30,7 @@ public class Attachment : Entity<long>, IAuditable
     internal Attachment(
         long workId,
         int? stateId,
-        AttachmentType attachmentType,
+        int attachmentTypeId,
         string fileName,
         string fileStoragePath,
         string fileHash,
@@ -46,7 +45,7 @@ public class Attachment : Entity<long>, IAuditable
 
         WorkId = workId;
         StateId = stateId;
-        AttachmentType = attachmentType;
+        AttachmentTypeId = attachmentTypeId;
         FileName = fileName;
         FileStoragePath = fileStoragePath;
         FileHash = fileHash.ToUpperInvariant();

@@ -3,7 +3,6 @@ namespace AWM.Service.Infrastructure.Persistence.Configurations.Thesis;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using AWM.Service.Domain.Thesis.Entities;
-using AWM.Service.Domain.Thesis.Enums;
 using AWM.Service.Domain.Auth.Entities;
 using AWM.Service.Domain.Org.Entities;
 using AWM.Service.Infrastructure.Persistence.Configurations.Base;
@@ -18,11 +17,7 @@ public class ExpertConfiguration : SoftDeletableEntityConfiguration<Expert, int>
     {
         base.Configure(builder);
 
-        builder.ToTable("Experts", "Thesis", t =>
-        {
-            t.HasCheckConstraint("Check_Expert_Type", 
-                "[ExpertiseType] IN ('NormControl', 'SoftwareCheck', 'AntiPlagiarism')");
-        });
+        builder.ToTable("Experts", "Thesis");
 
         builder.Property(e => e.Id)
             .UseIdentityColumn();
@@ -33,10 +28,8 @@ public class ExpertConfiguration : SoftDeletableEntityConfiguration<Expert, int>
         builder.Property(e => e.DepartmentId)
             .IsRequired();
 
-        builder.Property(e => e.ExpertiseType)
-            .IsRequired()
-            .HasConversion<string>()
-            .HasMaxLength(50);
+        builder.Property(e => e.CheckTypeId)
+            .IsRequired();
 
         builder.Property(e => e.IsActive)
             .IsRequired()
@@ -55,8 +48,14 @@ public class ExpertConfiguration : SoftDeletableEntityConfiguration<Expert, int>
             .HasConstraintName("FK_Experts_Dept")
             .OnDelete(DeleteBehavior.Restrict);
 
+        builder.HasOne<CheckType>()
+            .WithMany()
+            .HasForeignKey(e => e.CheckTypeId)
+            .HasConstraintName("FK_Experts_CheckType")
+            .OnDelete(DeleteBehavior.Restrict);
+
         // Index for active experts by type
-        builder.HasIndex(e => new { e.DepartmentId, e.ExpertiseType })
+        builder.HasIndex(e => new { e.DepartmentId, e.CheckTypeId })
             .HasDatabaseName("IX_Experts_Type")
             .HasFilter("[IsActive] = 1");
     }

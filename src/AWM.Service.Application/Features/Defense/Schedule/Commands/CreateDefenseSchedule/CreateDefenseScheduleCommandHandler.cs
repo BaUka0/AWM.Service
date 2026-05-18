@@ -2,7 +2,6 @@ namespace AWM.Service.Application.Features.Defense.Schedule.Commands.CreateDefen
 
 using AWM.Service.Domain.Common;
 using AWM.Service.Domain.Defense.Entities;
-using AWM.Service.Domain.Defense.Enums;
 using AWM.Service.Domain.Repositories;
 using KDS.Primitives.FluentResult;
 using MediatR;
@@ -44,7 +43,7 @@ public sealed class CreateDefenseScheduleCommandHandler : IRequestHandler<Create
                 return Result.Failure<long>(new Error("NotFound.Commission",
                     $"Commission with ID {request.CommissionId} not found."));
 
-            if (commission.CommissionType != CommissionType.GAK)
+            if (commission.CommissionTypeId != 2)
                 return Result.Failure<long>(new Error("BusinessRule.Commission",
                     "The specified commission is not a GAK commission."));
 

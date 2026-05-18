@@ -1,6 +1,5 @@
 namespace AWM.Service.Application.Features.Thesis.Works.Commands.AddParticipant;
 
-using AWM.Service.Domain.Thesis.Enums;
 using KDS.Primitives.FluentResult;
 using MediatR;
 
@@ -20,7 +19,7 @@ public sealed record AddParticipantCommand : IRequest<Result<long>>
     public int StudentId { get; init; }
 
     /// <summary>
-    /// Role of the participant (Leader or Member).
+    /// Role ID of the participant (FK to Thesis.ParticipantRoles). 1 = Leader, 2 = Member.
     /// </summary>
-    public ParticipantRole Role { get; init; } = ParticipantRole.Member;
+    public int RoleId { get; init; } = 2; // Member = 2
 }

@@ -50,7 +50,7 @@ public sealed class AssignExpertsCommandHandler : IRequestHandler<AssignExpertsC
                 // Check for existing active expert with same user + type
                 var existing = existingExperts.FirstOrDefault(
                     e => e.UserId == assignment.UserId
-                         && e.ExpertiseType == assignment.ExpertiseType
+                         && e.CheckTypeId == assignment.CheckTypeId
                          && !e.IsDeleted);
 
                 if (existing != null)
@@ -66,7 +66,7 @@ public sealed class AssignExpertsCommandHandler : IRequestHandler<AssignExpertsC
                 var expert = new Expert(
                     assignment.UserId,
                     request.DepartmentId,
-                    assignment.ExpertiseType,
+                    assignment.CheckTypeId,
                     userId.Value);
 
                 await _expertRepository.AddAsync(expert, cancellationToken);

@@ -143,7 +143,7 @@ public sealed class GetMyWorkProgressQueryHandler
                 Id = participant.Id,
                 StudentId = participant.StudentId,
                 Name = name,
-                Role = participant.Role.ToString(),
+                Role = participant.RoleId.ToString(),
                 IsLeader = participant.IsLeader,
                 JoinedAt = participant.JoinedAt
             });
@@ -153,7 +153,7 @@ public sealed class GetMyWorkProgressQueryHandler
         {
             Id = a.Id,
             FileName = a.FileName,
-            AttachmentType = a.AttachmentType.ToString(),
+            AttachmentType = a.AttachmentTypeId.ToString(),
             CreatedAt = a.CreatedAt,
             CreatedBy = a.CreatedBy
         }).ToList();
@@ -161,7 +161,7 @@ public sealed class GetMyWorkProgressQueryHandler
         var qualityChecks = detailedWork.QualityChecks.Select(q => new WorkProgressQualityCheckDto
         {
             Id = q.Id,
-            CheckType = q.CheckType.ToString(),
+            CheckType = q.CheckTypeId.ToString(),
             AttemptNumber = q.AttemptNumber,
             IsPassed = q.IsPassed,
             ResultValue = q.ResultValue,
@@ -197,7 +197,7 @@ public sealed class GetMyWorkProgressQueryHandler
                 Type = "quality_check",
                 Date = check.CheckedAt,
                 Status = check.IsPassed ? "completed" : "failed",
-                Title = $"{check.CheckType} (Attempt {check.AttemptNumber})",
+                Title = $"{check.CheckTypeId} (Attempt {check.AttemptNumber})",
                 Description = check.Comment
             });
         }

@@ -2,7 +2,7 @@ namespace AWM.Service.Domain.Thesis.Entities;
 
 using AWM.Service.Domain.Common;
 using AWM.Service.Domain.Thesis.Events;
-using AWM.Service.Domain.Thesis.Enums;
+
 
 /// <summary>
 /// StudentWork entity - the main thesis work aggregate root.
@@ -65,7 +65,11 @@ public class StudentWork : AggregateRoot<long>, IAuditable, ISoftDeletable
     /// <summary>
     /// Adds a participant to the work.
     /// </summary>
-    public WorkParticipant AddParticipant(int studentId, ParticipantRole role = ParticipantRole.Member)
+    // Seeded reference IDs
+    private const int RoleLeader = 1;
+    private const int RoleMember = 2;
+
+    public WorkParticipant AddParticipant(int studentId, int roleId = RoleMember)
     {
         // Check if already a participant
         if (_participants.Any(p => p.StudentId == studentId))
@@ -76,13 +80,13 @@ public class StudentWork : AggregateRoot<long>, IAuditable, ISoftDeletable
             throw new InvalidOperationException("Maximum 5 participants allowed.");
 
         // Ensure only one leader
-        if (role == ParticipantRole.Leader && _participants.Any(p => p.Role == ParticipantRole.Leader))
+        if (roleId == RoleLeader && _participants.Any(p => p.RoleId == RoleLeader))
             throw new InvalidOperationException("Work already has a leader.");
 
-        var participant = new WorkParticipant(Id, studentId, role);
+        var participant = new WorkParticipant(Id, studentId, roleId);
         _participants.Add(participant);
 
-        RaiseDomainEvent(new ParticipantJoinedEvent(Id, studentId, role.ToString()));
+        RaiseDomainEvent(new ParticipantJoinedEvent(Id, studentId, roleId.ToString()));
         return participant;
     }
 
@@ -97,7 +101,7 @@ public class StudentWork : AggregateRoot<long>, IAuditable, ISoftDeletable
         if (_participants.Count == 1)
             throw new InvalidOperationException("Cannot remove the last participant from the work.");
 
-        if (participant.Role == ParticipantRole.Leader && _participants.Count > 1)
+        if (participant.RoleId == RoleLeader && _participants.Count > 1)
             throw new InvalidOperationException("Cannot remove the leader while other participants exist. Transfer leadership first.");
 
         _participants.Remove(participant);
@@ -122,7 +126,7 @@ public class StudentWork : AggregateRoot<long>, IAuditable, ISoftDeletable
     /// Adds an attachment to the work.
     /// </summary>
     public Attachment AddAttachment(
-        AttachmentType attachmentType,
+        int attachmentTypeId,
         string fileName,
         string fileStoragePath,
         string fileHash,
@@ -132,7 +136,7 @@ public class StudentWork : AggregateRoot<long>, IAuditable, ISoftDeletable
         var attachment = new Attachment(
             Id,
             stateId ?? CurrentStateId,
-            attachmentType,
+            attachmentTypeId,
             fileName,
             fileStoragePath,
             fileHash,
@@ -161,18 +165,18 @@ public class StudentWork : AggregateRoot<long>, IAuditable, ISoftDeletable
     /// The expert will later complete it via CompleteQualityCheck.
     /// </summary>
     public QualityCheck AddQualityCheck(
-        CheckType checkType,
+        int checkTypeId,
         bool isPassed,
         int? expertId = null,
         decimal? resultValue = null,
         string? comment = null,
         string? documentPath = null)
     {
-        var attemptNumber = _qualityChecks.Count(c => c.CheckType == checkType) + 1;
+        var attemptNumber = _qualityChecks.Count(c => c.CheckTypeId == checkTypeId) + 1;
 
         var check = new QualityCheck(
             Id,
-            checkType,
+            checkTypeId,
             isPassed,
             attemptNumber,
             expertId,
@@ -212,7 +216,7 @@ public class StudentWork : AggregateRoot<long>, IAuditable, ISoftDeletable
         LastModifiedAt = DateTime.UtcNow;
         LastModifiedBy = expertId;
 
-        RaiseDomainEvent(new QualityCheckCompletedEvent(Id, check.CheckType.ToString(), isPassed, expertId));
+        RaiseDomainEvent(new QualityCheckCompletedEvent(Id, check.CheckTypeId.ToString(), isPassed, expertId));
 
         return check;
     }
@@ -233,24 +237,24 @@ public class StudentWork : AggregateRoot<long>, IAuditable, ISoftDeletable
     /// </summary>
     public WorkParticipant? GetLeader()
     {
-        return _participants.FirstOrDefault(p => p.Role == ParticipantRole.Leader);
+        return _participants.FirstOrDefault(p => p.RoleId == RoleLeader);
     }
 
     /// <summary>
     /// Checks if a specific check type has passed.
     /// </summary>
-    public bool HasPassedCheck(CheckType checkType)
+    public bool HasPassedCheck(int checkTypeId)
     {
-        return _qualityChecks.Any(c => c.CheckType == checkType && c.IsPassed);
+        return _qualityChecks.Any(c => c.CheckTypeId == checkTypeId && c.IsPassed);
     }
 
     /// <summary>
     /// Gets the latest check of a specific type.
     /// </summary>
-    public QualityCheck? GetLatestCheck(CheckType checkType)
+    public QualityCheck? GetLatestCheck(int checkTypeId)
     {
         return _qualityChecks
-            .Where(c => c.CheckType == checkType)
+            .Where(c => c.CheckTypeId == checkTypeId)
             .OrderByDescending(c => c.AttemptNumber)
             .FirstOrDefault();
     }

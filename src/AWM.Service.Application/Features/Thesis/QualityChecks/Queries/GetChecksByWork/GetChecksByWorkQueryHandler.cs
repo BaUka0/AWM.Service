@@ -32,13 +32,13 @@ public sealed class GetChecksByWorkQueryHandler
             }
 
             var dtos = work.QualityChecks
-                .OrderBy(c => c.CheckType.ToString())
+                .OrderBy(c => c.CheckTypeId.ToString())
                 .ThenBy(c => c.AttemptNumber)
                 .Select(c => new QualityCheckDto
                 {
                     Id = c.Id,
                     WorkId = c.WorkId,
-                    CheckType = c.CheckType.ToString(),
+                    CheckType = c.CheckTypeId.ToString(),
                     AttemptNumber = c.AttemptNumber,
                     IsPassed = c.IsPassed,
                     ResultValue = c.ResultValue,

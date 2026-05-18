@@ -69,7 +69,7 @@ public sealed class UpdateTopicCommandHandler : IRequestHandler<UpdateTopicComma
             }
 
             // 5. Business rule: If reducing MaxParticipants, check if it's possible
-            var acceptedApplicationsCount = topic.Applications.Count(a => a.Status == Domain.Thesis.Enums.ApplicationStatus.Accepted);
+            var acceptedApplicationsCount = topic.Applications.Count(a => a.StatusId == 2);
 
             if (request.MaxParticipants < acceptedApplicationsCount)
             {

@@ -1,7 +1,5 @@
 namespace AWM.Service.WebAPI.Common.Contracts.Requests.Thesis;
 
-using AWM.Service.Domain.Thesis.Enums;
-
 /// <summary>
 /// Request contract for adding a participant to a student work.
 /// </summary>
@@ -14,8 +12,8 @@ public sealed record AddParticipantRequest
     public int StudentId { get; init; }
 
     /// <summary>
-    /// Role of the participant (Leader or Member). Defaults to Member.
+    /// Role of the participant (1 = Leader, 2 = Member). Defaults to Member (2).
     /// </summary>
-    /// <example>Member</example>
-    public ParticipantRole Role { get; init; } = ParticipantRole.Member;
+    /// <example>2</example>
+    public int Role { get; init; } = 2;
 }

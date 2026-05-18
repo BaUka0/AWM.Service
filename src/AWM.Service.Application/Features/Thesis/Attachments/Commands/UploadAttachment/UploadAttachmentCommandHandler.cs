@@ -1,7 +1,6 @@
 namespace AWM.Service.Application.Features.Thesis.Attachments.Commands.UploadAttachment;
 
 using AWM.Service.Domain.Thesis.Service;
-using AWM.Service.Domain.Thesis.Enums;
 using AWM.Service.Domain.Common;
 using AWM.Service.Domain.Repositories;
 using KDS.Primitives.FluentResult;
@@ -39,8 +38,8 @@ public sealed class UploadAttachmentCommandHandler : IRequestHandler<UploadAttac
                 return Result.Failure<long>(new Error("404", $"StudentWork with ID {request.WorkId} not found."));
 
             // Block uploading new work versions (Draft/Final) after NormControl is passed
-            if (work.HasPassedCheck(CheckType.NormControl)
-                && (request.AttachmentType == AttachmentType.Draft || request.AttachmentType == AttachmentType.Final))
+            if (work.HasPassedCheck(1)
+                && (request.AttachmentTypeId == 1 || request.AttachmentTypeId == 2))
             {
                 return Result.Failure<long>(new Error("BusinessRule.Attachment",
                     "Cannot upload new work versions after NormControl has been passed."));
@@ -60,7 +59,7 @@ public sealed class UploadAttachmentCommandHandler : IRequestHandler<UploadAttac
 
             // Create domain attachment through the aggregate root
             var attachment = work.AddAttachment(
-                request.AttachmentType,
+                request.AttachmentTypeId,
                 request.File.FileName,
                 storagePath,
                 fileHash,

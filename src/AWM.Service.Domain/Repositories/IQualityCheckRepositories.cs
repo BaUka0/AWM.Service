@@ -1,8 +1,6 @@
 namespace AWM.Service.Domain.Repositories;
 
 using AWM.Service.Domain.Thesis.Entities;
-using AWM.Service.Domain.Thesis.Enums;
-
 /// <summary>
 /// Repository for external reviewers (база внешних рецензентов).
 /// </summary>
@@ -52,7 +50,7 @@ public interface IExpertRepository
     /// </summary>
     Task<IReadOnlyList<Expert>> GetByDepartmentAndTypeAsync(
         int departmentId,
-        ExpertiseType expertiseType,
+        int checkTypeId,
         CancellationToken cancellationToken = default);
 
     /// <summary>

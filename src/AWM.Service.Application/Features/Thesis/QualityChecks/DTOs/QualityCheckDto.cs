@@ -1,6 +1,5 @@
 namespace AWM.Service.Application.Features.Thesis.QualityChecks.DTOs;
 
-using AWM.Service.Domain.Thesis.Enums;
 
 /// <summary>
 /// Data Transfer Object for a quality check record.

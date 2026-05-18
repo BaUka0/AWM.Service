@@ -92,7 +92,7 @@ public sealed class GetApplicationsByStudentQueryHandler
         var topicsById = topics.ToDictionary(t => t.Id);
         var topicApplications = await _applicationRepository.GetByTopicIdsAsync(topicIds, cancellationToken);
         var acceptedCountsByTopicId = topicApplications
-            .Where(a => !a.IsDeleted && a.Status == Domain.Thesis.Enums.ApplicationStatus.Accepted)
+            .Where(a => !a.IsDeleted && a.StatusId == 2)
             .GroupBy(a => a.TopicId)
             .ToDictionary(g => g.Key, g => g.Count());
 

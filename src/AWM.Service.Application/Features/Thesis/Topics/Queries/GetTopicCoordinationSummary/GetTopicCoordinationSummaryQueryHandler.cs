@@ -2,7 +2,6 @@ namespace AWM.Service.Application.Features.Thesis.Topics.Queries.GetTopicCoordin
 
 using AWM.Service.Domain.Common;
 using AWM.Service.Domain.Repositories;
-using AWM.Service.Domain.Thesis.Enums;
 using KDS.Primitives.FluentResult;
 using MediatR;
 using Microsoft.Extensions.Logging;
@@ -71,9 +70,9 @@ public sealed class GetTopicCoordinationSummaryQueryHandler
         foreach (var topic in topics)
         {
             var applications = applicationsByTopicId.GetValueOrDefault(topic.Id, []);
-            var accepted = applications.Count(a => a.Status == ApplicationStatus.Accepted);
-            var pending = applications.Count(a => a.Status == ApplicationStatus.Submitted);
-            var rejected = applications.Count(a => a.Status == ApplicationStatus.Rejected);
+            var accepted = applications.Count(a => a.StatusId == 2);
+            var pending = applications.Count(a => a.StatusId == 1);
+            var rejected = applications.Count(a => a.StatusId == 3);
             var available = Math.Max(0, topic.MaxParticipants - accepted);
             var supervisor = supervisorsById.GetValueOrDefault(topic.SupervisorId);
             var supervisorUser = supervisor is null
@@ -95,7 +94,7 @@ public sealed class GetTopicCoordinationSummaryQueryHandler
                 RejectedCount = rejected,
                 AvailableSpots = available,
                 LastRejectionReason = applications
-                    .Where(a => a.Status == ApplicationStatus.Rejected && !string.IsNullOrWhiteSpace(a.ReviewComment))
+                    .Where(a => a.StatusId == 3 && !string.IsNullOrWhiteSpace(a.ReviewComment))
                     .OrderByDescending(a => a.ReviewedAt ?? a.AppliedAt)
                     .Select(a => a.ReviewComment)
                     .FirstOrDefault(),

@@ -36,7 +36,7 @@ public sealed class GetAttachmentByIdQueryHandler
                 Id = attachment.Id,
                 WorkId = attachment.WorkId,
                 StateId = attachment.StateId,
-                AttachmentType = attachment.AttachmentType,
+                AttachmentTypeId = attachment.AttachmentTypeId,
                 FileName = attachment.FileName,
                 FileStoragePath = attachment.FileStoragePath,
                 CreatedAt = attachment.CreatedAt,

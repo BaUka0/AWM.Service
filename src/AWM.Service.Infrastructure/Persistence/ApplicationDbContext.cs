@@ -68,6 +68,9 @@ public sealed class ApplicationDbContext : DbContext
     public DbSet<AcademicProgram> AcademicPrograms => Set<AcademicProgram>();
     public DbSet<Student> Students => Set<Student>();
     public DbSet<Staff> Staff => Set<Staff>();
+
+    // Reference tables (replacing enums)
+    public DbSet<StudentStatus> StudentStatuses => Set<StudentStatus>();
     #endregion
 
     #region Wf Schema
@@ -89,6 +92,12 @@ public sealed class ApplicationDbContext : DbContext
     public DbSet<Reviewer> Reviewers => Set<Reviewer>();
     public DbSet<Review> Reviews => Set<Review>();
     public DbSet<SupervisorReview> SupervisorReviews => Set<SupervisorReview>();
+
+    // Reference tables (replacing enums)
+    public DbSet<ApplicationStatus> ApplicationStatuses => Set<ApplicationStatus>();
+    public DbSet<ParticipantRole> ParticipantRoles => Set<ParticipantRole>();
+    public DbSet<AttachmentType> AttachmentTypes => Set<AttachmentType>();
+    public DbSet<CheckType> CheckTypes => Set<CheckType>();
     #endregion
 
     #region Defense Schema
@@ -99,6 +108,11 @@ public sealed class ApplicationDbContext : DbContext
     public DbSet<EvaluationCriteria> EvaluationCriteria => Set<EvaluationCriteria>();
     public DbSet<Grade> Grades => Set<Grade>();
     public DbSet<Protocol> Protocols => Set<Protocol>();
+
+    // Reference tables (replacing enums)
+    public DbSet<CommissionType> CommissionTypes => Set<CommissionType>();
+    public DbSet<CommissionRole> CommissionRoles => Set<CommissionRole>();
+    public DbSet<AttendanceStatus> AttendanceStatuses => Set<AttendanceStatus>();
     #endregion
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

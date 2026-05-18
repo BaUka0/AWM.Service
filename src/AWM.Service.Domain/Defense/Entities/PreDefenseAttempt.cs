@@ -1,7 +1,6 @@
 namespace AWM.Service.Domain.Defense.Entities;
 
 using AWM.Service.Domain.Common;
-using AWM.Service.Domain.Defense.Enums;
 
 /// <summary>
 /// PreDefenseAttempt entity - tracks student's pre-defense attempts.
@@ -11,7 +10,7 @@ public class PreDefenseAttempt : Entity<long>, IAuditable
     public long WorkId { get; private set; }
     public int PreDefenseNumber { get; private set; }
     public long? ScheduleId { get; private set; }
-    public AttendanceStatus AttendanceStatus { get; private set; }
+    public int AttendanceStatusId { get; private set; }
     public decimal? AverageScore { get; private set; }
     public bool IsPassed { get; private set; }
     public DateTime AttemptDate { get; private set; }
@@ -21,6 +20,11 @@ public class PreDefenseAttempt : Entity<long>, IAuditable
     public DateTime? LastModifiedAt { get; private set; }
     public int? LastModifiedBy { get; private set; }
 
+    // Seeded reference IDs
+    private const int StatusAttended = 1;
+    private const int StatusAbsent = 2;
+    private const int StatusExcused = 3;
+
     private PreDefenseAttempt() { }
 
     public PreDefenseAttempt(
@@ -28,7 +32,7 @@ public class PreDefenseAttempt : Entity<long>, IAuditable
         int preDefenseNumber,
         int createdBy,
         long? scheduleId = null,
-        AttendanceStatus attendanceStatus = AttendanceStatus.Attended)
+        int attendanceStatusId = StatusAttended)
     {
         if (preDefenseNumber < 1 || preDefenseNumber > 3)
             throw new ArgumentException("Pre-defense number must be 1, 2, or 3.", nameof(preDefenseNumber));
@@ -36,7 +40,7 @@ public class PreDefenseAttempt : Entity<long>, IAuditable
         WorkId = workId;
         PreDefenseNumber = preDefenseNumber;
         ScheduleId = scheduleId;
-        AttendanceStatus = attendanceStatus;
+        AttendanceStatusId = attendanceStatusId;
         IsPassed = false;
         AttemptDate = DateTime.UtcNow;
 
@@ -49,7 +53,7 @@ public class PreDefenseAttempt : Entity<long>, IAuditable
     /// </summary>
     public void RecordResult(decimal averageScore, bool isPassed, int modifiedBy)
     {
-        if (AttendanceStatus != AttendanceStatus.Attended)
+        if (AttendanceStatusId != StatusAttended)
             throw new InvalidOperationException("Cannot record result for non-attended attempt.");
 
         AverageScore = averageScore;
@@ -64,7 +68,7 @@ public class PreDefenseAttempt : Entity<long>, IAuditable
     /// </summary>
     public void MarkAbsent(int modifiedBy, bool excused = false)
     {
-        AttendanceStatus = excused ? AttendanceStatus.Excused : AttendanceStatus.Absent;
+        AttendanceStatusId = excused ? StatusExcused : StatusAbsent;
         IsPassed = false;
         AverageScore = null;
 

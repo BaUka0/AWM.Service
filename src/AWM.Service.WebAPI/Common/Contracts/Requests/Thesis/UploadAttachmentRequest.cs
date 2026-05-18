@@ -1,6 +1,5 @@
 namespace AWM.Service.WebAPI.Common.Contracts.Requests.Thesis;
 
-using AWM.Service.Domain.Thesis.Enums;
 using Microsoft.AspNetCore.Http;
 
 /// <summary>
@@ -9,10 +8,10 @@ using Microsoft.AspNetCore.Http;
 public sealed record UploadAttachmentRequest
 {
     /// <summary>
-    /// Type of attachment being uploaded (0 = Draft, 1 = Final, 2 = Presentation, 3 = Software).
+    /// Type of attachment being uploaded (1 = Draft, 2 = Final, 3 = Presentation, 4 = Software, 5 = Demo, 6 = Handout).
     /// </summary>
     /// <example>1</example>
-    public AttachmentType AttachmentType { get; init; }
+    public int AttachmentType { get; init; }
 
     /// <summary>
     /// The file to upload.

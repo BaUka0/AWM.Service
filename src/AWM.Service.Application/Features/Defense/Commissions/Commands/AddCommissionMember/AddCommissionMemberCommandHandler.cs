@@ -36,7 +36,7 @@ public sealed class AddCommissionMemberCommandHandler : IRequestHandler<AddCommi
             }
 
             // Domain method enforces: only one chairman, only one secretary
-            var member = commission.AddMember(request.UserId, request.RoleInCommission);
+            var member = commission.AddMember(request.UserId, request.CommissionRoleId);
 
             await _commissionRepository.UpdateAsync(commission, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);

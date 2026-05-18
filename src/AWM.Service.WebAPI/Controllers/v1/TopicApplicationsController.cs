@@ -8,7 +8,7 @@ using AWM.Service.Application.Features.Thesis.Applications.DTOs;
 using AWM.Service.Application.Features.Thesis.Applications.Queries.GetApplicationsByStudent;
 using AWM.Service.Application.Features.Thesis.Applications.Queries.GetApplicationsByTopic;
 using AWM.Service.Domain.Common;
-using AWM.Service.Domain.Thesis.Enums;
+
 using AWM.Service.WebAPI.Authorization;
 using AWM.Service.WebAPI.Common.Contracts.Requests.Thesis;
 using AWM.Service.WebAPI.Common.Contracts.Responses.Thesis;
@@ -76,13 +76,13 @@ public class TopicApplicationsController : BaseController
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetByTopic(
         long topicId,
-        [FromQuery] ApplicationStatus? status = null,
+        [FromQuery] int? status = null,
         CancellationToken cancellationToken = default)
     {
         var query = new GetApplicationsByTopicQuery
         {
             TopicId = topicId,
-            StatusFilter = status.HasValue ? (int)status.Value : null
+            StatusFilter = status
         };
 
         var result = await _sender.Send(query, cancellationToken);

@@ -1,6 +1,5 @@
 namespace AWM.Service.Application.Features.Defense.Commissions.Commands.CreateCommission;
 
-using AWM.Service.Domain.Defense.Enums;
 using FluentValidation;
 
 /// <summary>
@@ -18,9 +17,9 @@ public sealed class CreateCommissionCommandValidator : AbstractValidator<CreateC
             .GreaterThan(0)
             .WithMessage("Academic year ID must be greater than 0.");
 
-        RuleFor(x => x.CommissionType)
-            .IsInEnum()
-            .WithMessage("Commission type must be a valid value (PreDefense or GAK).");
+        RuleFor(x => x.CommissionTypeId)
+            .InclusiveBetween(1, 2)
+            .WithMessage("Commission type must be a valid value (1 = PreDefense, 2 = GAK).");
 
         RuleFor(x => x.PreDefenseNumber)
             .InclusiveBetween(1, 3)

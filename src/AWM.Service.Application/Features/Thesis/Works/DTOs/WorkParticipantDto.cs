@@ -21,7 +21,7 @@ public sealed record WorkParticipantDto
             Id = entity.Id,
             WorkId = entity.WorkId,
             StudentId = entity.StudentId,
-            Role = entity.Role.ToString(),
+            Role = entity.RoleId.ToString(),
             IsLeader = entity.IsLeader,
             JoinedAt = entity.JoinedAt
         };

@@ -1,7 +1,6 @@
 namespace AWM.Service.Domain.Thesis.Entities;
 
 using AWM.Service.Domain.Common;
-using AWM.Service.Domain.Thesis.Enums;
 
 /// <summary>
 /// Expert entity - department staff member assigned for quality checks.
@@ -10,7 +9,7 @@ public class Expert : Entity<int>, IAuditable, ISoftDeletable
 {
     public int UserId { get; private set; }
     public int DepartmentId { get; private set; }
-    public ExpertiseType ExpertiseType { get; private set; }
+    public int CheckTypeId { get; private set; }
     public bool IsActive { get; private set; }
 
     public DateTime CreatedAt { get; private set; }
@@ -24,11 +23,11 @@ public class Expert : Entity<int>, IAuditable, ISoftDeletable
 
     private Expert() { }
 
-    public Expert(int userId, int departmentId, ExpertiseType expertiseType, int createdBy = 0)
+    public Expert(int userId, int departmentId, int checkTypeId, int createdBy = 0)
     {
         UserId = userId;
         DepartmentId = departmentId;
-        ExpertiseType = expertiseType;
+        CheckTypeId = checkTypeId;
         IsActive = true;
 
         CreatedAt = DateTime.UtcNow;

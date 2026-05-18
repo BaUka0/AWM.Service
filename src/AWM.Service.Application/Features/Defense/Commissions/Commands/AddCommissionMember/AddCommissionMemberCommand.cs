@@ -1,6 +1,5 @@
 namespace AWM.Service.Application.Features.Defense.Commissions.Commands.AddCommissionMember;
 
-using AWM.Service.Domain.Defense.Enums;
 using KDS.Primitives.FluentResult;
 using MediatR;
 
@@ -22,5 +21,5 @@ public sealed record AddCommissionMemberCommand : IRequest<Result<int>>
     /// <summary>
     /// Role of the member in the commission.
     /// </summary>
-    public RoleInCommission RoleInCommission { get; init; }
+    public int CommissionRoleId { get; init; }
 }

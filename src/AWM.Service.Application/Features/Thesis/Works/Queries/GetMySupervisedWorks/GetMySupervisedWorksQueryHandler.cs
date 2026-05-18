@@ -129,7 +129,7 @@ public sealed class GetMySupervisedWorksQueryHandler
                 {
                     StudentId = participant.StudentId,
                     Name = studentUser?.Login ?? studentUser?.Email,
-                    Role = participant.Role.ToString(),
+                    Role = participant.RoleId.ToString(),
                     IsLeader = participant.IsLeader,
                     Score = null
                 });
@@ -139,7 +139,7 @@ public sealed class GetMySupervisedWorksQueryHandler
             {
                 Id = a.Id,
                 FileName = a.FileName,
-                AttachmentType = a.AttachmentType.ToString(),
+                AttachmentType = a.AttachmentTypeId.ToString(),
                 CreatedAt = a.CreatedAt,
                 CreatedBy = a.CreatedBy
             }).ToList();

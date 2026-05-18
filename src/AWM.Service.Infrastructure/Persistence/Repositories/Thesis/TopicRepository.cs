@@ -2,7 +2,6 @@ namespace AWM.Service.Infrastructure.Persistence.Repositories.Thesis;
 
 using AWM.Service.Domain.Repositories;
 using AWM.Service.Domain.Thesis.Entities;
-using AWM.Service.Domain.Thesis.Enums;
 using AWM.Service.Infrastructure.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
 
@@ -81,7 +80,7 @@ public sealed class TopicRepository : RepositoryBase<Topic, long>, ITopicReposit
     {
         var acceptedCountsQuery = Context.TopicApplications
             .AsNoTracking()
-            .Where(a => !a.IsDeleted && a.Status == ApplicationStatus.Accepted)
+            .Where(a => !a.IsDeleted && a.StatusId == 2)
             .GroupBy(a => a.TopicId)
             .Select(group => new
             {

@@ -33,10 +33,8 @@ public class StudentConfiguration : SoftDeletableEntityConfiguration<Student, in
         builder.Property(e => e.CurrentCourse)
             .IsRequired();
 
-        builder.Property(e => e.Status)
-            .IsRequired()
-            .HasConversion<string>()
-            .HasMaxLength(50);
+        builder.Property(e => e.StatusId)
+            .IsRequired();
 
         // Foreign keys
         builder.HasOne<User>()
@@ -49,6 +47,12 @@ public class StudentConfiguration : SoftDeletableEntityConfiguration<Student, in
             .WithMany()
             .HasForeignKey(e => e.ProgramId)
             .HasConstraintName("FK_Students_Program")
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne<StudentStatus>()
+            .WithMany()
+            .HasForeignKey(e => e.StatusId)
+            .HasConstraintName("FK_Students_Status")
             .OnDelete(DeleteBehavior.Restrict);
 
         // Unique constraint on UserId (one student profile per user)

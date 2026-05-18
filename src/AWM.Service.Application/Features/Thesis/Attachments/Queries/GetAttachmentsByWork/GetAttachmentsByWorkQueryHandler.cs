@@ -32,7 +32,7 @@ public sealed class GetAttachmentsByWorkQueryHandler
                     Id = a.Id,
                     WorkId = a.WorkId,
                     StateId = a.StateId,
-                    AttachmentType = a.AttachmentType,
+                    AttachmentTypeId = a.AttachmentTypeId,
                     FileName = a.FileName,
                     FileStoragePath = a.FileStoragePath,
                     CreatedAt = a.CreatedAt,

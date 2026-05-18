@@ -3,7 +3,6 @@ namespace AWM.Service.Infrastructure.Persistence.Configurations.Defense;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using AWM.Service.Domain.Defense.Entities;
-using AWM.Service.Domain.Defense.Enums;
 using AWM.Service.Domain.Thesis.Entities;
 using AWM.Service.Infrastructure.Persistence.Configurations.Base;
 
@@ -21,8 +20,6 @@ public class PreDefenseAttemptConfiguration : AuditableEntityConfiguration<PreDe
         {
             t.HasCheckConstraint("Check_PreDef_Num", 
                 "[PreDefenseNumber] BETWEEN 1 AND 3");
-            t.HasCheckConstraint("Check_PreDef_Attendance", 
-                "[AttendanceStatus] IN ('Attended', 'Absent', 'Excused')");
         });
 
         builder.Property(e => e.Id)
@@ -36,11 +33,9 @@ public class PreDefenseAttemptConfiguration : AuditableEntityConfiguration<PreDe
 
         builder.Property(e => e.ScheduleId);
 
-        builder.Property(e => e.AttendanceStatus)
+        builder.Property(e => e.AttendanceStatusId)
             .IsRequired()
-            .HasConversion<string>()
-            .HasMaxLength(50)
-            .HasDefaultValue(AttendanceStatus.Attended);
+            .HasDefaultValue(1);
 
         builder.Property(e => e.AverageScore)
             .HasColumnType("decimal(5,2)");
@@ -64,6 +59,12 @@ public class PreDefenseAttemptConfiguration : AuditableEntityConfiguration<PreDe
             .WithMany()
             .HasForeignKey(e => e.ScheduleId)
             .HasConstraintName("FK_PreDef_Schedule")
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne<AttendanceStatus>()
+            .WithMany()
+            .HasForeignKey(e => e.AttendanceStatusId)
+            .HasConstraintName("FK_PreDef_AttendanceStatus")
             .OnDelete(DeleteBehavior.Restrict);
 
         // Unique constraint - one attempt per work per pre-defense number

@@ -3,7 +3,7 @@ namespace AWM.Service.Application.Features.Thesis.Topics.DTOs;
 using AWM.Service.Domain.Auth.Entities;
 using AWM.Service.Domain.Edu.Entities;
 using AWM.Service.Domain.Thesis.Entities;
-using AWM.Service.Domain.Thesis.Enums;
+
 using AWM.Service.Domain.Wf.Entities;
 using ApplicationTopicApplicationDto = AWM.Service.Application.Features.Thesis.Applications.DTOs.TopicApplicationDto;
 
@@ -29,11 +29,11 @@ internal readonly record struct TopicApplicationCounters(
 
             applicationsCount++;
 
-            if (application.Status == ApplicationStatus.Submitted)
+            if (application.StatusId == 1)
             {
                 pendingApplicationsCount++;
             }
-            else if (application.Status == ApplicationStatus.Accepted)
+            else if (application.StatusId == 2)
             {
                 acceptedApplicationsCount++;
             }

@@ -2,7 +2,6 @@ namespace AWM.Service.Application.Features.Thesis.Topics.Commands.DeactivateTopi
 
 using AWM.Service.Domain.Common;
 using AWM.Service.Domain.Repositories;
-using AWM.Service.Domain.Thesis.Enums;
 using KDS.Primitives.FluentResult;
 using MediatR;
 using Microsoft.Extensions.Logging;
@@ -60,7 +59,7 @@ public sealed class DeactivateTopicCommandHandler
 
         // Check that topic has no accepted students
         var applications = await _applicationRepository.GetByTopicIdAsync(topic.Id, cancellationToken);
-        var hasAccepted = applications.Any(a => a.Status == ApplicationStatus.Accepted);
+        var hasAccepted = applications.Any(a => a.StatusId == 2);
 
         if (hasAccepted)
         {

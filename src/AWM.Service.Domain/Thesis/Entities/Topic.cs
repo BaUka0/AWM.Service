@@ -189,7 +189,8 @@ public class Topic : AggregateRoot<long>, IAuditable, ISoftDeletable
         if (!IsApproved || IsClosed)
             return false;
 
-        var acceptedCount = _applications.Count(a => a.Status == Enums.ApplicationStatus.Accepted);
+        const int StatusAccepted = 2;
+        var acceptedCount = _applications.Count(a => a.StatusId == StatusAccepted);
         return acceptedCount < MaxParticipants;
     }
 
@@ -198,7 +199,8 @@ public class Topic : AggregateRoot<long>, IAuditable, ISoftDeletable
     /// </summary>
     public int GetAvailableSpots()
     {
-        var acceptedCount = _applications.Count(a => a.Status == Enums.ApplicationStatus.Accepted);
+        const int StatusAccepted = 2;
+        var acceptedCount = _applications.Count(a => a.StatusId == StatusAccepted);
         return Math.Max(0, MaxParticipants - acceptedCount);
     }
 

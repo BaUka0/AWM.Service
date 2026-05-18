@@ -34,7 +34,7 @@ public sealed class GetPreDefenseAttemptsQueryHandler
                     WorkId = a.WorkId,
                     PreDefenseNumber = a.PreDefenseNumber,
                     ScheduleId = a.ScheduleId,
-                    AttendanceStatus = a.AttendanceStatus.ToString(),
+                    AttendanceStatus = a.AttendanceStatusId.ToString(),
                     AverageScore = a.AverageScore,
                     IsPassed = a.IsPassed,
                     NeedsRetake = a.NeedsRetake,

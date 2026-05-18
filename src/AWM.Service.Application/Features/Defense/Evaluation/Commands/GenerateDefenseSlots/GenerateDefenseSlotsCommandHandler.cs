@@ -1,7 +1,6 @@
 namespace AWM.Service.Application.Features.Defense.Evaluation.Commands.GenerateDefenseSlots;
 
 using AWM.Service.Domain.Common;
-using AWM.Service.Domain.Defense.Enums;
 using AWM.Service.Domain.Repositories;
 using KDS.Primitives.FluentResult;
 using MediatR;
@@ -44,7 +43,7 @@ public sealed class GenerateDefenseSlotsCommandHandler
                 return Result.Failure<int>(new Error("NotFound.Commission",
                     $"Commission with ID {request.CommissionId} not found."));
 
-            if (commission.CommissionType != CommissionType.GAK)
+            if (commission.CommissionTypeId != 2)
                 return Result.Failure<int>(new Error("BusinessRule.Commission",
                     "Defense slots can only be generated for GAK commissions."));
 

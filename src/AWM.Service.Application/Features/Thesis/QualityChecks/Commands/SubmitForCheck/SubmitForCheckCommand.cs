@@ -1,6 +1,5 @@
 namespace AWM.Service.Application.Features.Thesis.QualityChecks.Commands.SubmitForCheck;
 
-using AWM.Service.Domain.Thesis.Enums;
 using KDS.Primitives.FluentResult;
 using MediatR;
 
@@ -16,9 +15,9 @@ public sealed record SubmitForCheckCommand : IRequest<Result<long>>
     public long WorkId { get; init; }
 
     /// <summary>
-    /// Type of check to perform.
+    /// Check type ID (FK to Thesis.CheckTypes). 1=NormControl, 2=SoftwareCheck, 3=AntiPlagiarism.
     /// </summary>
-    public CheckType CheckType { get; init; }
+    public int CheckTypeId { get; init; }
 
     /// <summary>
     /// Optional comment from the student.

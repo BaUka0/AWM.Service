@@ -1,5 +1,4 @@
 namespace AWM.Service.Application.Features.Defense.Commissions.Commands.CreateCommission;
-using AWM.Service.Domain.Defense.Enums;
 using KDS.Primitives.FluentResult;
 using MediatR;
 
@@ -21,7 +20,7 @@ public sealed record CreateCommissionCommand : IRequest<Result<int>>
     /// <summary>
     /// Type of commission (PreDefense or GAK).
     /// </summary>
-    public CommissionType CommissionType { get; init; }
+    public int CommissionTypeId { get; init; }
 
     /// <summary>
     /// Optional name for the commission.
@@ -39,4 +38,4 @@ public sealed record CreateCommissionCommand : IRequest<Result<int>>
     public IReadOnlyList<CreateCommissionMemberCommand> Members { get; init; } = new List<CreateCommissionMemberCommand>();
 }
 
-public record CreateCommissionMemberCommand(int UserId, RoleInCommission Role);
+public record CreateCommissionMemberCommand(int UserId, int CommissionRoleId);

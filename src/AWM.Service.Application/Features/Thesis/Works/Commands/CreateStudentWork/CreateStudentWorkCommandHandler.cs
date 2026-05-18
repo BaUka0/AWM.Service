@@ -3,7 +3,6 @@ namespace AWM.Service.Application.Features.Thesis.Works.Commands.CreateStudentWo
 using AWM.Service.Domain.Common;
 using AWM.Service.Domain.Repositories;
 using AWM.Service.Domain.Thesis.Entities;
-using AWM.Service.Domain.Thesis.Enums;
 using KDS.Primitives.FluentResult;
 using MediatR;
 
@@ -84,7 +83,7 @@ public sealed class CreateStudentWorkCommandHandler : IRequestHandler<CreateStud
             return Result.Failure<long>(new Error("NotFound.Student",
                 $"Student with ID {request.StudentId} not found."));
 
-        work.AddParticipant(request.StudentId, ParticipantRole.Leader);
+        work.AddParticipant(request.StudentId, 1); // Leader = 1
 
         // 5. Persist
         await _workRepository.AddAsync(work, cancellationToken);

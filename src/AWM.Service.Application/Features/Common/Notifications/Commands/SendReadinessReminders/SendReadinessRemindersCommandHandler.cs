@@ -3,7 +3,6 @@ namespace AWM.Service.Application.Features.Common.Notifications.Commands.SendRea
 using AWM.Service.Domain.Common;
 using AWM.Service.Domain.CommonDomain.Services;
 using AWM.Service.Domain.Repositories;
-using AWM.Service.Domain.Thesis.Enums;
 using KDS.Primitives.FluentResult;
 using MediatR;
 using Microsoft.Extensions.Logging;
@@ -69,9 +68,9 @@ public sealed class SendReadinessRemindersCommandHandler
             {
                 var workAttempts = attemptsByWorkId.GetValueOrDefault(work.Id, []);
                 var preDefensePassed = workAttempts.Any(a => a.IsPassed);
-                var normPassed = work.HasPassedCheck(CheckType.NormControl);
-                var softwarePassed = work.HasPassedCheck(CheckType.SoftwareCheck);
-                var plagiarismPassed = work.HasPassedCheck(CheckType.AntiPlagiarism);
+                var normPassed = work.HasPassedCheck(1);
+                var softwarePassed = work.HasPassedCheck(2);
+                var plagiarismPassed = work.HasPassedCheck(3);
                 var workReviews = reviewsByWorkId.GetValueOrDefault(work.Id, []);
                 var hasReview = workReviews.Any(r => r.IsUploaded);
 

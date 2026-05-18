@@ -2,7 +2,6 @@ namespace AWM.Service.Infrastructure.Persistence.Repositories.Thesis;
 
 using AWM.Service.Domain.Repositories;
 using AWM.Service.Domain.Thesis.Entities;
-using AWM.Service.Domain.Thesis.Enums;
 using AWM.Service.Infrastructure.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
 
@@ -17,14 +16,14 @@ public sealed class ExpertRepository : RepositoryBase<Expert, int>, IExpertRepos
     /// <inheritdoc />
     public async Task<IReadOnlyList<Expert>> GetByDepartmentAndTypeAsync(
         int departmentId,
-        ExpertiseType expertiseType,
+        int checkTypeId,
         CancellationToken cancellationToken = default)
     {
         return await Context.Experts
             .AsNoTracking()
             .Where(e => e.IsActive &&
                         e.DepartmentId == departmentId &&
-                        e.ExpertiseType == expertiseType)
+                        e.CheckTypeId == checkTypeId)
             .ToListAsync(cancellationToken);
     }
 

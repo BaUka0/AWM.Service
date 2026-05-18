@@ -39,7 +39,7 @@ public sealed class GetCommissionByIdQueryHandler
                 Id = commission.Id,
                 DepartmentId = commission.DepartmentId,
                 AcademicYearId = commission.AcademicYearId,
-                CommissionType = commission.CommissionType.ToString(),
+                CommissionType = commission.CommissionTypeId.ToString(),
                 Name = commission.Name,
                 PreDefenseNumber = commission.PreDefenseNumber,
                 CreatedAt = commission.CreatedAt,
@@ -52,7 +52,7 @@ public sealed class GetCommissionByIdQueryHandler
                         Id = m.Id,
                         CommissionId = m.CommissionId,
                         UserId = m.UserId,
-                        RoleInCommission = m.RoleInCommission.ToString(),
+                        RoleInCommission = m.CommissionRoleId.ToString(),
                         CreatedAt = m.CreatedAt
                     })
                     .ToList()

@@ -3,7 +3,6 @@ namespace AWM.Service.Infrastructure.Persistence.Configurations.Thesis;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using AWM.Service.Domain.Thesis.Entities;
-using AWM.Service.Domain.Thesis.Enums;
 using AWM.Service.Infrastructure.Persistence.Configurations.Base;
 
 /// <summary>
@@ -24,10 +23,8 @@ public class QualityCheckConfiguration : AuditableEntityConfiguration<QualityChe
         builder.Property(e => e.WorkId)
             .IsRequired();
 
-        builder.Property(e => e.CheckType)
-            .IsRequired()
-            .HasConversion<string>()
-            .HasMaxLength(50);
+        builder.Property(e => e.CheckTypeId)
+            .IsRequired();
 
         builder.Property(e => e.AssignedExpertId);
 
@@ -64,8 +61,14 @@ public class QualityCheckConfiguration : AuditableEntityConfiguration<QualityChe
             .HasConstraintName("FK_QChecks_Expert")
             .OnDelete(DeleteBehavior.Restrict);
 
+        builder.HasOne<CheckType>()
+            .WithMany()
+            .HasForeignKey(e => e.CheckTypeId)
+            .HasConstraintName("FK_QChecks_Type")
+            .OnDelete(DeleteBehavior.Restrict);
+
         // Index for check queries
-        builder.HasIndex(e => new { e.WorkId, e.CheckType, e.AttemptNumber })
+        builder.HasIndex(e => new { e.WorkId, e.CheckTypeId, e.AttemptNumber })
             .HasDatabaseName("IX_QualityChecks_Work");
     }
 }

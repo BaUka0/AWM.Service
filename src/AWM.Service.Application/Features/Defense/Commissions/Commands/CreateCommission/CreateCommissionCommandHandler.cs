@@ -38,14 +38,14 @@ public sealed class CreateCommissionCommandHandler : IRequestHandler<CreateCommi
             var commission = new Commission(
                 departmentId: request.DepartmentId,
                 academicYearId: request.AcademicYearId,
-                commissionType: request.CommissionType,
+                commissionTypeId: request.CommissionTypeId,
                 createdBy: userId.Value,
                 name: request.Name,
                 preDefenseNumber: request.PreDefenseNumber);
 
             foreach (var member in request.Members)
             {
-                commission.AddMember(member.UserId, member.Role);
+                commission.AddMember(member.UserId, member.CommissionRoleId);
             }
 
             await _commissionRepository.AddAsync(commission, cancellationToken);
