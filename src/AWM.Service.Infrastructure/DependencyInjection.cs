@@ -74,6 +74,9 @@ public static class DependencyInjection
                    });
         });
 
+        // Register Database Initialiser
+        services.AddScoped<ApplicationDbContextInitialiser>();
+
         // Register Unit of Work
         services.AddScoped<IUnitOfWork, UnitOfWork>();
 

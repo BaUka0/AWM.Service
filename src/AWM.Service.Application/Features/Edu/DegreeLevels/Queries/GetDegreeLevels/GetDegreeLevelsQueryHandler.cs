@@ -4,6 +4,11 @@ using AWM.Service.Application.Features.Edu.DegreeLevels.DTOs;
 using AWM.Service.Domain.Repositories;
 using KDS.Primitives.FluentResult;
 using MediatR;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 /// <summary>
 /// Handler for retrieving degree levels.
@@ -23,6 +28,22 @@ public sealed class GetDegreeLevelsQueryHandler
         GetDegreeLevelsQuery request, 
         CancellationToken cancellationToken)
     {
-        return Result.Failure<IReadOnlyList<DegreeLevelDto>>(new Error("NotImplemented", "Not implemented - University entities are read-only"));
+        var levels = await _degreeLevelRepository.GetAllAsync(cancellationToken);
+        
+        var queryable = levels.AsEnumerable();
+
+        if (!string.IsNullOrWhiteSpace(request.Name))
+        {
+            queryable = queryable.Where(l => l.Title.Contains(request.Name, StringComparison.OrdinalIgnoreCase));
+        }
+
+        var dtos = queryable.Select(l => new DegreeLevelDto
+        {
+            Id = l.Id,
+            Name = l.Title,
+            DurationYears = 0
+        }).ToList();
+
+        return Result.Success<IReadOnlyList<DegreeLevelDto>>(dtos);
     }
 }

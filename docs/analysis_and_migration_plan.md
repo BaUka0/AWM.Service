@@ -254,12 +254,13 @@ Addon таблицы ссылаются на University entities через **in
   И добавить её конфигурацию в `ApplicationDbContext` с генерацией новой миграции `AddLocalAccountsTable`. Это позволит реализовать `LoginCommandHandler` и `RegisterUserCommandHandler`.
 
 ### 2. Физическое удаление устаревших обработчиков (Stage 5D и 5E)
-* **Текущее состояние**: В кодовой базе проекта `AWM.Service.Application` всё ещё присутствуют файлы команд создания/обновления/удаления для `Institutes`, `Departments`, `AcademicPrograms`, `DegreeLevels`, `Staff`, `Students`. Они возвращают `NotImplemented` заглушки.
-* **Предлагаемое решение**: Физически удалить данные папки и файлы из проекта `Application`, а также удалить соответствующие Endpoint'ы из API контроллеров, чтобы кодовая база соответствовала концепции Read-Only Master для университетских данных.
+* **Текущее состояние**: Выполнено. В кодовой базе проекта `AWM.Service.Application` физически удалены файлы команд создания/обновления/удаления для `Institutes`, `Departments`, `AcademicPrograms`, `DegreeLevels`, `Staff`, `Students`. Соответствующие Endpoint'ы удалены из контроллеров.
 
 ### 3. Переименование контрактов и контроллеров (Stage 7)
-* В соответствии с маппингом из Section 6, необходимо провести рефакторинг API контроллеров и DTO-моделей:
+* **Текущее состояние**: Выполнено. Проведен рефакторинг API контроллеров и DTO-моделей:
   - `AcademicProgramsController` -> `SpecialitiesController`
   - `DegreeLevelsController` -> `SpecialityLevelsController`
   - `DepartmentsController` & `InstitutesController` -> объединены в `OrgUnitsController`
+  - Старые DTO и контроллеры удалены. Добавлены новые контракты `SpecialityResponse`, `SpecialityLevelResponse`, `OrgUnitResponse`.
+
 

@@ -140,6 +140,17 @@ builder.Services.AddScoped<AWM.Service.Domain.Auth.Interfaces.IJwtTokenService, 
 
 var app = builder.Build();
 
+// Seed and migrate database
+if (app.Environment.IsDevelopment() || app.Environment.IsStaging())
+{
+    using (var scope = app.Services.CreateScope())
+    {
+        var initialiser = scope.ServiceProvider.GetRequiredService<AWM.Service.Infrastructure.Persistence.ApplicationDbContextInitialiser>();
+        await initialiser.InitialiseAsync();
+        await initialiser.SeedAsync();
+    }
+}
+
 app.UseExceptionHandler();
 
 // Configure the HTTP request pipeline.
