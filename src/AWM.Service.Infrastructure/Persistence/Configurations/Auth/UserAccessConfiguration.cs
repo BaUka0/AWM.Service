@@ -23,7 +23,7 @@ public class UserAccessConfiguration : AuditableEntityConfiguration<UserAccess, 
         builder.Property(e => e.AssignedAt)
             .IsRequired();
 
-        builder.HasOne<AWM.Service.Domain.University.User>()
+        builder.HasOne(e => e.User)
             .WithMany()
             .HasForeignKey(e => e.UserId)
             .OnDelete(DeleteBehavior.Cascade);

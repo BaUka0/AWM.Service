@@ -8,7 +8,7 @@ public class SpecialityConfiguration : IEntityTypeConfiguration<Speciality>
 {
     public void Configure(EntityTypeBuilder<Speciality> builder)
     {
-        builder.ToTable("Edu_Specialities");
+        builder.ToTable("Edu_Specialities", t => t.ExcludeFromMigrations());
         builder.HasKey(e => e.Id);
 
         builder.Property(e => e.Id)

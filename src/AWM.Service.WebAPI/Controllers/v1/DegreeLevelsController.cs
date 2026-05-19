@@ -1,8 +1,6 @@
 namespace AWM.Service.WebAPI.Controllers.v1;
 
-using AWM.Service.Application.Features.Edu.DegreeLevels.Commands.CreateDegreeLevel;
 using AWM.Service.Application.Features.Edu.DegreeLevels.Queries.GetDegreeLevels;
-using AWM.Service.WebAPI.Common.Contracts.Requests.Edu;
 using AWM.Service.WebAPI.Common.Contracts.Responses.Edu;
 using AWM.Service.WebAPI.Authorization;
 using Mapster;
@@ -61,93 +59,5 @@ public sealed class DegreeLevelsController : BaseController
         var response = result.Value.Adapt<IReadOnlyList<DegreeLevelResponse>>();
 
         return Ok(response);
-    }
-
-    /// <summary>
-    /// Create a new degree level.
-    /// </summary>
-    /// <param name="request">Degree level creation data.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>Created degree level ID.</returns>
-    [HttpPost]
-    [RequireAccess("AcademicPrograms", "Create")]
-    [ProducesResponseType(typeof(int), StatusCodes.Status201Created)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> CreateDegreeLevel(
-        [FromBody] CreateDegreeLevelRequest request,
-        CancellationToken cancellationToken = default)
-    {
-        var command = request.Adapt<CreateDegreeLevelCommand>();
-
-        var result = await _sender.Send(command, cancellationToken);
-
-        if (result.IsFailed)
-        {
-            return HandleResultError(result.Error);
-        }
-
-        return CreatedAtAction(
-            nameof(GetDegreeLevels),
-            new { name = request.Name },
-            result.Value);
-    }
-
-    /// <summary>
-    /// Update an existing degree level.
-    /// </summary>
-    /// <param name="id">Degree level ID.</param>
-    /// <param name="request">Updated degree level data.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>No content on success.</returns>
-    [HttpPut("{id}")]
-    [RequireAccess("AcademicPrograms", "Update")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> UpdateDegreeLevel(
-        [FromRoute] int id,
-        [FromBody] UpdateDegreeLevelRequest request,
-        CancellationToken cancellationToken = default)
-    {
-        var command = request.Adapt<AWM.Service.Application.Features.Edu.DegreeLevels.Commands.UpdateDegreeLevel.UpdateDegreeLevelCommand>() with { Id = id };
-
-        var result = await _sender.Send(command, cancellationToken);
-
-        if (result.IsFailed)
-        {
-            return HandleResultError(result.Error);
-        }
-
-        return NoContent();
-    }
-
-    /// <summary>
-    /// Soft delete a degree level.
-    /// </summary>
-    /// <param name="id">Degree level ID.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>No content on success.</returns>
-    [HttpDelete("{id}")]
-    [RequireAccess("AcademicPrograms", "Delete")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status409Conflict)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> DeleteDegreeLevel(
-        [FromRoute] int id,
-        CancellationToken cancellationToken = default)
-    {
-        var command = new AWM.Service.Application.Features.Edu.DegreeLevels.Commands.DeleteDegreeLevel.DeleteDegreeLevelCommand { Id = id };
-
-        var result = await _sender.Send(command, cancellationToken);
-
-        if (result.IsFailed)
-        {
-            return HandleResultError(result.Error);
-        }
-
-        return NoContent();
     }
 }

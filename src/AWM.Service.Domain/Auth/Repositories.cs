@@ -83,3 +83,16 @@ public interface IUserAccessHistoryRepository
     Task<IReadOnlyList<UserAccessHistory>> GetByRoleAccessIdAsync(int roleAccessId, CancellationToken cancellationToken = default);
     Task AddAsync(UserAccessHistory history, CancellationToken cancellationToken = default);
 }
+
+/// <summary>
+/// Repository for LocalAccount.
+/// </summary>
+public interface ILocalAccountRepository
+{
+    Task<LocalAccount?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
+    Task<LocalAccount?> GetByUserIdAsync(int userId, CancellationToken cancellationToken = default);
+    Task<LocalAccount?> GetByRefreshTokenAsync(string refreshToken, CancellationToken cancellationToken = default);
+    Task AddAsync(LocalAccount localAccount, CancellationToken cancellationToken = default);
+    Task UpdateAsync(LocalAccount localAccount, CancellationToken cancellationToken = default);
+}
+

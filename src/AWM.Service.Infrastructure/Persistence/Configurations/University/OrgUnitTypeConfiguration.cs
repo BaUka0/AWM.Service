@@ -8,7 +8,7 @@ public class OrgUnitTypeConfiguration : IEntityTypeConfiguration<OrgUnitType>
 {
     public void Configure(EntityTypeBuilder<OrgUnitType> builder)
     {
-        builder.ToTable("Edu_OrgUnitTypes");
+        builder.ToTable("Edu_OrgUnitTypes", t => t.ExcludeFromMigrations());
         builder.HasKey(e => e.Id);
 
         builder.Property(e => e.Id)

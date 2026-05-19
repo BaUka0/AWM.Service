@@ -123,6 +123,7 @@ public static class DependencyInjection
         services.AddScoped<IRoleOperationActionRepository, RoleOperationActionRepository>();
         services.AddScoped<IUserAccessRepository, UserAccessRepository>();
         services.AddScoped<IUserAccessHistoryRepository, UserAccessHistoryRepository>();
+        services.AddScoped<ILocalAccountRepository, LocalAccountRepository>();
 
         // Register University Read-Only Repositories
         services.AddScoped<IUserReadOnlyRepository, UserReadOnlyRepository>();

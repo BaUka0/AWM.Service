@@ -8,7 +8,7 @@ public class StudentStatusConfiguration : IEntityTypeConfiguration<StudentStatus
 {
     public void Configure(EntityTypeBuilder<StudentStatus> builder)
     {
-        builder.ToTable("Edu_StudentStatuses");
+        builder.ToTable("Edu_StudentStatuses", t => t.ExcludeFromMigrations());
         builder.HasKey(e => e.Id);
 
         builder.Property(e => e.Id)

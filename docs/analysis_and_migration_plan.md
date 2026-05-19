@@ -96,22 +96,22 @@ Addon таблицы ссылаются на University entities через **in
 
 ### ✅ DONE
 
-| Этап | Описание | Файлов |
-|------|----------|--------|
-| 0 | Подготовка (аудит, DDL, заморозка) | — |
-| 1 | University entities + DbContext + repos | ~36 |
-| 2 | Удаление дубликатов (11 entity, 11 configs, DbSeeder) | ~50 обновлено |
-| 3 | FK remapping (15 renames, ~350+ ссылок) | ~110 |
-| 4 | DbContext + конфигурации | ~30 |
-| 6 | Infrastructure repos + DI | ~15 |
-| — | Auth/RbacPlus → Auth/ (упразднение папки) | ~37 |
+| Этап | Описание | Файлов | Статус |
+|------|----------|--------|--------|
+| 0 | Подготовка (аудит, DDL, заморозка) | — | Выполнено |
+| 1 | University entities + DbContext + repos | ~36 | Выполнено |
+| 2 | Удаление дубликатов (11 entity, 11 configs, DbSeeder) | ~50 обновлено | Выполнено |
+| 3 | FK remapping (15 renames, ~350+ ссылок) | ~110 | Выполнено |
+| 4 | DbContext + конфигурации | ~30 | Выполнено |
+| 4.5 | Сгенерировать и применить миграцию `AddV6UniversityIntegration` | 1 | Выполнено (БД обновлена, схемы `Edu`/`Org` удалены) |
+| 6 | Infrastructure repos + DI | ~15 | Выполнено |
+| — | Auth/RbacPlus → Auth/ (упразднение папки) | ~37 | Выполнено |
 
 ### 🔲 TODO
 
 | Этап | Описание | Статус | Файлов |
 |-----|----------|--------|--------|
-| 4.5 | Сгенерировать миграцию `AddV6UniversityIntegration` | Готов к генерации | 1 |
-| 5 | Переписать 34 заглушённых Application handlers | **Не начат** | ~34 |
+| 5 | Переписать 34 заглушённых Application handlers | **В процессе анализа** | ~34 |
 | 7 | Обновить WebAPI controllers | **Не начат** | ~15 |
 | 8 | Создать новый DbSeeder (RBAC+, Workflow, Reference) | **Не начат** | 1 |
 | 9 | Скрипты миграции данных (если production) | **Не начат** | ~6 |
@@ -161,38 +161,12 @@ Addon таблицы ссылаются на University entities через **in
 | 6 | `Edu/Staff/Queries/GetStaffByDepartment/...` | Query | Читать `University.Employee` + `EmployeePosition` |
 
 ### 5D. Org/Edu Command Handlers (12 файлов)
-**Ответственный**: _________
-**Зависимости**: Решение — удалять или переделать?
-**Примечание**: University entities read-only. Эти команды НЕ МОГУТ создавать/изменять University данные.
-
-| # | Handler | Тип | Рекомендация |
-|---|---------|-----|-------------|
-| 1 | `Org/Institutes/Commands/CreateInstitute/...` | Command | **Удалить** — создаётся в University БД |
-| 2 | `Org/Institutes/Commands/UpdateInstitute/...` | Command | **Удалить** |
-| 3 | `Org/Institutes/Commands/DeleteInstitute/...` | Command | **Удалить** |
-| 4 | `Org/Departments/Commands/CreateDepartment/...` | Command | **Удалить** |
-| 5 | `Org/Departments/Commands/UpdateDepartment/...` | Command | **Удалить** |
-| 6 | `Org/Departments/Commands/DeleteDepartment/...` | Command | **Удалить** |
-| 7 | `Edu/AcademicPrograms/Commands/CreateAcademicProgram/...` | Command | **Удалить** |
-| 8 | `Edu/AcademicPrograms/Commands/UpdateAcademicProgram/...` | Command | **Удалить** |
-| 9 | `Edu/AcademicPrograms/Commands/DeleteAcademicProgram/...` | Command | **Удалить** |
-| 10 | `Edu/DegreeLevels/Commands/CreateDegreeLevel/...` | Command | **Удалить** |
-| 11 | `Edu/DegreeLevels/Commands/UpdateDegreeLevel/...` | Command | **Удалить** |
-| 12 | `Edu/DegreeLevels/Commands/DeleteDegreeLevel/...` | Command | **Удалить** |
+**Ответственный**: Antigravity
+**Статус**: **Выполнено** ✅ (Все 12 обработчиков команд физически удалены, соответствующие эндпоинты убраны из API контроллеров)
 
 ### 5E. Edu Staff/Student Handlers (6 файлов)
-**Ответственный**: _________
-**Зависимости**: `IStudentRepository`, `IStaffRepository`
-
-| # | Handler | Тип | Что делать |
-|---|---------|-----|-----------|
-| 1 | `Edu/Staff/Queries/GetSupervisors/...` | Query | Читать `Employee` где `IsAdvisor=true` |
-| 2 | `Edu/Staff/Commands/CreateStaff/...` | Command | **Удалить** — read-only |
-| 3 | `Edu/Staff/Commands/UpdateStaff/...` | Command | **Удалить** — read-only |
-| 4 | `Edu/Staff/Commands/UpdateStaffWorkload/...` | Command | **Удалить** — read-only |
-| 5 | `Edu/Staff/Commands/ApproveSupervisors/...` | Command | **Удалить** — read-only |
-| 6 | `Edu/Students/Commands/CreateStudent/...` | Command | **Удалить** — read-only |
-| 7 | `Edu/Students/Commands/UpdateStudent/...` | Command | **Удалить** — read-only |
+**Ответственный**: Antigravity
+**Статус**: **В процессе** (Все 6 обработчиков команд физически удалены и убраны из контроллеров. Запросы `GetSupervisors` и `GetStaffByDepartment` требуют реализации)
 
 ### 5F. Common Period Handler (1 файл)
 **Ответственный**: _________
@@ -256,3 +230,36 @@ Addon таблицы ссылаются на University entities через **in
 | `.HasColumnName()` для FK renames | БД колонки не переименовываются |
 | Auth.RbacPlus → Auth | Упрощение структуры |
 | Удалить CRUD commands для University entities | Read-only — команды не нужны |
+
+---
+
+## 11. АНАЛИЗ ТЕКУЩЕГО СОСТОЯНИЯ И ПРОБЛЕМЫ АУТЕНТИФИКАЦИИ
+
+На текущем этапе (после успешного наката миграции `AddV6UniversityIntegration` и очистки локальной БД от схем `Edu` и `Org`) выявлены следующие архитектурные вопросы, требующие решения перед реализацией обработчиков (Stage 5):
+
+### 1. Проблема локальной аутентификации (Auth/Login/Register)
+* **Текущее состояние**: Таблица `Auth.Users` удалена, так как пользователи перенесены в read-only таблицу `Edu_Users`. При этом сущности `LocalAccounts` и `UserIdentities`, упомянутые в архитектурном плане, отсутствуют в доменном слое и в `ApplicationDbContext`.
+* **Предлагаемое решение**: 
+  Необходимо создать новую сущность `LocalAccount` в доменном слое (`Domain/Auth/Entities/LocalAccount.cs`):
+  ```csharp
+  public class LocalAccount : Entity<int>, IAuditable
+  {
+      public int UserId { get; private set; } // FK -> Edu_Users.ID
+      public string PasswordHash { get; private set; } = null!;
+      public string? RefreshToken { get; private set; }
+      public DateTime? RefreshTokenExpiryTime { get; private set; }
+      // ... методы обновления токена и смены пароля
+  }
+  ```
+  И добавить её конфигурацию в `ApplicationDbContext` с генерацией новой миграции `AddLocalAccountsTable`. Это позволит реализовать `LoginCommandHandler` и `RegisterUserCommandHandler`.
+
+### 2. Физическое удаление устаревших обработчиков (Stage 5D и 5E)
+* **Текущее состояние**: В кодовой базе проекта `AWM.Service.Application` всё ещё присутствуют файлы команд создания/обновления/удаления для `Institutes`, `Departments`, `AcademicPrograms`, `DegreeLevels`, `Staff`, `Students`. Они возвращают `NotImplemented` заглушки.
+* **Предлагаемое решение**: Физически удалить данные папки и файлы из проекта `Application`, а также удалить соответствующие Endpoint'ы из API контроллеров, чтобы кодовая база соответствовала концепции Read-Only Master для университетских данных.
+
+### 3. Переименование контрактов и контроллеров (Stage 7)
+* В соответствии с маппингом из Section 6, необходимо провести рефакторинг API контроллеров и DTO-моделей:
+  - `AcademicProgramsController` -> `SpecialitiesController`
+  - `DegreeLevelsController` -> `SpecialityLevelsController`
+  - `DepartmentsController` & `InstitutesController` -> объединены в `OrgUnitsController`
+

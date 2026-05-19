@@ -45,6 +45,7 @@ public sealed class ApplicationDbContext : DbContext
     public DbSet<RoleOperationAction> RoleOperationActions => Set<RoleOperationAction>();
     public DbSet<UserAccess> UserAccesses => Set<UserAccess>();
     public DbSet<UserAccessHistory> UserAccessHistories => Set<UserAccessHistory>();
+    public DbSet<LocalAccount> LocalAccounts => Set<LocalAccount>();
     #endregion
 
     #region Wf Schema

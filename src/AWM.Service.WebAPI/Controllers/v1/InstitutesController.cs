@@ -1,12 +1,8 @@
 namespace AWM.Service.WebAPI.Controllers.v1;
 
-using AWM.Service.Application.Features.Org.Institutes.Commands.CreateInstitute;
-using AWM.Service.Application.Features.Org.Institutes.Commands.DeleteInstitute;
-using AWM.Service.Application.Features.Org.Institutes.Commands.UpdateInstitute;
 using AWM.Service.Application.Features.Org.Institutes.Queries.GetAllInstitutes;
 using AWM.Service.Application.Features.Org.Institutes.Queries.GetInstituteById;
 using AWM.Service.WebAPI.Authorization;
-using AWM.Service.WebAPI.Common.Contracts.Requests.Institutes;
 using AWM.Service.WebAPI.Common.Contracts.Responses.Org;
 using Mapster;
 using MediatR;
@@ -29,9 +25,8 @@ public sealed class InstitutesController : BaseController
     }
 
     /// <summary>
-    /// Get all institutes for a specific university.
+    /// Get all institutes.
     /// </summary>
-    /// <param name="universityId">University ID</param>
     /// <param name="includeDepartments">Include departments in response</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>List of institutes</returns>
@@ -94,87 +89,5 @@ public sealed class InstitutesController : BaseController
         var response = result.Value.Adapt<InstituteResponse>();
 
         return Ok(response);
-    }
-
-    /// <summary>
-    /// Create a new institute.
-    /// </summary>
-    /// <param name="request">Create institute request</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>Created institute ID</returns>
-    [HttpPost]
-    [RequireAccess("Org_Institutes", "Create")]
-    [ProducesResponseType(typeof(int), StatusCodes.Status201Created)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> Create([FromBody] CreateInstituteRequest request, CancellationToken cancellationToken = default)
-    {
-        var command = request.Adapt<CreateInstituteCommand>();
-
-        var result = await _sender.Send(command, cancellationToken);
-
-        if (result.IsFailed)
-        {
-            return HandleResultError(result.Error);
-        }
-
-        return CreatedAtAction(nameof(GetById), new { instituteId = result.Value, version = "1.0" }, result.Value);
-    }
-
-    /// <summary>
-    /// Update an existing institute.
-    /// </summary>
-    /// <param name="instituteId">Institute ID</param>
-    /// <param name="request">Update institute request</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>No content on success</returns>
-    [HttpPut("{instituteId}")]
-    [RequireAccess("Org_Institutes", "Update")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> Update(int instituteId, [FromBody] UpdateInstituteRequest request, CancellationToken cancellationToken = default)
-    {
-        var command = request.Adapt<UpdateInstituteCommand>() with { InstituteId = instituteId };
-
-        var result = await _sender.Send(command, cancellationToken);
-
-        if (result.IsFailed)
-        {
-            return HandleResultError(result.Error);
-        }
-
-        return NoContent();
-    }
-
-    /// <summary>
-    /// Soft delete an institute.
-    /// </summary>
-    /// <param name="instituteId">Institute ID</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>No content on success</returns>
-    [HttpDelete("{instituteId}")]
-    [RequireAccess("Org_Institutes", "Delete")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status409Conflict)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> Delete(int instituteId, CancellationToken cancellationToken = default)
-    {
-        var command = new DeleteInstituteCommand
-        {
-            InstituteId = instituteId
-        };
-
-        var result = await _sender.Send(command, cancellationToken);
-
-        if (result.IsFailed)
-        {
-            return HandleResultError(result.Error);
-        }
-
-        return NoContent();
     }
 }

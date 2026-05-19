@@ -3,7 +3,7 @@ namespace AWM.Service.Application.Features.Auth.DTOs;
 /// <summary>
 /// Full user profile DTO returned by the GET /api/v1/Users/me endpoint.
 /// </summary>
-public sealed class UserProfileDto
+public sealed record UserProfileDto
 {
     public int UserId { get; init; }
     public string Login { get; init; } = string.Empty;

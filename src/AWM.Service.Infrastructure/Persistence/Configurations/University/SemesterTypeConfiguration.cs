@@ -8,7 +8,7 @@ public class SemesterTypeConfiguration : IEntityTypeConfiguration<SemesterType>
 {
     public void Configure(EntityTypeBuilder<SemesterType> builder)
     {
-        builder.ToTable("Edu_SemesterTypes");
+        builder.ToTable("Edu_SemesterTypes", t => t.ExcludeFromMigrations());
         builder.HasKey(e => e.Id);
 
         builder.Property(e => e.Id)

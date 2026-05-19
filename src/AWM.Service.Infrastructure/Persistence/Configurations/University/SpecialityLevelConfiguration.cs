@@ -8,7 +8,7 @@ public class SpecialityLevelConfiguration : IEntityTypeConfiguration<SpecialityL
 {
     public void Configure(EntityTypeBuilder<SpecialityLevel> builder)
     {
-        builder.ToTable("Edu_SpecialityLevels");
+        builder.ToTable("Edu_SpecialityLevels", t => t.ExcludeFromMigrations());
         builder.HasKey(e => e.Id);
 
         builder.Property(e => e.Id)

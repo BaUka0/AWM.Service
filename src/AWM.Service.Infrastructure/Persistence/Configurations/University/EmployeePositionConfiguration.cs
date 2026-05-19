@@ -8,7 +8,7 @@ public class EmployeePositionConfiguration : IEntityTypeConfiguration<EmployeePo
 {
     public void Configure(EntityTypeBuilder<EmployeePosition> builder)
     {
-        builder.ToTable("Edu_EmployeePositions");
+        builder.ToTable("Edu_EmployeePositions", t => t.ExcludeFromMigrations());
         builder.HasKey(e => e.Id);
 
         builder.Property(e => e.Id)
