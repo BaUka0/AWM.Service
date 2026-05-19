@@ -29,7 +29,7 @@ public sealed class CreateWorkTypeCommandHandler : IRequestHandler<CreateWorkTyp
     {
         try
         {
-            var workType = new WorkType(request.Name, _currentUserProvider.UserId ?? 0, request.DegreeLevelId);
+            var workType = new WorkType(request.Name, _currentUserProvider.UserId ?? 0, request.SpecialityLevelId);
             await _workflowRepository.AddWorkTypeAsync(workType, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 

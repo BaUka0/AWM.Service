@@ -9,5 +9,5 @@ using MediatR;
 public sealed record CreateWorkTypeCommand : IRequest<Result<int>>
 {
     public string Name { get; init; } = string.Empty;
-    public int? DegreeLevelId { get; init; }
+    public int? SpecialityLevelId { get; init; }
 }

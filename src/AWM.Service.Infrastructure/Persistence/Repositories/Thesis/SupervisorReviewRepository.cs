@@ -25,7 +25,7 @@ public sealed class SupervisorReviewRepository : RepositoryBase<SupervisorReview
     {
         return await Context.SupervisorReviews
             .AsNoTracking()
-            .Where(r => r.SupervisorId == supervisorId)
+            .Where(r => r.EmployeeId == supervisorId)
             .OrderByDescending(r => r.CreatedAt)
             .ToListAsync(cancellationToken);
     }

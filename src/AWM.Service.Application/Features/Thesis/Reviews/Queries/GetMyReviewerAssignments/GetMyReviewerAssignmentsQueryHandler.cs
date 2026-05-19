@@ -76,7 +76,7 @@ public sealed class GetMyReviewerAssignmentsQueryHandler
             cancellationToken);
         var usersById = users.ToDictionary(u => u.Id);
         var departments = await _orgLookupRepository.GetDepartmentsByIdsAsync(
-            works.Where(w => w.DepartmentId > 0).Select(w => w.DepartmentId).Distinct(),
+            works.Where(w => w.OrgUnitId > 0).Select(w => w.OrgUnitId).Distinct(),
             cancellationToken);
         var departmentsById = departments.ToDictionary(d => d.Id);
 
@@ -99,13 +99,13 @@ public sealed class GetMyReviewerAssignmentsQueryHandler
                 var studentUser = student is not null
                     ? usersById.GetValueOrDefault(student.UserId)
                     : null;
-                studentName = studentUser?.Login ?? studentUser?.Email;
+                studentName = studentUser?.Email ?? studentUser?.FirstName;
             }
 
             string? departmentName = null;
-            if (work.DepartmentId > 0)
+            if (work.OrgUnitId > 0)
             {
-                departmentName = departmentsById.GetValueOrDefault(work.DepartmentId)?.Name;
+                departmentName = departmentsById.GetValueOrDefault(work.OrgUnitId)?.Title;
             }
 
             dtos.Add(new ReviewerAssignmentDto
@@ -114,7 +114,7 @@ public sealed class GetMyReviewerAssignmentsQueryHandler
                 ReviewId = review.Id,
                 TopicTitle = topic is not null ? topic.TitleRu : null,
                 StudentName = studentName,
-                DepartmentId = work.DepartmentId,
+                OrgUnitId = work.OrgUnitId,
                 DepartmentName = departmentName,
                 IsReviewUploaded = review.IsUploaded,
                 AssignedAt = review.CreatedAt,

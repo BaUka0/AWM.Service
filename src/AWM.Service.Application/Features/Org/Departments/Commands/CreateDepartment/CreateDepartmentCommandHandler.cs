@@ -26,33 +26,6 @@ public sealed class CreateDepartmentCommandHandler : IRequestHandler<CreateDepar
 
     public async Task<Result<int>> Handle(CreateDepartmentCommand request, CancellationToken cancellationToken)
     {
-        try
-        {
-            var institute = await _organizationLookupRepository.GetInstituteByIdTrackedAsync(request.InstituteId, cancellationToken);
-
-            if (institute is null || institute.IsDeleted)
-            {
-                return Result.Failure<int>(new Error("404", $"Institute with ID {request.InstituteId} not found or has been deleted."));
-            }
-
-            var userId = _currentUserProvider.UserId;
-            if (!userId.HasValue)
-            {
-                return Result.Failure<int>(new Error("401", "User ID is not available."));
-            }
-            var department = institute.AddDepartment(request.Name, userId.Value, request.Code);
-
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-            return Result.Success(department.Id);
-        }
-        catch (ArgumentException argEx)
-        {
-            return Result.Failure<int>(new Error("400", argEx.Message));
-        }
-        catch (Exception ex)
-        {
-            return Result.Failure<int>(new Error("500", $"An error occurred while creating the Department: {ex.Message}"));
-        }
+        return Result.Failure<int>(new Error("NotImplemented", "Not implemented - University entities are read-only"));
     }
 }

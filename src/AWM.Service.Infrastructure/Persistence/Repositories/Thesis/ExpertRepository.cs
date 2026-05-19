@@ -22,7 +22,7 @@ public sealed class ExpertRepository : RepositoryBase<Expert, int>, IExpertRepos
         return await Context.Experts
             .AsNoTracking()
             .Where(e => e.IsActive &&
-                        e.DepartmentId == departmentId &&
+                        e.OrgUnitId == departmentId &&
                         e.CheckTypeId == checkTypeId)
             .ToListAsync(cancellationToken);
     }
@@ -32,7 +32,7 @@ public sealed class ExpertRepository : RepositoryBase<Expert, int>, IExpertRepos
     {
         return await Context.Experts
             .AsNoTracking()
-            .Where(e => e.IsActive && e.DepartmentId == departmentId)
+            .Where(e => e.IsActive && e.OrgUnitId == departmentId)
             .ToListAsync(cancellationToken);
     }
 

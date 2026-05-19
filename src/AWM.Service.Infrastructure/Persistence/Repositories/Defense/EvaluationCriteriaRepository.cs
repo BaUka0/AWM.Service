@@ -15,16 +15,16 @@ public sealed class EvaluationCriteriaRepository : RepositoryBase<EvaluationCrit
     /// <inheritdoc />
     public async Task<IReadOnlyList<EvaluationCriteria>> GetByWorkTypeAsync(
         int workTypeId,
-        int? departmentId = null,
+        int? orgUnitId = null,
         CancellationToken cancellationToken = default)
     {
         // First try to get department-specific criteria
-        if (departmentId.HasValue)
+        if (orgUnitId.HasValue)
         {
             var deptCriteria = await Context.EvaluationCriteria
                 .AsNoTracking()
                 .Where(e => e.WorkTypeId == workTypeId &&
-                            e.DepartmentId == departmentId)
+                            e.OrgUnitId == orgUnitId)
                 .OrderBy(e => e.CriteriaName)
                 .ToListAsync(cancellationToken);
 
@@ -36,7 +36,7 @@ public sealed class EvaluationCriteriaRepository : RepositoryBase<EvaluationCrit
         return await Context.EvaluationCriteria
             .AsNoTracking()
             .Where(e => e.WorkTypeId == workTypeId &&
-                        e.DepartmentId == null)
+                        e.OrgUnitId == null)
             .OrderBy(e => e.CriteriaName)
             .ToListAsync(cancellationToken);
     }

@@ -62,7 +62,7 @@ public sealed class GetTopicByIdQueryHandler : IRequestHandler<GetTopicByIdQuery
             }
 
             var supervisorStaff = (await _staffRepository.GetByIdsAsync(
-                new[] { topic.SupervisorId },
+                new[] { topic.EmployeeId },
                 cancellationToken)).FirstOrDefault();
             var students = await _studentRepository.GetByIdsAsync(
                 applications.Select(application => application.StudentId).Distinct(),
@@ -72,14 +72,14 @@ public sealed class GetTopicByIdQueryHandler : IRequestHandler<GetTopicByIdQuery
             var userIds = students.Select(student => student.UserId).ToList();
             if (supervisorStaff is not null)
             {
-                userIds.Add(supervisorStaff.UserId);
+                userIds.Add(supervisorStaff.Id);
             }
 
             var usersById = (await _userRepository.GetByIdsAsync(userIds.Distinct(), cancellationToken))
                 .ToDictionary(user => user.Id);
             var supervisorUser = supervisorStaff is null
                 ? null
-                : usersById.GetValueOrDefault(supervisorStaff.UserId);
+                : usersById.GetValueOrDefault(supervisorStaff.Id);
             var workType = (await _workflowRepository.GetWorkTypesByIdsAsync(
                 new[] { topic.WorkTypeId },
                 cancellationToken)).FirstOrDefault();

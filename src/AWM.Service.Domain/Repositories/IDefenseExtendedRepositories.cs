@@ -18,7 +18,7 @@ public interface IEvaluationCriteriaRepository
     /// </summary>
     Task<IReadOnlyList<EvaluationCriteria>> GetByWorkTypeAsync(
         int workTypeId, 
-        int? departmentId = null, 
+        int? orgUnitId = null, 
         CancellationToken cancellationToken = default);
 
     /// <summary>

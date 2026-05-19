@@ -27,46 +27,6 @@ public sealed class GetAllUsersQueryHandler
         GetAllUsersQuery request,
         CancellationToken cancellationToken)
     {
-        var users = await _userRepository.GetAllAsync(cancellationToken);
-
-        // Apply optional filters
-        var filtered = users.AsEnumerable();
-
-        if (request.IsActive.HasValue)
-            filtered = filtered.Where(u => u.IsActive == request.IsActive.Value);
-
-        if (!string.IsNullOrWhiteSpace(request.Search))
-        {
-            var search = request.Search.Trim().ToLowerInvariant();
-            filtered = filtered.Where(u =>
-                u.Login.ToLowerInvariant().Contains(search) ||
-                u.Email.ToLowerInvariant().Contains(search));
-        }
-
-        var filteredUsers = filtered.ToList();
-        var result = new List<AdminUserDto>();
-
-        foreach (var user in filteredUsers)
-        {
-            var roles = user.UserAccesses
-                .Select(ua => ua.RoleAccess?.Code ?? ua.RoleAccessId.ToString())
-                .Distinct()
-                .ToList();
-
-            result.Add(new AdminUserDto
-            {
-                UserId = user.Id,
-                Login = user.Login,
-                Email = user.Email,
-                IsActive = user.IsActive,
-                Roles = roles,
-                RoleId = user.UserAccesses.FirstOrDefault()?.RoleAccessId,
-                DepartmentId = null,
-                DepartmentName = null,
-                CreatedAt = user.CreatedAt,
-            });
-        }
-
-        return Result.Success<IReadOnlyList<AdminUserDto>>(result);
+        return Result.Failure<IReadOnlyList<AdminUserDto>>(new Error("NotImplemented", "Not implemented - University entities are read-only"));
     }
 }

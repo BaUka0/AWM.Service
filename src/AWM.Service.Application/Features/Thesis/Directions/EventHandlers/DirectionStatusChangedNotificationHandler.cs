@@ -33,15 +33,15 @@ public sealed class DirectionApprovedNotificationHandler : INotificationHandler<
         var direction = await _directionRepository.GetByIdAsync(notification.DirectionId, cancellationToken);
         if (direction is null) return;
 
-        var staff = await _staffRepository.GetByIdAsync(direction.SupervisorId, cancellationToken);
+        var staff = await _staffRepository.GetByIdAsync(direction.EmployeeId, cancellationToken);
         if (staff is null)
         {
-            _logger.LogWarning("Cannot send notification: Staff {StaffId} not found for direction {DirectionId}", direction.SupervisorId, direction.Id);
+            _logger.LogWarning("Cannot send notification: Staff {StaffId} not found for direction {DirectionId}", direction.EmployeeId, direction.Id);
             return;
         }
 
         await _notificationService.SendAsync(
-            userId: staff.UserId,
+            userId: staff.Id,
             title: "Направление утверждено",
             createdBy: notification.ReviewedBy,
             body: $"Ваше направление «{direction.TitleRu}» было утверждено.",
@@ -50,7 +50,7 @@ public sealed class DirectionApprovedNotificationHandler : INotificationHandler<
             cancellationToken: cancellationToken);
 
         _logger.LogInformation("Notification sent to supervisor UserId={UserId} (StaffId={StaffId}) about direction {DirectionId} approval",
-            staff.UserId, direction.SupervisorId, direction.Id);
+            staff.Id, direction.EmployeeId, direction.Id);
     }
 }
 
@@ -81,10 +81,10 @@ public sealed class DirectionRejectedNotificationHandler : INotificationHandler<
         var direction = await _directionRepository.GetByIdAsync(notification.DirectionId, cancellationToken);
         if (direction is null) return;
 
-        var staff = await _staffRepository.GetByIdAsync(direction.SupervisorId, cancellationToken);
+        var staff = await _staffRepository.GetByIdAsync(direction.EmployeeId, cancellationToken);
         if (staff is null)
         {
-            _logger.LogWarning("Cannot send notification: Staff {StaffId} not found for direction {DirectionId}", direction.SupervisorId, direction.Id);
+            _logger.LogWarning("Cannot send notification: Staff {StaffId} not found for direction {DirectionId}", direction.EmployeeId, direction.Id);
             return;
         }
 
@@ -93,7 +93,7 @@ public sealed class DirectionRejectedNotificationHandler : INotificationHandler<
             : $"Ваше направление «{direction.TitleRu}» было отклонено. Причина: {notification.Comment}";
 
         await _notificationService.SendAsync(
-            userId: staff.UserId,
+            userId: staff.Id,
             title: "Направление отклонено",
             createdBy: notification.ReviewedBy,
             body: body,
@@ -102,7 +102,7 @@ public sealed class DirectionRejectedNotificationHandler : INotificationHandler<
             cancellationToken: cancellationToken);
 
         _logger.LogInformation("Notification sent to supervisor UserId={UserId} (StaffId={StaffId}) about direction {DirectionId} rejection",
-            staff.UserId, direction.SupervisorId, direction.Id);
+            staff.Id, direction.EmployeeId, direction.Id);
     }
 }
 
@@ -133,15 +133,15 @@ public sealed class DirectionRequiresRevisionNotificationHandler : INotification
         var direction = await _directionRepository.GetByIdAsync(notification.DirectionId, cancellationToken);
         if (direction is null) return;
 
-        var staff = await _staffRepository.GetByIdAsync(direction.SupervisorId, cancellationToken);
+        var staff = await _staffRepository.GetByIdAsync(direction.EmployeeId, cancellationToken);
         if (staff is null)
         {
-            _logger.LogWarning("Cannot send notification: Staff {StaffId} not found for direction {DirectionId}", direction.SupervisorId, direction.Id);
+            _logger.LogWarning("Cannot send notification: Staff {StaffId} not found for direction {DirectionId}", direction.EmployeeId, direction.Id);
             return;
         }
 
         await _notificationService.SendAsync(
-            userId: staff.UserId,
+            userId: staff.Id,
             title: "Направление требует доработки",
             createdBy: notification.ReviewedBy,
             body: $"Ваше направление «{direction.TitleRu}» требует доработки. Комментарий: {notification.Comment}",
@@ -150,6 +150,6 @@ public sealed class DirectionRequiresRevisionNotificationHandler : INotification
             cancellationToken: cancellationToken);
 
         _logger.LogInformation("Notification sent to supervisor UserId={UserId} (StaffId={StaffId}) about direction {DirectionId} revision request",
-            staff.UserId, direction.SupervisorId, direction.Id);
+            staff.Id, direction.EmployeeId, direction.Id);
     }
 }

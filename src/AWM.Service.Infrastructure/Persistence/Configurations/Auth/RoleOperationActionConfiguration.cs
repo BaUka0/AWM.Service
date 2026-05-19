@@ -2,7 +2,7 @@ namespace AWM.Service.Infrastructure.Persistence.Configurations.Auth;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using AWM.Service.Domain.Auth.RbacPlus.Entities;
+using AWM.Service.Domain.Auth.Entities;
 /// <summary>
 /// EF Core configuration for RoleOperationAction entity.
 /// Maps to [Auth].[RoleOperationActions] table.

@@ -28,7 +28,7 @@ public sealed class GetInstituteByIdQueryHandler
         {
             var institute = await _organizationLookupRepository.GetInstituteByIdAsync(request.InstituteId, cancellationToken);
 
-            if (institute is null || institute.IsDeleted)
+            if (institute is null || institute.Deleted)
             {
                 return Result.Failure<InstituteDto>(
                     new Error("404", $"Institute with ID {request.InstituteId} not found or has been deleted."));
@@ -45,29 +45,29 @@ public sealed class GetInstituteByIdQueryHandler
         }
     }
 
-    private static InstituteDto MapToDto(Domain.Org.Entities.Institute institute, bool includeDepartments)
+    private static InstituteDto MapToDto(Domain.University.OrgUnit institute, bool includeDepartments)
     {
         return new InstituteDto
         {
             Id = institute.Id,
-            Name = institute.Name,
-            CreatedAt = institute.CreatedAt,
-            CreatedBy = institute.CreatedBy,
-            LastModifiedAt = institute.LastModifiedAt,
-            LastModifiedBy = institute.LastModifiedBy,
+            Name = institute.Title,
+            CreatedAt = default,
+            CreatedBy = 0,
+            LastModifiedAt = null,
+            LastModifiedBy = null,
             Departments = includeDepartments
-                ? institute.Departments
-                    .Where(d => !d.IsDeleted)
+                ? institute.Children
+                    .Where(d => !d.Deleted)
                     .Select(d => new DepartmentDto
                     {
                         Id = d.Id,
-                        InstituteId = d.InstituteId,
-                        Name = d.Name,
-                        Code = d.Code,
-                        CreatedAt = d.CreatedAt,
-                        CreatedBy = d.CreatedBy,
-                        LastModifiedAt = d.LastModifiedAt,
-                        LastModifiedBy = d.LastModifiedBy
+                        InstituteId = d.ParentId ?? 0,
+                        Name = d.Title,
+                        Code = d.ShortTitle,
+                        CreatedAt = default,
+                        CreatedBy = 0,
+                        LastModifiedAt = null,
+                        LastModifiedBy = null
                     })
                     .ToList()
                 : null

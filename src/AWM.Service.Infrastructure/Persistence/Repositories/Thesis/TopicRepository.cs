@@ -38,8 +38,8 @@ public sealed class TopicRepository : RepositoryBase<Topic, long>, ITopicReposit
     {
         return await Context.Topics
             .AsNoTracking()
-            .Where(t => t.DepartmentId == departmentId &&
-                        t.AcademicYearId == academicYearId)
+            .Where(t => t.OrgUnitId == departmentId &&
+                        t.SemesterId == academicYearId)
             .OrderByDescending(t => t.CreatedAt)
             .ToListAsync(cancellationToken);
     }
@@ -52,8 +52,8 @@ public sealed class TopicRepository : RepositoryBase<Topic, long>, ITopicReposit
     {
         return await Context.Topics
             .Include(t => t.Applications.Where(a => !a.IsDeleted))
-            .Where(t => t.DepartmentId == departmentId &&
-                        t.AcademicYearId == academicYearId)
+            .Where(t => t.OrgUnitId == departmentId &&
+                        t.SemesterId == academicYearId)
             .OrderByDescending(t => t.CreatedAt)
             .ToListAsync(cancellationToken);
     }
@@ -66,8 +66,8 @@ public sealed class TopicRepository : RepositoryBase<Topic, long>, ITopicReposit
     {
         return await Context.Topics
             .AsNoTracking()
-            .Where(t => t.SupervisorId == supervisorId &&
-                        t.AcademicYearId == academicYearId)
+            .Where(t => t.EmployeeId == supervisorId &&
+                        t.SemesterId == academicYearId)
             .OrderByDescending(t => t.CreatedAt)
             .ToListAsync(cancellationToken);
     }
@@ -91,8 +91,8 @@ public sealed class TopicRepository : RepositoryBase<Topic, long>, ITopicReposit
         return await Context.Topics
             .AsNoTracking()
             .Where(t => !t.IsDeleted &&
-                        t.DepartmentId == departmentId &&
-                        t.AcademicYearId == academicYearId &&
+                        t.OrgUnitId == departmentId &&
+                        t.SemesterId == academicYearId &&
                         t.IsApproved &&
                         !t.IsClosed)
             .GroupJoin(

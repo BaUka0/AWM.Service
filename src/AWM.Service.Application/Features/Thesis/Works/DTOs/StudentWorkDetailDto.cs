@@ -9,8 +9,8 @@ public sealed record StudentWorkDetailDto
 {
     public long Id { get; init; }
     public long? TopicId { get; init; }
-    public int AcademicYearId { get; init; }
-    public int DepartmentId { get; init; }
+    public int SemesterId { get; init; }
+    public int OrgUnitId { get; init; }
     public int CurrentStateId { get; init; }
     public bool IsDefended { get; init; }
     public string? FinalGrade { get; init; }
@@ -27,8 +27,8 @@ public sealed record StudentWorkDetailDto
         {
             Id = entity.Id,
             TopicId = entity.TopicId,
-            AcademicYearId = entity.AcademicYearId,
-            DepartmentId = entity.DepartmentId,
+            SemesterId = entity.SemesterId,
+            OrgUnitId = entity.OrgUnitId,
             CurrentStateId = entity.CurrentStateId,
             IsDefended = entity.IsDefended,
             FinalGrade = entity.FinalGrade,

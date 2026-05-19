@@ -3,8 +3,7 @@ namespace AWM.Service.Infrastructure.Persistence.Configurations.Thesis;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using AWM.Service.Domain.Thesis.Entities;
-using AWM.Service.Domain.Auth.Entities;
-using AWM.Service.Domain.Org.Entities;
+using AWM.Service.Domain.University;
 using AWM.Service.Infrastructure.Persistence.Configurations.Base;
 
 /// <summary>
@@ -25,7 +24,8 @@ public class ExpertConfiguration : SoftDeletableEntityConfiguration<Expert, int>
         builder.Property(e => e.UserId)
             .IsRequired();
 
-        builder.Property(e => e.DepartmentId)
+        builder.Property(e => e.OrgUnitId)
+            .HasColumnName("DepartmentId")
             .IsRequired();
 
         builder.Property(e => e.CheckTypeId)
@@ -42,9 +42,9 @@ public class ExpertConfiguration : SoftDeletableEntityConfiguration<Expert, int>
             .HasConstraintName("FK_Experts_User")
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne<Department>()
+        builder.HasOne<OrgUnit>()
             .WithMany()
-            .HasForeignKey(e => e.DepartmentId)
+            .HasForeignKey(e => e.OrgUnitId)
             .HasConstraintName("FK_Experts_Dept")
             .OnDelete(DeleteBehavior.Restrict);
 
@@ -55,7 +55,7 @@ public class ExpertConfiguration : SoftDeletableEntityConfiguration<Expert, int>
             .OnDelete(DeleteBehavior.Restrict);
 
         // Index for active experts by type
-        builder.HasIndex(e => new { e.DepartmentId, e.CheckTypeId })
+        builder.HasIndex(e => new { e.OrgUnitId, e.CheckTypeId })
             .HasDatabaseName("IX_Experts_Type")
             .HasFilter("[IsActive] = 1");
     }

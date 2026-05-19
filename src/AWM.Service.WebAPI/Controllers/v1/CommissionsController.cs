@@ -48,8 +48,8 @@ public class CommissionsController : BaseController
     {
         var query = new GetCommissionsByDepartmentQuery
         {
-            DepartmentId = departmentId,
-            AcademicYearId = academicYearId
+            OrgUnitId = departmentId,
+            SemesterId = academicYearId
         };
 
         var result = await _sender.Send(query);

@@ -70,7 +70,7 @@ public sealed class SubmitDirectionCommandHandler
 
         // Validate that DirectionSubmission stage is open
         var (isAllowed, errorMessage) = await _stageValidationService
-            .ValidateOperationInStageAsync(direction.DepartmentId, direction.AcademicYearId,
+            .ValidateOperationInStageAsync(direction.OrgUnitId, direction.SemesterId,
                 1, cancellationToken);
 
         if (!isAllowed)
@@ -87,7 +87,7 @@ public sealed class SubmitDirectionCommandHandler
 
         // Verify user is the supervisor (authorization check)
         var staff = await _staffRepository.GetByUserIdAsync(userId.Value, cancellationToken);
-        if (staff is null || direction.SupervisorId != staff.Id)
+        if (staff is null || direction.EmployeeId != staff.Id)
         {
             _logger.LogWarning("SubmitDirection failed: User={UserId} (StaffId={StaffId}) is not the supervisor for Direction={DirectionId}",
                 userId.Value, staff?.Id, request.Id);

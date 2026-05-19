@@ -7,8 +7,8 @@ using AWM.Service.Domain.Common;
 /// </summary>
 public class Commission : AggregateRoot<int>, IAuditable, ISoftDeletable
 {
-    public int DepartmentId { get; private set; }
-    public int AcademicYearId { get; private set; }
+    public int OrgUnitId { get; private set; }
+    public int SemesterId { get; private set; }
     public string? Name { get; private set; }
     public int CommissionTypeId { get; private set; }
     public int? PreDefenseNumber { get; private set; }
@@ -32,8 +32,8 @@ public class Commission : AggregateRoot<int>, IAuditable, ISoftDeletable
     private Commission() { }
 
     public Commission(
-        int departmentId,
-        int academicYearId,
+        int orgUnitId,
+        int semesterId,
         int commissionTypeId,
         int createdBy,
         string? name = null,
@@ -45,8 +45,8 @@ public class Commission : AggregateRoot<int>, IAuditable, ISoftDeletable
                 throw new ArgumentException("Pre-defense number must be 1, 2, or 3.", nameof(preDefenseNumber));
         }
 
-        DepartmentId = departmentId;
-        AcademicYearId = academicYearId;
+        OrgUnitId = orgUnitId;
+        SemesterId = semesterId;
         CommissionTypeId = commissionTypeId;
         Name = name ?? GetDefaultName(commissionTypeId, preDefenseNumber);
         PreDefenseNumber = preDefenseNumber;

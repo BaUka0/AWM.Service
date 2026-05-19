@@ -11,9 +11,9 @@ using AWM.Service.Domain.Thesis.Events;
 public class Topic : AggregateRoot<long>, IAuditable, ISoftDeletable
 {
     public long? DirectionId { get; private set; }
-    public int AcademicYearId { get; private set; }
-    public int DepartmentId { get; private set; }
-    public int SupervisorId { get; private set; }
+    public int SemesterId { get; private set; }
+    public int OrgUnitId { get; private set; }
+    public int EmployeeId { get; private set; }
     public int WorkTypeId { get; private set; }
 
     public string TitleRu { get; private set; } = null!;
@@ -43,9 +43,9 @@ public class Topic : AggregateRoot<long>, IAuditable, ISoftDeletable
     private Topic() { }
 
     public Topic(
-        int departmentId,
-        int supervisorId,
-        int academicYearId,
+        int orgUnitId,
+        int employeeId,
+        int semesterId,
         int workTypeId,
         string titleRu,
         long? directionId = null,
@@ -62,9 +62,9 @@ public class Topic : AggregateRoot<long>, IAuditable, ISoftDeletable
             throw new ArgumentException("Max participants must be between 1 and 5.", nameof(maxParticipants));
 
         DirectionId = directionId;
-        DepartmentId = departmentId;
-        SupervisorId = supervisorId;
-        AcademicYearId = academicYearId;
+        OrgUnitId = orgUnitId;
+        EmployeeId = employeeId;
+        SemesterId = semesterId;
         WorkTypeId = workTypeId;
         TitleRu = titleRu;
         TitleKz = titleKz;
@@ -77,12 +77,12 @@ public class Topic : AggregateRoot<long>, IAuditable, ISoftDeletable
         IsApproved = false;
         IsClosed = false;
         CreatedAt = DateTime.UtcNow;
-        CreatedBy = supervisorId; // Topic creator is supervisor
+        CreatedBy = employeeId; // Topic creator is supervisor
         LastModifiedAt = CreatedAt;
-        LastModifiedBy = supervisorId;
+        LastModifiedBy = employeeId;
         IsDeleted = false;
 
-        RaiseDomainEvent(new TopicCreatedEvent(Id, directionId, supervisorId));
+        RaiseDomainEvent(new TopicCreatedEvent(Id, directionId, employeeId));
     }
 
     /// <summary>

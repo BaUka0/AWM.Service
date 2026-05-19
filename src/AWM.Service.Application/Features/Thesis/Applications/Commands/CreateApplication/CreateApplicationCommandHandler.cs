@@ -91,7 +91,7 @@ public sealed class CreateApplicationCommandHandler : IRequestHandler<CreateAppl
 
         // 3a. Validate that TopicSelection stage is open
         var (isAllowed, errorMessage) = await _stageValidationService
-            .ValidateOperationInStageAsync(topic.DepartmentId, topic.AcademicYearId,
+            .ValidateOperationInStageAsync(topic.OrgUnitId, topic.SemesterId,
                 3, cancellationToken);
 
         if (!isAllowed)
@@ -129,12 +129,12 @@ public sealed class CreateApplicationCommandHandler : IRequestHandler<CreateAppl
         // 7. Check if student already has an accepted application this year
         var hasAccepted = await _applicationRepository.HasAcceptedApplicationAsync(
             studentId,
-            topic.AcademicYearId,
+            topic.SemesterId,
             cancellationToken);
 
         if (hasAccepted)
         {
-            _logger.LogWarning("CreateApplication failed: Student={StudentId} (UserId={UserId}) already has an accepted application for year={Year}", studentId, userId.Value, topic.AcademicYearId);
+            _logger.LogWarning("CreateApplication failed: Student={StudentId} (UserId={UserId}) already has an accepted application for year={Year}", studentId, userId.Value, topic.SemesterId);
             return Result.Failure<long>(new Error("Application.AlreadyAccepted",
                 "You already have an accepted application for this academic year."));
         }
@@ -154,11 +154,11 @@ public sealed class CreateApplicationCommandHandler : IRequestHandler<CreateAppl
 
             // Notify supervisor about new application.
             // topic.SupervisorId is Staff.Id — must resolve staff to get Auth.Users.Id for notification.
-            var supervisorStaff = await _staffRepository.GetByIdAsync(topic.SupervisorId, cancellationToken);
+            var supervisorStaff = await _staffRepository.GetByIdAsync(topic.EmployeeId, cancellationToken);
             if (supervisorStaff is not null)
             {
                 await _notificationService.SendAsync(
-                    userId: supervisorStaff.UserId,
+                    userId: supervisorStaff.Id,
                     title: "Новая заявка на тему",
                     createdBy: userId.Value,
                     body: $"Студент подал заявку на тему «{topic.TitleRu}».",
@@ -168,7 +168,7 @@ public sealed class CreateApplicationCommandHandler : IRequestHandler<CreateAppl
             }
             else
             {
-                _logger.LogWarning("CreateApplication: Staff not found for StaffId={StaffId}, supervisor notification skipped.", topic.SupervisorId);
+                _logger.LogWarning("CreateApplication: Staff not found for StaffId={StaffId}, supervisor notification skipped.", topic.EmployeeId);
             }
 
             _logger.LogInformation("Successfully created application ID={ApplicationId} for Topic ID={TopicId} by Student={StudentId} (UserId={UserId})",

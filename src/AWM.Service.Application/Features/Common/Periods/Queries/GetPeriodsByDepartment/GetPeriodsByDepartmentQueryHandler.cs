@@ -18,14 +18,14 @@ public sealed class GetStagesByDepartmentQueryHandler : IRequestHandler<GetStage
     {
         try
         {
-            var stages = await _stageRepository.GetByDepartmentAsync(request.DepartmentId, request.SemesterId, cancellationToken);
+            var stages = await _stageRepository.GetByDepartmentAsync(request.OrgUnitId, request.SemesterId, cancellationToken);
 
             var dtos = stages
                 .Where(p => !p.IsDeleted)
                 .Select(p => new StageDto
                 {
                     Id = p.Id,
-                    DepartmentId = p.DepartmentId,
+                    OrgUnitId = p.OrgUnitId,
                     SemesterId = p.SemesterId,
                     WorkflowStageId = p.WorkflowStageId,
                     StartDate = p.StartDate,

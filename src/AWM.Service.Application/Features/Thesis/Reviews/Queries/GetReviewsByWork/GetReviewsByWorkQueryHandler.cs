@@ -38,7 +38,7 @@ public sealed class GetReviewsByWorkQueryHandler : IRequestHandler<GetReviewsByW
             {
                 Id = supervisorReview.Id,
                 WorkId = supervisorReview.WorkId,
-                SupervisorId = supervisorReview.SupervisorId,
+                EmployeeId = supervisorReview.EmployeeId,
                 ReviewText = supervisorReview.ReviewText,
                 FileStoragePath = supervisorReview.FileStoragePath,
                 CreatedAt = supervisorReview.CreatedAt,

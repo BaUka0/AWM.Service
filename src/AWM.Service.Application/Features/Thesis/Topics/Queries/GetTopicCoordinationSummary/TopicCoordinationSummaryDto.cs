@@ -40,7 +40,7 @@ public sealed record TopicCoordinationItemDto
     public string? TitleKz { get; init; }
     public string? TitleEn { get; init; }
     public string? SupervisorName { get; init; }
-    public int SupervisorId { get; init; }
+    public int EmployeeId { get; init; }
     public int MaxParticipants { get; init; }
     public int ApplicationsCount { get; init; }
     public int AcceptedCount { get; init; }

@@ -7,6 +7,6 @@ public record TransitionResponse
     public string? FromStateName { get; init; }
     public int ToStateId { get; init; }
     public string? ToStateName { get; init; }
-    public int? AllowedRoleId { get; init; }
+    public int? RoleAccessId { get; init; }
     public bool IsAutomatic { get; init; }
 }

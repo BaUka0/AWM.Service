@@ -26,38 +26,6 @@ public sealed class UpdateDepartmentCommandHandler : IRequestHandler<UpdateDepar
 
     public async Task<Result> Handle(UpdateDepartmentCommand request, CancellationToken cancellationToken)
     {
-        try
-        {
-            var department = await _organizationLookupRepository.GetDepartmentByIdTrackedAsync(request.DepartmentId, cancellationToken);
-
-            if (department is null || department.IsDeleted)
-            {
-                return Result.Failure(new Error("404", $"Department with ID {request.DepartmentId} not found or has been deleted."));
-            }
-
-            var userId = _currentUserProvider.UserId;
-            if (!userId.HasValue)
-            {
-                return Result.Failure(new Error("401", "User ID is not available."));
-            }
-            department.UpdateName(request.Name, userId.Value);
-
-            if (request.Code != null)
-            {
-                department.UpdateCode(request.Code, userId.Value);
-            }
-
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-            return Result.Success();
-        }
-        catch (ArgumentException argEx)
-        {
-            return Result.Failure(new Error("400", argEx.Message));
-        }
-        catch (Exception ex)
-        {
-            return Result.Failure(new Error("500", $"An error occurred while updating the Department: {ex.Message}"));
-        }
+        return Result.Failure(new Error("NotImplemented", "Not implemented - University entities are read-only"));
     }
 }

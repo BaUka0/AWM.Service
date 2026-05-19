@@ -54,7 +54,7 @@ public sealed class GetAvailableTransitionsQueryHandler : IRequestHandler<GetAva
                     FromStateName = fromState?.DisplayName ?? fromState?.SystemName,
                     ToStateId = transition.ToStateId,
                     ToStateName = toState?.DisplayName ?? toState?.SystemName,
-                    AllowedRoleId = transition.AllowedRoleId,
+                    RoleAccessId = transition.RoleAccessId,
                     IsAutomatic = transition.IsAutomatic
                 });
             }

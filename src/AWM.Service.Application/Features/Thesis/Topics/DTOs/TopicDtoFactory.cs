@@ -1,7 +1,6 @@
 namespace AWM.Service.Application.Features.Thesis.Topics.DTOs;
 
-using AWM.Service.Domain.Auth.Entities;
-using AWM.Service.Domain.Edu.Entities;
+using AWM.Service.Domain.University;
 using AWM.Service.Domain.Thesis.Entities;
 
 using AWM.Service.Domain.Wf.Entities;
@@ -48,21 +47,21 @@ internal static class TopicDtoFactory
     public static TopicDto Create(
         Topic topic,
         Direction? direction,
-        Staff? supervisorStaff,
+        Employee? supervisorStaff,
         User? supervisorUser,
         WorkType? workType,
         TopicApplicationCounters applicationCounters)
     {
-        var supervisorName = supervisorUser?.Login ?? supervisorUser?.Email ?? supervisorStaff?.Position;
+        var supervisorName = supervisorUser?.Email ?? supervisorUser?.FirstName ?? "";
         var availableSpots = Math.Max(0, topic.MaxParticipants - applicationCounters.AcceptedApplicationsCount);
 
         return new TopicDto
         {
             Id = topic.Id,
             DirectionId = topic.DirectionId,
-            DepartmentId = topic.DepartmentId,
-            SupervisorId = topic.SupervisorId,
-            AcademicYearId = topic.AcademicYearId,
+            OrgUnitId = topic.OrgUnitId,
+            EmployeeId = topic.EmployeeId,
+            SemesterId = topic.SemesterId,
             WorkTypeId = topic.WorkTypeId,
             TitleRu = topic.TitleRu,
             TitleEn = topic.TitleEn,
@@ -91,7 +90,7 @@ internal static class TopicDtoFactory
     public static TopicDetailDto CreateDetail(
         Topic topic,
         Direction? direction,
-        Staff? supervisorStaff,
+        Employee? supervisorStaff,
         User? supervisorUser,
         WorkType? workType,
         TopicApplicationCounters applicationCounters,
@@ -109,9 +108,9 @@ internal static class TopicDtoFactory
         {
             Id = topicDto.Id,
             DirectionId = topicDto.DirectionId,
-            DepartmentId = topicDto.DepartmentId,
-            SupervisorId = topicDto.SupervisorId,
-            AcademicYearId = topicDto.AcademicYearId,
+            OrgUnitId = topicDto.OrgUnitId,
+            EmployeeId = topicDto.EmployeeId,
+            SemesterId = topicDto.SemesterId,
             WorkTypeId = topicDto.WorkTypeId,
             TitleRu = topicDto.TitleRu,
             TitleEn = topicDto.TitleEn,

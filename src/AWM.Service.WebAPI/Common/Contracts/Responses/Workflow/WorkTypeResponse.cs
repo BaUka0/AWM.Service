@@ -15,5 +15,5 @@ public sealed class WorkTypeResponse
     /// <summary>
     /// Associated degree level ID (null for CourseWork).
     /// </summary>
-    public int? DegreeLevelId { get; init; }
+    public int? SpecialityLevelId { get; init; }
 }

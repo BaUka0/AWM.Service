@@ -45,7 +45,7 @@ public sealed class GetFailedPreDefenseStudentsQueryHandler
                     new Error("401", "User ID is not available."));
 
             var works = await _workRepository.GetByDepartmentAsync(
-                request.DepartmentId, request.AcademicYearId, cancellationToken);
+                request.OrgUnitId, request.SemesterId, cancellationToken);
             var attempts = await _attemptRepository.GetByWorkIdsAsync(
                 works.Select(w => w.Id),
                 cancellationToken);
@@ -93,7 +93,7 @@ public sealed class GetFailedPreDefenseStudentsQueryHandler
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "GetFailedPreDefenseStudents failed for Dept={DeptId}", request.DepartmentId);
+            _logger.LogError(ex, "GetFailedPreDefenseStudents failed for Dept={DeptId}", request.OrgUnitId);
             return Result.Failure<IReadOnlyList<FailedPreDefenseStudentDto>>(new Error("500", ex.Message));
         }
     }

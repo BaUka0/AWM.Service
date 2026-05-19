@@ -45,7 +45,7 @@ public class EvaluationController : BaseController
         var query = new GetEvaluationCriteriaQuery
         {
             WorkTypeId = workTypeId,
-            DepartmentId = departmentId
+            OrgUnitId = departmentId
         };
 
         var result = await _sender.Send(query);

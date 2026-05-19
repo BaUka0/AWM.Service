@@ -8,14 +8,14 @@ using MediatR;
 public sealed record CreateCommissionCommand : IRequest<Result<int>>
 {
     /// <summary>
-    /// Department ID the commission belongs to.
+    /// Org unit ID the commission belongs to.
     /// </summary>
-    public int DepartmentId { get; init; }
+    public int OrgUnitId { get; init; }
 
     /// <summary>
-    /// Academic year ID for the commission.
+    /// Semester ID for the commission.
     /// </summary>
-    public int AcademicYearId { get; init; }
+    public int SemesterId { get; init; }
 
     /// <summary>
     /// Type of commission (PreDefense or GAK).

@@ -63,7 +63,7 @@ public sealed class ScheduleRepository : IScheduleRepository
                   (schedule, commission) => new { Schedule = schedule, Commission = commission })
             .Where(x => !x.Schedule.IsDeleted && 
                         !x.Commission.IsDeleted &&
-                        x.Commission.DepartmentId == departmentId &&
+                        x.Commission.OrgUnitId == departmentId &&
                         x.Schedule.DefenseDate >= from && 
                         x.Schedule.DefenseDate <= to)
             .OrderBy(x => x.Schedule.DefenseDate)

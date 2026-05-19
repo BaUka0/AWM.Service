@@ -36,8 +36,8 @@ public sealed class CreateCommissionCommandHandler : IRequestHandler<CreateCommi
             }
 
             var commission = new Commission(
-                departmentId: request.DepartmentId,
-                academicYearId: request.AcademicYearId,
+                orgUnitId: request.OrgUnitId,
+                semesterId: request.SemesterId,
                 commissionTypeId: request.CommissionTypeId,
                 createdBy: userId.Value,
                 name: request.Name,

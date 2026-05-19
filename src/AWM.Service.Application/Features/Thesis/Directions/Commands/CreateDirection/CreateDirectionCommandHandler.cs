@@ -123,9 +123,9 @@ public sealed class CreateDirectionCommandHandler
 
             // Create direction entity using domain constructor
             var direction = new Direction(
-                departmentId: request.DepartmentId,
-                supervisorId: supervisorId,
-                academicYearId: request.AcademicYearId,
+                orgUnitId: request.DepartmentId,
+                employeeId: supervisorId,
+                semesterId: request.AcademicYearId,
                 workTypeId: request.WorkTypeId,
                 titleRu: request.TitleRu,
                 draftStateId: draftState.Id,

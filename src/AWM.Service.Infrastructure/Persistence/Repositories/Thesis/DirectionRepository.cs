@@ -44,8 +44,8 @@ public sealed class DirectionRepository : IDirectionRepository
         return await _context.Directions
             .AsNoTracking()
             .Where(d => !d.IsDeleted && 
-                        d.DepartmentId == departmentId && 
-                        d.AcademicYearId == academicYearId)
+                        d.OrgUnitId == departmentId && 
+                        d.SemesterId == academicYearId)
             .OrderByDescending(d => d.CreatedAt)
             .ToListAsync(cancellationToken);
     }
@@ -59,8 +59,8 @@ public sealed class DirectionRepository : IDirectionRepository
         return await _context.Directions
             .AsNoTracking()
             .Where(d => !d.IsDeleted && 
-                        d.SupervisorId == supervisorId && 
-                        d.AcademicYearId == academicYearId)
+                        d.EmployeeId == supervisorId && 
+                        d.SemesterId == academicYearId)
             .OrderByDescending(d => d.CreatedAt)
             .ToListAsync(cancellationToken);
     }

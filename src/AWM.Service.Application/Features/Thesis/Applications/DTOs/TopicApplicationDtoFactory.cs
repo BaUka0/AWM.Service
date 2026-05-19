@@ -1,7 +1,6 @@
 namespace AWM.Service.Application.Features.Thesis.Applications.DTOs;
 
-using AWM.Service.Domain.Auth.Entities;
-using AWM.Service.Domain.Edu.Entities;
+using AWM.Service.Domain.University;
 using AWM.Service.Domain.Thesis.Entities;
 using AWM.Service.Domain.Wf.Entities;
 
@@ -12,7 +11,7 @@ internal static class TopicApplicationDtoFactory
         Topic topic,
         Student? student,
         User? studentUser,
-        Staff? supervisorStaff,
+        Employee? supervisorStaff,
         User? supervisorUser,
         Direction? direction,
         WorkType? workType,
@@ -23,8 +22,8 @@ internal static class TopicApplicationDtoFactory
             Id = application.Id,
             TopicId = application.TopicId,
             StudentId = application.StudentId,
-            StudentName = studentUser?.Login ?? studentUser?.Email,
-            StudentGroupCode = student?.GroupCode,
+            StudentName = studentUser?.Email ?? studentUser?.FirstName,
+            StudentGroupCode = null,
             MotivationLetter = application.MotivationLetter,
             AppliedAt = application.AppliedAt,
             StatusId = application.StatusId,
@@ -39,8 +38,8 @@ internal static class TopicApplicationDtoFactory
             DirectionTitleRu = direction?.TitleRu,
             DirectionTitleKz = direction?.TitleKz,
             DirectionTitleEn = direction?.TitleEn,
-            SupervisorId = topic.SupervisorId,
-            SupervisorName = supervisorUser?.Login ?? supervisorUser?.Email ?? supervisorStaff?.Position,
+            EmployeeId = topic.EmployeeId,
+            SupervisorName = supervisorUser?.Email ?? supervisorUser?.FirstName ?? "",
             WorkTypeId = topic.WorkTypeId,
             WorkTypeName = workType?.Name,
             TopicMaxParticipants = topic.MaxParticipants,

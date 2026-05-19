@@ -97,11 +97,11 @@ public sealed class GetMyWorkProgressQueryHandler
 
         if (topic is not null)
         {
-            var supervisor = await _staffRepository.GetByIdAsync(topic.SupervisorId, cancellationToken);
+            var supervisor = await _staffRepository.GetByIdAsync(topic.EmployeeId, cancellationToken);
             if (supervisor is not null)
             {
-                var supervisorUser = await _userRepository.GetByIdAsync(supervisor.UserId, cancellationToken);
-                supervisorName = supervisorUser?.Login ?? supervisorUser?.Email ?? supervisor.Position;
+                var supervisorUser = await _userRepository.GetByIdAsync(supervisor.Id, cancellationToken);
+                supervisorName = supervisorUser?.Email ?? supervisorUser?.FirstName;
                 supervisorContacts = supervisorUser?.Email;
             }
 
@@ -136,7 +136,7 @@ public sealed class GetMyWorkProgressQueryHandler
             var studentUser = studentEntity is not null
                 ? participantUsersById.GetValueOrDefault(studentEntity.UserId)
                 : null;
-            var name = studentUser?.Login ?? studentUser?.Email;
+            var name = studentUser?.Email ?? studentUser?.FirstName;
 
             participants.Add(new WorkProgressParticipantDto
             {
@@ -221,8 +221,8 @@ public sealed class GetMyWorkProgressQueryHandler
         {
             Id = detailedWork.Id,
             TopicId = detailedWork.TopicId,
-            AcademicYearId = detailedWork.AcademicYearId,
-            DepartmentId = detailedWork.DepartmentId,
+            SemesterId = detailedWork.SemesterId,
+            OrgUnitId = detailedWork.OrgUnitId,
             CurrentStateId = detailedWork.CurrentStateId,
             CurrentStateName = state?.DisplayName ?? state?.SystemName,
             IsDefended = detailedWork.IsDefended,

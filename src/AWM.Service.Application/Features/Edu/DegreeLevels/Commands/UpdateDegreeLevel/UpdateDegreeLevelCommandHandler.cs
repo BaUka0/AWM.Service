@@ -26,30 +26,6 @@ public sealed class UpdateDegreeLevelCommandHandler : IRequestHandler<UpdateDegr
 
     public async Task<Result> Handle(UpdateDegreeLevelCommand request, CancellationToken cancellationToken)
     {
-        var degreeLevel = await _eduRepository.GetByIdAsync(request.Id, cancellationToken);
-
-        if (degreeLevel is null)
-        {
-            return Result.Failure(new Error("NotFound.DegreeLevel", $"Degree level with ID {request.Id} not found."));
-        }
-
-        if (degreeLevel.IsDeleted)
-        {
-            return Result.Failure(new Error("Conflict.DegreeLevel", "Cannot update a deleted degree level."));
-        }
-
-        try
-        {
-            degreeLevel.Update(request.Name, request.DurationYears, _currentUserProvider.UserId ?? 0);
-        }
-        catch (ArgumentException ex)
-        {
-            return Result.Failure(new Error("Validation.DegreeLevel", ex.Message));
-        }
-
-        await _eduRepository.UpdateAsync(degreeLevel, cancellationToken);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-        return Result.Success();
+        return Result.Failure(new Error("NotImplemented", "Not implemented - University entities are read-only"));
     }
 }

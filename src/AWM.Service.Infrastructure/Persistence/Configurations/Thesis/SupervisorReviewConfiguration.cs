@@ -3,7 +3,7 @@ namespace AWM.Service.Infrastructure.Persistence.Configurations.Thesis;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using AWM.Service.Domain.Thesis.Entities;
-using AWM.Service.Domain.Edu.Entities;
+using AWM.Service.Domain.University;
 using AWM.Service.Infrastructure.Persistence.Configurations.Base;
 
 /// <summary>
@@ -24,7 +24,8 @@ public class SupervisorReviewConfiguration : SoftDeletableEntityConfiguration<Su
         builder.Property(e => e.WorkId)
             .IsRequired();
 
-        builder.Property(e => e.SupervisorId)
+        builder.Property(e => e.EmployeeId)
+            .HasColumnName("SupervisorId")
             .IsRequired();
 
         builder.Property(e => e.ReviewText)
@@ -41,14 +42,14 @@ public class SupervisorReviewConfiguration : SoftDeletableEntityConfiguration<Su
             .HasConstraintName("FK_SupReviews_Work")
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasOne<Staff>()
+        builder.HasOne<Employee>()
             .WithMany()
-            .HasForeignKey(e => e.SupervisorId)
+            .HasForeignKey(e => e.EmployeeId)
             .HasConstraintName("FK_SupReviews_Supervisor")
             .OnDelete(DeleteBehavior.Restrict);
 
         // Unique constraint - one supervisor review per work
-        builder.HasIndex(e => new { e.WorkId, e.SupervisorId })
+        builder.HasIndex(e => new { e.WorkId, e.EmployeeId })
             .IsUnique()
             .HasDatabaseName("UQ_SupReview_Work_Supervisor");
     }

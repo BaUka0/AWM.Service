@@ -11,8 +11,8 @@ using AWM.Service.Domain.Thesis.Events;
 public class StudentWork : AggregateRoot<long>, IAuditable, ISoftDeletable
 {
     public long? TopicId { get; private set; }
-    public int AcademicYearId { get; private set; }
-    public int DepartmentId { get; private set; }
+    public int SemesterId { get; private set; }
+    public int OrgUnitId { get; private set; }
     public int CurrentStateId { get; private set; }
 
     public string? FinalGrade { get; private set; }
@@ -42,15 +42,15 @@ public class StudentWork : AggregateRoot<long>, IAuditable, ISoftDeletable
     private StudentWork() { }
 
     public StudentWork(
-        int academicYearId,
-        int departmentId,
+        int semesterId,
+        int orgUnitId,
         int draftStateId,
         int createdBy,
         long? topicId = null)
     {
         TopicId = topicId;
-        AcademicYearId = academicYearId;
-        DepartmentId = departmentId;
+        SemesterId = semesterId;
+        OrgUnitId = orgUnitId;
         CurrentStateId = draftStateId;
         IsDefended = false;
         CreatedAt = DateTime.UtcNow;
@@ -59,7 +59,7 @@ public class StudentWork : AggregateRoot<long>, IAuditable, ISoftDeletable
         LastModifiedBy = createdBy;
         IsDeleted = false;
 
-        RaiseDomainEvent(new WorkCreatedEvent(Id, topicId, departmentId));
+        RaiseDomainEvent(new WorkCreatedEvent(Id, topicId, orgUnitId));
     }
 
     /// <summary>

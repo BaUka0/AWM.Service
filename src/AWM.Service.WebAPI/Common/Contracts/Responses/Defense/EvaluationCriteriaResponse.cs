@@ -13,9 +13,9 @@ public sealed record EvaluationCriteriaResponse
     /// <example>1</example>
     public int WorkTypeId { get; init; }
 
-    /// <summary>Department ID. Null for university-wide criteria.</summary>
+    /// <summary>Org unit ID. Null for university-wide criteria.</summary>
     /// <example>2</example>
-    public int? DepartmentId { get; init; }
+    public int? OrgUnitId { get; init; }
 
     /// <summary>Name of the criteria.</summary>
     /// <example>Качество оформления</example>

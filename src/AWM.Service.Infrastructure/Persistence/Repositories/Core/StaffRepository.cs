@@ -1,51 +1,45 @@
 namespace AWM.Service.Infrastructure.Persistence.Repositories.Core;
 
-using AWM.Service.Domain.Edu.Entities;
-using AWM.Service.Domain.Repositories;
-using AWM.Service.Infrastructure.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
+using AWM.Service.Domain.University;
+using AWM.Service.Domain.Repositories;
 
-/// <summary>
-/// Repository implementation for Staff aggregate.
-/// </summary>
-public sealed class StaffRepository : RepositoryBase<Staff, int>, IStaffRepository
+public class StaffRepository : IStaffRepository
 {
-    public StaffRepository(ApplicationDbContext context) : base(context) { }
+    private readonly UniversityDbContext _context;
 
-    /// <inheritdoc />
-    public async Task<Staff?> GetByUserIdAsync(int userId, CancellationToken cancellationToken = default)
+    public StaffRepository(UniversityDbContext context)
     {
-        return await Context.Staff
-            .FirstOrDefaultAsync(s => s.UserId == userId, cancellationToken);
+        _context = context;
     }
 
-    /// <inheritdoc />
-    public async Task<IReadOnlyList<Staff>> GetByIdsAsync(IEnumerable<int> ids, CancellationToken cancellationToken = default)
+    public async Task<Employee?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
-        var distinctIds = ids.Distinct().ToList();
-        return await Context.Staff
-            .AsNoTracking()
-            .Where(s => distinctIds.Contains(s.Id) && !s.IsDeleted)
+        return await _context.Employees.FindAsync(new object[] { id }, cancellationToken);
+    }
+
+    public async Task<Employee?> GetByUserIdAsync(int userId, CancellationToken cancellationToken = default)
+    {
+        return await _context.Employees
+            .FirstOrDefaultAsync(e => e.Id == userId, cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<Employee>> GetByIdsAsync(IEnumerable<int> ids, CancellationToken cancellationToken = default)
+    {
+        return await _context.Employees
+            .Where(e => ids.Contains(e.Id))
             .ToListAsync(cancellationToken);
     }
 
-    /// <inheritdoc />
-    public async Task<IReadOnlyList<Staff>> GetByDepartmentAsync(int departmentId, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<Employee>> GetAdvisorsAsync(CancellationToken cancellationToken = default)
     {
-        return await Context.Staff
-            .AsNoTracking()
-            .Where(s => s.DepartmentId == departmentId)
-            .OrderBy(s => s.Position)
+        return await _context.Employees
+            .Where(e => e.IsAdvisor)
             .ToListAsync(cancellationToken);
     }
 
-    /// <inheritdoc />
-    public async Task<IReadOnlyList<Staff>> GetSupervisorsWithCapacityAsync(int departmentId, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<Employee>> GetAllAsync(CancellationToken cancellationToken = default)
     {
-        return await Context.Staff
-            .AsNoTracking()
-            .Where(s => s.DepartmentId == departmentId && s.IsSupervisor && s.MaxStudentsLoad > 0)
-            .OrderBy(s => s.Position)
-            .ToListAsync(cancellationToken);
+        return await _context.Employees.ToListAsync(cancellationToken);
     }
 }

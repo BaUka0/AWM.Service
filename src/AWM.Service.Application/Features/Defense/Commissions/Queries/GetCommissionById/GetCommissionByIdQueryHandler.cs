@@ -37,8 +37,8 @@ public sealed class GetCommissionByIdQueryHandler
             var dto = new CommissionDetailDto
             {
                 Id = commission.Id,
-                DepartmentId = commission.DepartmentId,
-                AcademicYearId = commission.AcademicYearId,
+                OrgUnitId = commission.OrgUnitId,
+                SemesterId = commission.SemesterId,
                 CommissionType = commission.CommissionTypeId.ToString(),
                 Name = commission.Name,
                 PreDefenseNumber = commission.PreDefenseNumber,

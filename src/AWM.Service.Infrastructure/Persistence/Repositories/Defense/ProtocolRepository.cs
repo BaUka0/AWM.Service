@@ -39,7 +39,7 @@ public sealed class ProtocolRepository : RepositoryBase<Protocol, long>, IProtoc
         return await Context.Protocols
             .AsNoTracking()
             .Join(
-                Context.Commissions.Where(c => !c.IsDeleted && c.DepartmentId == departmentId && c.AcademicYearId == academicYearId),
+                Context.Commissions.Where(c => !c.IsDeleted && c.OrgUnitId == departmentId && c.SemesterId == academicYearId),
                 p => p.CommissionId,
                 c => c.Id,
                 (p, c) => p)

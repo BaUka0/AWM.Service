@@ -32,10 +32,10 @@ public sealed class CreateStageCommandHandler : IRequestHandler<CreateStageComma
         {
             var userId = _currentUserProvider.UserId;
             _logger.LogInformation("Attempting to create stage for Dept={DeptId}, Year={YearId}, Stage={Stage} by User={UserId}",
-                request.DepartmentId, request.SemesterId, request.WorkflowStageId, userId);
+                request.OrgUnitId, request.SemesterId, request.WorkflowStageId, userId);
 
             // Check for overlapping stages of the same stage in the same department/year
-            var existingStages = await _stageRepository.GetByDepartmentAsync(request.DepartmentId, request.SemesterId, cancellationToken);
+            var existingStages = await _stageRepository.GetByDepartmentAsync(request.OrgUnitId, request.SemesterId, cancellationToken);
             var overlapping = existingStages
                 .Where(p => !p.IsDeleted && p.WorkflowStageId == request.WorkflowStageId)
                 .Any(p => request.StartDate < p.EndDate && request.EndDate > p.StartDate);
@@ -43,7 +43,7 @@ public sealed class CreateStageCommandHandler : IRequestHandler<CreateStageComma
             if (overlapping)
             {
                 _logger.LogWarning("CreateStage failed: Overlapping stage for Stage={Stage} in Dept={DeptId}, Year={YearId}",
-                    request.WorkflowStageId, request.DepartmentId, request.SemesterId);
+                    request.WorkflowStageId, request.OrgUnitId, request.SemesterId);
                 return Result.Failure<int>(new Error("409", "An overlapping stage for this workflow stage already exists."));
             }
 
@@ -54,7 +54,7 @@ public sealed class CreateStageCommandHandler : IRequestHandler<CreateStageComma
             }
 
             var stage = new Stage(
-                request.DepartmentId,
+                request.OrgUnitId,
                 request.SemesterId,
                 request.WorkflowStageId,
                 request.StartDate,
@@ -64,7 +64,7 @@ public sealed class CreateStageCommandHandler : IRequestHandler<CreateStageComma
             await _stageRepository.AddAsync(stage, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-            _logger.LogInformation("Successfully created stage with ID={StageId} for Dept={DeptId}", stage.Id, request.DepartmentId);
+            _logger.LogInformation("Successfully created stage with ID={StageId} for Dept={DeptId}", stage.Id, request.OrgUnitId);
             return Result.Success(stage.Id);
         }
         catch (ArgumentException argEx)
@@ -74,7 +74,7 @@ public sealed class CreateStageCommandHandler : IRequestHandler<CreateStageComma
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "CreateStage failed for Dept={DeptId}", request.DepartmentId);
+            _logger.LogError(ex, "CreateStage failed for Dept={DeptId}", request.OrgUnitId);
             return Result.Failure<int>(new Error("500", $"An error occurred while creating the Stage: {ex.Message}"));
         }
     }

@@ -64,8 +64,8 @@ public sealed class CreateStudentWorkCommandHandler : IRequestHandler<CreateStud
 
         // 3. Create work
         var work = new StudentWork(
-            academicYearId: request.AcademicYearId,
-            departmentId: request.DepartmentId,
+            semesterId: request.AcademicYearId,
+            orgUnitId: request.DepartmentId,
             draftStateId: draftState.Id,
             createdBy: _currentUserProvider.UserId.Value,
             topicId: request.TopicId);

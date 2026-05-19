@@ -9,13 +9,13 @@ public sealed class CreateCommissionCommandValidator : AbstractValidator<CreateC
 {
     public CreateCommissionCommandValidator()
     {
-        RuleFor(x => x.DepartmentId)
+        RuleFor(x => x.OrgUnitId)
             .GreaterThan(0)
-            .WithMessage("Department ID must be greater than 0.");
+            .WithMessage("Org unit ID must be greater than 0.");
 
-        RuleFor(x => x.AcademicYearId)
+        RuleFor(x => x.SemesterId)
             .GreaterThan(0)
-            .WithMessage("Academic year ID must be greater than 0.");
+            .WithMessage("Semester ID must be greater than 0.");
 
         RuleFor(x => x.CommissionTypeId)
             .InclusiveBetween(1, 2)

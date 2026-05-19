@@ -8,7 +8,7 @@ using AWM.Service.Domain.Common;
 public class EvaluationCriteria : Entity<int>, IAuditable, ISoftDeletable
 {
     public int WorkTypeId { get; private set; }
-    public int? DepartmentId { get; private set; }
+    public int? OrgUnitId { get; private set; }
     public string CriteriaName { get; private set; } = null!;
     public int MaxScore { get; private set; }
     public decimal Weight { get; private set; }
@@ -30,7 +30,7 @@ public class EvaluationCriteria : Entity<int>, IAuditable, ISoftDeletable
         int maxScore,
         int createdBy,
         decimal weight = 1.0m,
-        int? departmentId = null)
+        int? orgUnitId = null)
     {
         if (string.IsNullOrWhiteSpace(criteriaName))
             throw new ArgumentException("Criteria name is required.", nameof(criteriaName));
@@ -40,7 +40,7 @@ public class EvaluationCriteria : Entity<int>, IAuditable, ISoftDeletable
             throw new ArgumentException("Weight must be positive.", nameof(weight));
 
         WorkTypeId = workTypeId;
-        DepartmentId = departmentId;
+        OrgUnitId = orgUnitId;
         CriteriaName = criteriaName;
         MaxScore = maxScore;
         Weight = weight;
@@ -83,5 +83,5 @@ public class EvaluationCriteria : Entity<int>, IAuditable, ISoftDeletable
     /// <summary>
     /// Checks if this is a university-wide criteria (no department).
     /// </summary>
-    public bool IsUniversityWide => DepartmentId == null;
+    public bool IsUniversityWide => OrgUnitId == null;
 }

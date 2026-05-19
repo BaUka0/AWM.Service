@@ -4,7 +4,7 @@ public sealed record SupervisorReviewDto
 {
     public long Id { get; init; }
     public long WorkId { get; init; }
-    public int SupervisorId { get; init; }
+    public int EmployeeId { get; init; }
     public string ReviewText { get; init; } = null!;
     public string? FileStoragePath { get; init; }
     public DateTime CreatedAt { get; init; }

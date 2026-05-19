@@ -11,9 +11,9 @@ using AWM.Service.Domain.Wf.Entities;
 /// </summary>
 public class Direction : AggregateRoot<long>, IAuditable, ISoftDeletable
 {
-    public int DepartmentId { get; private set; }
-    public int SupervisorId { get; private set; }
-    public int AcademicYearId { get; private set; }
+    public int OrgUnitId { get; private set; }
+    public int EmployeeId { get; private set; }
+    public int SemesterId { get; private set; }
     public int WorkTypeId { get; private set; }
 
     public string TitleRu { get; private set; } = null!;
@@ -44,9 +44,9 @@ public class Direction : AggregateRoot<long>, IAuditable, ISoftDeletable
     private Direction() { }
 
     public Direction(
-        int departmentId,
-        int supervisorId,
-        int academicYearId,
+        int orgUnitId,
+        int employeeId,
+        int semesterId,
         int workTypeId,
         string titleRu,
         int draftStateId,
@@ -59,9 +59,9 @@ public class Direction : AggregateRoot<long>, IAuditable, ISoftDeletable
         if (string.IsNullOrWhiteSpace(titleRu))
             throw new ArgumentException("Russian title is required.", nameof(titleRu));
 
-        DepartmentId = departmentId;
-        SupervisorId = supervisorId;
-        AcademicYearId = academicYearId;
+        OrgUnitId = orgUnitId;
+        EmployeeId = employeeId;
+        SemesterId = semesterId;
         WorkTypeId = workTypeId;
         TitleRu = titleRu;
         TitleKz = titleKz;
@@ -71,12 +71,12 @@ public class Direction : AggregateRoot<long>, IAuditable, ISoftDeletable
         DescriptionEn = descriptionEn;
         CurrentStateId = draftStateId;
         CreatedAt = DateTime.UtcNow;
-        CreatedBy = supervisorId;
+        CreatedBy = employeeId;
         LastModifiedAt = CreatedAt;
-        LastModifiedBy = supervisorId;
+        LastModifiedBy = employeeId;
         IsDeleted = false;
 
-        RaiseDomainEvent(new DirectionCreatedEvent(Id, supervisorId, departmentId));
+        RaiseDomainEvent(new DirectionCreatedEvent(Id, employeeId, orgUnitId));
     }
 
     /// <summary>

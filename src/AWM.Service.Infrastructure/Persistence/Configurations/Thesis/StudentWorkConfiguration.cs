@@ -3,9 +3,8 @@ namespace AWM.Service.Infrastructure.Persistence.Configurations.Thesis;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using AWM.Service.Domain.Thesis.Entities;
-using AWM.Service.Domain.Org.Entities;
+using AWM.Service.Domain.University;
 using AWM.Service.Domain.Wf.Entities;
-using AWM.Service.Domain.CommonDomain.Entities;
 using AWM.Service.Infrastructure.Persistence.Configurations.Base;
 
 /// <summary>
@@ -34,10 +33,12 @@ public class StudentWorkConfiguration : SoftDeletableEntityConfiguration<Student
 
         builder.Property(e => e.TopicId);
 
-        builder.Property(e => e.AcademicYearId)
+        builder.Property(e => e.SemesterId)
+            .HasColumnName("AcademicYearId")
             .IsRequired();
 
-        builder.Property(e => e.DepartmentId)
+        builder.Property(e => e.OrgUnitId)
+            .HasColumnName("DepartmentId")
             .IsRequired();
 
         builder.Property(e => e.CurrentStateId)
@@ -60,9 +61,9 @@ public class StudentWorkConfiguration : SoftDeletableEntityConfiguration<Student
             .HasConstraintName("FK_Works_Topic")
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne<Department>()
+        builder.HasOne<OrgUnit>()
             .WithMany()
-            .HasForeignKey(e => e.DepartmentId)
+            .HasForeignKey(e => e.OrgUnitId)
             .HasConstraintName("FK_Works_Dept")
             .OnDelete(DeleteBehavior.Restrict);
 
@@ -94,7 +95,7 @@ public class StudentWorkConfiguration : SoftDeletableEntityConfiguration<Student
             .OnDelete(DeleteBehavior.Cascade);
 
         // Index for filtering
-        builder.HasIndex(e => new { e.DepartmentId, e.AcademicYearId, e.CurrentStateId })
+        builder.HasIndex(e => new { e.OrgUnitId, e.SemesterId, e.CurrentStateId })
             .HasDatabaseName("IX_StudentWorks_Filter");
     }
 }

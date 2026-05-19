@@ -5,8 +5,8 @@ using MediatR;
 
 public sealed record GetFailedPreDefenseStudentsQuery : IRequest<Result<IReadOnlyList<FailedPreDefenseStudentDto>>>
 {
-    public int DepartmentId { get; init; }
-    public int AcademicYearId { get; init; }
+    public int OrgUnitId { get; init; }
+    public int SemesterId { get; init; }
     public int? PreDefenseNumber { get; init; }
 }
 

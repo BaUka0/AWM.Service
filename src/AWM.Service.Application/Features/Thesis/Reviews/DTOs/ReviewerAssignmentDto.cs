@@ -6,7 +6,7 @@ public sealed record ReviewerAssignmentDto
     public long ReviewId { get; init; }
     public string? TopicTitle { get; init; }
     public string? StudentName { get; init; }
-    public int DepartmentId { get; init; }
+    public int OrgUnitId { get; init; }
     public string? DepartmentName { get; init; }
     public bool IsReviewUploaded { get; init; }
     public DateTime AssignedAt { get; init; }

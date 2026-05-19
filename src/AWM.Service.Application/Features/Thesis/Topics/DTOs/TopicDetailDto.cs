@@ -9,9 +9,9 @@ public sealed record TopicDetailDto
 {
     public long Id { get; init; }
     public long? DirectionId { get; init; }
-    public int DepartmentId { get; init; }
-    public int SupervisorId { get; init; }
-    public int AcademicYearId { get; init; }
+    public int OrgUnitId { get; init; }
+    public int EmployeeId { get; init; }
+    public int SemesterId { get; init; }
     public int WorkTypeId { get; init; }
     
     public string TitleRu { get; init; } = null!;

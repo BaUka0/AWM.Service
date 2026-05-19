@@ -8,7 +8,7 @@ using AWM.Service.Domain.Common;
 public class Expert : Entity<int>, IAuditable, ISoftDeletable
 {
     public int UserId { get; private set; }
-    public int DepartmentId { get; private set; }
+    public int OrgUnitId { get; private set; }
     public int CheckTypeId { get; private set; }
     public bool IsActive { get; private set; }
 
@@ -23,10 +23,10 @@ public class Expert : Entity<int>, IAuditable, ISoftDeletable
 
     private Expert() { }
 
-    public Expert(int userId, int departmentId, int checkTypeId, int createdBy = 0)
+    public Expert(int userId, int orgUnitId, int checkTypeId, int createdBy = 0)
     {
         UserId = userId;
-        DepartmentId = departmentId;
+        OrgUnitId = orgUnitId;
         CheckTypeId = checkTypeId;
         IsActive = true;
 

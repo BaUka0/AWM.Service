@@ -27,7 +27,7 @@ public sealed class GetAllDepartmentsQueryHandler
             var departments = await _organizationLookupRepository.GetAllDepartmentsAsync(cancellationToken);
 
             var departmentDtos = departments
-                .Where(d => !d.IsDeleted)
+                .Where(d => !d.Deleted)
                 .Select(MapToDto)
                 .ToList();
 
@@ -40,18 +40,18 @@ public sealed class GetAllDepartmentsQueryHandler
         }
     }
 
-    private static DepartmentDto MapToDto(Domain.Org.Entities.Department department)
+    private static DepartmentDto MapToDto(Domain.University.OrgUnit department)
     {
         return new DepartmentDto
         {
             Id = department.Id,
-            InstituteId = department.InstituteId,
-            Name = department.Name,
-            Code = department.Code,
-            CreatedAt = department.CreatedAt,
-            CreatedBy = department.CreatedBy,
-            LastModifiedAt = department.LastModifiedAt,
-            LastModifiedBy = department.LastModifiedBy
+            InstituteId = department.ParentId ?? 0,
+            Name = department.Title,
+            Code = department.ShortTitle,
+            CreatedAt = default,
+            CreatedBy = 0,
+            LastModifiedAt = null,
+            LastModifiedBy = null
         };
     }
 }

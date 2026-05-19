@@ -1,21 +1,25 @@
 namespace AWM.Service.Infrastructure.Persistence.Repositories.Common;
 
-using AWM.Service.Domain.CommonDomain.Entities;
-using AWM.Service.Domain.Repositories;
 using Microsoft.EntityFrameworkCore;
+using AWM.Service.Domain.University;
+using AWM.Service.Domain.Repositories;
 
-/// <summary>
-/// Repository implementation for SemesterType.
-/// </summary>
-public sealed class SemesterTypeRepository : RepositoryBase<SemesterType, int>, ISemesterTypeRepository
+public class SemesterTypeRepository : ISemesterTypeRepository
 {
-    public SemesterTypeRepository(ApplicationDbContext context) : base(context) { }
+    private readonly UniversityDbContext _context;
+
+    public SemesterTypeRepository(UniversityDbContext context)
+    {
+        _context = context;
+    }
+
+    public async Task<SemesterType?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+    {
+        return await _context.SemesterTypes.FindAsync(new object[] { id }, cancellationToken);
+    }
 
     public async Task<IReadOnlyList<SemesterType>> GetAllAsync(CancellationToken cancellationToken = default)
     {
-        return await Context.SemesterTypes
-            .AsNoTracking()
-            .OrderBy(s => s.OrderBy)
-            .ToListAsync(cancellationToken);
+        return await _context.SemesterTypes.ToListAsync(cancellationToken);
     }
 }

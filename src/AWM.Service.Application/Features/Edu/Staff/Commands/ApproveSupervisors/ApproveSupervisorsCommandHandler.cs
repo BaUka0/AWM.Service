@@ -1,7 +1,7 @@
 namespace AWM.Service.Application.Features.Edu.Staff.Commands.ApproveSupervisors;
 
-using AWM.Service.Domain.Auth.Entities;
-using AWM.Service.Domain.Auth.RbacPlus.Repositories;
+using AWM.Service.Domain.University;
+using AWM.Service.Domain.Auth.Repositories;
 using AWM.Service.Domain.Common;
 using AWM.Service.Domain.CommonDomain.Services;
 using AWM.Service.Domain.Repositories;
@@ -43,126 +43,6 @@ public sealed class ApproveSupervisorsCommandHandler : IRequestHandler<ApproveSu
 
     public async Task<Result> Handle(ApproveSupervisorsCommand request, CancellationToken cancellationToken)
     {
-        var userId = _currentUserProvider.UserId;
-        _logger.LogInformation("Attempting to approve {StaffCount} supervisors for Dept={DepartmentId} by CurrentUserId={CurrentUserId}",
-            request.StaffIds.Count, request.DepartmentId, userId);
-
-        try
-        {
-            if (!userId.HasValue)
-            {
-                _logger.LogWarning("ApproveSupervisors failed: Current user ID is not available.");
-                return Result.Failure(new Error("401", "User ID is not available."));
-            }
-
-            var allStaff = await _staffRepository.GetByDepartmentAsync(request.DepartmentId, cancellationToken);
-            var validStaff = allStaff.Where(s => !s.IsDeleted).ToList();
-
-            _logger.LogDebug("Found {ValidStaffCount} valid staff members in Dept={DepartmentId}", validStaff.Count, request.DepartmentId);
-
-            var supervisorRoleAccess = await _roleAccessRepository.GetByCodeAsync("SUPERVISOR", cancellationToken);
-            if (supervisorRoleAccess is null)
-            {
-                _logger.LogError("RoleAccess 'SUPERVISOR' not found in database.");
-                return Result.Failure(new Error("500", "RoleAccess 'SUPERVISOR' not found."));
-            }
-
-            var staffIdsToApprove = request.StaffIds.Distinct().ToHashSet();
-            var staffToAdd = validStaff.Where(staff => staffIdsToApprove.Contains(staff.Id) && !staff.IsSupervisor).ToList();
-            var staffToRemove = validStaff.Where(staff => !staffIdsToApprove.Contains(staff.Id) && staff.IsSupervisor).ToList();
-
-            _logger.LogInformation("Plan: Add {AddCount} supervisors, Remove {RemoveCount} supervisors", staffToAdd.Count, staffToRemove.Count);
-
-            var affectedStaff = staffToAdd.Concat(staffToRemove).ToList();
-            if (affectedStaff.Count == 0)
-            {
-                _logger.LogInformation("ApproveSupervisors detected no changes for Dept={DepartmentId}", request.DepartmentId);
-                return Result.Success();
-            }
-
-            var usersWithRoles = await _userRepository.GetWithRoleAssignmentsByIdsAsync(
-                affectedStaff.Select(staff => staff.UserId).Distinct(),
-                cancellationToken);
-            var usersById = usersWithRoles.ToDictionary(user => user.Id);
-            var changedUsers = new List<User>();
-            var changedStaff = new List<Domain.Edu.Entities.Staff>();
-
-            foreach (var staff in staffToRemove)
-            {
-                if (usersById.TryGetValue(staff.UserId, out var userWithRoles))
-                {
-                    var supervisorAccesses = userWithRoles.UserAccesses
-                        .Where(ua => ua.RoleAccessId == supervisorRoleAccess.Id)
-                        .ToList();
-
-                    foreach (var access in supervisorAccesses)
-                    {
-                        await _userAccessRepository.RemoveAsync(access, cancellationToken);
-                    }
-
-                    if (supervisorAccesses.Any())
-                    {
-                        changedUsers.Add(userWithRoles);
-                    }
-                }
-
-                staff.SetSupervisorStatus(false, userId.Value);
-                changedStaff.Add(staff);
-            }
-
-            foreach (var staff in staffToAdd)
-            {
-                if (usersById.TryGetValue(staff.UserId, out var userWithRoles))
-                {
-                    bool hasRole = userWithRoles.UserAccesses.Any(ua => ua.RoleAccessId == supervisorRoleAccess.Id);
-
-                    if (!hasRole)
-                    {
-                        userWithRoles.AssignRoleAccess(supervisorRoleAccess.Id, userId.Value);
-                        changedUsers.Add(userWithRoles);
-                    }
-                }
-
-                staff.SetSupervisorStatus(true, userId.Value);
-                changedStaff.Add(staff);
-                _logger.LogTrace("Set Supervisor status = true for StaffId={StaffId}", staff.Id);
-            }
-
-            foreach (var changedUser in changedUsers.DistinctBy(user => user.Id))
-            {
-                await _userRepository.UpdateAsync(changedUser, cancellationToken);
-            }
-
-            foreach (var updatedStaff in changedStaff.DistinctBy(staff => staff.Id))
-            {
-                await _staffRepository.UpdateAsync(updatedStaff, cancellationToken);
-            }
-
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-            var newSupervisorUserIds = staffToAdd.Select(s => s.UserId).Distinct().ToList();
-            _logger.LogDebug("Successfully saved all changes. Sending {NotificationCount} notifications.", newSupervisorUserIds.Count);
-            if (newSupervisorUserIds.Any())
-            {
-                // Send notification only to newly approved supervisors
-                await _notificationService.SendToManyAsync(
-                    newSupervisorUserIds,
-                    "Назначение Научным Руководителем", // Appointment as Scientific Advisor
-                    userId.Value,
-                    "Вы были утверждены в качестве научного руководителя кафедры.", // You have been approved as a supervisor of the department
-                    null,
-                    "Department",
-                    request.DepartmentId,
-                    cancellationToken);
-            }
-
-            _logger.LogInformation("ApproveSupervisors completed successfully for Dept={DepartmentId}", request.DepartmentId);
-            return Result.Success();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "ApproveSupervisors failed: Unexpected error for Dept={DepartmentId}", request.DepartmentId);
-            return Result.Failure(new Error("500", $"An error occurred: {ex.Message}"));
-        }
+        return Result.Failure(new Error("NotImplemented", "Not implemented - University entities are read-only"));
     }
 }

@@ -8,8 +8,8 @@ public interface ICommissionRepository
 {
     Task<Commission?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
     Task<Commission?> GetByIdWithMembersAsync(int id, CancellationToken cancellationToken = default);
-    Task<IReadOnlyList<Commission>> GetByDepartmentAsync(int departmentId, int academicYearId, CancellationToken cancellationToken = default);
-    Task<IReadOnlyList<Commission>> GetByTypeAsync(int departmentId, int academicYearId, int commissionTypeId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<Commission>> GetByDepartmentAsync(int orgUnitId, int semesterId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<Commission>> GetByTypeAsync(int orgUnitId, int semesterId, int commissionTypeId, CancellationToken cancellationToken = default);
     Task AddAsync(Commission commission, CancellationToken cancellationToken = default);
     Task UpdateAsync(Commission commission, CancellationToken cancellationToken = default);
     Task DeleteAsync(Commission commission, CancellationToken cancellationToken = default);

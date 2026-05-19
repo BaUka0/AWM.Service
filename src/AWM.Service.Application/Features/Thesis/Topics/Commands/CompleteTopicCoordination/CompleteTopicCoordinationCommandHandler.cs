@@ -70,7 +70,7 @@ public sealed class CompleteTopicCoordinationCommandHandler
         var supervisorUserIds = new HashSet<int>();
         var notifiedStudentUserIds = new HashSet<int>();
         var supervisors = await _staffRepository.GetByIdsAsync(
-            topics.Select(t => t.SupervisorId).Distinct(),
+            topics.Select(t => t.EmployeeId).Distinct(),
             cancellationToken);
         var supervisorsById = supervisors.ToDictionary(s => s.Id);
         var pendingApplications = topics
@@ -86,11 +86,11 @@ public sealed class CompleteTopicCoordinationCommandHandler
             if (topic.IsDeleted) continue;
 
             // Resolve supervisor UserId for notification
-            var supervisorStaff = supervisorsById.GetValueOrDefault(topic.SupervisorId);
+            var supervisorStaff = supervisorsById.GetValueOrDefault(topic.EmployeeId);
             if (supervisorStaff is not null)
-                supervisorUserIds.Add(supervisorStaff.UserId);
+                supervisorUserIds.Add(supervisorStaff.Id);
             else
-                _logger.LogWarning("CompleteTopicCoordination: Staff not found for StaffId={StaffId}, supervisor notification will be skipped.", topic.SupervisorId);
+                _logger.LogWarning("CompleteTopicCoordination: Staff not found for StaffId={StaffId}, supervisor notification will be skipped.", topic.EmployeeId);
 
             // Close all open topics
             if (!topic.IsClosed)

@@ -34,23 +34,23 @@ public sealed class TopicApprovedNotificationHandler : INotificationHandler<Topi
         if (topic is null) return;
 
         // Resolve Staff -> UserId for notification
-        var staff = await _staffRepository.GetByIdAsync(topic.SupervisorId, cancellationToken);
+        var staff = await _staffRepository.GetByIdAsync(topic.EmployeeId, cancellationToken);
         if (staff is null)
         {
-            _logger.LogWarning("Cannot send notification: Staff {StaffId} not found for topic {TopicId}", topic.SupervisorId, topic.Id);
+            _logger.LogWarning("Cannot send notification: Staff {StaffId} not found for topic {TopicId}", topic.EmployeeId, topic.Id);
             return;
         }
 
         await _notificationService.SendAsync(
-            userId: staff.UserId,
+            userId: staff.Id,
             title: "Тема утверждена",
-            createdBy: staff.UserId,
+            createdBy: staff.Id,
             body: $"Ваша тема «{topic.TitleRu}» была утверждена кафедрой и доступна для выбора студентами.",
             relatedEntityType: "Topic",
             relatedEntityId: topic.Id,
             cancellationToken: cancellationToken);
 
         _logger.LogInformation("Notification sent to supervisor UserId={UserId} (StaffId={StaffId}) about topic {TopicId} approval",
-            staff.UserId, topic.SupervisorId, topic.Id);
+            staff.Id, topic.EmployeeId, topic.Id);
     }
 }

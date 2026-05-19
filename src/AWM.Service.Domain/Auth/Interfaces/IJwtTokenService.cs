@@ -1,4 +1,4 @@
-using AWM.Service.Domain.Auth.Entities;
+using AWM.Service.Domain.University;
 
 namespace AWM.Service.Domain.Auth.Interfaces;
 

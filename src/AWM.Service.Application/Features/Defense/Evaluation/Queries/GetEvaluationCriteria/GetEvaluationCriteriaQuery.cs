@@ -15,7 +15,7 @@ public sealed record GetEvaluationCriteriaQuery : IRequest<Result<IReadOnlyList<
     public int WorkTypeId { get; init; }
 
     /// <summary>
-    /// Optional department ID. If null, returns university-wide criteria.
+    /// Optional org unit ID. If null, returns university-wide criteria.
     /// </summary>
-    public int? DepartmentId { get; init; }
+    public int? OrgUnitId { get; init; }
 }

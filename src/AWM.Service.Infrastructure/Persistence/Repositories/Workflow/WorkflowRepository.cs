@@ -47,11 +47,11 @@ public sealed class WorkflowRepository : IWorkflowRepository
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<WorkType>> GetWorkTypesByDegreeLevelAsync(int degreeLevelId, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<WorkType>> GetWorkTypesByDegreeLevelAsync(int specialityLevelId, CancellationToken cancellationToken = default)
     {
         return await _context.WorkTypes
             .AsNoTracking()
-            .Where(w => w.DegreeLevelId == degreeLevelId)
+            .Where(w => w.SpecialityLevelId == specialityLevelId)
             .OrderBy(w => w.Name)
             .ToListAsync(cancellationToken);
     }
@@ -159,7 +159,7 @@ public sealed class WorkflowRepository : IWorkflowRepository
             .Where(t => t.FromStateId == fromStateId &&
                         t.ToStateId == toStateId &&
                         !t.IsAutomatic &&
-                        (t.AllowedRoleId == null || t.AllowedRoleId == roleId))
+                        (t.RoleAccessId == null || t.RoleAccessId == roleId))
             .FirstOrDefaultAsync(cancellationToken);
 
         return transition != null;

@@ -29,7 +29,7 @@ public sealed class GetAllWorkTypesQueryHandler
         {
             Id = w.Id,
             Name = w.Name,
-            DegreeLevelId = w.DegreeLevelId
+            SpecialityLevelId = w.SpecialityLevelId
         }).ToList();
 
         return Result.Success<IReadOnlyList<WorkTypeDto>>(dtos);

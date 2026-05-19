@@ -6,8 +6,8 @@ public sealed record StudentWorkProgressDto
 {
     public long Id { get; init; }
     public long? TopicId { get; init; }
-    public int AcademicYearId { get; init; }
-    public int DepartmentId { get; init; }
+    public int SemesterId { get; init; }
+    public int OrgUnitId { get; init; }
     public int CurrentStateId { get; init; }
     public string? CurrentStateName { get; init; }
     public bool IsDefended { get; init; }

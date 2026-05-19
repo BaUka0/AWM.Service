@@ -2,7 +2,7 @@ namespace AWM.Service.Infrastructure.Persistence.Configurations.Auth;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using AWM.Service.Domain.Auth.RbacPlus.Entities;
+using AWM.Service.Domain.Auth.Entities;
 using AWM.Service.Infrastructure.Persistence.Configurations.Base;
 
 /// <summary>
@@ -23,8 +23,8 @@ public class UserAccessConfiguration : AuditableEntityConfiguration<UserAccess, 
         builder.Property(e => e.AssignedAt)
             .IsRequired();
 
-        builder.HasOne(e => e.User)
-            .WithMany(e => e.UserAccesses)
+        builder.HasOne<AWM.Service.Domain.University.User>()
+            .WithMany()
             .HasForeignKey(e => e.UserId)
             .OnDelete(DeleteBehavior.Cascade);
 

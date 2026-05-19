@@ -27,38 +27,6 @@ public sealed class UpdateStaffWorkloadCommandHandler : IRequestHandler<UpdateSt
 
     public async Task<Result> Handle(UpdateStaffWorkloadCommand request, CancellationToken cancellationToken)
     {
-        var userId = _currentUserProvider.UserId;
-        _logger.LogInformation("Attempting to update workload (MaxLoad={MaxLoad}) for StaffId={StaffId} by CurrentUserId={UserId}",
-            request.MaxStudentsLoad, request.StaffId, userId);
-
-        try
-        {
-            if (!userId.HasValue)
-            {
-                _logger.LogWarning("UpdateStaffWorkload failed: Current user ID is not available.");
-                return Result.Failure(new Error("401", "User ID is not available."));
-            }
-
-            var staff = await _staffRepository.GetByIdAsync(request.StaffId, cancellationToken);
-
-            if (staff is null || staff.IsDeleted)
-            {
-                _logger.LogWarning("UpdateStaffWorkload failed: Staff profile {StaffId} not found.", request.StaffId);
-                return Result.Failure(new Error("404", $"Staff profile not found for ID {request.StaffId}"));
-            }
-
-            staff.UpdateMaxStudentsLoad(request.MaxStudentsLoad, userId.Value);
-
-            await _staffRepository.UpdateAsync(staff, cancellationToken);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-            _logger.LogInformation("Successfully updated workload for StaffId={StaffId}", staff.Id);
-            return Result.Success();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "UpdateStaffWorkload failed: Unexpected error for StaffId={StaffId}", request.StaffId);
-            return Result.Failure(new Error("500", $"An error occurred updating workload: {ex.Message}"));
-        }
+        return Result.Failure(new Error("NotImplemented", "Not implemented - University entities are read-only"));
     }
 }

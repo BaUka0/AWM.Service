@@ -1,7 +1,7 @@
 namespace AWM.Service.Application.Features.Auth.RbacPlus.Queries.GetRoleAccessMatrix;
 
-using AWM.Service.Domain.Auth.RbacPlus.Repositories;
-using AWM.Service.Domain.Auth.RbacPlus.ViewModels;
+using AWM.Service.Domain.Auth.Repositories;
+using AWM.Service.Domain.Auth.ViewModels;
 using MediatR;
 
 /// <summary>

@@ -3,10 +3,8 @@ namespace AWM.Service.Infrastructure.Persistence.Configurations.Thesis;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using AWM.Service.Domain.Thesis.Entities;
-using AWM.Service.Domain.Org.Entities;
-using AWM.Service.Domain.Edu.Entities;
+using AWM.Service.Domain.University;
 using AWM.Service.Domain.Wf.Entities;
-using AWM.Service.Domain.CommonDomain.Entities;
 using AWM.Service.Infrastructure.Persistence.Configurations.Base;
 
 /// <summary>
@@ -37,13 +35,16 @@ public class TopicConfiguration : SoftDeletableEntityConfiguration<Topic, long>
 
         builder.Property(e => e.DirectionId);
 
-        builder.Property(e => e.AcademicYearId)
+        builder.Property(e => e.SemesterId)
+            .HasColumnName("AcademicYearId")
             .IsRequired();
 
-        builder.Property(e => e.DepartmentId)
+        builder.Property(e => e.OrgUnitId)
+            .HasColumnName("DepartmentId")
             .IsRequired();
 
-        builder.Property(e => e.SupervisorId)
+        builder.Property(e => e.EmployeeId)
+            .HasColumnName("SupervisorId")
             .IsRequired();
 
         builder.Property(e => e.WorkTypeId)
@@ -91,15 +92,15 @@ public class TopicConfiguration : SoftDeletableEntityConfiguration<Topic, long>
             .HasConstraintName("FK_Topics_Direction")
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne<Department>()
+        builder.HasOne<OrgUnit>()
             .WithMany()
-            .HasForeignKey(e => e.DepartmentId)
+            .HasForeignKey(e => e.OrgUnitId)
             .HasConstraintName("FK_Topics_Dept")
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne<Staff>()
+        builder.HasOne<Employee>()
             .WithMany()
-            .HasForeignKey(e => e.SupervisorId)
+            .HasForeignKey(e => e.EmployeeId)
             .HasConstraintName("FK_Topics_Supervisor")
             .OnDelete(DeleteBehavior.Restrict);
 
@@ -116,7 +117,7 @@ public class TopicConfiguration : SoftDeletableEntityConfiguration<Topic, long>
             .OnDelete(DeleteBehavior.Cascade);
 
         // Indexes
-        builder.HasIndex(e => new { e.DepartmentId, e.AcademicYearId, e.IsApproved })
+        builder.HasIndex(e => new { e.OrgUnitId, e.SemesterId, e.IsApproved })
             .HasDatabaseName("IX_Topics_Filter");
 
         builder.HasIndex(e => e.DirectionId)

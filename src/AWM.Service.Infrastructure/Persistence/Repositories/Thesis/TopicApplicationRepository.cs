@@ -73,7 +73,7 @@ public sealed class TopicApplicationRepository : RepositoryBase<TopicApplication
             .Where(x => !x.App.IsDeleted &&
                         !x.Topic.IsDeleted &&
                         x.App.StudentId == studentId &&
-                        x.Topic.AcademicYearId == academicYearId)
+                        x.Topic.SemesterId == academicYearId)
             .Select(x => x.App)
             .OrderByDescending(a => a.AppliedAt)
             .ToListAsync(cancellationToken);
@@ -97,7 +97,7 @@ public sealed class TopicApplicationRepository : RepositoryBase<TopicApplication
             .AnyAsync(x => !x.App.IsDeleted &&
                            !x.Topic.IsDeleted &&
                            x.App.StudentId == studentId &&
-                           x.Topic.AcademicYearId == academicYearId &&
+                           x.Topic.SemesterId == academicYearId &&
                             x.App.StatusId == 2,
                            cancellationToken);
     }

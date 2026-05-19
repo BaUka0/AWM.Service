@@ -1,6 +1,6 @@
 using AWM.Service.Domain.Thesis.Service;
 using AWM.Service.Domain.Repositories;
-using AWM.Service.Domain.Auth.RbacPlus.Repositories;
+using AWM.Service.Domain.Auth.Repositories;
 using AWM.Service.Infrastructure.FileStorage;
 using AWM.Service.Infrastructure.Persistence;
 using AWM.Service.Infrastructure.Persistence.Interceptors;
@@ -10,6 +10,7 @@ using AWM.Service.Infrastructure.Persistence.Repositories.Defense;
 using AWM.Service.Infrastructure.Persistence.Repositories.Dictionary;
 using AWM.Service.Infrastructure.Persistence.Repositories.RbacPlus;
 using AWM.Service.Infrastructure.Persistence.Repositories.Thesis;
+using AWM.Service.Infrastructure.Persistence.Repositories.University;
 using AWM.Service.Infrastructure.Persistence.Repositories.Workflow;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -61,6 +62,18 @@ public static class DependencyInjection
             }
         });
 
+        // Register University Read-Only DbContext
+        services.AddDbContext<UniversityDbContext>((sp, options) =>
+        {
+            options.UseSqlServer(connectionString, sqlOptions =>
+                   {
+                       sqlOptions.EnableRetryOnFailure(
+                           maxRetryCount: 3,
+                           maxRetryDelay: TimeSpan.FromSeconds(10),
+                           errorNumbersToAdd: null);
+                   });
+        });
+
         // Register Unit of Work
         services.AddScoped<IUnitOfWork, UnitOfWork>();
 
@@ -110,6 +123,14 @@ public static class DependencyInjection
         services.AddScoped<IRoleOperationActionRepository, RoleOperationActionRepository>();
         services.AddScoped<IUserAccessRepository, UserAccessRepository>();
         services.AddScoped<IUserAccessHistoryRepository, UserAccessHistoryRepository>();
+
+        // Register University Read-Only Repositories
+        services.AddScoped<IUserReadOnlyRepository, UserReadOnlyRepository>();
+        services.AddScoped<IStudentReadOnlyRepository, StudentReadOnlyRepository>();
+        services.AddScoped<IEmployeeReadOnlyRepository, EmployeeReadOnlyRepository>();
+        services.AddScoped<IOrgUnitReadOnlyRepository, OrgUnitReadOnlyRepository>();
+        services.AddScoped<ISemesterReadOnlyRepository, SemesterReadOnlyRepository>();
+        services.AddScoped<ISpecialityReadOnlyRepository, SpecialityReadOnlyRepository>();
 
         // Register File Storage Service
         // Switch to S3FileStorageService for production (add AWSSDK.S3 NuGet + configure "FileStorage:S3" section)

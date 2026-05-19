@@ -13,7 +13,7 @@ public sealed class StageRepository : RepositoryBase<Stage, int>, IStageReposito
 
     /// <inheritdoc />
     public async Task<Stage?> GetActiveByStageAsync(
-        int departmentId,
+        int orgUnitId,
         int semesterId,
         int workflowStageId,
         CancellationToken cancellationToken = default)
@@ -21,7 +21,7 @@ public sealed class StageRepository : RepositoryBase<Stage, int>, IStageReposito
         var now = DateTime.UtcNow;
         return await Context.Stages
             .AsNoTracking()
-            .Where(s => s.DepartmentId == departmentId &&
+            .Where(s => s.OrgUnitId == orgUnitId &&
                         s.SemesterId == semesterId &&
                         s.WorkflowStageId == workflowStageId &&
                         s.IsActive &&
@@ -32,14 +32,14 @@ public sealed class StageRepository : RepositoryBase<Stage, int>, IStageReposito
 
     /// <inheritdoc />
     public async Task<Stage?> GetActiveStageAsync(
-        int departmentId,
+        int orgUnitId,
         int semesterId,
         CancellationToken cancellationToken = default)
     {
         var now = DateTime.UtcNow;
         return await Context.Stages
             .AsNoTracking()
-            .Where(s => s.DepartmentId == departmentId &&
+            .Where(s => s.OrgUnitId == orgUnitId &&
                         s.SemesterId == semesterId &&
                         s.IsActive &&
                         s.StartDate <= now &&
@@ -50,13 +50,13 @@ public sealed class StageRepository : RepositoryBase<Stage, int>, IStageReposito
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<Stage>> GetByDepartmentAsync(
-        int departmentId,
+        int orgUnitId,
         int semesterId,
         CancellationToken cancellationToken = default)
     {
         return await Context.Stages
             .AsNoTracking()
-            .Where(s => s.DepartmentId == departmentId &&
+            .Where(s => s.OrgUnitId == orgUnitId &&
                         s.SemesterId == semesterId)
             .OrderBy(s => s.StartDate)
             .ToListAsync(cancellationToken);
@@ -64,12 +64,12 @@ public sealed class StageRepository : RepositoryBase<Stage, int>, IStageReposito
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<Stage>> GetTrackedByDepartmentAsync(
-        int departmentId,
+        int orgUnitId,
         int semesterId,
         CancellationToken cancellationToken = default)
     {
         return await Context.Stages
-            .Where(s => s.DepartmentId == departmentId &&
+            .Where(s => s.OrgUnitId == orgUnitId &&
                         s.SemesterId == semesterId)
             .OrderBy(s => s.StartDate)
             .ToListAsync(cancellationToken);
@@ -77,12 +77,12 @@ public sealed class StageRepository : RepositoryBase<Stage, int>, IStageReposito
 
     /// <inheritdoc />
     public async Task<bool> IsStageOpenAsync(
-        int departmentId,
+        int orgUnitId,
         int semesterId,
         int workflowStageId,
         CancellationToken cancellationToken = default)
     {
-        var stage = await GetActiveByStageAsync(departmentId, semesterId, workflowStageId, cancellationToken);
+        var stage = await GetActiveByStageAsync(orgUnitId, semesterId, workflowStageId, cancellationToken);
         return stage != null;
     }
 }

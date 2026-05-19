@@ -59,11 +59,11 @@ public sealed class GetTopicCoordinationSummaryQueryHandler
         var applicationsByTopicId = allApplications.GroupBy(a => a.TopicId)
             .ToDictionary(g => g.Key, g => g.ToList());
         var supervisors = await _staffRepository.GetByIdsAsync(
-            topics.Select(t => t.SupervisorId).Distinct(),
+            topics.Select(t => t.EmployeeId).Distinct(),
             cancellationToken);
         var supervisorsById = supervisors.ToDictionary(s => s.Id);
         var supervisorUsers = await _userRepository.GetByIdsAsync(
-            supervisors.Select(s => s.UserId).Distinct(),
+            supervisors.Select(s => s.Id).Distinct(),
             cancellationToken);
         var supervisorUsersById = supervisorUsers.ToDictionary(u => u.Id);
 
@@ -74,10 +74,10 @@ public sealed class GetTopicCoordinationSummaryQueryHandler
             var pending = applications.Count(a => a.StatusId == 1);
             var rejected = applications.Count(a => a.StatusId == 3);
             var available = Math.Max(0, topic.MaxParticipants - accepted);
-            var supervisor = supervisorsById.GetValueOrDefault(topic.SupervisorId);
+            var supervisor = supervisorsById.GetValueOrDefault(topic.EmployeeId);
             var supervisorUser = supervisor is null
                 ? null
-                : supervisorUsersById.GetValueOrDefault(supervisor.UserId);
+                : supervisorUsersById.GetValueOrDefault(supervisor.Id);
 
             topicItems.Add(new TopicCoordinationItemDto
             {
@@ -85,8 +85,8 @@ public sealed class GetTopicCoordinationSummaryQueryHandler
                 TitleRu = topic.TitleRu,
                 TitleKz = topic.TitleKz,
                 TitleEn = topic.TitleEn,
-                SupervisorId = topic.SupervisorId,
-                SupervisorName = supervisorUser?.Login ?? supervisorUser?.Email ?? supervisor?.Position,
+                EmployeeId = topic.EmployeeId,
+                SupervisorName = supervisorUser?.Email ?? supervisorUser?.FirstName ?? "",
                 MaxParticipants = topic.MaxParticipants,
                 ApplicationsCount = applications.Count,
                 AcceptedCount = accepted,

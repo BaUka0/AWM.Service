@@ -22,15 +22,15 @@ public sealed class CommissionRepository : RepositoryBase<Commission, int>, ICom
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<Commission>> GetByDepartmentAsync(
-        int departmentId,
-        int academicYearId,
+        int orgUnitId,
+        int semesterId,
         CancellationToken cancellationToken = default)
     {
         return await Context.Commissions
             .AsNoTracking()
             .Include(c => c.Members)
-            .Where(c => c.DepartmentId == departmentId &&
-                        c.AcademicYearId == academicYearId)
+            .Where(c => c.OrgUnitId == orgUnitId &&
+                        c.SemesterId == semesterId)
             .OrderBy(c => c.CommissionTypeId)
             .ThenBy(c => c.PreDefenseNumber)
             .ToListAsync(cancellationToken);
@@ -38,16 +38,16 @@ public sealed class CommissionRepository : RepositoryBase<Commission, int>, ICom
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<Commission>> GetByTypeAsync(
-        int departmentId,
-        int academicYearId,
+        int orgUnitId,
+        int semesterId,
         int commissionTypeId,
         CancellationToken cancellationToken = default)
     {
         return await Context.Commissions
             .AsNoTracking()
             .Include(c => c.Members)
-            .Where(c => c.DepartmentId == departmentId &&
-                        c.AcademicYearId == academicYearId &&
+            .Where(c => c.OrgUnitId == orgUnitId &&
+                        c.SemesterId == semesterId &&
                         c.CommissionTypeId == commissionTypeId)
             .OrderBy(c => c.PreDefenseNumber)
             .ToListAsync(cancellationToken);

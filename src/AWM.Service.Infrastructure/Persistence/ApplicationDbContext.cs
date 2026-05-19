@@ -2,19 +2,12 @@ namespace AWM.Service.Infrastructure.Persistence;
 
 using Microsoft.EntityFrameworkCore;
 
-// Org
-using AWM.Service.Domain.Org.Entities;
-
 // Common
 using AWM.Service.Domain.CommonDomain.Entities;
 
 // Auth
 using AWM.Service.Domain.Auth.Entities;
-using AWM.Service.Domain.Auth.RbacPlus.Entities;
-using AWM.Service.Domain.Auth.RbacPlus.ViewModels;
-
-// Edu
-using AWM.Service.Domain.Edu.Entities;
+using AWM.Service.Domain.Auth.ViewModels;
 
 // Wf
 using AWM.Service.Domain.Wf.Entities;
@@ -27,7 +20,8 @@ using AWM.Service.Domain.Defense.Entities;
 
 /// <summary>
 /// Main application DbContext for EF Core.
-/// Contains all entity DbSets organized by schema.
+/// Contains addon entity DbSets organized by schema.
+/// University master data is in separate UniversityDbContext (read-only).
 /// </summary>
 public sealed class ApplicationDbContext : DbContext
 {
@@ -36,14 +30,7 @@ public sealed class ApplicationDbContext : DbContext
     {
     }
 
-    #region Org Schema
-    public DbSet<Institute> Institutes => Set<Institute>();
-    public DbSet<Department> Departments => Set<Department>();
-    #endregion
-
     #region Common Schema
-    public DbSet<SemesterType> SemesterTypes => Set<SemesterType>();
-    public DbSet<Semester> Semesters => Set<Semester>();
     public DbSet<WorkflowStage> WorkflowStages => Set<WorkflowStage>();
     public DbSet<Stage> Stages => Set<Stage>();
     public DbSet<NotificationTemplate> NotificationTemplates => Set<NotificationTemplate>();
@@ -51,9 +38,6 @@ public sealed class ApplicationDbContext : DbContext
     #endregion
 
     #region Auth Schema
-    public DbSet<User> Users => Set<User>();
-    public DbSet<Role> Roles => Set<Role>();
-
     // RBAC+ entities
     public DbSet<RoleAccess> RoleAccesses => Set<RoleAccess>();
     public DbSet<RoleOperation> RoleOperations => Set<RoleOperation>();
@@ -61,16 +45,6 @@ public sealed class ApplicationDbContext : DbContext
     public DbSet<RoleOperationAction> RoleOperationActions => Set<RoleOperationAction>();
     public DbSet<UserAccess> UserAccesses => Set<UserAccess>();
     public DbSet<UserAccessHistory> UserAccessHistories => Set<UserAccessHistory>();
-    #endregion
-
-    #region Edu Schema
-    public DbSet<DegreeLevel> DegreeLevels => Set<DegreeLevel>();
-    public DbSet<AcademicProgram> AcademicPrograms => Set<AcademicProgram>();
-    public DbSet<Student> Students => Set<Student>();
-    public DbSet<Staff> Staff => Set<Staff>();
-
-    // Reference tables (replacing enums)
-    public DbSet<StudentStatus> StudentStatuses => Set<StudentStatus>();
     #endregion
 
     #region Wf Schema

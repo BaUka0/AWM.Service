@@ -29,7 +29,7 @@ public sealed class GetAllInstitutesQueryHandler
             var institutes = await _organizationLookupRepository.GetAllInstitutesAsync(cancellationToken);
 
             var instituteDtos = institutes
-                .Where(i => !i.IsDeleted)
+                .Where(i => !i.Deleted)
                 .Select(i => MapToDto(i, request.IncludeDepartments))
                 .ToList();
 
@@ -42,29 +42,29 @@ public sealed class GetAllInstitutesQueryHandler
         }
     }
 
-    private static InstituteDto MapToDto(Domain.Org.Entities.Institute institute, bool includeDepartments)
+    private static InstituteDto MapToDto(Domain.University.OrgUnit institute, bool includeDepartments)
     {
         return new InstituteDto
         {
             Id = institute.Id,
-            Name = institute.Name,
-            CreatedAt = institute.CreatedAt,
-            CreatedBy = institute.CreatedBy,
-            LastModifiedAt = institute.LastModifiedAt,
-            LastModifiedBy = institute.LastModifiedBy,
+            Name = institute.Title,
+            CreatedAt = default,
+            CreatedBy = 0,
+            LastModifiedAt = null,
+            LastModifiedBy = null,
             Departments = includeDepartments
-                ? institute.Departments
-                    .Where(d => !d.IsDeleted)
+                ? institute.Children
+                    .Where(d => !d.Deleted)
                     .Select(d => new DepartmentDto
                     {
                         Id = d.Id,
-                        InstituteId = d.InstituteId,
-                        Name = d.Name,
-                        Code = d.Code,
-                        CreatedAt = d.CreatedAt,
-                        CreatedBy = d.CreatedBy,
-                        LastModifiedAt = d.LastModifiedAt,
-                        LastModifiedBy = d.LastModifiedBy
+                        InstituteId = d.ParentId ?? 0,
+                        Name = d.Title,
+                        Code = d.ShortTitle,
+                        CreatedAt = default,
+                        CreatedBy = 0,
+                        LastModifiedAt = null,
+                        LastModifiedBy = null
                     })
                     .ToList()
                 : null

@@ -53,13 +53,13 @@ public sealed class GetTopicsByDirectionQueryHandler
                 .GroupBy(application => application.TopicId)
                 .ToDictionary(group => group.Key, TopicApplicationCounters.FromApplications);
 
-            var supervisorIds = activeTopics.Select(t => t.SupervisorId).Distinct();
+            var supervisorIds = activeTopics.Select(t => t.EmployeeId).Distinct();
             var workTypeIds = activeTopics.Select(t => t.WorkTypeId).Distinct();
 
             var staff = await _staffRepository.GetByIdsAsync(supervisorIds, cancellationToken);
             var workTypes = await _workflowRepository.GetWorkTypesByIdsAsync(workTypeIds, cancellationToken);
 
-            var userIds = staff.Select(s => s.UserId).Distinct();
+            var userIds = staff.Select(s => s.Id).Distinct();
             var users = await _userRepository.GetByIdsAsync(userIds, cancellationToken);
 
             var staffDict = staff.ToDictionary(s => s.Id);
@@ -69,10 +69,10 @@ public sealed class GetTopicsByDirectionQueryHandler
             var dtos = activeTopics.Select(topic =>
             {
                 var counters = applicationCountersByTopicId.GetValueOrDefault(topic.Id, TopicApplicationCounters.Empty);
-                var supervisor = staffDict.GetValueOrDefault(topic.SupervisorId);
+                var supervisor = staffDict.GetValueOrDefault(topic.EmployeeId);
                 var supervisorUser = supervisor is null
                     ? null
-                    : userDict.GetValueOrDefault(supervisor.UserId);
+                    : userDict.GetValueOrDefault(supervisor.Id);
                 var workType = workTypeDict.GetValueOrDefault(topic.WorkTypeId);
 
                 return TopicDtoFactory.Create(

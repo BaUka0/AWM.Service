@@ -1,6 +1,6 @@
 namespace AWM.Service.Application.Features.Auth.RbacPlus.Queries.CheckUserAccess;
 
-using AWM.Service.Domain.Auth.RbacPlus.Repositories;
+using AWM.Service.Domain.Auth.Repositories;
 using MediatR;
 
 /// <summary>

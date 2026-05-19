@@ -115,7 +115,7 @@ public sealed class GetStudentDefenseStepQueryHandler
 
                     members.Add(new DefenseStepMemberDto
                     {
-                        Name = memberUser?.Login ?? memberUser?.Email ?? $"User {member.UserId}",
+                        Name = memberUser?.Email ?? memberUser?.FirstName ?? $"User {member.UserId}",
                         Role = member.CommissionRoleId.ToString()
                     });
                 }

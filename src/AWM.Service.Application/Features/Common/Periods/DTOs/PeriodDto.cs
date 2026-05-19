@@ -3,7 +3,7 @@ namespace AWM.Service.Application.Features.Common.Stages.DTOs;
 public sealed record StageDto
 {
     public int Id { get; init; }
-    public int DepartmentId { get; init; }
+    public int OrgUnitId { get; init; }
     public int SemesterId { get; init; }
     public int WorkflowStageId { get; init; }
     public DateTime StartDate { get; init; }

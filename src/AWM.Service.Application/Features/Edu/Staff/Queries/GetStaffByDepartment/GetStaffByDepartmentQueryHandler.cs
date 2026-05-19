@@ -20,46 +20,25 @@ public sealed class GetStaffByDepartmentQueryHandler : IRequestHandler<GetStaffB
 
     public async Task<Result<IReadOnlyList<StaffDto>>> Handle(GetStaffByDepartmentQuery request, CancellationToken cancellationToken)
     {
-        try
-        {
-            var staffList = await _staffRepository.GetByDepartmentAsync(request.DepartmentId, cancellationToken);
-            var activeStaff = staffList.Where(s => !s.IsDeleted).ToList();
-            var users = await _userRepository.GetByIdsAsync(
-                activeStaff.Select(s => s.UserId).Distinct(),
-                cancellationToken);
-            var usersById = users.ToDictionary(u => u.Id);
-
-            var dtos = new List<StaffDto>();
-            foreach (var staff in activeStaff)
-            {
-                var user = usersById.GetValueOrDefault(staff.UserId);
-                dtos.Add(MapToDto(staff, user));
-            }
-
-            return Result.Success<IReadOnlyList<StaffDto>>(dtos);
-        }
-        catch (Exception ex)
-        {
-            return Result.Failure<IReadOnlyList<StaffDto>>(new Error("500", $"An error occurred: {ex.Message}"));
-        }
+        return Result.Failure<IReadOnlyList<StaffDto>>(new Error("NotImplemented", "Not implemented - University entities are read-only"));
     }
 
-    private static StaffDto MapToDto(Domain.Edu.Entities.Staff staff, Domain.Auth.Entities.User? user)
+    private static StaffDto MapToDto(Domain.University.Employee staff, Domain.University.User? user)
     {
         return new StaffDto
         {
             Id = staff.Id,
-            UserId = staff.UserId,
-            FullName = user?.Login,
+            UserId = staff.Id,
+            FullName = user?.Email,
             Email = user?.Email,
-            Position = staff.Position,
-            AcademicDegree = staff.AcademicDegree,
-            DepartmentId = staff.DepartmentId,
-            MaxStudentsLoad = staff.MaxStudentsLoad,
-            CreatedAt = staff.CreatedAt,
-            CreatedBy = staff.CreatedBy,
-            LastModifiedAt = staff.LastModifiedAt,
-            LastModifiedBy = staff.LastModifiedBy
+            Position = "",
+            AcademicDegree = null,
+            DepartmentId = 0,
+            MaxStudentsLoad = 0,
+            CreatedAt = default,
+            CreatedBy = 0,
+            LastModifiedAt = null,
+            LastModifiedBy = null
         };
     }
 }

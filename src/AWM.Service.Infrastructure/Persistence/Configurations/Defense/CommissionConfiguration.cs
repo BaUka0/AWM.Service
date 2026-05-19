@@ -3,8 +3,7 @@ namespace AWM.Service.Infrastructure.Persistence.Configurations.Defense;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using AWM.Service.Domain.Defense.Entities;
-using AWM.Service.Domain.Org.Entities;
-using AWM.Service.Domain.CommonDomain.Entities;
+using AWM.Service.Domain.University;
 using AWM.Service.Infrastructure.Persistence.Configurations.Base;
 
 /// <summary>
@@ -26,11 +25,13 @@ public class CommissionConfiguration : SoftDeletableEntityConfiguration<Commissi
         builder.Property(e => e.Id)
             .UseIdentityColumn();
 
-        builder.Property(e => e.DepartmentId)
-            .IsRequired();
+        builder.Property(e => e.OrgUnitId)
+            .IsRequired()
+            .HasColumnName("DepartmentId");
 
-        builder.Property(e => e.AcademicYearId)
-            .IsRequired();
+        builder.Property(e => e.SemesterId)
+            .IsRequired()
+            .HasColumnName("AcademicYearId");
 
         builder.Property(e => e.Name)
             .HasMaxLength(255);
@@ -41,9 +42,9 @@ public class CommissionConfiguration : SoftDeletableEntityConfiguration<Commissi
         builder.Property(e => e.PreDefenseNumber);
 
         // Foreign keys
-        builder.HasOne<Department>()
+        builder.HasOne<OrgUnit>()
             .WithMany()
-            .HasForeignKey(e => e.DepartmentId)
+            .HasForeignKey(e => e.OrgUnitId)
             .HasConstraintName("FK_Commissions_Dept")
             .OnDelete(DeleteBehavior.Restrict);
 

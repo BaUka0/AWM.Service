@@ -6,8 +6,8 @@ public sealed class CreateStageCommandValidator : AbstractValidator<CreateStageC
 {
     public CreateStageCommandValidator()
     {
-        RuleFor(x => x.DepartmentId)
-            .GreaterThan(0).WithMessage("Department ID must be greater than 0.");
+        RuleFor(x => x.OrgUnitId)
+            .GreaterThan(0).WithMessage("Org unit ID must be greater than 0.");
 
         RuleFor(x => x.SemesterId)
             .GreaterThan(0).WithMessage("Semester ID must be greater than 0.");

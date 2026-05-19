@@ -10,12 +10,12 @@ using MediatR;
 public sealed record GetCommissionsByDepartmentQuery : IRequest<Result<IReadOnlyList<CommissionDto>>>
 {
     /// <summary>
-    /// Department ID to filter by.
+    /// Org unit ID to filter by.
     /// </summary>
-    public int DepartmentId { get; init; }
+    public int OrgUnitId { get; init; }
 
     /// <summary>
-    /// Academic year ID to filter by.
+    /// Semester ID to filter by.
     /// </summary>
-    public int AcademicYearId { get; init; }
+    public int SemesterId { get; init; }
 }

@@ -1,7 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using AWM.Service.Domain.Auth.Entities;
+using AWM.Service.Domain.University;
 using AWM.Service.Domain.Auth.Interfaces;
 using AWM.Service.WebAPI.Authorization;
 using AWM.Service.WebAPI.Common.Settings;
@@ -28,7 +28,7 @@ public class JwtTokenService : IJwtTokenService
         var claims = new List<Claim>
         {
             new(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new(ClaimTypes.Name, user.Login),
+            new(ClaimTypes.Name, user.Email ?? user.FirstName),
             new(ClaimTypes.Email, user.Email)
         };
 

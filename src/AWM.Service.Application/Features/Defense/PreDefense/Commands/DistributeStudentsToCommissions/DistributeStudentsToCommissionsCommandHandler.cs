@@ -71,13 +71,13 @@ public sealed class DistributeStudentsToCommissionsCommandHandler
             };
 
             var (isAllowed, errorMessage) = await _stageValidationService.ValidateOperationInStageAsync(
-                request.DepartmentId, request.AcademicYearId, workflowStageId, cancellationToken);
+                request.OrgUnitId, request.SemesterId, workflowStageId, cancellationToken);
             if (!isAllowed)
                 return Result.Failure<int>(new Error("400", errorMessage!));
 
             // Get all PreDefense commissions for this round
             var commissions = await _commissionRepository.GetByTypeAsync(
-                request.DepartmentId, request.AcademicYearId, 1, cancellationToken);
+                request.OrgUnitId, request.SemesterId, 1, cancellationToken);
             var targetCommissions = commissions
                 .Where(c => c.PreDefenseNumber == request.PreDefenseNumber)
                 .ToList();
@@ -88,7 +88,7 @@ public sealed class DistributeStudentsToCommissionsCommandHandler
 
             // Get all student works in department
             var allWorks = await _workRepository.GetByDepartmentAsync(
-                request.DepartmentId, request.AcademicYearId, cancellationToken);
+                request.OrgUnitId, request.SemesterId, cancellationToken);
             var attempts = await _attemptRepository.GetByWorkIdsAsync(
                 allWorks.Select(w => w.Id),
                 cancellationToken);
@@ -165,7 +165,7 @@ public sealed class DistributeStudentsToCommissionsCommandHandler
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "DistributeStudents failed for Dept={DeptId}", request.DepartmentId);
+            _logger.LogError(ex, "DistributeStudents failed for Dept={DeptId}", request.OrgUnitId);
             return Result.Failure<int>(new Error("500", ex.Message));
         }
     }

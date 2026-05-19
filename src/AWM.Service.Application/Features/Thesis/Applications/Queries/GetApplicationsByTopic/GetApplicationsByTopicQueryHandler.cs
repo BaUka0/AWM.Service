@@ -54,7 +54,7 @@ public sealed class GetApplicationsByTopicQueryHandler
 
         var userId = _currentUserProvider.UserId.Value;
 
-        // Resolve staff profile — topic.SupervisorId is Staff.Id, not Auth.Users.Id
+        // Resolve staff profile — topic.EmployeeId is Staff.Id, not Auth.Users.Id
         var currentStaff = await _staffRepository.GetByUserIdAsync(userId, cancellationToken);
         if (currentStaff is null)
         {
@@ -71,8 +71,8 @@ public sealed class GetApplicationsByTopicQueryHandler
         }
 
         // 2. Check authorization - only supervisor of the topic can view applications
-        // Compare Staff.Id with Staff.Id (topic.SupervisorId is a FK to Edu.Staff)
-        if (topic.SupervisorId != currentStaff.Id)
+        // Compare Staff.Id with Staff.Id (topic.EmployeeId is a FK to Edu.Staff)
+        if (topic.EmployeeId != currentStaff.Id)
         {
             return Result.Failure<IReadOnlyList<TopicApplicationDto>>(
                 new Error("Authorization.Forbidden", "You can only view applications for your own topics."));
@@ -106,12 +106,12 @@ public sealed class GetApplicationsByTopicQueryHandler
             : null;
         var workType = await _workflowRepository.GetWorkTypeByIdAsync(topic.WorkTypeId, cancellationToken);
         var userIds = students.Select(s => s.UserId)
-            .Append(currentStaff.UserId)
+            .Append(currentStaff.Id)
             .Distinct()
             .ToList();
         var users = await _userRepository.GetByIdsAsync(userIds, cancellationToken);
         var usersById = users.ToDictionary(u => u.Id);
-        var supervisorUser = usersById.GetValueOrDefault(currentStaff.UserId);
+        var supervisorUser = usersById.GetValueOrDefault(currentStaff.Id);
         var availableSpots = topic.GetAvailableSpots();
 
         var dtos = new List<TopicApplicationDto>();

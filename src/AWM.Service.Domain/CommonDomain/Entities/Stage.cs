@@ -1,7 +1,6 @@
 namespace AWM.Service.Domain.CommonDomain.Entities;
 
 using AWM.Service.Domain.Common;
-using AWM.Service.Domain.Org.Entities;
 using AWM.Service.Domain.Primitives;
 
 /// <summary>
@@ -10,7 +9,7 @@ using AWM.Service.Domain.Primitives;
 /// </summary>
 public class Stage : Entity<int>, IAuditable, ISoftDeletable
 {
-    public int DepartmentId { get; private set; }
+    public int OrgUnitId { get; private set; }
     public int SemesterId { get; private set; }
     public int WorkflowStageId { get; private set; }
     public DateTime StartDate { get; private set; }
@@ -28,12 +27,12 @@ public class Stage : Entity<int>, IAuditable, ISoftDeletable
 
     private Stage() { }
 
-    public Stage(int departmentId, int semesterId, int workflowStageId, DateTime startDate, DateTime endDate, int createdBy)
+    public Stage(int orgUnitId, int semesterId, int workflowStageId, DateTime startDate, DateTime endDate, int createdBy)
     {
         if (endDate <= startDate)
             throw new ArgumentException("End date must be after start date.", nameof(endDate));
 
-        DepartmentId = departmentId;
+        OrgUnitId = orgUnitId;
         SemesterId = semesterId;
         WorkflowStageId = workflowStageId;
         StartDate = startDate;

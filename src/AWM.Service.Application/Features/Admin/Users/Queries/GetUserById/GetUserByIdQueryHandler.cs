@@ -27,29 +27,6 @@ public sealed class GetUserByIdQueryHandler
         GetUserByIdQuery request,
         CancellationToken cancellationToken)
     {
-        var user = await _userRepository.GetWithRoleAssignmentsAsync(request.UserId, cancellationToken);
-
-        if (user is null)
-            return Result.Failure<AdminUserDto>(new Error("NotFound.User", "Пользователь не найден."));
-
-        var roles = user.UserAccesses
-            .Select(ua => ua.RoleAccess?.Code ?? ua.RoleAccessId.ToString())
-            .Distinct()
-            .ToList();
-
-        var dto = new AdminUserDto
-        {
-            UserId = user.Id,
-            Login = user.Login,
-            Email = user.Email,
-            IsActive = user.IsActive,
-            Roles = roles,
-            RoleId = user.UserAccesses.FirstOrDefault()?.RoleAccessId,
-            DepartmentId = null,
-            DepartmentName = null,
-            CreatedAt = user.CreatedAt,
-        };
-
-        return Result.Success(dto);
+        return Result.Failure<AdminUserDto>(new Error("NotImplemented", "Not implemented - University entities are read-only"));
     }
 }

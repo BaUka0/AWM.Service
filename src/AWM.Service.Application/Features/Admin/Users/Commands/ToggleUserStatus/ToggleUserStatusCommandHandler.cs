@@ -21,18 +21,6 @@ public sealed class ToggleUserStatusCommandHandler : IRequestHandler<ToggleUserS
 
     public async Task<Result> Handle(ToggleUserStatusCommand request, CancellationToken cancellationToken)
     {
-        var user = await _userRepository.GetByIdAsync(request.UserId, cancellationToken);
-        if (user is null)
-            return Result.Failure(new Error("NotFound.User", "Пользователь не найден."));
-
-        if (request.IsActive)
-            user.Activate();
-        else
-            user.Deactivate();
-
-        await _userRepository.UpdateAsync(user, cancellationToken);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-        return Result.Success();
+        return Result.Failure(new Error("NotImplemented", "Not implemented - University entities are read-only"));
     }
 }

@@ -1,65 +1,42 @@
 namespace AWM.Service.Domain.Repositories;
 
-using AWM.Service.Domain.Org.Entities;
-using AWM.Service.Domain.Auth.Entities;
-using AWM.Service.Domain.Edu.Entities;
+using AWM.Service.Domain.University;
 using System.Collections.Generic;
 
 /// <summary>
-/// Repository interface for User aggregate.
+/// Repository interface for User (read-only, from University).
 /// </summary>
 public interface IUserRepository
 {
     Task<User?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
     Task<User?> GetByLoginAsync(string login, CancellationToken cancellationToken = default);
-    Task<User?> GetByLoginWithRoleAssignmentsAsync(string login, CancellationToken cancellationToken = default);
-    Task<User?> GetByRefreshTokenAsync(string refreshToken, CancellationToken cancellationToken = default);
-    Task<User?> GetByExternalIdAsync(string externalId, CancellationToken cancellationToken = default);
+    Task<User?> GetByEmailAsync(string email, CancellationToken cancellationToken = default);
+    Task<User?> GetByIinAsync(string iin, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<User>> GetAllAsync(CancellationToken cancellationToken = default);
-    Task AddAsync(User user, CancellationToken cancellationToken = default);
-    Task UpdateAsync(User user, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Gets a list of users by their IDs.
-    /// </summary>
     Task<IReadOnlyList<User>> GetByIdsAsync(IEnumerable<int> ids, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Gets user with all role assignments eagerly loaded for authorization.
-    /// </summary>
-    Task<User?> GetWithRoleAssignmentsAsync(int id, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Gets users with all role assignments eagerly loaded for bulk authorization updates.
-    /// </summary>
-    Task<IReadOnlyList<User>> GetWithRoleAssignmentsByIdsAsync(IEnumerable<int> ids, CancellationToken cancellationToken = default);
 }
 
 /// <summary>
-/// Repository interface for Student aggregate.
+/// Repository interface for Student (read-only, from University).
 /// </summary>
 public interface IStudentRepository
 {
     Task<Student?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
-    Task<IReadOnlyList<Student>> GetByIdsAsync(IEnumerable<int> ids, CancellationToken cancellationToken = default);
     Task<Student?> GetByUserIdAsync(int userId, CancellationToken cancellationToken = default);
-    Task<IReadOnlyList<Student>> GetByProgramAsync(int programId, CancellationToken cancellationToken = default);
-    Task<IReadOnlyList<Student>> GetByProgramIdsAsync(IEnumerable<int> programIds, CancellationToken cancellationToken = default);
-    Task AddAsync(Student student, CancellationToken cancellationToken = default);
-    Task UpdateAsync(Student student, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<Student>> GetByIdsAsync(IEnumerable<int> ids, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<Student>> GetBySpecialityAsync(int specialityId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<Student>> GetByStatusAsync(int statusId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<Student>> GetAllAsync(CancellationToken cancellationToken = default);
 }
 
 /// <summary>
-/// Repository interface for Staff aggregate.
+/// Repository interface for Employee (read-only, from University).
 /// </summary>
 public interface IStaffRepository
 {
-    Task<Staff?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
-    Task<IReadOnlyList<Staff>> GetByIdsAsync(IEnumerable<int> ids, CancellationToken cancellationToken = default);
-    Task<Staff?> GetByUserIdAsync(int userId, CancellationToken cancellationToken = default);
-    Task<IReadOnlyList<Staff>> GetByDepartmentAsync(int departmentId, CancellationToken cancellationToken = default);
-    Task<IReadOnlyList<Staff>> GetSupervisorsWithCapacityAsync(int departmentId, CancellationToken cancellationToken = default);
-    Task AddAsync(Staff staff, CancellationToken cancellationToken = default);
-    Task UpdateAsync(Staff staff, CancellationToken cancellationToken = default);
+    Task<Employee?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
+    Task<Employee?> GetByUserIdAsync(int userId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<Employee>> GetByIdsAsync(IEnumerable<int> ids, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<Employee>> GetAdvisorsAsync(CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<Employee>> GetAllAsync(CancellationToken cancellationToken = default);
 }
-

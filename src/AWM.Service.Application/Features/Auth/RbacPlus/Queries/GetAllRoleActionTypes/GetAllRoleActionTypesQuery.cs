@@ -1,7 +1,7 @@
 namespace AWM.Service.Application.Features.Auth.RbacPlus.Queries.GetAllRoleActionTypes;
 
-using AWM.Service.Domain.Auth.RbacPlus.Entities;
-using AWM.Service.Domain.Auth.RbacPlus.Repositories;
+using AWM.Service.Domain.Auth.Entities;
+using AWM.Service.Domain.Auth.Repositories;
 using MediatR;
 
 /// <summary>

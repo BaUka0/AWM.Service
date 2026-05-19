@@ -6,6 +6,6 @@ using MediatR;
 
 public sealed record GetStagesByDepartmentQuery : IRequest<Result<IReadOnlyList<StageDto>>>
 {
-    public int DepartmentId { get; init; }
+    public int OrgUnitId { get; init; }
     public int SemesterId { get; init; }
 }

@@ -25,7 +25,7 @@ public sealed class GetEvaluationCriteriaQueryHandler
         try
         {
             var criteria = await _criteriaRepository.GetByWorkTypeAsync(
-                request.WorkTypeId, request.DepartmentId, cancellationToken);
+                request.WorkTypeId, request.OrgUnitId, cancellationToken);
 
             var dtos = criteria
                 .Where(c => !c.IsDeleted)
@@ -33,7 +33,7 @@ public sealed class GetEvaluationCriteriaQueryHandler
                 {
                     Id = c.Id,
                     WorkTypeId = c.WorkTypeId,
-                    DepartmentId = c.DepartmentId,
+                    OrgUnitId = c.OrgUnitId,
                     CriteriaName = c.CriteriaName,
                     MaxScore = c.MaxScore,
                     Weight = c.Weight

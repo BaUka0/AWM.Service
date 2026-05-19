@@ -28,7 +28,7 @@ public interface IWorkflowRepository
     /// <summary>
     /// Gets work types by degree level (e.g., only Bachelor works).
     /// </summary>
-    Task<IReadOnlyList<WorkType>> GetWorkTypesByDegreeLevelAsync(int degreeLevelId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<WorkType>> GetWorkTypesByDegreeLevelAsync(int specialityLevelId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Adds a new work type.

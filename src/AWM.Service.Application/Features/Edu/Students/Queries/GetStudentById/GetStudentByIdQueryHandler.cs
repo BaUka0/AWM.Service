@@ -23,7 +23,7 @@ public sealed class GetStudentByIdQueryHandler : IRequestHandler<GetStudentByIdQ
         try
         {
             var student = await _studentRepository.GetByIdAsync(request.StudentId, cancellationToken);
-            if (student is null || student.IsDeleted)
+            if (student is null)
                 return Result.Failure<StudentDto>(new Error("404", $"Student with ID {request.StudentId} not found."));
 
             var user = await _userRepository.GetByIdAsync(student.UserId, cancellationToken);
@@ -32,17 +32,17 @@ public sealed class GetStudentByIdQueryHandler : IRequestHandler<GetStudentByIdQ
             {
                 Id = student.Id,
                 UserId = student.UserId,
-                FullName = user?.Login,
+                FullName = user?.Email,
                 Email = user?.Email,
-                GroupCode = student.GroupCode,
-                ProgramId = student.ProgramId,
-                AdmissionYear = student.AdmissionYear,
-                CurrentCourse = student.CurrentCourse,
+                GroupCode = null,
+                ProgramId = student.SpecialityId,
+                AdmissionYear = student.Year,
+                CurrentCourse = 0,
                 Status = student.StatusId.ToString(),
-                CreatedAt = student.CreatedAt,
-                CreatedBy = student.CreatedBy,
-                LastModifiedAt = student.LastModifiedAt,
-                LastModifiedBy = student.LastModifiedBy
+                CreatedAt = default,
+                CreatedBy = 0,
+                LastModifiedAt = null,
+                LastModifiedBy = null
             };
 
             return Result.Success(dto);

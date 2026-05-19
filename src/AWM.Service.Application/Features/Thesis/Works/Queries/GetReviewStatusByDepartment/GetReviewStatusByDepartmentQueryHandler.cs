@@ -102,7 +102,7 @@ public sealed class GetReviewStatusByDepartmentQueryHandler
                 {
                     if (usersById.TryGetValue(student.UserId, out var studentUser))
                     {
-                        studentName = studentUser.Login ?? studentUser.Email;
+                        studentName = studentUser.Email ?? studentUser.FirstName;
                     }
                 }
 

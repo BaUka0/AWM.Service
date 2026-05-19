@@ -3,7 +3,7 @@ namespace AWM.Service.Infrastructure.Persistence.Configurations.Wf;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using AWM.Service.Domain.Wf.Entities;
-using AWM.Service.Domain.Edu.Entities;
+using AWM.Service.Domain.University;
 using AWM.Service.Infrastructure.Persistence.Configurations.Base;
 
 /// <summary>
@@ -25,12 +25,13 @@ public class WorkTypeConfiguration : SoftDeletableEntityConfiguration<WorkType, 
             .IsRequired()
             .HasMaxLength(100);
 
-        builder.Property(e => e.DegreeLevelId);
+        builder.Property(e => e.SpecialityLevelId)
+            .HasColumnName("DegreeLevelId");
 
-        // Foreign key to DegreeLevel
-        builder.HasOne<DegreeLevel>()
+        // Foreign key to SpecialityLevel
+        builder.HasOne<SpecialityLevel>()
             .WithMany()
-            .HasForeignKey(e => e.DegreeLevelId)
+            .HasForeignKey(e => e.SpecialityLevelId)
             .HasConstraintName("FK_WorkType_Degree")
             .OnDelete(DeleteBehavior.Restrict);
 

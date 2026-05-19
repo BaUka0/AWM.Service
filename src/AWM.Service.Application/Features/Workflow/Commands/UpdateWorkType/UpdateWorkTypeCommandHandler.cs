@@ -40,7 +40,7 @@ public sealed class UpdateWorkTypeCommandHandler : IRequestHandler<UpdateWorkTyp
 
         try
         {
-            workType.Update(request.Name, request.DegreeLevelId, _currentUserProvider.UserId ?? 0);
+            workType.Update(request.Name, request.SpecialityLevelId, _currentUserProvider.UserId ?? 0);
         }
         catch (ArgumentException ex)
         {

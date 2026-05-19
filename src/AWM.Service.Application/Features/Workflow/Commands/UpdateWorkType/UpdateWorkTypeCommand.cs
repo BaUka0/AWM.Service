@@ -10,5 +10,5 @@ public sealed record UpdateWorkTypeCommand : IRequest<Result>
 {
     public int Id { get; init; }
     public string Name { get; init; } = string.Empty;
-    public int? DegreeLevelId { get; init; }
+    public int? SpecialityLevelId { get; init; }
 }

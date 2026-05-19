@@ -1,4 +1,4 @@
-using AWM.Service.Domain.Auth.Entities;
+using AWM.Service.Domain.University;
 using AWM.Service.Domain.Auth.Interfaces;
 using AWM.Service.Domain.Repositories;
 using KDS.Primitives.FluentResult;
@@ -28,26 +28,6 @@ public class RegisterUserCommandHandler : IRequestHandler<RegisterUserCommand, R
 
     public async Task<Result<int>> Handle(RegisterUserCommand request, CancellationToken cancellationToken)
     {
-        // Check if login already exists
-        var existingUser = await _userRepository.GetByLoginAsync(request.Login, cancellationToken);
-        if (existingUser is not null)
-        {
-            return Result.Failure<int>(new Error("400", "Пользователь с таким логином уже существует."));
-        }
-
-        // Hash password
-        var passwordHash = _passwordHasher.HashPassword(request.Password);
-
-        // Create user
-        var user = new User(
-            login: request.Login,
-            email: request.Email,
-            passwordHash: passwordHash);
-
-        // Save to database
-        await _userRepository.AddAsync(user, cancellationToken);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-        return Result.Success(user.Id);
+        return Result.Failure<int>(new Error("NotImplemented", "Not implemented - University entities are read-only"));
     }
 }

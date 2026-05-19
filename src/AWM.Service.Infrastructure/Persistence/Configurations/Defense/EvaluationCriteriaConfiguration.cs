@@ -3,8 +3,8 @@ namespace AWM.Service.Infrastructure.Persistence.Configurations.Defense;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using AWM.Service.Domain.Defense.Entities;
+using AWM.Service.Domain.University;
 using AWM.Service.Domain.Wf.Entities;
-using AWM.Service.Domain.Org.Entities;
 using AWM.Service.Infrastructure.Persistence.Configurations.Base;
 
 /// <summary>
@@ -25,7 +25,8 @@ public class EvaluationCriteriaConfiguration : SoftDeletableEntityConfiguration<
         builder.Property(e => e.WorkTypeId)
             .IsRequired();
 
-        builder.Property(e => e.DepartmentId);
+        builder.Property(e => e.OrgUnitId)
+            .HasColumnName("DepartmentId");
 
         builder.Property(e => e.CriteriaName)
             .IsRequired()
@@ -46,9 +47,9 @@ public class EvaluationCriteriaConfiguration : SoftDeletableEntityConfiguration<
             .HasConstraintName("FK_Criteria_WorkType")
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne<Department>()
+        builder.HasOne<OrgUnit>()
             .WithMany()
-            .HasForeignKey(e => e.DepartmentId)
+            .HasForeignKey(e => e.OrgUnitId)
             .HasConstraintName("FK_Criteria_Dept")
             .OnDelete(DeleteBehavior.Restrict);
     }

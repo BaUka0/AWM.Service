@@ -1,101 +1,73 @@
 namespace AWM.Service.Infrastructure.Persistence.Repositories.Dictionary;
 
-using AWM.Service.Domain.Org.Entities;
-using AWM.Service.Domain.Repositories;
-using AWM.Service.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using AWM.Service.Domain.University;
+using AWM.Service.Domain.Repositories;
 
-/// <summary>
-/// Lookup repository for organizational entities.
-/// </summary>
-public sealed class OrganizationLookupRepository : IOrganizationLookupRepository
+public class OrganizationLookupRepository : IOrganizationLookupRepository
 {
-    private readonly ApplicationDbContext _context;
+    private readonly UniversityDbContext _context;
 
-    public OrganizationLookupRepository(ApplicationDbContext context)
+    // TypeId constants from Edu_OrgUnitTypes
+    private const int TypeDepartment = 1;
+    private const int TypeInstitute = 2;
+
+    public OrganizationLookupRepository(UniversityDbContext context)
     {
-        _context = context ?? throw new ArgumentNullException(nameof(context));
+        _context = context;
     }
 
-    /// <inheritdoc />
-    public async Task<IReadOnlyList<Institute>> GetAllInstitutesAsync(CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<OrgUnit>> GetAllInstitutesAsync(CancellationToken cancellationToken = default)
     {
-        return await _context.Institutes
-            .AsNoTracking()
-            .Where(i => !i.IsDeleted)
-            .OrderBy(i => i.Name)
+        return await _context.OrgUnits
+            .Where(o => o.TypeId == TypeInstitute && !o.Deleted)
             .ToListAsync(cancellationToken);
     }
 
-    /// <inheritdoc />
-    public async Task<IReadOnlyList<Department>> GetDepartmentsByInstituteAsync(int instituteId, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<OrgUnit>> GetDepartmentsByInstituteAsync(int instituteId, CancellationToken cancellationToken = default)
     {
-        return await _context.Departments
-            .AsNoTracking()
-            .Where(d => !d.IsDeleted && d.InstituteId == instituteId)
-            .OrderBy(d => d.Name)
+        return await _context.OrgUnits
+            .Where(o => o.ParentId == instituteId && o.TypeId == TypeDepartment && !o.Deleted)
             .ToListAsync(cancellationToken);
     }
 
-    /// <inheritdoc />
-    public async Task<IReadOnlyList<Department>> GetAllDepartmentsAsync(CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<OrgUnit>> GetAllDepartmentsAsync(CancellationToken cancellationToken = default)
     {
-        return await _context.Departments
-            .AsNoTracking()
-            .Where(d => !d.IsDeleted)
-            .OrderBy(d => d.Name)
+        return await _context.OrgUnits
+            .Where(o => o.TypeId == TypeDepartment && !o.Deleted)
             .ToListAsync(cancellationToken);
     }
 
-    /// <inheritdoc />
-    public async Task<Department?> GetDepartmentByIdAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<OrgUnit?> GetDepartmentByIdAsync(int id, CancellationToken cancellationToken = default)
     {
-        return await _context.Departments
-            .Where(d => !d.IsDeleted)
-            .FirstOrDefaultAsync(d => d.Id == id, cancellationToken);
+        return await _context.OrgUnits
+            .FirstOrDefaultAsync(o => o.Id == id && o.TypeId == TypeDepartment && !o.Deleted, cancellationToken);
     }
 
-    /// <inheritdoc />
-    public async Task<IReadOnlyList<Department>> GetDepartmentsByIdsAsync(IEnumerable<int> ids, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<OrgUnit>> GetDepartmentsByIdsAsync(IEnumerable<int> ids, CancellationToken cancellationToken = default)
     {
-        var departmentIds = ids.Distinct().ToList();
-        if (departmentIds.Count == 0)
-            return [];
-
-        return await _context.Departments
-            .AsNoTracking()
-            .Where(d => !d.IsDeleted && departmentIds.Contains(d.Id))
+        return await _context.OrgUnits
+            .Where(o => ids.Contains(o.Id) && o.TypeId == TypeDepartment && !o.Deleted)
             .ToListAsync(cancellationToken);
     }
 
-    /// <inheritdoc />
-    public async Task<Institute?> GetInstituteByIdAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<OrgUnit?> GetInstituteByIdAsync(int id, CancellationToken cancellationToken = default)
     {
-        return await _context.Institutes
-            .AsNoTracking()
-            .Where(i => !i.IsDeleted)
-            .FirstOrDefaultAsync(i => i.Id == id, cancellationToken);
+        return await _context.OrgUnits
+            .FirstOrDefaultAsync(o => o.Id == id && o.TypeId == TypeInstitute && !o.Deleted, cancellationToken);
     }
 
-    /// <inheritdoc />
-    public async Task<Institute?> GetInstituteByIdTrackedAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<OrgUnit?> GetInstituteByIdTrackedAsync(int id, CancellationToken cancellationToken = default)
     {
-        return await _context.Institutes
-            .Where(i => !i.IsDeleted)
-            .FirstOrDefaultAsync(i => i.Id == id, cancellationToken);
+        return await _context.OrgUnits
+            .AsTracking()
+            .FirstOrDefaultAsync(o => o.Id == id && o.TypeId == TypeInstitute && !o.Deleted, cancellationToken);
     }
 
-    /// <inheritdoc />
-    public async Task<Department?> GetDepartmentByIdTrackedAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<OrgUnit?> GetDepartmentByIdTrackedAsync(int id, CancellationToken cancellationToken = default)
     {
-        return await _context.Departments
-            .Where(d => !d.IsDeleted)
-            .FirstOrDefaultAsync(d => d.Id == id, cancellationToken);
-    }
-
-    /// <inheritdoc />
-    public async Task AddInstituteAsync(Institute institute, CancellationToken cancellationToken = default)
-    {
-        await _context.Institutes.AddAsync(institute, cancellationToken);
+        return await _context.OrgUnits
+            .AsTracking()
+            .FirstOrDefaultAsync(o => o.Id == id && o.TypeId == TypeDepartment && !o.Deleted, cancellationToken);
     }
 }

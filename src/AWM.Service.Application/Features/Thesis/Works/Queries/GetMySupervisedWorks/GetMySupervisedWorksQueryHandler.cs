@@ -128,7 +128,7 @@ public sealed class GetMySupervisedWorksQueryHandler
                 students.Add(new SupervisedStudentDto
                 {
                     StudentId = participant.StudentId,
-                    Name = studentUser?.Login ?? studentUser?.Email,
+                    Name = studentUser?.Email ?? studentUser?.FirstName,
                     Role = participant.RoleId.ToString(),
                     IsLeader = participant.IsLeader,
                     Score = null

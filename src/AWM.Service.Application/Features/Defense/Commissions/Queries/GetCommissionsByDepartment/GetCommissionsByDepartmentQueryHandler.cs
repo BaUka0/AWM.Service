@@ -29,8 +29,8 @@ public sealed class GetCommissionsByDepartmentQueryHandler
         try
         {
             var commissions = await _commissionRepository.GetByDepartmentAsync(
-                request.DepartmentId,
-                request.AcademicYearId,
+                request.OrgUnitId,
+                request.SemesterId,
                 cancellationToken);
 
             var allUserIds = commissions
@@ -40,7 +40,7 @@ public sealed class GetCommissionsByDepartmentQueryHandler
                 .ToList();
 
             var users = await _userRepository.GetByIdsAsync(allUserIds, cancellationToken);
-            var usersDict = users.ToDictionary(u => u.Id, u => u.Login);
+            var usersDict = users.ToDictionary(u => u.Id, u => u.Email ?? u.FirstName);
 
             var dtos = commissions
                 .Select(c =>
@@ -51,8 +51,8 @@ public sealed class GetCommissionsByDepartmentQueryHandler
                     return new CommissionDto
                     {
                         Id = c.Id,
-                        DepartmentId = c.DepartmentId,
-                        AcademicYearId = c.AcademicYearId,
+                        OrgUnitId = c.OrgUnitId,
+                        SemesterId = c.SemesterId,
                         CommissionType = c.CommissionTypeId.ToString(),
                         Name = c.Name,
                         PreDefenseNumber = c.PreDefenseNumber,

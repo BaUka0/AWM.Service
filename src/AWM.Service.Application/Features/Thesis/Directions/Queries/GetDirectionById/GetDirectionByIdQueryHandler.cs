@@ -52,9 +52,9 @@ public sealed class GetDirectionByIdQueryHandler
             var result = new DirectionDetailDto
             {
                 Id = direction.Id,
-                DepartmentId = direction.DepartmentId,
-                SupervisorId = direction.SupervisorId,
-                AcademicYearId = direction.AcademicYearId,
+                OrgUnitId = direction.OrgUnitId,
+                EmployeeId = direction.EmployeeId,
+                SemesterId = direction.SemesterId,
                 WorkTypeId = direction.WorkTypeId,
                 TitleRu = direction.TitleRu,
                 TitleKz = direction.TitleKz,

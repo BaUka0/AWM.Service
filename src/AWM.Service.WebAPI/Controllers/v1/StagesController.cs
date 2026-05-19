@@ -41,7 +41,7 @@ public sealed class StagesController : BaseController
     {
         var query = new GetStagesByDepartmentQuery
         {
-            DepartmentId = departmentId,
+            OrgUnitId = departmentId,
             SemesterId = semesterId
         };
 
@@ -72,7 +72,7 @@ public sealed class StagesController : BaseController
     {
         var query = new GetActiveStageQuery
         {
-            DepartmentId = departmentId,
+            OrgUnitId = departmentId,
             SemesterId = semesterId,
             WorkflowStageId = workflowStageId
         };
@@ -107,7 +107,7 @@ public sealed class StagesController : BaseController
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> Create(int departmentId, [FromBody] CreateStageRequest request, CancellationToken cancellationToken = default)
     {
-        var command = request.Adapt<CreateStageCommand>() with { DepartmentId = departmentId };
+        var command = request.Adapt<CreateStageCommand>() with { OrgUnitId = departmentId };
 
         var result = await _sender.Send(command, cancellationToken);
 

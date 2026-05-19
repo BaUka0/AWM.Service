@@ -6,16 +6,16 @@ namespace AWM.Service.WebAPI.Common.Contracts.Requests.Defense;
 public sealed record CreateCommissionRequest
 {
     /// <summary>
-    /// Department ID.
+    /// Org unit ID.
     /// </summary>
     /// <example>1</example>
-    public int DepartmentId { get; init; }
+    public int OrgUnitId { get; init; }
 
     /// <summary>
-    /// Academic year ID.
+    /// Semester ID.
     /// </summary>
     /// <example>2</example>
-    public int AcademicYearId { get; init; }
+    public int SemesterId { get; init; }
 
     /// <summary>
     /// Type of commission (1 = PreDefense, 2 = GAK).

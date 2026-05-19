@@ -1,27 +1,26 @@
 namespace AWM.Service.Domain.Repositories;
 
 using AWM.Service.Domain.CommonDomain.Entities;
+using AWM.Service.Domain.University;
 
 /// <summary>
-/// Repository for SemesterType reference data.
+/// Repository for SemesterType (read-only, from University).
 /// </summary>
 public interface ISemesterTypeRepository
 {
     Task<SemesterType?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<SemesterType>> GetAllAsync(CancellationToken cancellationToken = default);
-    Task AddAsync(SemesterType semesterType, CancellationToken cancellationToken = default);
 }
 
 /// <summary>
-/// Repository for Semester aggregate.
+/// Repository for Semester (read-only, from University).
 /// </summary>
 public interface ISemesterRepository
 {
     Task<Semester?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
+    Task<Semester?> GetCurrentAsync(CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Semester>> GetAllAsync(CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Semester>> GetByStudyYearAsync(int studyYear, CancellationToken cancellationToken = default);
-    Task AddAsync(Semester semester, CancellationToken cancellationToken = default);
-    Task UpdateAsync(Semester semester, CancellationToken cancellationToken = default);
 }
 
 /// <summary>
@@ -39,54 +38,29 @@ public interface IWorkflowStageRepository
 /// </summary>
 public interface IStageRepository
 {
-    /// <summary>
-    /// Gets a stage by ID.
-    /// </summary>
     Task<Stage?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Gets the active stage for a specific workflow stage in a department.
-    /// </summary>
     Task<Stage?> GetActiveByStageAsync(
-        int departmentId,
+        int orgUnitId,
         int semesterId,
         int workflowStageId,
         CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Gets all stages for a department in a semester.
-    /// </summary>
     Task<IReadOnlyList<Stage>> GetByDepartmentAsync(
-        int departmentId,
+        int orgUnitId,
         int semesterId,
         CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Gets all stages for a department in a semester, with tracking.
-    /// Used for updates to avoid tracking conflicts.
-    /// </summary>
     Task<IReadOnlyList<Stage>> GetTrackedByDepartmentAsync(
-        int departmentId,
+        int orgUnitId,
         int semesterId,
         CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Gets any currently active stage for the department and semester.
-    /// </summary>
     Task<Stage?> GetActiveStageAsync(
-        int departmentId,
+        int orgUnitId,
         int semesterId,
         CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Checks if a workflow stage is currently open.
-    /// </summary>
     Task<bool> IsStageOpenAsync(
-        int departmentId,
+        int orgUnitId,
         int semesterId,
         int workflowStageId,
         CancellationToken cancellationToken = default);
-
     Task AddAsync(Stage stage, CancellationToken cancellationToken = default);
     Task UpdateAsync(Stage stage, CancellationToken cancellationToken = default);
 }

@@ -57,7 +57,7 @@ public sealed class GetDirectionsByDepartmentQueryHandler
             // Filter by Supervisor
             if (request.SupervisorId.HasValue)
             {
-                filtered = filtered.Where(d => d.SupervisorId == request.SupervisorId.Value);
+                filtered = filtered.Where(d => d.EmployeeId == request.SupervisorId.Value);
             }
 
             var filteredList = filtered.ToList();
@@ -74,9 +74,9 @@ public sealed class GetDirectionsByDepartmentQueryHandler
                     return new DirectionDto
                     {
                         Id = direction.Id,
-                        DepartmentId = direction.DepartmentId,
-                        SupervisorId = direction.SupervisorId,
-                        AcademicYearId = direction.AcademicYearId,
+                        OrgUnitId = direction.OrgUnitId,
+                        EmployeeId = direction.EmployeeId,
+                        SemesterId = direction.SemesterId,
                         WorkTypeId = direction.WorkTypeId,
                         TitleRu = direction.TitleRu,
                         TitleKz = direction.TitleKz,

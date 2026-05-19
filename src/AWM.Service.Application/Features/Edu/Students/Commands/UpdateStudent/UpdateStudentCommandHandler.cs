@@ -20,36 +20,6 @@ public sealed class UpdateStudentCommandHandler : IRequestHandler<UpdateStudentC
 
     public async Task<Result> Handle(UpdateStudentCommand request, CancellationToken cancellationToken)
     {
-        try
-        {
-            var student = await _studentRepository.GetByIdAsync(request.StudentId, cancellationToken);
-            if (student is null || student.IsDeleted)
-                return Result.Failure(new Error("404", $"Student with ID {request.StudentId} not found."));
-
-            var userId = _currentUserProvider.UserId;
-            if (!userId.HasValue)
-                return Result.Failure(new Error("401", "User ID is not available."));
-
-            if (request.GroupCode is not null)
-                student.UpdateGroup(request.GroupCode, userId.Value);
-
-            if (request.CurrentCourse.HasValue)
-                student.PromoteToCourse(request.CurrentCourse.Value, userId.Value);
-
-            await _studentRepository.UpdateAsync(student, cancellationToken);
-            return Result.Success();
-        }
-        catch (ArgumentException argEx)
-        {
-            return Result.Failure(new Error("400", argEx.Message));
-        }
-        catch (InvalidOperationException opEx)
-        {
-            return Result.Failure(new Error("400", opEx.Message));
-        }
-        catch (Exception ex)
-        {
-            return Result.Failure(new Error("500", $"An error occurred while updating the Student: {ex.Message}"));
-        }
+        return Result.Failure(new Error("NotImplemented", "Not implemented - University entities are read-only"));
     }
 }

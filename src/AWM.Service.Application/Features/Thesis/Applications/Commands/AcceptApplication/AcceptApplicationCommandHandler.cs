@@ -92,8 +92,8 @@ public sealed class AcceptApplicationCommandHandler : IRequestHandler<AcceptAppl
         }
 
         // 4. Check authorization - only the topic's supervisor can accept
-        // topic.SupervisorId is Staff.Id — compare with Staff.Id, not with Auth.Users.Id
-        if (topic.SupervisorId != currentStaff.Id)
+        // topic.EmployeeId is Staff.Id — compare with Staff.Id, not with Auth.Users.Id
+        if (topic.EmployeeId != currentStaff.Id)
         {
             _logger.LogWarning("AcceptApplication failed: User={UserId} (StaffId={StaffId}) is not the supervisor for Topic={TopicId}", userId.Value, currentStaff.Id, topic.Id);
             return Result.Failure(new Error("Authorization.Forbidden", "Only the topic supervisor can accept applications."));
@@ -148,8 +148,8 @@ public sealed class AcceptApplicationCommandHandler : IRequestHandler<AcceptAppl
             var createWorkCommand = new CreateStudentWorkCommand
             {
                 TopicId = topic.Id,
-                AcademicYearId = topic.AcademicYearId,
-                DepartmentId = topic.DepartmentId,
+                AcademicYearId = topic.SemesterId,
+                DepartmentId = topic.OrgUnitId,
                 StudentId = application.StudentId
             };
 

@@ -26,22 +26,6 @@ public sealed class DeleteAcademicProgramCommandHandler : IRequestHandler<Delete
 
     public async Task<Result> Handle(DeleteAcademicProgramCommand request, CancellationToken cancellationToken)
     {
-        var program = await _eduRepository.GetByIdAsync(request.Id, cancellationToken);
-
-        if (program is null)
-        {
-            return Result.Failure(new Error("NotFound.AcademicProgram", $"Academic program with ID {request.Id} not found."));
-        }
-
-        if (program.IsDeleted)
-        {
-            return Result.Failure(new Error("Conflict.AcademicProgram", "Academic program is already deleted."));
-        }
-
-        program.Delete(_currentUserProvider.UserId ?? 0);
-        await _eduRepository.UpdateAsync(program, cancellationToken);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-        return Result.Success();
+        return Result.Failure(new Error("NotImplemented", "Not implemented - University entities are read-only"));
     }
 }

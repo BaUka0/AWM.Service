@@ -11,8 +11,8 @@ public sealed record EvaluationCriteriaDto
     /// <summary>Work type ID this criteria applies to.</summary>
     public int WorkTypeId { get; init; }
 
-    /// <summary>Department ID. Null for university-wide criteria.</summary>
-    public int? DepartmentId { get; init; }
+    /// <summary>Org unit ID. Null for university-wide criteria.</summary>
+    public int? OrgUnitId { get; init; }
 
     /// <summary>Name of the criteria.</summary>
     public string CriteriaName { get; init; } = null!;

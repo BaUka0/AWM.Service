@@ -1,50 +1,25 @@
 namespace AWM.Service.Infrastructure.Persistence.Repositories.Dictionary;
 
-using AWM.Service.Domain.Edu.Entities;
-using AWM.Service.Domain.Repositories;
-using AWM.Service.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using AWM.Service.Domain.University;
+using AWM.Service.Domain.Repositories;
 
-/// <summary>
-/// Repository implementation for DegreeLevel.
-/// </summary>
-public sealed class DegreeLevelRepository : IDegreeLevelRepository
+public class DegreeLevelRepository : IDegreeLevelRepository
 {
-    private readonly ApplicationDbContext _context;
+    private readonly UniversityDbContext _context;
 
-    public DegreeLevelRepository(ApplicationDbContext context)
+    public DegreeLevelRepository(UniversityDbContext context)
     {
-        _context = context ?? throw new ArgumentNullException(nameof(context));
+        _context = context;
     }
 
-    /// <inheritdoc />
-    public async Task<DegreeLevel?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<SpecialityLevel?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
-        return await _context.DegreeLevels
-            .FirstOrDefaultAsync(d => d.Id == id, cancellationToken);
+        return await _context.SpecialityLevels.FindAsync(new object[] { id }, cancellationToken);
     }
 
-    /// <inheritdoc />
-    public async Task<IReadOnlyList<DegreeLevel>> GetAllAsync(CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<SpecialityLevel>> GetAllAsync(CancellationToken cancellationToken = default)
     {
-        return await _context.DegreeLevels
-            .AsNoTracking()
-            .OrderBy(d => d.DurationYears)
-            .ToListAsync(cancellationToken);
-    }
-
-    /// <inheritdoc />
-    public async Task AddAsync(DegreeLevel degreeLevel, CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(degreeLevel);
-        await _context.DegreeLevels.AddAsync(degreeLevel, cancellationToken);
-    }
-
-    /// <inheritdoc />
-    public Task UpdateAsync(DegreeLevel degreeLevel, CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(degreeLevel);
-        _context.DegreeLevels.Update(degreeLevel);
-        return Task.CompletedTask;
+        return await _context.SpecialityLevels.ToListAsync(cancellationToken);
     }
 }

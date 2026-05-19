@@ -32,60 +32,6 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<AuthResu
 
     public async Task<Result<AuthResult>> Handle(LoginCommand request, CancellationToken cancellationToken)
     {
-        var user = await _userRepository.GetByLoginWithRoleAssignmentsAsync(request.Login, cancellationToken);
-
-        if (user is null)
-        {
-            return Result.Failure<AuthResult>(new Error("401", "Неверный логин или пароль."));
-        }
-
-        // Check if user is active
-        if (!user.IsActive)
-        {
-            return Result.Failure<AuthResult>(new Error("401", "Учетная запись деактивирована."));
-        }
-
-        // Check if user is deleted
-        if (user.IsDeleted)
-        {
-            return Result.Failure<AuthResult>(new Error("401", "Учетная запись удалена."));
-        }
-
-        // Verify password
-        if (string.IsNullOrEmpty(user.PasswordHash))
-        {
-            return Result.Failure<AuthResult>(new Error("401", "Для данного пользователя не установлен пароль. Используйте SSO."));
-        }
-
-        if (!_passwordHasher.VerifyPassword(request.Password, user.PasswordHash))
-        {
-            return Result.Failure<AuthResult>(new Error("401", "Неверный логин или пароль."));
-        }
-
-        // Get user roles (use RoleAccess.Code if available, otherwise fall back to RoleAccessId)
-        var roles = user.UserAccesses
-            .Select(ua => ua.RoleAccess?.Code ?? ua.RoleAccessId.ToString())
-            .Distinct()
-            .ToList();
-
-        // Generate Tokens
-        var token = _jwtTokenService.GenerateToken(user, roles);
-        var refreshTokenResult = _jwtTokenService.GenerateRefreshToken();
-
-        // Update user's refresh token and save
-        user.UpdateRefreshToken(refreshTokenResult.Token, refreshTokenResult.Expiry);
-        await _userRepository.UpdateAsync(user, cancellationToken);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-        var result = new AuthResult(
-            Token: token,
-            Login: user.Login,
-            UserId: user.Id,
-            Email: user.Email,
-            Roles: roles,
-            RefreshToken: refreshTokenResult.Token
-        );
-
-        return Result.Success(result);
+        return Result.Failure<AuthResult>(new Error("NotImplemented", "Not implemented - University entities are read-only"));
     }
 }

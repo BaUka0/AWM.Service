@@ -74,14 +74,14 @@ public sealed class GetAvailableTopicsQueryHandler
                 .ToDictionary(group => group.Key, TopicApplicationCounters.FromApplications);
 
             var directionIds = topics.Where(t => t.DirectionId.HasValue).Select(t => t.DirectionId!.Value).Distinct();
-            var supervisorIds = topics.Select(t => t.SupervisorId).Distinct();
+            var supervisorIds = topics.Select(t => t.EmployeeId).Distinct();
             var workTypeIds = topics.Select(t => t.WorkTypeId).Distinct();
 
             var directions = await _directionRepository.GetByIdsAsync(directionIds, cancellationToken);
             var staff = await _staffRepository.GetByIdsAsync(supervisorIds, cancellationToken);
             var workTypes = await _workflowRepository.GetWorkTypesByIdsAsync(workTypeIds, cancellationToken);
 
-            var userIds = staff.Select(s => s.UserId).Distinct();
+            var userIds = staff.Select(s => s.Id).Distinct();
             var users = await _userRepository.GetByIdsAsync(userIds, cancellationToken);
 
             var directionDict = directions.ToDictionary(d => d.Id);
@@ -95,10 +95,10 @@ public sealed class GetAvailableTopicsQueryHandler
                 var direction = topic.DirectionId.HasValue
                     ? directionDict.GetValueOrDefault(topic.DirectionId.Value)
                     : null;
-                var supervisor = staffDict.GetValueOrDefault(topic.SupervisorId);
+                var supervisor = staffDict.GetValueOrDefault(topic.EmployeeId);
                 var supervisorUser = supervisor is null
                     ? null
-                    : userDict.GetValueOrDefault(supervisor.UserId);
+                    : userDict.GetValueOrDefault(supervisor.Id);
                 var workType = workTypeDict.GetValueOrDefault(topic.WorkTypeId);
 
                 return TopicDtoFactory.Create(

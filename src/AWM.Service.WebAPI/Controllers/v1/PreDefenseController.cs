@@ -99,8 +99,8 @@ public class PreDefenseController : BaseController
     {
         var query = new GetFailedPreDefenseStudentsQuery
         {
-            DepartmentId = departmentId,
-            AcademicYearId = academicYearId,
+            OrgUnitId = departmentId,
+            SemesterId = academicYearId,
             PreDefenseNumber = preDefenseNumber
         };
 

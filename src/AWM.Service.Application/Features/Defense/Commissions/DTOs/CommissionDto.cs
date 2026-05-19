@@ -11,14 +11,14 @@ public sealed record CommissionDto
     public int Id { get; init; }
 
     /// <summary>
-    /// Department ID.
+    /// Org unit ID.
     /// </summary>
-    public int DepartmentId { get; init; }
+    public int OrgUnitId { get; init; }
 
     /// <summary>
-    /// Academic year ID.
+    /// Semester ID.
     /// </summary>
-    public int AcademicYearId { get; init; }
+    public int SemesterId { get; init; }
 
     /// <summary>
     /// Type of commission (PreDefense or GAK).

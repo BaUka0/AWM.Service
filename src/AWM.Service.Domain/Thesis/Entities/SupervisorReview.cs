@@ -9,7 +9,7 @@ using AWM.Service.Domain.Common;
 public class SupervisorReview : Entity<long>, IAuditable, ISoftDeletable
 {
     public long WorkId { get; private set; }
-    public int SupervisorId { get; private set; }
+    public int EmployeeId { get; private set; }
     public string ReviewText { get; private set; } = null!;
     public string? FileStoragePath { get; private set; }
     
@@ -24,13 +24,13 @@ public class SupervisorReview : Entity<long>, IAuditable, ISoftDeletable
 
     private SupervisorReview() { }
 
-    public SupervisorReview(long workId, int supervisorId, string reviewText, int createdBy, string? fileStoragePath = null)
+    public SupervisorReview(long workId, int employeeId, string reviewText, int createdBy, string? fileStoragePath = null)
     {
         if (string.IsNullOrWhiteSpace(reviewText))
             throw new ArgumentException("Review text is required.", nameof(reviewText));
 
         WorkId = workId;
-        SupervisorId = supervisorId;
+        EmployeeId = employeeId;
         ReviewText = reviewText;
         FileStoragePath = fileStoragePath;
         

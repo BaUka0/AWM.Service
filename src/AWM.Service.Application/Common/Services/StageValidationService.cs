@@ -17,21 +17,21 @@ public sealed class StageValidationService : IStageValidationService
     }
 
     public async Task<bool> IsStageOpenAsync(
-        int departmentId,
+        int orgUnitId,
         int semesterId,
         int workflowStageId,
         CancellationToken cancellationToken = default)
     {
-        return await _stageRepository.IsStageOpenAsync(departmentId, semesterId, workflowStageId, cancellationToken);
+        return await _stageRepository.IsStageOpenAsync(orgUnitId, semesterId, workflowStageId, cancellationToken);
     }
 
     public async Task<(bool IsAllowed, string? ErrorMessage)> ValidateOperationInStageAsync(
-        int departmentId,
+        int orgUnitId,
         int semesterId,
         int workflowStageId,
         CancellationToken cancellationToken = default)
     {
-        var isOpen = await IsStageOpenAsync(departmentId, semesterId, workflowStageId, cancellationToken);
+        var isOpen = await IsStageOpenAsync(orgUnitId, semesterId, workflowStageId, cancellationToken);
 
         if (!isOpen)
         {

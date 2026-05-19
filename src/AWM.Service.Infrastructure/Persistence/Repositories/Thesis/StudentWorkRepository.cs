@@ -91,8 +91,8 @@ public sealed class StudentWorkRepository : RepositoryBase<StudentWork, long>, I
         return await Context.StudentWorks
             .AsNoTracking()
             .Include(w => w.Participants)
-            .Where(w => w.DepartmentId == departmentId &&
-                        w.AcademicYearId == academicYearId)
+            .Where(w => w.OrgUnitId == departmentId &&
+                        w.SemesterId == academicYearId)
             .OrderByDescending(w => w.CreatedAt)
             .ToListAsync(cancellationToken);
     }
@@ -107,8 +107,8 @@ public sealed class StudentWorkRepository : RepositoryBase<StudentWork, long>, I
             .AsNoTracking()
             .Include(w => w.Participants)
             .Include(w => w.QualityChecks)
-            .Where(w => w.DepartmentId == departmentId &&
-                        w.AcademicYearId == academicYearId)
+            .Where(w => w.OrgUnitId == departmentId &&
+                        w.SemesterId == academicYearId)
             .OrderByDescending(w => w.CreatedAt)
             .AsSplitQuery()
             .ToListAsync(cancellationToken);
@@ -123,9 +123,9 @@ public sealed class StudentWorkRepository : RepositoryBase<StudentWork, long>, I
         return await Context.StudentWorks
             .AsNoTracking()
             .Include(w => w.Participants)
-            .Where(w => w.AcademicYearId == academicYearId &&
+            .Where(w => w.SemesterId == academicYearId &&
                         Context.Topics.Any(t => t.Id == w.TopicId &&
-                                                 t.SupervisorId == supervisorId))
+                                                 t.EmployeeId == supervisorId))
             .OrderByDescending(w => w.CreatedAt)
             .ToListAsync(cancellationToken);
     }
@@ -140,7 +140,7 @@ public sealed class StudentWorkRepository : RepositoryBase<StudentWork, long>, I
             .AsNoTracking()
             .Include(w => w.Participants)
             .Where(w => w.CurrentStateId == stateId &&
-                        w.DepartmentId == departmentId)
+                        w.OrgUnitId == departmentId)
             .OrderByDescending(w => w.LastModifiedAt)
             .ToListAsync(cancellationToken);
     }
@@ -156,8 +156,8 @@ public sealed class StudentWorkRepository : RepositoryBase<StudentWork, long>, I
         var query = Context.StudentWorks
             .AsNoTracking()
             .Include(w => w.Participants)
-            .Where(w => w.DepartmentId == departmentId &&
-                        w.AcademicYearId == academicYearId);
+            .Where(w => w.OrgUnitId == departmentId &&
+                        w.SemesterId == academicYearId);
 
         var totalCount = await query.CountAsync(cancellationToken);
 
@@ -182,7 +182,7 @@ public sealed class StudentWorkRepository : RepositoryBase<StudentWork, long>, I
             .AsNoTracking()
             .Include(w => w.Participants)
             .Where(w => w.CurrentStateId == stateId &&
-                        w.DepartmentId == departmentId);
+                        w.OrgUnitId == departmentId);
 
         var totalCount = await query.CountAsync(cancellationToken);
 

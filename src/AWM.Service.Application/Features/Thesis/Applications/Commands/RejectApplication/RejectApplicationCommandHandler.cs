@@ -90,7 +90,7 @@ public sealed class RejectApplicationCommandHandler : IRequestHandler<RejectAppl
         }
 
         // 4. Check authorization - only the topic's supervisor can reject
-        if (topic.SupervisorId != currentStaff.Id)
+        if (topic.EmployeeId != currentStaff.Id)
         {
             _logger.LogWarning("RejectApplication failed: User={UserId} is not the supervisor for Topic={TopicId}", supervisorUserId, topic.Id);
             return Result.Failure(new Error("Authorization.Forbidden", "Only the topic supervisor can reject applications."));

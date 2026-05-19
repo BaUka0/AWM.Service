@@ -27,7 +27,8 @@ public class TransitionConfiguration : SoftDeletableEntityConfiguration<Transiti
         builder.Property(e => e.ToStateId)
             .IsRequired();
 
-        builder.Property(e => e.AllowedRoleId);
+        builder.Property(e => e.RoleAccessId)
+            .HasColumnName("AllowedRoleId");
 
         builder.Property(e => e.IsAutomatic)
             .IsRequired()
@@ -46,9 +47,9 @@ public class TransitionConfiguration : SoftDeletableEntityConfiguration<Transiti
             .HasConstraintName("FK_Trans_ToState")
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne<Role>()
+        builder.HasOne<RoleAccess>()
             .WithMany()
-            .HasForeignKey(e => e.AllowedRoleId)
+            .HasForeignKey(e => e.RoleAccessId)
             .HasConstraintName("FK_Trans_Role")
             .OnDelete(DeleteBehavior.Restrict);
 

@@ -1,6 +1,6 @@
 namespace AWM.Service.Application.Features.Admin.Users.Commands.CreateUser;
 
-using AWM.Service.Domain.Auth.Entities;
+using AWM.Service.Domain.University;
 using AWM.Service.Domain.Auth.Interfaces;
 using AWM.Service.Domain.Common;
 using AWM.Service.Domain.Repositories;
@@ -35,50 +35,6 @@ public sealed class CreateUserCommandHandler : IRequestHandler<CreateUserCommand
 
     public async Task<Result<int>> Handle(CreateUserCommand request, CancellationToken cancellationToken)
     {
-        try
-        {
-            // 1. Check login uniqueness
-            var existing = await _userRepository.GetByLoginAsync(request.Login, cancellationToken);
-            if (existing is not null)
-                return Result.Failure<int>(new Error("Conflict.Login", "Пользователь с таким логином уже существует."));
-
-            // 2. Validate role
-            var role = await _roleRepository.GetByIdAsync(request.RoleId, cancellationToken);
-            if (role is null)
-                return Result.Failure<int>(new Error("NotFound.Role", "Указанная роль не найдена."));
-
-            // 3. Hash password
-            var passwordHash = _passwordHasher.HashPassword(request.Password);
-
-            // 4. Create user
-            var user = new User(
-                login: request.Login,
-                email: request.Email,
-                passwordHash: passwordHash);
-
-            var adminId = _currentUserProvider.UserId ?? 0;
-            user.SetAuditInfo(adminId);
-
-            await _userRepository.AddAsync(user, cancellationToken);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-            // 5. Assign role access (RBAC+)
-            user.AssignRoleAccess(
-                roleAccessId: request.RoleId,
-                assignedBy: adminId);
-
-            await _userRepository.UpdateAsync(user, cancellationToken);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-            return Result.Success(user.Id);
-        }
-        catch (ArgumentException argEx)
-        {
-            return Result.Failure<int>(new Error("400", argEx.Message));
-        }
-        catch (Exception ex)
-        {
-            return Result.Failure<int>(new Error("500", $"Ошибка при создании пользователя: {ex.Message}"));
-        }
+        return Result.Failure<int>(new Error("NotImplemented", "Not implemented - University entities are read-only"));
     }
 }

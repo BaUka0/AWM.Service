@@ -9,7 +9,7 @@ public class Transition : Entity<int>, IAuditable, ISoftDeletable
 {
     public int FromStateId { get; private set; }
     public int ToStateId { get; private set; }
-    public int? AllowedRoleId { get; private set; }
+    public int? RoleAccessId { get; private set; }
     public bool IsAutomatic { get; private set; }
 
     public DateTime CreatedAt { get; private set; }
@@ -23,11 +23,11 @@ public class Transition : Entity<int>, IAuditable, ISoftDeletable
 
     private Transition() { }
 
-    public Transition(int fromStateId, int toStateId, int createdBy = 0, int? allowedRoleId = null, bool isAutomatic = false)
+    public Transition(int fromStateId, int toStateId, int createdBy = 0, int? roleAccessId = null, bool isAutomatic = false)
     {
         FromStateId = fromStateId;
         ToStateId = toStateId;
-        AllowedRoleId = allowedRoleId;
+        RoleAccessId = roleAccessId;
         IsAutomatic = isAutomatic;
         
         CreatedAt = DateTime.UtcNow;
@@ -38,9 +38,9 @@ public class Transition : Entity<int>, IAuditable, ISoftDeletable
     /// <summary>
     /// Creates a manual transition requiring a specific role.
     /// </summary>
-    public static Transition Manual(int fromStateId, int toStateId, int allowedRoleId, int createdBy = 0)
+    public static Transition Manual(int fromStateId, int toStateId, int roleAccessId, int createdBy = 0)
     {
-        return new Transition(fromStateId, toStateId, createdBy, allowedRoleId, false);
+        return new Transition(fromStateId, toStateId, createdBy, roleAccessId, false);
     }
 
     /// <summary>
@@ -69,6 +69,6 @@ public class Transition : Entity<int>, IAuditable, ISoftDeletable
         if (IsAutomatic || IsDeleted)
             return false;
 
-        return AllowedRoleId == null || AllowedRoleId == roleId;
+        return RoleAccessId == null || RoleAccessId == roleId;
     }
 }

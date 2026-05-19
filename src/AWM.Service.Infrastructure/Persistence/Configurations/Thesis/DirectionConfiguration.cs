@@ -3,10 +3,8 @@ namespace AWM.Service.Infrastructure.Persistence.Configurations.Thesis;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using AWM.Service.Domain.Thesis.Entities;
-using AWM.Service.Domain.Org.Entities;
-using AWM.Service.Domain.Edu.Entities;
+using AWM.Service.Domain.University;
 using AWM.Service.Domain.Wf.Entities;
-using AWM.Service.Domain.CommonDomain.Entities;
 using AWM.Service.Infrastructure.Persistence.Configurations.Base;
 
 /// <summary>
@@ -33,13 +31,16 @@ public class DirectionConfiguration : SoftDeletableEntityConfiguration<Direction
         builder.Property(e => e.Id)
             .UseIdentityColumn();
 
-        builder.Property(e => e.DepartmentId)
+        builder.Property(e => e.OrgUnitId)
+            .HasColumnName("DepartmentId")
             .IsRequired();
 
-        builder.Property(e => e.SupervisorId)
+        builder.Property(e => e.EmployeeId)
+            .HasColumnName("SupervisorId")
             .IsRequired();
 
-        builder.Property(e => e.AcademicYearId)
+        builder.Property(e => e.SemesterId)
+            .HasColumnName("AcademicYearId")
             .IsRequired();
 
         builder.Property(e => e.WorkTypeId)
@@ -79,15 +80,15 @@ public class DirectionConfiguration : SoftDeletableEntityConfiguration<Direction
             .HasColumnType("nvarchar(max)");
 
         // Foreign keys
-        builder.HasOne<Department>()
+        builder.HasOne<OrgUnit>()
             .WithMany()
-            .HasForeignKey(e => e.DepartmentId)
+            .HasForeignKey(e => e.OrgUnitId)
             .HasConstraintName("FK_Directions_Dept")
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne<Staff>()
+        builder.HasOne<Employee>()
             .WithMany()
-            .HasForeignKey(e => e.SupervisorId)
+            .HasForeignKey(e => e.EmployeeId)
             .HasConstraintName("FK_Directions_Supervisor")
             .OnDelete(DeleteBehavior.Restrict);
 
@@ -110,7 +111,7 @@ public class DirectionConfiguration : SoftDeletableEntityConfiguration<Direction
             .OnDelete(DeleteBehavior.Restrict);
 
         // Index for filtering
-        builder.HasIndex(e => new { e.DepartmentId, e.AcademicYearId, e.CurrentStateId })
+        builder.HasIndex(e => new { e.OrgUnitId, e.SemesterId, e.CurrentStateId })
             .HasDatabaseName("IX_Directions_Dept_Year");
     }
 }

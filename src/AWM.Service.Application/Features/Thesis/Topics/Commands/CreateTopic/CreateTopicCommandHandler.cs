@@ -95,9 +95,9 @@ public sealed class CreateTopicCommandHandler : IRequestHandler<CreateTopicComma
 
             // 3. Create topic using domain constructor
             var topic = new Topic(
-                departmentId: request.DepartmentId,
-                supervisorId: supervisorId,
-                academicYearId: request.AcademicYearId,
+                orgUnitId: request.DepartmentId,
+                employeeId: supervisorId,
+                semesterId: request.AcademicYearId,
                 workTypeId: request.WorkTypeId,
                 titleRu: request.TitleRu,
                 directionId: request.DirectionId,

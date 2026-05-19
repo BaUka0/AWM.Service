@@ -1,8 +1,8 @@
 namespace AWM.Service.Infrastructure.Persistence.Repositories.RbacPlus;
 
-using AWM.Service.Domain.Auth.RbacPlus.Entities;
-using AWM.Service.Domain.Auth.RbacPlus.Repositories;
-using AWM.Service.Domain.Auth.RbacPlus.ViewModels;
+using AWM.Service.Domain.Auth.Entities;
+using AWM.Service.Domain.Auth.Repositories;
+using AWM.Service.Domain.Auth.ViewModels;
 using Microsoft.EntityFrameworkCore;
 
 /// <summary>

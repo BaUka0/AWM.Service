@@ -65,7 +65,7 @@ public sealed record TopicApplicationDto
     public string? DirectionTitleRu { get; init; }
     public string? DirectionTitleKz { get; init; }
     public string? DirectionTitleEn { get; init; }
-    public int SupervisorId { get; init; }
+    public int EmployeeId { get; init; }
     public string? SupervisorName { get; init; }
     public int? WorkTypeId { get; init; }
     public string? WorkTypeName { get; init; }

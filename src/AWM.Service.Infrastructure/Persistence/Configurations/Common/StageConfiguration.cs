@@ -3,7 +3,7 @@ namespace AWM.Service.Infrastructure.Persistence.Configurations.Common;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using AWM.Service.Domain.CommonDomain.Entities;
-using AWM.Service.Domain.Org.Entities;
+using AWM.Service.Domain.University;
 using AWM.Service.Infrastructure.Persistence.Configurations.Base;
 
 /// <summary>
@@ -24,8 +24,9 @@ public class StageConfiguration : SoftDeletableEntityConfiguration<Stage, int>
         builder.Property(e => e.Id)
             .UseIdentityColumn();
 
-        builder.Property(e => e.DepartmentId)
-            .IsRequired();
+        builder.Property(e => e.OrgUnitId)
+            .IsRequired()
+            .HasColumnName("DepartmentId");
 
         builder.Property(e => e.SemesterId)
             .IsRequired();
@@ -46,9 +47,9 @@ public class StageConfiguration : SoftDeletableEntityConfiguration<Stage, int>
             .HasDefaultValue(true);
 
         // Foreign keys
-        builder.HasOne<Department>()
+        builder.HasOne<OrgUnit>()
             .WithMany()
-            .HasForeignKey(e => e.DepartmentId)
+            .HasForeignKey(e => e.OrgUnitId)
             .HasConstraintName("FK_Stages_Dept")
             .OnDelete(DeleteBehavior.Restrict);
 
@@ -65,7 +66,7 @@ public class StageConfiguration : SoftDeletableEntityConfiguration<Stage, int>
             .OnDelete(DeleteBehavior.Restrict);
 
         // Index for active stages
-        builder.HasIndex(e => new { e.DepartmentId, e.SemesterId, e.WorkflowStageId })
+        builder.HasIndex(e => new { e.OrgUnitId, e.SemesterId, e.WorkflowStageId })
             .HasDatabaseName("IX_Stages_Active")
             .HasFilter("[IsActive] = 1");
     }

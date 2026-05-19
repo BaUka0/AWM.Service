@@ -26,33 +26,6 @@ public sealed class UpdateInstituteCommandHandler : IRequestHandler<UpdateInstit
 
     public async Task<Result> Handle(UpdateInstituteCommand request, CancellationToken cancellationToken)
     {
-        try
-        {
-            var institute = await _organizationLookupRepository.GetInstituteByIdTrackedAsync(request.InstituteId, cancellationToken);
-
-            if (institute is null || institute.IsDeleted)
-            {
-                return Result.Failure(new Error("404", $"Institute with ID {request.InstituteId} not found or has been deleted."));
-            }
-
-            var userId = _currentUserProvider.UserId;
-            if (!userId.HasValue)
-            {
-                return Result.Failure(new Error("401", "User ID is not available."));
-            }
-            institute.UpdateName(request.Name, userId.Value);
-
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-            return Result.Success();
-        }
-        catch (ArgumentException argEx)
-        {
-            return Result.Failure(new Error("400", argEx.Message));
-        }
-        catch (Exception ex)
-        {
-            return Result.Failure(new Error("500", $"An error occurred while updating the Institute: {ex.Message}"));
-        }
+        return Result.Failure(new Error("NotImplemented", "Not implemented - University entities are read-only"));
     }
 }

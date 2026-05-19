@@ -34,47 +34,6 @@ public sealed class DeleteDepartmentCommandHandler : IRequestHandler<DeleteDepar
 
     public async Task<Result> Handle(DeleteDepartmentCommand request, CancellationToken cancellationToken)
     {
-        try
-        {
-            var department = await _organizationLookupRepository.GetDepartmentByIdTrackedAsync(request.DepartmentId, cancellationToken);
-
-            if (department is null || department.IsDeleted)
-            {
-                return Result.Failure(new Error("404", $"Department with ID {request.DepartmentId} not found or already deleted."));
-            }
-
-            // 1. Check for active staff
-            var staff = await _staffRepository.GetByDepartmentAsync(request.DepartmentId, cancellationToken);
-            if (staff.Any(s => !s.IsDeleted))
-            {
-                return Result.Failure(new Error(
-                    "409",
-                    "Cannot delete Department with active Staff members. Please reassign or delete Staff first."));
-            }
-
-            // 2. Check for active academic programs
-            var programs = await _academicProgramRepository.GetByDepartmentAsync(request.DepartmentId, cancellationToken);
-            if (programs.Any(p => !p.IsDeleted))
-            {
-                return Result.Failure(new Error(
-                    "409",
-                    "Cannot delete Department with active Academic Programs. Please delete Programs first."));
-            }
-
-            var userId = _currentUserProvider.UserId;
-            if (!userId.HasValue)
-            {
-                return Result.Failure(new Error("401", "User ID is not available."));
-            }
-            department.Delete(userId.Value);
-
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-            return Result.Success();
-        }
-        catch (Exception ex)
-        {
-            return Result.Failure(new Error("500", $"An error occurred while deleting the Department: {ex.Message}"));
-        }
+        return Result.Failure(new Error("NotImplemented", "Not implemented - University entities are read-only"));
     }
 }

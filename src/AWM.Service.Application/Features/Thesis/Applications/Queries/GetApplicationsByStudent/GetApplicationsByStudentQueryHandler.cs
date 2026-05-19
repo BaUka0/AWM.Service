@@ -100,7 +100,7 @@ public sealed class GetApplicationsByStudentQueryHandler
         var students = await _studentRepository.GetByIdsAsync(studentIds, cancellationToken);
         var studentsById = students.ToDictionary(s => s.Id);
 
-        var supervisorIds = topics.Select(t => t.SupervisorId).Distinct().ToList();
+        var supervisorIds = topics.Select(t => t.EmployeeId).Distinct().ToList();
         var supervisors = await _staffRepository.GetByIdsAsync(supervisorIds, cancellationToken);
         var supervisorsById = supervisors.ToDictionary(s => s.Id);
 
@@ -113,7 +113,7 @@ public sealed class GetApplicationsByStudentQueryHandler
         var workTypesById = workTypes.ToDictionary(w => w.Id);
 
         var userIds = students.Select(s => s.UserId)
-            .Concat(supervisors.Select(s => s.UserId))
+            .Concat(supervisors.Select(s => s.Id))
             .Distinct()
             .ToList();
         var users = await _userRepository.GetByIdsAsync(userIds, cancellationToken);
@@ -131,9 +131,9 @@ public sealed class GetApplicationsByStudentQueryHandler
             var studentUser = applicationStudent is not null
                 ? usersById.GetValueOrDefault(applicationStudent.UserId)
                 : null;
-            var supervisor = supervisorsById.GetValueOrDefault(topic.SupervisorId);
+            var supervisor = supervisorsById.GetValueOrDefault(topic.EmployeeId);
             var supervisorUser = supervisor is not null
-                ? usersById.GetValueOrDefault(supervisor.UserId)
+                ? usersById.GetValueOrDefault(supervisor.Id)
                 : null;
             var direction = topic.DirectionId.HasValue
                 ? directionsById.GetValueOrDefault(topic.DirectionId.Value)

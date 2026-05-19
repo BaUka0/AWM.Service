@@ -1,57 +1,52 @@
 namespace AWM.Service.Infrastructure.Persistence.Repositories.Core;
 
-using AWM.Service.Domain.Edu.Entities;
-using AWM.Service.Domain.Repositories;
-using AWM.Service.Infrastructure.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
+using AWM.Service.Domain.University;
+using AWM.Service.Domain.Repositories;
 
-/// <summary>
-/// Repository implementation for Student aggregate.
-/// </summary>
-public sealed class StudentRepository : RepositoryBase<Student, int>, IStudentRepository
+public class StudentRepository : IStudentRepository
 {
-    public StudentRepository(ApplicationDbContext context) : base(context) { }
+    private readonly UniversityDbContext _context;
 
-    /// <inheritdoc />
+    public StudentRepository(UniversityDbContext context)
+    {
+        _context = context;
+    }
+
+    public async Task<Student?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+    {
+        return await _context.Students.FindAsync(new object[] { id }, cancellationToken);
+    }
+
     public async Task<Student?> GetByUserIdAsync(int userId, CancellationToken cancellationToken = default)
     {
-        return await Context.Students
+        return await _context.Students
             .FirstOrDefaultAsync(s => s.UserId == userId, cancellationToken);
     }
 
-    /// <inheritdoc />
     public async Task<IReadOnlyList<Student>> GetByIdsAsync(IEnumerable<int> ids, CancellationToken cancellationToken = default)
     {
-        var idList = ids.ToList();
-        return await Context.Students
-            .AsNoTracking()
-            .Where(s => idList.Contains(s.Id))
+        return await _context.Students
+            .Where(s => ids.Contains(s.Id))
             .ToListAsync(cancellationToken);
     }
 
-    /// <inheritdoc />
-    public async Task<IReadOnlyList<Student>> GetByProgramAsync(int programId, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<Student>> GetBySpecialityAsync(int specialityId, CancellationToken cancellationToken = default)
     {
-        return await Context.Students
-            .AsNoTracking()
-            .Where(s => s.ProgramId == programId)
-            .OrderBy(s => s.CurrentCourse)
-            .ThenBy(s => s.GroupCode)
+        return await _context.Students
+            .Where(s => s.SpecialityId == specialityId)
             .ToListAsync(cancellationToken);
     }
 
-    /// <inheritdoc />
-    public async Task<IReadOnlyList<Student>> GetByProgramIdsAsync(IEnumerable<int> programIds, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<Student>> GetByStatusAsync(int statusId, CancellationToken cancellationToken = default)
     {
-        var ids = programIds.Distinct().ToList();
-        if (ids.Count == 0)
-            return [];
-
-        return await Context.Students
-            .AsNoTracking()
-            .Where(s => ids.Contains(s.ProgramId))
-            .OrderBy(s => s.CurrentCourse)
-            .ThenBy(s => s.GroupCode)
+        return await _context.Students
+            .Where(s => s.StatusId == statusId)
             .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<Student>> GetAllAsync(CancellationToken cancellationToken = default)
+    {
+        return await _context.Students.ToListAsync(cancellationToken);
     }
 }

@@ -6,7 +6,7 @@ using MediatR;
 
 public sealed record GetActiveStageQuery : IRequest<Result<StageDto?>>
 {
-    public int DepartmentId { get; init; }
+    public int OrgUnitId { get; init; }
     public int SemesterId { get; init; }
     public int? WorkflowStageId { get; init; }
 }
