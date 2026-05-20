@@ -28,7 +28,7 @@ public class WorkType : Entity<int>, IAuditable, ISoftDeletable
     public WorkType(string name, int createdBy = 0, int? specialityLevelId = null)
     {
         if (string.IsNullOrWhiteSpace(name))
-            throw new ArgumentException("Work type name is required.", nameof(name));
+            throw new DomainException("WorkType.NameRequired", "Work type name is required.");
 
         Name = name;
         SpecialityLevelId = specialityLevelId;
@@ -44,7 +44,7 @@ public class WorkType : Entity<int>, IAuditable, ISoftDeletable
     public void Update(string name, int? specialityLevelId, int modifiedBy)
     {
         if (string.IsNullOrWhiteSpace(name))
-            throw new ArgumentException("Work type name is required.", nameof(name));
+            throw new DomainException("WorkType.NameRequired", "Work type name is required.");
 
         Name = name;
         SpecialityLevelId = specialityLevelId;

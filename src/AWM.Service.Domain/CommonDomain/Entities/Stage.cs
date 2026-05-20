@@ -30,7 +30,7 @@ public class Stage : Entity<int>, IAuditable, ISoftDeletable
     public Stage(int orgUnitId, int semesterId, int workflowStageId, DateTime startDate, DateTime endDate, int createdBy)
     {
         if (endDate <= startDate)
-            throw new ArgumentException("End date must be after start date.", nameof(endDate));
+            throw new DomainException("Stage.InvalidDateRange", "End date must be after start date.");
 
         OrgUnitId = orgUnitId;
         SemesterId = semesterId;
@@ -47,7 +47,7 @@ public class Stage : Entity<int>, IAuditable, ISoftDeletable
     public void UpdateDates(DateTime startDate, DateTime endDate, int modifiedBy)
     {
         if (endDate <= startDate)
-            throw new ArgumentException("End date must be after start date.", nameof(endDate));
+            throw new DomainException("Stage.InvalidDateRange", "End date must be after start date.");
 
         StartDate = startDate;
         EndDate = endDate;

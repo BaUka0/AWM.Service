@@ -7,7 +7,7 @@ using KDS.Primitives.FluentResult;
 using MediatR;
 
 public sealed class GetMySupervisedWorksQueryHandler
-    : IRequestHandler<GetMySupervisedWorksQuery, Result<IReadOnlyList<SupervisedWorkDto>>>
+    : IRequestHandler<GetMySupervisedWorksQuery, Result<(IReadOnlyList<SupervisedWorkDto> Items, int TotalCount)>>
 {
     private readonly ICurrentUserProvider _currentUserProvider;
     private readonly IEmployeeRepository _EmployeeRepository;
@@ -38,13 +38,13 @@ public sealed class GetMySupervisedWorksQueryHandler
         _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
     }
 
-    public async Task<Result<IReadOnlyList<SupervisedWorkDto>>> Handle(
+    public async Task<Result<(IReadOnlyList<SupervisedWorkDto> Items, int TotalCount)>> Handle(
         GetMySupervisedWorksQuery request,
         CancellationToken cancellationToken)
     {
         if (!_currentUserProvider.UserId.HasValue)
         {
-            return Result.Failure<IReadOnlyList<SupervisedWorkDto>>(
+            return Result.Failure<(IReadOnlyList<SupervisedWorkDto> Items, int TotalCount)>(
                 new Error("Authorization.Unauthorized", "User identity could not be determined."));
         }
 
@@ -53,7 +53,7 @@ public sealed class GetMySupervisedWorksQueryHandler
         var staff = await _EmployeeRepository.GetByUserIdAsync(userId, cancellationToken);
         if (staff is null)
         {
-            return Result.Failure<IReadOnlyList<SupervisedWorkDto>>(
+            return Result.Failure<(IReadOnlyList<SupervisedWorkDto> Items, int TotalCount)>(
                 new Error("Authorization.Forbidden", "User does not have a staff profile."));
         }
 
@@ -163,6 +163,12 @@ public sealed class GetMySupervisedWorksQueryHandler
             });
         }
 
-        return Result.Success<IReadOnlyList<SupervisedWorkDto>>(dtos);
+        var totalCount = dtos.Count;
+        var paginatedDtos = dtos
+            .Skip((request.Page - 1) * request.PageSize)
+            .Take(request.PageSize)
+            .ToList();
+
+        return Result.Success<(IReadOnlyList<SupervisedWorkDto> Items, int TotalCount)>((paginatedDtos, totalCount));
     }
 }

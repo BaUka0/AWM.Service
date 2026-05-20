@@ -7,6 +7,8 @@ using MediatR;
 /// <summary>
 /// Query to get all works for the current student ("My Works").
 /// </summary>
-public sealed record GetMyWorkQuery : IRequest<Result<IReadOnlyList<StudentWorkDto>>>
+public sealed record GetMyWorkQuery : IRequest<Result<(IReadOnlyList<StudentWorkDto> Items, int TotalCount)>>
 {
+    public int Page { get; init; } = 1;
+    public int PageSize { get; init; } = 10;
 }

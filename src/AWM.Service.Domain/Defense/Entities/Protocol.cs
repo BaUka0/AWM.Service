@@ -44,10 +44,10 @@ public class Protocol : Entity<long>, IAuditable, ISoftDeletable
     public void AttachDocument(string documentPath, int modifiedBy)
     {
         if (IsFinalized)
-            throw new InvalidOperationException("Cannot modify finalized protocol.");
+            throw new DomainException("Protocol.ModifyFinalized", "Cannot modify finalized protocol.");
 
         if (string.IsNullOrWhiteSpace(documentPath))
-            throw new ArgumentException("Document path is required.", nameof(documentPath));
+            throw new DomainException("Protocol.DocumentPathRequired", "Document path is required.");
 
         DocumentPath = documentPath;
         LastModifiedAt = DateTime.UtcNow;
@@ -60,7 +60,7 @@ public class Protocol : Entity<long>, IAuditable, ISoftDeletable
     public void Finalize(int finalizedBy)
     {
         if (IsFinalized)
-            throw new InvalidOperationException("Protocol is already finalized.");
+            throw new DomainException("Protocol.AlreadyFinalized", "Protocol is already finalized.");
 
         IsFinalized = true;
         FinalizedBy = finalizedBy;

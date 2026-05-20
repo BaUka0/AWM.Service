@@ -51,7 +51,7 @@ public class TopicApplication : Entity<long>, IAuditable, ISoftDeletable
     public void Accept(int reviewedBy)
     {
         if (StatusId != StatusSubmitted)
-            throw new InvalidOperationException("Only submitted applications can be accepted.");
+            throw new DomainException("TopicApplication.OnlySubmittedCanAccept", "Only submitted applications can be accepted.");
 
         StatusId = StatusAccepted;
         ReviewedAt = DateTime.UtcNow;
@@ -68,7 +68,7 @@ public class TopicApplication : Entity<long>, IAuditable, ISoftDeletable
     public void Reject(int reviewedBy, string? comment = null)
     {
         if (StatusId != StatusSubmitted)
-            throw new InvalidOperationException("Only submitted applications can be rejected.");
+            throw new DomainException("TopicApplication.OnlySubmittedCanReject", "Only submitted applications can be rejected.");
 
         StatusId = StatusRejected;
         ReviewedAt = DateTime.UtcNow;

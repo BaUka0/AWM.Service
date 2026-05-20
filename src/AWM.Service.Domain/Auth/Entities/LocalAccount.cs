@@ -27,9 +27,9 @@ public class LocalAccount : Entity<int>, IAuditable
     public LocalAccount(int userId, string passwordHash, int createdBy)
     {
         if (userId <= 0)
-            throw new ArgumentException("UserId must be positive.", nameof(userId));
+            throw new DomainException("LocalAccount.InvalidUserId", "UserId must be positive.");
         if (string.IsNullOrWhiteSpace(passwordHash))
-            throw new ArgumentException("Password hash is required.", nameof(passwordHash));
+            throw new DomainException("LocalAccount.PasswordHashRequired", "Password hash is required.");
 
         UserId = userId;
         PasswordHash = passwordHash;
@@ -41,7 +41,7 @@ public class LocalAccount : Entity<int>, IAuditable
     public void UpdatePassword(string passwordHash, int modifiedBy)
     {
         if (string.IsNullOrWhiteSpace(passwordHash))
-            throw new ArgumentException("Password hash is required.", nameof(passwordHash));
+            throw new DomainException("LocalAccount.PasswordHashRequired", "Password hash is required.");
 
         PasswordHash = passwordHash;
         LastModifiedAt = DateTime.UtcNow;

@@ -42,7 +42,7 @@ public class WorkParticipant : Entity<long>, IAuditable
     public void PromoteToLeader(int modifiedBy)
     {
         if (RoleId == RoleLeader)
-            throw new InvalidOperationException("Already a leader.");
+            throw new DomainException("WorkParticipant.AlreadyLeader", "Already a leader.");
 
         RoleId = RoleLeader;
         LastModifiedAt = DateTime.UtcNow;
@@ -55,7 +55,7 @@ public class WorkParticipant : Entity<long>, IAuditable
     public void DemoteToMember(int modifiedBy)
     {
         if (RoleId == RoleMember)
-            throw new InvalidOperationException("Already a member.");
+            throw new DomainException("WorkParticipant.AlreadyMember", "Already a member.");
 
         RoleId = RoleMember;
         LastModifiedAt = DateTime.UtcNow;

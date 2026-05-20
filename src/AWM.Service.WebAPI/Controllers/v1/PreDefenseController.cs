@@ -38,6 +38,7 @@ public sealed class PreDefenseController : BaseController
     /// Get the schedule (all slots) for a pre-defense commission.
     /// </summary>
     /// <param name="commissionId">Commission ID</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>List of schedule slots ordered by defense date</returns>
     [HttpGet("schedule")]
     [RequireAccess("PreDefense", "Read")]
@@ -60,6 +61,7 @@ public sealed class PreDefenseController : BaseController
     /// Get all pre-defense attempts for a student work.
     /// </summary>
     /// <param name="workId">StudentWork ID</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>List of attempts ordered by attempt number</returns>
     [HttpGet("works/{workId:long}/attempts")]
     [RequireAccess("PreDefense", "Read")]
@@ -85,6 +87,7 @@ public sealed class PreDefenseController : BaseController
     /// <param name="departmentId">Department ID</param>
     /// <param name="academicYearId">Academic year ID</param>
     /// <param name="preDefenseNumber">Optional pre-defense round filter (1, 2, or 3)</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>List of failed students with attempt details</returns>
     [HttpGet("failed-students")]
     [RequireAccess("PreDefense", "Read")]
@@ -119,6 +122,7 @@ public sealed class PreDefenseController : BaseController
     /// </summary>
     /// <param name="workId">StudentWork ID to schedule</param>
     /// <param name="request">Schedule details</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Created schedule ID</returns>
     [HttpPost("works/{workId:long}/schedule")]
     [RequireAccess("PreDefense", "Create")]
@@ -145,6 +149,7 @@ public sealed class PreDefenseController : BaseController
     /// </summary>
     /// <param name="attemptId">PreDefenseAttempt ID</param>
     /// <param name="request">Attendance details</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>No content on success</returns>
     [HttpPut("attempts/{attemptId:long}/attendance")]
     [RequireAccess("PreDefense", "Update")]
@@ -171,6 +176,7 @@ public sealed class PreDefenseController : BaseController
     /// </summary>
     /// <param name="scheduleId">Schedule ID</param>
     /// <param name="request">Grade details</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Created grade ID</returns>
     [HttpPost("schedule/{scheduleId:long}/grades")]
     [RequireAccess("PreDefense_Grading", "Update")]
@@ -198,6 +204,7 @@ public sealed class PreDefenseController : BaseController
     /// </summary>
     /// <param name="attemptId">PreDefenseAttempt ID</param>
     /// <param name="request">Finalize details including average score and pass/fail result</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>No content on success</returns>
     [HttpPut("attempts/{attemptId:long}/finalize")]
     [RequireAccess("PreDefense", "Update")]
@@ -224,6 +231,7 @@ public sealed class PreDefenseController : BaseController
     /// After this, all commission members can see each other's grades.
     /// </summary>
     /// <param name="scheduleId">Schedule ID</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>No content on success</returns>
     [HttpPut("schedule/{scheduleId:long}/start-reconciliation")]
     [RequireAccess("PreDefense", "Update")]
@@ -248,6 +256,7 @@ public sealed class PreDefenseController : BaseController
     /// Distribute student works across pre-defense commissions (round-robin).
     /// </summary>
     /// <param name="request">Distribution parameters</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Number of works distributed</returns>
     [HttpPost("distribute")]
     [RequireAccess("PreDefense", "Create")]
@@ -273,6 +282,7 @@ public sealed class PreDefenseController : BaseController
     /// Generate time slots for a pre-defense commission on a specific date.
     /// </summary>
     /// <param name="request">Slot generation parameters</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Number of slots generated</returns>
     [HttpPost("generate-slots")]
     [RequireAccess("PreDefense", "Create")]
@@ -298,6 +308,7 @@ public sealed class PreDefenseController : BaseController
     /// Generate a pre-defense session protocol (ведомость) for a commission.
     /// </summary>
     /// <param name="request">Protocol generation details</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Created protocol ID</returns>
     [HttpPost("protocols")]
     [RequireAccess("PreDefense", "Create")]

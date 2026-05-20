@@ -32,7 +32,7 @@ public class Notification : Entity<long>, IAuditable
         long? relatedEntityId = null)
     {
         if (string.IsNullOrWhiteSpace(title))
-            throw new ArgumentException("Notification title is required.", nameof(title));
+            throw new DomainException("Notification.TitleRequired", "Notification title is required.");
 
         UserId = userId;
         TemplateId = templateId;

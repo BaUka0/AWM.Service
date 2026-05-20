@@ -16,7 +16,7 @@ public class AttendanceStatus : Entity<int>
     {
         Id = id;
         if (string.IsNullOrWhiteSpace(title))
-            throw new ArgumentException("Title is required.", nameof(title));
+            throw new DomainException("AttendanceStatus.TitleRequired", "Title is required.");
 
         Title = title;
     }

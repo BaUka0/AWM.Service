@@ -28,9 +28,9 @@ public class RoleAccess : Entity<int>, IAuditable
     public RoleAccess(string code, string nameRu, string nameKz, string nameEn, int createdBy)
     {
         if (string.IsNullOrWhiteSpace(code))
-            throw new ArgumentException("Role code is required.", nameof(code));
+            throw new DomainException("RoleAccess.CodeRequired", "Role code is required.");
         if (string.IsNullOrWhiteSpace(nameRu))
-            throw new ArgumentException("Russian name is required.", nameof(nameRu));
+            throw new DomainException("RoleAccess.NameRuRequired", "Russian name is required.");
 
         Code = code.ToUpperInvariant();
         NameRu = nameRu;
@@ -43,7 +43,7 @@ public class RoleAccess : Entity<int>, IAuditable
     public void UpdateNames(string nameRu, string nameKz, string nameEn, int modifiedBy)
     {
         if (string.IsNullOrWhiteSpace(nameRu))
-            throw new ArgumentException("Russian name is required.", nameof(nameRu));
+            throw new DomainException("RoleAccess.NameRuRequired", "Russian name is required.");
 
         NameRu = nameRu;
         NameKz = nameKz ?? nameRu;

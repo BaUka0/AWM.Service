@@ -23,7 +23,7 @@ public sealed class DateRange : ValueObject
     public static DateRange Create(DateTime start, DateTime end)
     {
         if (end <= start)
-            throw new ArgumentException("End date must be after start date.", nameof(end));
+            throw new DomainException("DateRange.InvalidRange", "End date must be after start date.");
 
         return new DateRange(start, end);
     }

@@ -37,11 +37,11 @@ public class Attachment : Entity<long>, IAuditable
         int uploadedBy)
     {
         if (string.IsNullOrWhiteSpace(fileName))
-            throw new ArgumentException("File name is required.", nameof(fileName));
+            throw new DomainException("Attachment.FileNameRequired", "File name is required.");
         if (string.IsNullOrWhiteSpace(fileStoragePath))
-            throw new ArgumentException("File storage path is required.", nameof(fileStoragePath));
+            throw new DomainException("Attachment.FileStoragePathRequired", "File storage path is required.");
         if (string.IsNullOrWhiteSpace(fileHash))
-            throw new ArgumentException("File hash is required.", nameof(fileHash));
+            throw new DomainException("Attachment.FileHashRequired", "File hash is required.");
 
         WorkId = workId;
         StateId = stateId;

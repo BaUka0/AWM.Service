@@ -11,7 +11,7 @@ using MediatR;
 /// Returns all works where the student is a participant.
 /// </summary>
 public sealed class GetMyWorkQueryHandler
-    : IRequestHandler<GetMyWorkQuery, Result<IReadOnlyList<StudentWorkDto>>>
+    : IRequestHandler<GetMyWorkQuery, Result<(IReadOnlyList<StudentWorkDto> Items, int TotalCount)>>
 {
     private readonly IStudentWorkRepository _workRepository;
     private readonly IStudentRepository _studentRepository;
@@ -27,13 +27,13 @@ public sealed class GetMyWorkQueryHandler
         _currentUserProvider = currentUserProvider;
     }
 
-    public async Task<Result<IReadOnlyList<StudentWorkDto>>> Handle(
+    public async Task<Result<(IReadOnlyList<StudentWorkDto> Items, int TotalCount)>> Handle(
         GetMyWorkQuery request,
         CancellationToken cancellationToken)
     {
         if (!_currentUserProvider.UserId.HasValue)
         {
-            return Result.Failure<IReadOnlyList<StudentWorkDto>>(
+            return Result.Failure<(IReadOnlyList<StudentWorkDto> Items, int TotalCount)>(
                 new Error("Authorization.Unauthorized", "User identity could not be determined."));
         }
 
@@ -43,7 +43,7 @@ public sealed class GetMyWorkQueryHandler
         var student = await _studentRepository.GetByUserIdAsync(userId, cancellationToken);
         if (student is null)
         {
-            return Result.Failure<IReadOnlyList<StudentWorkDto>>(
+            return Result.Failure<(IReadOnlyList<StudentWorkDto> Items, int TotalCount)>(
                 new Error("Authorization.Forbidden", "User does not have a student profile."));
         }
 
@@ -53,6 +53,12 @@ public sealed class GetMyWorkQueryHandler
             .Select(StudentWorkDto.FromEntity)
             .ToList();
 
-        return Result.Success<IReadOnlyList<StudentWorkDto>>(dtos);
+        var totalCount = dtos.Count;
+        var paginatedDtos = dtos
+            .Skip((request.Page - 1) * request.PageSize)
+            .Take(request.PageSize)
+            .ToList();
+
+        return Result.Success<(IReadOnlyList<StudentWorkDto> Items, int TotalCount)>((paginatedDtos, totalCount));
     }
 }

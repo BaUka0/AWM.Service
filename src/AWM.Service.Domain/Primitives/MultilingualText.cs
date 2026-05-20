@@ -15,7 +15,7 @@ public sealed class MultilingualText : ValueObject
     private MultilingualText(string ru, string? kz = null, string? en = null)
     {
         if (string.IsNullOrWhiteSpace(ru))
-            throw new ArgumentException("Russian text is required.", nameof(ru));
+            throw new DomainException("MultilingualText.RussianTextRequired", "Russian text is required.");
 
         Ru = ru;
         Kz = kz;

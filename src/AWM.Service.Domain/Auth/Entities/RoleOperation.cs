@@ -31,9 +31,9 @@ public class RoleOperation : Entity<int>, IAuditable
     public RoleOperation(string name, string nameRu, string nameKz, string nameEn, int createdBy, int? parentId = null, int orderBy = 0)
     {
         if (string.IsNullOrWhiteSpace(name))
-            throw new ArgumentException("Operation name is required.", nameof(name));
+            throw new DomainException("RoleOperation.NameRequired", "Operation name is required.");
         if (string.IsNullOrWhiteSpace(nameRu))
-            throw new ArgumentException("Russian name is required.", nameof(nameRu));
+            throw new DomainException("RoleOperation.NameRuRequired", "Russian name is required.");
 
         Name = name;
         NameRu = nameRu;
@@ -48,9 +48,9 @@ public class RoleOperation : Entity<int>, IAuditable
     public void Update(string name, string nameRu, string nameKz, string nameEn, int orderBy, int modifiedBy)
     {
         if (string.IsNullOrWhiteSpace(name))
-            throw new ArgumentException("Operation name is required.", nameof(name));
+            throw new DomainException("RoleOperation.NameRequired", "Operation name is required.");
         if (string.IsNullOrWhiteSpace(nameRu))
-            throw new ArgumentException("Russian name is required.", nameof(nameRu));
+            throw new DomainException("RoleOperation.NameRuRequired", "Russian name is required.");
 
         Name = name;
         NameRu = nameRu;

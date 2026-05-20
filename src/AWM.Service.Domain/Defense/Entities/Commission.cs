@@ -42,7 +42,7 @@ public class Commission : AggregateRoot<int>, IAuditable, ISoftDeletable
         if (commissionTypeId == TypePreDefense && preDefenseNumber.HasValue)
         {
             if (preDefenseNumber < 1 || preDefenseNumber > 3)
-                throw new ArgumentException("Pre-defense number must be 1, 2, or 3.", nameof(preDefenseNumber));
+                throw new DomainException("Commission.InvalidPreDefenseNumber", "Pre-defense number must be 1, 2, or 3.");
         }
 
         OrgUnitId = orgUnitId;
@@ -77,10 +77,10 @@ public class Commission : AggregateRoot<int>, IAuditable, ISoftDeletable
 
         // Ensure only one chairman and one secretary
         if (commissionRoleId == roleChairman && _members.Any(m => m.CommissionRoleId == roleChairman))
-            throw new InvalidOperationException("Commission already has a chairman.");
+            throw new DomainException("Commission.ChairmanAlreadyExists", "Commission already has a chairman.");
 
         if (commissionRoleId == roleSecretary && _members.Any(m => m.CommissionRoleId == roleSecretary))
-            throw new InvalidOperationException("Commission already has a secretary.");
+            throw new DomainException("Commission.SecretaryAlreadyExists", "Commission already has a secretary.");
 
         var member = new CommissionMember(Id, userId, commissionRoleId);
         _members.Add(member);

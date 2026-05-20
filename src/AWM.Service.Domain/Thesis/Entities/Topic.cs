@@ -57,9 +57,9 @@ public class Topic : AggregateRoot<long>, IAuditable, ISoftDeletable
         int maxParticipants = 1)
     {
         if (string.IsNullOrWhiteSpace(titleRu))
-            throw new ArgumentException("Russian title is required.", nameof(titleRu));
+            throw new DomainException("Topic.TitleRuRequired", "Russian title is required.");
         if (maxParticipants < 1 || maxParticipants > 5)
-            throw new ArgumentException("Max participants must be between 1 and 5.", nameof(maxParticipants));
+            throw new DomainException("Topic.MaxParticipantsOutOfRange", "Max participants must be between 1 and 5.");
 
         DirectionId = directionId;
         OrgUnitId = orgUnitId;
@@ -105,7 +105,7 @@ public class Topic : AggregateRoot<long>, IAuditable, ISoftDeletable
         string? descriptionEn)
     {
         if (string.IsNullOrWhiteSpace(titleRu))
-            throw new ArgumentException("Russian title is required.", nameof(titleRu));
+            throw new DomainException("Topic.TitleRuRequired", "Russian title is required.");
 
         TitleRu = titleRu;
         TitleKz = titleKz;
@@ -121,7 +121,7 @@ public class Topic : AggregateRoot<long>, IAuditable, ISoftDeletable
     public void UpdateMaxParticipants(int maxParticipants)
     {
         if (maxParticipants < 1 || maxParticipants > 5)
-            throw new ArgumentException("Max participants must be between 1 and 5.", nameof(maxParticipants));
+            throw new DomainException("Topic.MaxParticipantsOutOfRange", "Max participants must be between 1 and 5.");
 
         MaxParticipants = maxParticipants;
     }
@@ -132,9 +132,9 @@ public class Topic : AggregateRoot<long>, IAuditable, ISoftDeletable
     public void SubmitForApproval()
     {
         if (IsSubmittedForApproval)
-            throw new InvalidOperationException("Topic is already submitted for approval.");
+            throw new DomainException("Topic.AlreadySubmitted", "Topic is already submitted for approval.");
         if (IsApproved)
-            throw new InvalidOperationException("Topic is already approved.");
+            throw new DomainException("Topic.AlreadyApproved", "Topic is already approved.");
 
         IsSubmittedForApproval = true;
     }
@@ -176,7 +176,7 @@ public class Topic : AggregateRoot<long>, IAuditable, ISoftDeletable
     public void AddApplication(TopicApplication application)
     {
         if (application is null)
-            throw new ArgumentNullException(nameof(application));
+            throw new DomainException("Topic.ApplicationRequired", "Application is required.");
     
         _applications.Add(application);
     }

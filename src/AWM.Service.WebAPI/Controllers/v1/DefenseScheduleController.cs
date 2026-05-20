@@ -35,6 +35,7 @@ public sealed class DefenseScheduleController : BaseController
     /// Get the defense schedule (all slots) for a GAK commission.
     /// </summary>
     /// <param name="commissionId">Commission ID</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>List of schedule slots ordered by defense date</returns>
     [HttpGet]
     [RequireAccess("FinalDefense", "Read")]
@@ -59,6 +60,7 @@ public sealed class DefenseScheduleController : BaseController
     /// Get a specific defense slot by ID with detailed grade information.
     /// </summary>
     /// <param name="slotId">Schedule (slot) ID</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Detailed slot information with grades</returns>
     [HttpGet("{slotId:long}")]
     [RequireAccess("FinalDefense", "Read")]
@@ -84,6 +86,7 @@ public sealed class DefenseScheduleController : BaseController
     /// Create a new defense schedule slot (Secretary action).
     /// </summary>
     /// <param name="request">Schedule creation details</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Created schedule ID</returns>
     [HttpPost]
     [RequireAccess("FinalDefense", "Create")]
@@ -110,6 +113,7 @@ public sealed class DefenseScheduleController : BaseController
     /// </summary>
     /// <param name="scheduleId">Schedule ID to update</param>
     /// <param name="request">Update details</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>No content on success</returns>
     [HttpPut("{scheduleId:long}")]
     [RequireAccess("FinalDefense", "Update")]
@@ -136,6 +140,7 @@ public sealed class DefenseScheduleController : BaseController
     /// </summary>
     /// <param name="scheduleId">Schedule (slot) ID</param>
     /// <param name="request">Assignment details</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>No content on success</returns>
     [HttpPost("{scheduleId:long}/assign")]
     [RequireAccess("FinalDefense", "Create")]

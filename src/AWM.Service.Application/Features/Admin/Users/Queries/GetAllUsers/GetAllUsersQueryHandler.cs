@@ -10,7 +10,7 @@ using MediatR;
 /// Returns all users for a university with optional active/search filters.
 /// </summary>
 public sealed class GetAllUsersQueryHandler
-    : IRequestHandler<GetAllUsersQuery, Result<IReadOnlyList<AdminUserDto>>>
+    : IRequestHandler<GetAllUsersQuery, Result<(IReadOnlyList<AdminUserDto> Items, int TotalCount)>>
 {
     private readonly IUserRepository _userRepository;
     private readonly IOrganizationLookupRepository _orgLookupRepository;
@@ -35,7 +35,7 @@ public sealed class GetAllUsersQueryHandler
         _EmployeeRepository = EmployeeRepository;
     }
 
-    public async Task<Result<IReadOnlyList<AdminUserDto>>> Handle(
+    public async Task<Result<(IReadOnlyList<AdminUserDto> Items, int TotalCount)>> Handle(
         GetAllUsersQuery request,
         CancellationToken cancellationToken)
     {
@@ -106,6 +106,12 @@ public sealed class GetAllUsersQueryHandler
             };
         }).ToList();
 
-        return Result.Success<IReadOnlyList<AdminUserDto>>(dtos);
+        var totalCount = dtos.Count;
+        var paginatedDtos = dtos
+            .Skip((request.Page - 1) * request.PageSize)
+            .Take(request.PageSize)
+            .ToList();
+
+        return Result.Success<(IReadOnlyList<AdminUserDto> Items, int TotalCount)>((paginatedDtos, totalCount));
     }
 }

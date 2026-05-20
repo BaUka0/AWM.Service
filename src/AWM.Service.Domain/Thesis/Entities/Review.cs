@@ -43,7 +43,7 @@ public class Review : Entity<long>, IAuditable, ISoftDeletable
     public void UploadReview(string? reviewText, string? fileStoragePath, int modifiedBy)
     {
         if (string.IsNullOrWhiteSpace(reviewText) && string.IsNullOrWhiteSpace(fileStoragePath))
-            throw new ArgumentException("Either review text or file path must be provided.");
+            throw new DomainException("Review.ContentRequired", "Either review text or file path must be provided.");
 
         ReviewText = reviewText;
         FileStoragePath = fileStoragePath;

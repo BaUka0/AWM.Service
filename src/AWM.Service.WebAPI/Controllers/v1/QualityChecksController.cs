@@ -33,6 +33,7 @@ public sealed class QualityChecksController : BaseController
     /// Get all quality checks for a specific work.
     /// </summary>
     /// <param name="workId">StudentWork ID</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>List of quality check records ordered by type and attempt</returns>
     [HttpGet("by-work/{workId:long}")]
     [RequireAccess("QualityChecks", "Read")]
@@ -58,6 +59,7 @@ public sealed class QualityChecksController : BaseController
     /// <param name="departmentId">Department ID</param>
     /// <param name="academicYearId">Academic year ID</param>
     /// <param name="checkType">Optional check type filter</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>List of pending quality checks</returns>
     [HttpGet("pending")]
     [RequireAccess("QualityChecks", "Read")]
@@ -92,6 +94,7 @@ public sealed class QualityChecksController : BaseController
     /// </summary>
     /// <param name="workId">StudentWork ID</param>
     /// <param name="request">Submit request with check type</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Created quality check ID</returns>
     [HttpPost("~/api/v{version:apiVersion}/student-works/{workId:long}/quality-checks")]
     [RequireAccess("QualityChecks", "Create")]
@@ -120,6 +123,7 @@ public sealed class QualityChecksController : BaseController
     /// <param name="workId">StudentWork ID</param>
     /// <param name="checkId">ID of the pending QualityCheck to complete (returned by SubmitForCheck)</param>
     /// <param name="request">Check result details</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Updated quality check ID</returns>
     [HttpPut("~/api/v{version:apiVersion}/student-works/{workId:long}/quality-checks/{checkId:long}")]
     [RequireAccess("QualityChecks", "Update")]
@@ -146,6 +150,7 @@ public sealed class QualityChecksController : BaseController
     /// Creates Expert entities linking users to specific expertise types.
     /// </summary>
     /// <param name="request">Expert assignment details</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Number of new experts created</returns>
     [HttpPost("assign-experts")]
     [RequireAccess("QualityChecks", "Create")]

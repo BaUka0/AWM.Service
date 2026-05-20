@@ -30,7 +30,7 @@ public class Schedule : Entity<long>, IAuditable, ISoftDeletable
     public Schedule(int commissionId, long workId, DateTime defenseDate, int createdBy, string? location = null)
     {
         if (defenseDate < DateTime.UtcNow)
-            throw new ArgumentException("Defense date cannot be in the past.", nameof(defenseDate));
+            throw new DomainException("Schedule.DefenseDateInPast", "Defense date cannot be in the past.");
 
         CommissionId = commissionId;
         WorkId = workId;
@@ -82,7 +82,7 @@ public class Schedule : Entity<long>, IAuditable, ISoftDeletable
     {
         // Check if this member already graded this criteria
         if (_grades.Any(g => g.MemberId == memberId && g.CriteriaId == criteriaId))
-            throw new InvalidOperationException("Member has already graded this criteria.");
+            throw new DomainException("Schedule.MemberAlreadyGraded", "Member has already graded this criteria.");
 
         var grade = new Grade(Id, memberId, criteriaId, score, comment);
         _grades.Add(grade);
@@ -97,7 +97,7 @@ public class Schedule : Entity<long>, IAuditable, ISoftDeletable
     public void StartReconciliation(int modifiedBy)
     {
         if (IsReconciliationStarted)
-            throw new InvalidOperationException("Reconciliation has already been started.");
+            throw new DomainException("Schedule.ReconciliationAlreadyStarted", "Reconciliation has already been started.");
 
         IsReconciliationStarted = true;
         LastModifiedAt = DateTime.UtcNow;

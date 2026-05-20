@@ -26,7 +26,7 @@ public class Grade : Entity<long>, IAuditable
     internal Grade(long scheduleId, int memberId, int criteriaId, int score, string? comment = null)
     {
         if (score < 0)
-            throw new ArgumentException("Score cannot be negative.", nameof(score));
+            throw new DomainException("Grade.InvalidScore", "Score cannot be negative.");
 
         ScheduleId = scheduleId;
         MemberId = memberId;
@@ -44,7 +44,7 @@ public class Grade : Entity<long>, IAuditable
     public void UpdateScore(int score, int modifiedBy, string? comment = null)
     {
         if (score < 0)
-            throw new ArgumentException("Score cannot be negative.", nameof(score));
+            throw new DomainException("Grade.InvalidScore", "Score cannot be negative.");
 
         Score = score;
         Comment = comment;

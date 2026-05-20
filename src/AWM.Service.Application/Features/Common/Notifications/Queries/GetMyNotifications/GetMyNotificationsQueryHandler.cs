@@ -7,7 +7,7 @@ using KDS.Primitives.FluentResult;
 using MediatR;
 
 public sealed class GetMyNotificationsQueryHandler
-    : IRequestHandler<GetMyNotificationsQuery, Result<IReadOnlyList<NotificationDto>>>
+    : IRequestHandler<GetMyNotificationsQuery, Result<(IReadOnlyList<NotificationDto> Items, int TotalCount, int TotalUnreadCount)>>
 {
     private readonly INotificationRepository _notificationRepository;
     private readonly ICurrentUserProvider _currentUserProvider;
@@ -20,7 +20,7 @@ public sealed class GetMyNotificationsQueryHandler
         _currentUserProvider = currentUserProvider ?? throw new ArgumentNullException(nameof(currentUserProvider));
     }
 
-    public async Task<Result<IReadOnlyList<NotificationDto>>> Handle(
+    public async Task<Result<(IReadOnlyList<NotificationDto> Items, int TotalCount, int TotalUnreadCount)>> Handle(
         GetMyNotificationsQuery request,
         CancellationToken cancellationToken)
     {
@@ -28,22 +28,32 @@ public sealed class GetMyNotificationsQueryHandler
         {
             var userId = _currentUserProvider.UserId;
             if (!userId.HasValue)
-                return Result.Failure<IReadOnlyList<NotificationDto>>(new Error("401", "User is not authenticated."));
+                return Result.Failure<(IReadOnlyList<NotificationDto> Items, int TotalCount, int TotalUnreadCount)>(
+                    new Error("401", "User is not authenticated."));
 
+            int totalCount;
             IReadOnlyList<Domain.CommonDomain.Entities.Notification> notifications;
+
+            int skip = (request.Page - 1) * request.PageSize;
+            int take = request.PageSize;
 
             if (request.OnlyUnread == true)
             {
-                notifications = await _notificationRepository.GetUnreadByUserAsync(userId.Value, cancellationToken);
+                var allUnread = await _notificationRepository.GetUnreadByUserAsync(userId.Value, cancellationToken);
+                totalCount = allUnread.Count;
+                notifications = allUnread.Skip(skip).Take(take).ToList();
             }
             else
             {
+                totalCount = await _notificationRepository.GetCountByUserAsync(userId.Value, cancellationToken);
                 notifications = await _notificationRepository.GetByUserAsync(
                     userId.Value,
-                    request.Skip,
-                    request.Take,
+                    skip,
+                    take,
                     cancellationToken);
             }
+
+            int totalUnreadCount = await _notificationRepository.GetUnreadCountAsync(userId.Value, cancellationToken);
 
             var dtos = notifications.Select(n => new NotificationDto
             {
@@ -61,11 +71,11 @@ public sealed class GetMyNotificationsQueryHandler
                 LastModifiedBy = n.LastModifiedBy
             }).ToList();
 
-            return Result.Success<IReadOnlyList<NotificationDto>>(dtos);
+            return Result.Success<(IReadOnlyList<NotificationDto> Items, int TotalCount, int TotalUnreadCount)>((dtos, totalCount, totalUnreadCount));
         }
         catch (Exception ex)
         {
-            return Result.Failure<IReadOnlyList<NotificationDto>>(
+            return Result.Failure<(IReadOnlyList<NotificationDto> Items, int TotalCount, int TotalUnreadCount)>(
                 new Error("500", $"An error occurred while retrieving notifications: {ex.Message}"));
         }
     }

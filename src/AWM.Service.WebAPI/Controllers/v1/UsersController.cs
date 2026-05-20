@@ -59,10 +59,17 @@ public sealed class UsersController : BaseController
     /// <summary>
     /// Get all users with optional filters.
     /// </summary>
+    /// <param name="page">Current page number (1-based).</param>
+    /// <param name="pageSize">Number of users per page (default: 10).</param>
+    /// <param name="isActive">Optional filter by active status.</param>
+    /// <param name="search">Optional search query.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     [HttpGet]
     [RequireAccess("Users", "Read")]
-    [ProducesResponseType(typeof(IReadOnlyList<AdminUserResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(PagedResponse<AdminUserResponse>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10,
         [FromQuery] bool? isActive = null,
         [FromQuery] string? search = null,
         CancellationToken cancellationToken = default)
@@ -70,14 +77,25 @@ public sealed class UsersController : BaseController
         var query = new GetAllUsersQuery
         {
             IsActive = isActive,
-            Search = search
+            Search = search,
+            Page = page,
+            PageSize = pageSize
         };
 
         var result = await _sender.Send(query, cancellationToken);
 
         if (result.IsFailed) return HandleResultError(result.Error);
 
-        var response = result.Value.Adapt<IReadOnlyList<AdminUserResponse>>();
+        var (items, totalCount) = result.Value;
+
+        var response = new PagedResponse<AdminUserResponse>
+        {
+            Page = page,
+            PageSize = pageSize,
+            TotalCount = totalCount,
+            Items = items.Adapt<IReadOnlyList<AdminUserResponse>>()
+        };
+
         return Ok(response);
     }
 

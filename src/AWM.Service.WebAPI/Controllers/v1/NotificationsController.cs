@@ -34,8 +34,8 @@ public sealed class NotificationsController : BaseController
     /// <summary>
     /// Get notifications for the currently authenticated user.
     /// </summary>
-    /// <param name="skip">Number of notifications to skip (for pagination).</param>
-    /// <param name="take">Number of notifications to return (default: 20).</param>
+    /// <param name="page">Current page number (1-based).</param>
+    /// <param name="pageSize">Number of notifications per page (default: 20).</param>
     /// <param name="onlyUnread">If true, returns only unread notifications.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>List of notifications with unread count summary.</returns>
@@ -45,15 +45,15 @@ public sealed class NotificationsController : BaseController
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetMyNotifications(
-        [FromQuery] int skip = 0,
-        [FromQuery] int take = 20,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20,
         [FromQuery] bool? onlyUnread = null,
         CancellationToken cancellationToken = default)
     {
         var query = new GetMyNotificationsQuery
         {
-            Skip = skip,
-            Take = take,
+            Page = page,
+            PageSize = pageSize,
             OnlyUnread = onlyUnread
         };
 
@@ -62,14 +62,15 @@ public sealed class NotificationsController : BaseController
         if (result.IsFailed)
             return HandleResultError(result.Error);
 
-        var items = result.Value.Adapt<List<NotificationResponse>>();
-
-        var unreadCount = items.Count(n => !n.IsRead);
+        var (items, totalCount, totalUnreadCount) = result.Value;
 
         var response = new NotificationListResponse
         {
-            UnreadCount = unreadCount,
-            Items = items
+            UnreadCount = totalUnreadCount,
+            Page = page,
+            PageSize = pageSize,
+            TotalCount = totalCount,
+            Items = items.Adapt<List<NotificationResponse>>()
         };
 
         return Ok(response);

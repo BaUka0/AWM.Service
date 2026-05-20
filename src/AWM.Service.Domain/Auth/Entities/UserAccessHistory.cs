@@ -23,11 +23,11 @@ public class UserAccessHistory : Entity<int>, IAuditable
     public UserAccessHistory(int userId, int roleAccessId, string action, int? assignedBy = null)
     {
         if (userId <= 0)
-            throw new ArgumentException("UserId must be positive.", nameof(userId));
+            throw new DomainException("UserAccessHistory.InvalidUserId", "UserId must be positive.");
         if (roleAccessId <= 0)
-            throw new ArgumentException("RoleAccessId must be positive.", nameof(roleAccessId));
+            throw new DomainException("UserAccessHistory.InvalidRoleAccessId", "RoleAccessId must be positive.");
         if (string.IsNullOrWhiteSpace(action))
-            throw new ArgumentException("Action is required.", nameof(action));
+            throw new DomainException("UserAccessHistory.ActionRequired", "Action is required.");
 
         UserId = userId;
         RoleAccessId = roleAccessId;

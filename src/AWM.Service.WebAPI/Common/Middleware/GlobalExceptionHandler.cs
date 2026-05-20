@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using FluentValidation;
+using AWM.Service.Domain.Common;
 
 namespace AWM.Service.WebAPI.Common.Middleware;
 
@@ -21,10 +22,12 @@ public class GlobalExceptionHandler : IExceptionHandler
         Exception exception,
         CancellationToken cancellationToken)
     {
-        _logger.LogError(exception, "Unhandled exception occurred: {Message}", exception.Message);
-
         var (statusCode, title, detail) = exception switch
         {
+            DomainException de => (
+                StatusCodes.Status422UnprocessableEntity,
+                "Domain Error",
+                de.Message),
             ValidationException validationException => (
                 StatusCodes.Status400BadRequest,
                 "Validation Error",
@@ -34,6 +37,12 @@ public class GlobalExceptionHandler : IExceptionHandler
                 "Internal Server Error",
                 "An unexpected error occurred.")
         };
+
+        if (exception is DomainException)
+            _logger.LogWarning(exception, "Domain exception: {ErrorCode} - {Message}", 
+                ((DomainException)exception).ErrorCode, exception.Message);
+        else
+            _logger.LogError(exception, "Unhandled exception occurred: {Message}", exception.Message);
 
         httpContext.Response.StatusCode = statusCode;
 
@@ -46,7 +55,12 @@ public class GlobalExceptionHandler : IExceptionHandler
             Extensions = 
             {
                 ["traceId"] = httpContext.TraceIdentifier,
-                ["code"] = statusCode == StatusCodes.Status400BadRequest ? "ValidationError" : "InternalError"
+                ["code"] = statusCode switch
+                {
+                    StatusCodes.Status422UnprocessableEntity => ((DomainException)exception).ErrorCode,
+                    StatusCodes.Status400BadRequest => "ValidationError",
+                    _ => "InternalError"
+                }
             }
         };
 

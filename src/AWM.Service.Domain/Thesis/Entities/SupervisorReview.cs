@@ -27,7 +27,7 @@ public class SupervisorReview : Entity<long>, IAuditable, ISoftDeletable
     public SupervisorReview(long workId, int employeeId, string reviewText, int createdBy, string? fileStoragePath = null)
     {
         if (string.IsNullOrWhiteSpace(reviewText))
-            throw new ArgumentException("Review text is required.", nameof(reviewText));
+            throw new DomainException("SupervisorReview.ReviewTextRequired", "Review text is required.");
 
         WorkId = workId;
         EmployeeId = employeeId;
@@ -45,7 +45,7 @@ public class SupervisorReview : Entity<long>, IAuditable, ISoftDeletable
     public void UpdateReview(string reviewText, string? fileStoragePath, int modifiedBy)
     {
         if (string.IsNullOrWhiteSpace(reviewText))
-            throw new ArgumentException("Review text is required.", nameof(reviewText));
+            throw new DomainException("SupervisorReview.ReviewTextRequired", "Review text is required.");
 
         ReviewText = reviewText;
         FileStoragePath = fileStoragePath;

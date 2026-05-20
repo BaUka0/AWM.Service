@@ -38,7 +38,7 @@ public class NotificationTemplate : Entity<int>, IAuditable, ISoftDeletable
         string? bodyTemplateEn = null)
     {
         if (string.IsNullOrWhiteSpace(eventType))
-            throw new ArgumentException("Event type is required.", nameof(eventType));
+            throw new DomainException("NotificationTemplate.EventTypeRequired", "Event type is required.");
 
         EventType = eventType;
         TitleRu = titleRu;

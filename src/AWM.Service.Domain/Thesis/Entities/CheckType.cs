@@ -16,7 +16,7 @@ public class CheckType : Entity<int>
     {
         Id = id;
         if (string.IsNullOrWhiteSpace(title))
-            throw new ArgumentException("Title is required.", nameof(title));
+            throw new DomainException("CheckType.TitleRequired", "Title is required.");
 
         Title = title;
     }

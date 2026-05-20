@@ -29,6 +29,7 @@ public sealed class OrgUnitsController : BaseController
     /// Get all organizational units with optional type filter.
     /// </summary>
     /// <param name="typeId">Optional OrgUnitType ID filter (from /dictionaries/org-unit-types).</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     [HttpGet]
     [RequireAccess("Organization", "Read")]
     [ProducesResponseType(typeof(IReadOnlyList<OrgUnitResponse>), StatusCodes.Status200OK)]

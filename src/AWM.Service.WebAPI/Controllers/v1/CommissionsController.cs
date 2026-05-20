@@ -35,6 +35,7 @@ public sealed class CommissionsController : BaseController
     /// </summary>
     /// <param name="departmentId">Department ID</param>
     /// <param name="academicYearId">Academic year ID</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>List of commissions</returns>
     [HttpGet]
     [RequireAccess("Commissions", "Read")]
@@ -65,6 +66,7 @@ public sealed class CommissionsController : BaseController
     /// Get a specific commission by ID with full details including members.
     /// </summary>
     /// <param name="id">Commission ID</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Commission with member list</returns>
     [HttpGet("{id:int}")]
     [RequireAccess("Commissions", "Read")]
@@ -88,6 +90,7 @@ public sealed class CommissionsController : BaseController
     /// Create a new defense commission.
     /// </summary>
     /// <param name="request">Create commission request</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Created commission ID</returns>
     [HttpPost]
     [RequireAccess("Commissions", "Create")]
@@ -112,6 +115,7 @@ public sealed class CommissionsController : BaseController
     /// </summary>
     /// <param name="id">Commission ID</param>
     /// <param name="request">Update request</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>No content on success</returns>
     [HttpPut("{id:int}")]
     [RequireAccess("Commissions", "Update")]
@@ -137,6 +141,7 @@ public sealed class CommissionsController : BaseController
     /// </summary>
     /// <param name="id">Commission ID</param>
     /// <param name="request">Add member request</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Created member ID</returns>
     [HttpPost("{id:int}/members")]
     [RequireAccess("Commissions", "Create")]
@@ -162,6 +167,7 @@ public sealed class CommissionsController : BaseController
     /// </summary>
     /// <param name="id">Commission ID</param>
     /// <param name="memberId">Member record ID to remove</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>No content on success</returns>
     [HttpDelete("{id:int}/members/{memberId:int}")]
     [RequireAccess("Commissions", "Delete")]
@@ -188,6 +194,7 @@ public sealed class CommissionsController : BaseController
     /// Delete a commission.
     /// </summary>
     /// <param name="id">Commission ID</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>No content on success</returns>
     [HttpDelete("{id:int}")]
     [RequireAccess("Commissions", "Delete")]

@@ -73,15 +73,15 @@ public class StudentWork : AggregateRoot<long>, IAuditable, ISoftDeletable
     {
         // Check if already a participant
         if (_participants.Any(p => p.StudentId == studentId))
-            throw new InvalidOperationException("Student is already a participant.");
+            throw new DomainException("StudentWork.AlreadyParticipant", "Student is already a participant.");
 
         // Check max participants (5)
         if (_participants.Count >= 5)
-            throw new InvalidOperationException("Maximum 5 participants allowed.");
+            throw new DomainException("StudentWork.MaxParticipantsExceeded", "Maximum 5 participants allowed.");
 
         // Ensure only one leader
         if (roleId == RoleLeader && _participants.Any(p => p.RoleId == RoleLeader))
-            throw new InvalidOperationException("Work already has a leader.");
+            throw new DomainException("StudentWork.AlreadyHasLeader", "Work already has a leader.");
 
         var participant = new WorkParticipant(Id, studentId, roleId);
         _participants.Add(participant);
@@ -96,13 +96,13 @@ public class StudentWork : AggregateRoot<long>, IAuditable, ISoftDeletable
     public void RemoveParticipant(int studentId)
     {
         var participant = _participants.FirstOrDefault(p => p.StudentId == studentId)
-            ?? throw new InvalidOperationException("Student is not a participant of this work.");
+            ?? throw new DomainException("StudentWork.NotParticipant", "Student is not a participant of this work.");
 
         if (_participants.Count == 1)
-            throw new InvalidOperationException("Cannot remove the last participant from the work.");
+            throw new DomainException("StudentWork.CannotRemoveLastParticipant", "Cannot remove the last participant from the work.");
 
         if (participant.RoleId == RoleLeader && _participants.Count > 1)
-            throw new InvalidOperationException("Cannot remove the leader while other participants exist. Transfer leadership first.");
+            throw new DomainException("StudentWork.CannotRemoveLeader", "Cannot remove the leader while other participants exist. Transfer leadership first.");
 
         _participants.Remove(participant);
     }
@@ -153,7 +153,7 @@ public class StudentWork : AggregateRoot<long>, IAuditable, ISoftDeletable
     public void RemoveAttachment(long attachmentId, int removedBy)
     {
         var attachment = _attachments.FirstOrDefault(a => a.Id == attachmentId)
-            ?? throw new InvalidOperationException($"Attachment with ID {attachmentId} was not found on this work.");
+            ?? throw new DomainException("StudentWork.AttachmentNotFound", $"Attachment with ID {attachmentId} was not found on this work.");
 
         _attachments.Remove(attachment);
         LastModifiedAt = DateTime.UtcNow;
@@ -205,11 +205,11 @@ public class StudentWork : AggregateRoot<long>, IAuditable, ISoftDeletable
         string? documentPath = null)
     {
         var check = _qualityChecks.FirstOrDefault(c => c.Id == checkId)
-            ?? throw new InvalidOperationException(
+            ?? throw new DomainException("StudentWork.QualityCheckNotFound",
                 $"QualityCheck with ID {checkId} was not found on this work.");
 
         if (check.AssignedExpertId.HasValue)
-            throw new InvalidOperationException(
+            throw new DomainException("StudentWork.QualityCheckAlreadyRecorded",
                 "This quality check result has already been recorded by an expert.");
 
         check.SetResult(expertId, isPassed, resultValue, comment, documentPath);
@@ -263,7 +263,7 @@ public class StudentWork : AggregateRoot<long>, IAuditable, ISoftDeletable
     /// </summary>
     public void SetRepositoryUrl(string repositoryUrl, int modifiedBy)
     {
-        RepositoryUrl = repositoryUrl ?? throw new ArgumentNullException(nameof(repositoryUrl));
+        RepositoryUrl = repositoryUrl ?? throw new DomainException("StudentWork.RepositoryUrlRequired", "Repository URL is required.");
         LastModifiedBy = modifiedBy;
         LastModifiedAt = DateTime.UtcNow;
     }

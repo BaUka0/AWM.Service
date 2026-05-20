@@ -26,9 +26,9 @@ public class UserAccess : Entity<int>, IAuditable
     public UserAccess(int userId, int roleAccessId, int? assignedBy = null)
     {
         if (userId <= 0)
-            throw new ArgumentException("UserId must be positive.", nameof(userId));
+            throw new DomainException("UserAccess.InvalidUserId", "UserId must be positive.");
         if (roleAccessId <= 0)
-            throw new ArgumentException("RoleAccessId must be positive.", nameof(roleAccessId));
+            throw new DomainException("UserAccess.InvalidRoleAccessId", "RoleAccessId must be positive.");
 
         UserId = userId;
         RoleAccessId = roleAccessId;

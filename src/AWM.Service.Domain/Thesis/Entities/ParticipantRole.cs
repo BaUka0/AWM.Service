@@ -16,7 +16,7 @@ public class ParticipantRole : Entity<int>
     {
         Id = id;
         if (string.IsNullOrWhiteSpace(title))
-            throw new ArgumentException("Title is required.", nameof(title));
+            throw new DomainException("ParticipantRole.TitleRequired", "Title is required.");
 
         Title = title;
     }

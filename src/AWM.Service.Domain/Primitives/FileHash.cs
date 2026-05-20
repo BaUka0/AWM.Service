@@ -23,15 +23,15 @@ public sealed partial class FileHash : ValueObject
     public static FileHash Create(string hash)
     {
         if (string.IsNullOrWhiteSpace(hash))
-            throw new ArgumentException("Hash cannot be empty.", nameof(hash));
+            throw new DomainException("FileHash.Empty", "Hash cannot be empty.");
 
         hash = hash.Trim();
         
         if (hash.Length != Sha256Length)
-            throw new ArgumentException($"Hash must be {Sha256Length} characters (SHA-256).", nameof(hash));
+            throw new DomainException("FileHash.InvalidLength", $"Hash must be {Sha256Length} characters (SHA-256).");
 
         if (!HexPattern().IsMatch(hash))
-            throw new ArgumentException("Hash must contain only hexadecimal characters.", nameof(hash));
+            throw new DomainException("FileHash.InvalidCharacters", "Hash must contain only hexadecimal characters.");
 
         return new FileHash(hash);
     }

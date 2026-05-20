@@ -8,7 +8,7 @@ using MediatR;
 /// Query to get all student works in a department for an academic year.
 /// Used by department administrators and secretaries.
 /// </summary>
-public sealed record GetStudentWorksByDepartmentQuery : IRequest<Result<IReadOnlyList<StudentWorkDto>>>
+public sealed record GetStudentWorksByDepartmentQuery : IRequest<Result<(IReadOnlyList<StudentWorkDto> Items, int TotalCount)>>
 {
     /// <summary>
     /// Department ID.
@@ -19,4 +19,14 @@ public sealed record GetStudentWorksByDepartmentQuery : IRequest<Result<IReadOnl
     /// Academic year ID.
     /// </summary>
     public int AcademicYearId { get; init; }
+
+    /// <summary>
+    /// Page number (1-based).
+    /// </summary>
+    public int Page { get; init; } = 1;
+
+    /// <summary>
+    /// Items per page.
+    /// </summary>
+    public int PageSize { get; init; } = 10;
 }

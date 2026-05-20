@@ -9,7 +9,7 @@ using MediatR;
 /// Handler for GetStudentWorksBySupervisorQuery.
 /// </summary>
 public sealed class GetStudentWorksBySupervisorQueryHandler
-    : IRequestHandler<GetStudentWorksBySupervisorQuery, Result<IReadOnlyList<StudentWorkDto>>>
+    : IRequestHandler<GetStudentWorksBySupervisorQuery, Result<(IReadOnlyList<StudentWorkDto> Items, int TotalCount)>>
 {
     private readonly IStudentWorkRepository _workRepository;
 
@@ -18,7 +18,7 @@ public sealed class GetStudentWorksBySupervisorQueryHandler
         _workRepository = workRepository;
     }
 
-    public async Task<Result<IReadOnlyList<StudentWorkDto>>> Handle(
+    public async Task<Result<(IReadOnlyList<StudentWorkDto> Items, int TotalCount)>> Handle(
         GetStudentWorksBySupervisorQuery request,
         CancellationToken cancellationToken)
     {
@@ -31,6 +31,12 @@ public sealed class GetStudentWorksBySupervisorQueryHandler
             .Select(StudentWorkDto.FromEntity)
             .ToList();
 
-        return Result.Success<IReadOnlyList<StudentWorkDto>>(dtos);
+        var totalCount = dtos.Count;
+        var paginatedDtos = dtos
+            .Skip((request.Page - 1) * request.PageSize)
+            .Take(request.PageSize)
+            .ToList();
+
+        return Result.Success<(IReadOnlyList<StudentWorkDto> Items, int TotalCount)>((paginatedDtos, totalCount));
     }
 }

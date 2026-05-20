@@ -21,6 +21,7 @@ using AWM.Service.Application.Features.Thesis.Works.Queries.GetStudentWorksBySup
 using AWM.Service.Domain.Common;
 using AWM.Service.WebAPI.Authorization;
 using AWM.Service.WebAPI.Common.Contracts.Requests.Thesis;
+using AWM.Service.WebAPI.Common.Contracts.Responses;
 using AWM.Service.WebAPI.Common.Contracts.Responses.Thesis;
 using Mapster;
 using MediatR;
@@ -47,48 +48,89 @@ public sealed class StudentWorksController : BaseController
     /// </summary>
     /// <param name="supervisorId">Supervisor ID</param>
     /// <param name="academicYearId">Academic year ID</param>
+    /// <param name="page">Current page number (1-based).</param>
+    /// <param name="pageSize">Number of items per page (default: 10).</param>
     /// <param name="cancellationToken">Cancellation token</param>
-    /// <returns>List of works</returns>
+    /// <returns>Paginated list of works</returns>
     [HttpGet("supervisor/{supervisorId:int}")]
     [RequireAccess("StudentWorks", "Read")]
-    [ProducesResponseType(typeof(IReadOnlyList<StudentWorkResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(PagedResponse<StudentWorkResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetBySupervisor(
         int supervisorId,
         [FromQuery] int? academicYearId,
-        CancellationToken cancellationToken)
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10,
+        CancellationToken cancellationToken = default)
     {
         var result = await _sender.Send(
-            new GetStudentWorksBySupervisorQuery { SupervisorId = supervisorId, AcademicYearId = academicYearId ?? 0 },
+            new GetStudentWorksBySupervisorQuery
+            {
+                SupervisorId = supervisorId,
+                AcademicYearId = academicYearId ?? 0,
+                Page = page,
+                PageSize = pageSize
+            },
             cancellationToken);
 
-        return result.IsSuccess
-            ? Ok(result.Value.Adapt<IReadOnlyList<StudentWorkResponse>>())
-            : HandleResultError(result.Error);
+        if (result.IsFailed) return HandleResultError(result.Error);
+
+        var (items, totalCount) = result.Value;
+
+        var response = new PagedResponse<StudentWorkResponse>
+        {
+            Page = page,
+            PageSize = pageSize,
+            TotalCount = totalCount,
+            Items = items.Adapt<IReadOnlyList<StudentWorkResponse>>()
+        };
+
+        return Ok(response);
     }
 
     /// <summary>
     /// Get the current supervisor's supervised works ("My Students").
     /// </summary>
+    /// <param name="academicYearId">Academic year ID</param>
+    /// <param name="page">Current page number (1-based).</param>
+    /// <param name="pageSize">Number of items per page (default: 10).</param>
+    /// <param name="cancellationToken">Cancellation token</param>
     [HttpGet("my-supervised")]
     [RequireAccess("StudentWorks", "Read")]
-    [ProducesResponseType(typeof(IReadOnlyList<SupervisedWorkResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(PagedResponse<SupervisedWorkResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetMySupervisedWorks(
         [FromQuery] int? academicYearId,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10,
         CancellationToken cancellationToken = default)
     {
-        var query = new GetMySupervisedWorksQuery { AcademicYearId = academicYearId };
+        var query = new GetMySupervisedWorksQuery
+        {
+            AcademicYearId = academicYearId,
+            Page = page,
+            PageSize = pageSize
+        };
         var result = await _sender.Send(query, cancellationToken);
 
         if (result.IsFailed)
             return HandleResultError(result.Error);
 
-        return Ok(result.Value.Adapt<IReadOnlyList<SupervisedWorkResponse>>());
+        var (items, totalCount) = result.Value;
+
+        var response = new PagedResponse<SupervisedWorkResponse>
+        {
+            Page = page,
+            PageSize = pageSize,
+            TotalCount = totalCount,
+            Items = items.Adapt<IReadOnlyList<SupervisedWorkResponse>>()
+        };
+
+        return Ok(response);
     }
 
     /// <summary>
@@ -120,23 +162,29 @@ public sealed class StudentWorksController : BaseController
     /// </summary>
     /// <param name="departmentId">Department ID</param>
     /// <param name="academicYearId">Academic year ID</param>
+    /// <param name="page">Current page number (1-based).</param>
+    /// <param name="pageSize">Number of items per page (default: 10).</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>List of works</returns>
     [HttpGet("by-department")]
     [RequireAccess("StudentWorks", "Read")]
-    [ProducesResponseType(typeof(IReadOnlyList<StudentWorkResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(PagedResponse<StudentWorkResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetByDepartment(
         [FromQuery] int departmentId,
         [FromQuery] int academicYearId,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10,
         CancellationToken cancellationToken = default)
     {
         var query = new GetStudentWorksByDepartmentQuery
         {
             DepartmentId = departmentId,
-            AcademicYearId = academicYearId
+            AcademicYearId = academicYearId,
+            Page = page,
+            PageSize = pageSize
         };
 
         var result = await _sender.Send(query, cancellationToken);
@@ -144,31 +192,58 @@ public sealed class StudentWorksController : BaseController
         if (result.IsFailed)
             return HandleResultError(result.Error);
 
-        var response = result.Value.Adapt<IReadOnlyList<StudentWorkResponse>>();
+        var (items, totalCount) = result.Value;
+
+        var response = new PagedResponse<StudentWorkResponse>
+        {
+            Page = page,
+            PageSize = pageSize,
+            TotalCount = totalCount,
+            Items = items.Adapt<IReadOnlyList<StudentWorkResponse>>()
+        };
+
         return Ok(response);
     }
 
     /// <summary>
     /// Get the current student's own works ("My Works").
     /// </summary>
+    /// <param name="page">Current page number (1-based).</param>
+    /// <param name="pageSize">Number of items per page (default: 10).</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>List of student's works</returns>
     [HttpGet("my")]
     [RequireAccess("StudentWorks", "Read")]
-    [ProducesResponseType(typeof(IReadOnlyList<StudentWorkResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(PagedResponse<StudentWorkResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> GetMyWorks(CancellationToken cancellationToken = default)
+    public async Task<IActionResult> GetMyWorks(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10,
+        CancellationToken cancellationToken = default)
     {
-        var query = new GetMyWorkQuery();
+        var query = new GetMyWorkQuery
+        {
+            Page = page,
+            PageSize = pageSize
+        };
 
         var result = await _sender.Send(query, cancellationToken);
 
         if (result.IsFailed)
             return HandleResultError(result.Error);
 
-        var response = result.Value.Adapt<IReadOnlyList<StudentWorkResponse>>();
+        var (items, totalCount) = result.Value;
+
+        var response = new PagedResponse<StudentWorkResponse>
+        {
+            Page = page,
+            PageSize = pageSize,
+            TotalCount = totalCount,
+            Items = items.Adapt<IReadOnlyList<StudentWorkResponse>>()
+        };
+
         return Ok(response);
     }
 

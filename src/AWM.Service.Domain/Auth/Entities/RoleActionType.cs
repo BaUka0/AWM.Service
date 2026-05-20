@@ -20,9 +20,9 @@ public class RoleActionType : Entity<int>
     public RoleActionType(string code, string nameRu, string nameKz, string nameEn)
     {
         if (string.IsNullOrWhiteSpace(code))
-            throw new ArgumentException("Action type code is required.", nameof(code));
+            throw new DomainException("RoleActionType.CodeRequired", "Action type code is required.");
         if (string.IsNullOrWhiteSpace(nameRu))
-            throw new ArgumentException("Russian name is required.", nameof(nameRu));
+            throw new DomainException("RoleActionType.NameRuRequired", "Russian name is required.");
 
         Code = code.ToUpperInvariant();
         NameRu = nameRu;

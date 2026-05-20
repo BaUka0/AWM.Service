@@ -33,11 +33,11 @@ public class EvaluationCriteria : Entity<int>, IAuditable, ISoftDeletable
         int? orgUnitId = null)
     {
         if (string.IsNullOrWhiteSpace(criteriaName))
-            throw new ArgumentException("Criteria name is required.", nameof(criteriaName));
+            throw new DomainException("EvaluationCriteria.NameRequired", "Criteria name is required.");
         if (maxScore <= 0)
-            throw new ArgumentException("Max score must be positive.", nameof(maxScore));
+            throw new DomainException("EvaluationCriteria.MaxScoreMustBePositive", "Max score must be positive.");
         if (weight <= 0)
-            throw new ArgumentException("Weight must be positive.", nameof(weight));
+            throw new DomainException("EvaluationCriteria.WeightMustBePositive", "Weight must be positive.");
 
         WorkTypeId = workTypeId;
         OrgUnitId = orgUnitId;
@@ -56,11 +56,11 @@ public class EvaluationCriteria : Entity<int>, IAuditable, ISoftDeletable
     public void Update(string criteriaName, int maxScore, decimal weight, int modifiedBy)
     {
         if (string.IsNullOrWhiteSpace(criteriaName))
-            throw new ArgumentException("Criteria name is required.", nameof(criteriaName));
+            throw new DomainException("EvaluationCriteria.NameRequired", "Criteria name is required.");
         if (maxScore <= 0)
-            throw new ArgumentException("Max score must be positive.", nameof(maxScore));
+            throw new DomainException("EvaluationCriteria.MaxScoreMustBePositive", "Max score must be positive.");
         if (weight <= 0)
-            throw new ArgumentException("Weight must be positive.", nameof(weight));
+            throw new DomainException("EvaluationCriteria.WeightMustBePositive", "Weight must be positive.");
 
         CriteriaName = criteriaName;
         MaxScore = maxScore;

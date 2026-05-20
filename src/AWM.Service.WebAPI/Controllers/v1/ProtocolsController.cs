@@ -30,6 +30,7 @@ public sealed class ProtocolsController : BaseController
     /// Get a protocol by its ID.
     /// </summary>
     /// <param name="protocolId">Protocol ID</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Protocol details</returns>
     [HttpGet("{protocolId:long}")]
     [RequireAccess("FinalDefense", "Read")]
@@ -56,6 +57,7 @@ public sealed class ProtocolsController : BaseController
     /// Generate a defense session protocol (Secretary action).
     /// </summary>
     /// <param name="request">Protocol generation details</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Created protocol ID</returns>
     [HttpPost]
     [RequireAccess("Defense_Protocol", "Create")]

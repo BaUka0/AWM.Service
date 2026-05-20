@@ -35,7 +35,7 @@ public class PreDefenseAttempt : Entity<long>, IAuditable
         int attendanceStatusId = StatusAttended)
     {
         if (preDefenseNumber < 1 || preDefenseNumber > 3)
-            throw new ArgumentException("Pre-defense number must be 1, 2, or 3.", nameof(preDefenseNumber));
+            throw new DomainException("PreDefenseAttempt.InvalidNumber", "Pre-defense number must be 1, 2, or 3.");
 
         WorkId = workId;
         PreDefenseNumber = preDefenseNumber;
@@ -54,7 +54,7 @@ public class PreDefenseAttempt : Entity<long>, IAuditable
     public void RecordResult(decimal averageScore, bool isPassed, int modifiedBy)
     {
         if (AttendanceStatusId != StatusAttended)
-            throw new InvalidOperationException("Cannot record result for non-attended attempt.");
+            throw new DomainException("PreDefenseAttempt.NotAttended", "Cannot record result for non-attended attempt.");
 
         AverageScore = averageScore;
         IsPassed = isPassed;

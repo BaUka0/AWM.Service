@@ -33,6 +33,7 @@ public sealed class EvaluationController : BaseController
     /// </summary>
     /// <param name="workTypeId">Work type ID</param>
     /// <param name="departmentId">Optional department ID</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>List of evaluation criteria</returns>
     [HttpGet("criteria")]
     [RequireAccess("FinalDefense", "Read")]
@@ -62,6 +63,7 @@ public sealed class EvaluationController : BaseController
     /// Get all grades for a specific defense schedule (slot).
     /// </summary>
     /// <param name="scheduleId">Schedule ID</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>List of grades</returns>
     [HttpGet("schedule/{scheduleId:long}/grades")]
     [RequireAccess("FinalDefense", "Read")]
@@ -88,6 +90,7 @@ public sealed class EvaluationController : BaseController
     /// </summary>
     /// <param name="scheduleId">Schedule ID</param>
     /// <param name="request">Grade details</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Created grade ID</returns>
     [HttpPost("schedule/{scheduleId:long}/grades")]
     [RequireAccess("Defense_Grading", "Update")]
@@ -115,6 +118,7 @@ public sealed class EvaluationController : BaseController
     /// Locks the associated protocol — no more changes allowed.
     /// </summary>
     /// <param name="scheduleId">Schedule ID</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>No content on success</returns>
     [HttpPut("schedule/{scheduleId:long}/finalize")]
     [RequireAccess("FinalDefense", "Update")]

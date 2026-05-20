@@ -26,7 +26,7 @@ public class State : Entity<int>, IAuditable, ISoftDeletable
     public State(int workTypeId, string systemName, int createdBy = 0, string? displayName = null, bool isFinal = false)
     {
         if (string.IsNullOrWhiteSpace(systemName))
-            throw new ArgumentException("System name is required.", nameof(systemName));
+            throw new DomainException("State.SystemNameRequired", "System name is required.");
 
         WorkTypeId = workTypeId;
         SystemName = systemName;

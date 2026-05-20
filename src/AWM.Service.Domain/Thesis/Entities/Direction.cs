@@ -57,7 +57,7 @@ public class Direction : AggregateRoot<long>, IAuditable, ISoftDeletable
         string? descriptionEn = null)
     {
         if (string.IsNullOrWhiteSpace(titleRu))
-            throw new ArgumentException("Russian title is required.", nameof(titleRu));
+            throw new DomainException("Direction.TitleRuRequired", "Russian title is required.");
 
         OrgUnitId = orgUnitId;
         EmployeeId = employeeId;
@@ -99,7 +99,7 @@ public class Direction : AggregateRoot<long>, IAuditable, ISoftDeletable
         string? descriptionEn)
     {
         if (string.IsNullOrWhiteSpace(titleRu))
-            throw new ArgumentException("Russian title is required.", nameof(titleRu));
+            throw new DomainException("Direction.TitleRuRequired", "Russian title is required.");
 
         TitleRu = titleRu;
         TitleKz = titleKz;
@@ -152,7 +152,7 @@ public class Direction : AggregateRoot<long>, IAuditable, ISoftDeletable
     public void RequestRevision(int revisionStateId, int reviewedBy, string comment)
     {
         if (string.IsNullOrWhiteSpace(comment))
-            throw new ArgumentException("Comment is required for revision request.", nameof(comment));
+            throw new DomainException("Direction.RevisionCommentRequired", "Comment is required for revision request.");
 
         CurrentStateId = revisionStateId;
         ReviewedAt = DateTime.UtcNow;

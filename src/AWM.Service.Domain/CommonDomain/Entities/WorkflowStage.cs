@@ -16,7 +16,7 @@ public class WorkflowStage : Entity<int>
     public WorkflowStage(string name, int orderBy)
     {
         if (string.IsNullOrWhiteSpace(name))
-            throw new ArgumentException("Name is required.", nameof(name));
+            throw new DomainException("WorkflowStage.NameRequired", "Name is required.");
 
         Name = name;
         OrderBy = orderBy;
