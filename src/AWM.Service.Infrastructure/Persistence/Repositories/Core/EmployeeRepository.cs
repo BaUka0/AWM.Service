@@ -8,6 +8,8 @@ public class EmployeeRepository : IEmployeeRepository
 {
     private readonly UniversityDbContext _context;
 
+    private const int MaxQuerySize = 1000;
+
     public EmployeeRepository(UniversityDbContext context)
     {
         _context = context;
@@ -28,6 +30,7 @@ public class EmployeeRepository : IEmployeeRepository
     {
         return await _context.Employees
             .Where(e => ids.Contains(e.Id))
+            .Take(MaxQuerySize)
             .ToListAsync(cancellationToken);
     }
 
@@ -35,6 +38,7 @@ public class EmployeeRepository : IEmployeeRepository
     {
         return await _context.Employees
             .Where(e => e.IsAdvisor)
+            .Take(MaxQuerySize)
             .ToListAsync(cancellationToken);
     }
 
@@ -46,6 +50,7 @@ public class EmployeeRepository : IEmployeeRepository
             .Include(e => e.Positions)
                 .ThenInclude(p => p.OrgUnit)
             .Where(e => e.Positions.Any(ep => ep.OrgUnitId == departmentId))
+            .Take(MaxQuerySize)
             .ToListAsync(cancellationToken);
     }
 
@@ -56,6 +61,7 @@ public class EmployeeRepository : IEmployeeRepository
                 .ThenInclude(p => p.Position)
             .Include(e => e.Positions)
                 .ThenInclude(p => p.OrgUnit)
+            .Take(MaxQuerySize)
             .ToListAsync(cancellationToken);
     }
 
@@ -71,6 +77,6 @@ public class EmployeeRepository : IEmployeeRepository
 
     public async Task<IReadOnlyList<Employee>> GetAllAsync(CancellationToken cancellationToken = default)
     {
-        return await _context.Employees.ToListAsync(cancellationToken);
+        return await _context.Employees.Take(MaxQuerySize).ToListAsync(cancellationToken);
     }
 }

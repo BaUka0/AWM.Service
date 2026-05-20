@@ -17,6 +17,7 @@ public sealed class GetMyWorkProgressQueryHandler
     private readonly IEmployeeRepository _EmployeeRepository;
     private readonly IUserRepository _userRepository;
     private readonly IWorkflowRepository _workflowRepository;
+    private readonly ISpecialityCheckTypeRepository _specialityCheckTypeRepository;
 
     public GetMyWorkProgressQueryHandler(
         ICurrentUserProvider currentUserProvider,
@@ -26,7 +27,8 @@ public sealed class GetMyWorkProgressQueryHandler
         IDirectionRepository directionRepository,
         IEmployeeRepository EmployeeRepository,
         IUserRepository userRepository,
-        IWorkflowRepository workflowRepository)
+        IWorkflowRepository workflowRepository,
+        ISpecialityCheckTypeRepository specialityCheckTypeRepository)
     {
         _currentUserProvider = currentUserProvider ?? throw new ArgumentNullException(nameof(currentUserProvider));
         _studentRepository = studentRepository ?? throw new ArgumentNullException(nameof(studentRepository));
@@ -36,6 +38,7 @@ public sealed class GetMyWorkProgressQueryHandler
         _EmployeeRepository = EmployeeRepository ?? throw new ArgumentNullException(nameof(EmployeeRepository));
         _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
         _workflowRepository = workflowRepository ?? throw new ArgumentNullException(nameof(workflowRepository));
+        _specialityCheckTypeRepository = specialityCheckTypeRepository ?? throw new ArgumentNullException(nameof(specialityCheckTypeRepository));
     }
 
     public async Task<Result<StudentWorkProgressDto?>> Handle(
@@ -215,6 +218,13 @@ public sealed class GetMyWorkProgressQueryHandler
             }
         }
 
+        // Check eligibility for defense by fetching mandatory checks for the student's speciality
+        var mandatoryCheckTypeIds = (await _specialityCheckTypeRepository
+            .GetBySpecialityAsync(student.SpecialityId, cancellationToken))
+            .Select(s => s.CheckTypeId)
+            .ToList();
+        var isEligible = detailedWork.IsEligibleForDefense(mandatoryCheckTypeIds);
+
         var dto = new StudentWorkProgressDto
         {
             Id = detailedWork.Id,
@@ -225,6 +235,7 @@ public sealed class GetMyWorkProgressQueryHandler
             CurrentStateName = state?.DisplayName ?? state?.SystemName,
             IsDefended = detailedWork.IsDefended,
             FinalGrade = detailedWork.FinalGrade,
+            IsEligibleForDefense = isEligible,
             CreatedAt = detailedWork.CreatedAt,
             RepositoryUrl = detailedWork.RepositoryUrl,
             TopicTitle = topic is not null

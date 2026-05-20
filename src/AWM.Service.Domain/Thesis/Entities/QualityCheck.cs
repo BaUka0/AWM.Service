@@ -3,7 +3,7 @@ namespace AWM.Service.Domain.Thesis.Entities;
 using AWM.Service.Domain.Common;
 
 /// <summary>
-/// QualityCheck entity - results of quality checks (NormControl, SoftwareCheck, AntiPlagiarism).
+/// QualityCheck entity - results of quality checks (e.g. NormControl, SoftwareCheck, AntiPlagiarism).
 /// Supports retry cycle with attempt numbering.
 /// </summary>
 public class QualityCheck : Entity<long>, IAuditable
@@ -22,8 +22,8 @@ public class QualityCheck : Entity<long>, IAuditable
     public DateTime? LastModifiedAt { get; private set; }
     public int? LastModifiedBy { get; private set; }
 
-    // Seeded reference IDs
-    private const int CheckTypeAntiPlagiarism = 3;
+    // Navigation properties
+    public CheckType? CheckType { get; private set; }
 
     // Legacy field
     public DateTime CheckedAt => CreatedAt;
@@ -74,15 +74,15 @@ public class QualityCheck : Entity<long>, IAuditable
     }
 
     /// <summary>
-    /// Checks if this is an anti-plagiarism check with percentage result.
+    /// Checks if this check has a numeric result (e.g. percentage).
     /// </summary>
-    public bool HasPercentageResult => CheckTypeId == CheckTypeAntiPlagiarism && ResultValue.HasValue;
+    public bool HasNumericResult => ResultValue.HasValue;
 
     /// <summary>
-    /// Gets the plagiarism percentage (for AntiPlagiarism checks).
+    /// Gets the numeric result (e.g. percentage).
     /// </summary>
-    public decimal? GetPlagiarismPercentage()
+    public decimal? GetNumericResult()
     {
-        return CheckTypeId == CheckTypeAntiPlagiarism ? ResultValue : null;
+        return ResultValue;
     }
 }

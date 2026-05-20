@@ -8,6 +8,8 @@ public class UserReadOnlyRepository : IUserReadOnlyRepository
 {
     private readonly UniversityDbContext _context;
 
+    private const int MaxQuerySize = 1000;
+
     public UserReadOnlyRepository(UniversityDbContext context)
     {
         _context = context;
@@ -22,6 +24,7 @@ public class UserReadOnlyRepository : IUserReadOnlyRepository
     {
         return await _context.Users
             .Where(u => ids.Contains(u.Id))
+            .Take(MaxQuerySize)
             .ToListAsync(cancellationToken);
     }
 
@@ -39,6 +42,6 @@ public class UserReadOnlyRepository : IUserReadOnlyRepository
 
     public async Task<IReadOnlyList<User>> GetAllAsync(CancellationToken cancellationToken = default)
     {
-        return await _context.Users.ToListAsync(cancellationToken);
+        return await _context.Users.Take(MaxQuerySize).ToListAsync(cancellationToken);
     }
 }

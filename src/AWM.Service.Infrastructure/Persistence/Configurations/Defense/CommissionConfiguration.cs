@@ -48,12 +48,6 @@ public class CommissionConfiguration : SoftDeletableEntityConfiguration<Commissi
             .HasConstraintName("FK_Commissions_Dept")
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne<CommissionType>()
-            .WithMany()
-            .HasForeignKey(e => e.CommissionTypeId)
-            .HasConstraintName("FK_Commissions_Type")
-            .OnDelete(DeleteBehavior.Restrict);
-
         // Navigation to members
         builder.HasMany(e => e.Members)
             .WithOne()

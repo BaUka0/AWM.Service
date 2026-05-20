@@ -8,6 +8,8 @@ public class UserRepository : IUserRepository
 {
     private readonly UniversityDbContext _context;
 
+    private const int MaxQuerySize = 1000;
+
     public UserRepository(UniversityDbContext context)
     {
         _context = context;
@@ -39,13 +41,14 @@ public class UserRepository : IUserRepository
 
     public async Task<IReadOnlyList<User>> GetAllAsync(CancellationToken cancellationToken = default)
     {
-        return await _context.Users.ToListAsync(cancellationToken);
+        return await _context.Users.Take(MaxQuerySize).ToListAsync(cancellationToken);
     }
 
     public async Task<IReadOnlyList<User>> GetByIdsAsync(IEnumerable<int> ids, CancellationToken cancellationToken = default)
     {
         return await _context.Users
             .Where(u => ids.Contains(u.Id))
+            .Take(MaxQuerySize)
             .ToListAsync(cancellationToken);
     }
 }

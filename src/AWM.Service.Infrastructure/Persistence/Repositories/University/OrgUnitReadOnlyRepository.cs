@@ -12,6 +12,8 @@ public class OrgUnitReadOnlyRepository : IOrgUnitReadOnlyRepository
     private const int TypeDepartment = 1;
     private const int TypeInstitute = 2;
 
+    private const int MaxQuerySize = 1000;
+
     public OrgUnitReadOnlyRepository(UniversityDbContext context)
     {
         _context = context;
@@ -26,6 +28,7 @@ public class OrgUnitReadOnlyRepository : IOrgUnitReadOnlyRepository
     {
         return await _context.OrgUnits
             .Where(o => ids.Contains(o.Id))
+            .Take(MaxQuerySize)
             .ToListAsync(cancellationToken);
     }
 
@@ -33,6 +36,7 @@ public class OrgUnitReadOnlyRepository : IOrgUnitReadOnlyRepository
     {
         return await _context.OrgUnits
             .Where(o => o.TypeId == typeId && !o.Deleted)
+            .Take(MaxQuerySize)
             .ToListAsync(cancellationToken);
     }
 
@@ -40,6 +44,7 @@ public class OrgUnitReadOnlyRepository : IOrgUnitReadOnlyRepository
     {
         return await _context.OrgUnits
             .Where(o => o.TypeId == TypeDepartment && !o.Deleted)
+            .Take(MaxQuerySize)
             .ToListAsync(cancellationToken);
     }
 
@@ -47,6 +52,7 @@ public class OrgUnitReadOnlyRepository : IOrgUnitReadOnlyRepository
     {
         return await _context.OrgUnits
             .Where(o => o.TypeId == TypeInstitute && !o.Deleted)
+            .Take(MaxQuerySize)
             .ToListAsync(cancellationToken);
     }
 
@@ -54,6 +60,7 @@ public class OrgUnitReadOnlyRepository : IOrgUnitReadOnlyRepository
     {
         return await _context.OrgUnits
             .Where(o => o.ParentId == parentId && !o.Deleted)
+            .Take(MaxQuerySize)
             .ToListAsync(cancellationToken);
     }
 
@@ -61,6 +68,7 @@ public class OrgUnitReadOnlyRepository : IOrgUnitReadOnlyRepository
     {
         return await _context.OrgUnits
             .Where(o => !o.Deleted)
+            .Take(MaxQuerySize)
             .ToListAsync(cancellationToken);
     }
 
@@ -68,6 +76,7 @@ public class OrgUnitReadOnlyRepository : IOrgUnitReadOnlyRepository
     {
         return await _context.OrgUnitTypes
             .AsNoTracking()
+            .Take(MaxQuerySize)
             .ToListAsync(cancellationToken);
     }
 }

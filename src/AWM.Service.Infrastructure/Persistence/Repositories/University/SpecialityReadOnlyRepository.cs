@@ -8,6 +8,8 @@ public class SpecialityReadOnlyRepository : ISpecialityReadOnlyRepository
 {
     private readonly UniversityDbContext _context;
 
+    private const int MaxQuerySize = 1000;
+
     public SpecialityReadOnlyRepository(UniversityDbContext context)
     {
         _context = context;
@@ -22,6 +24,7 @@ public class SpecialityReadOnlyRepository : ISpecialityReadOnlyRepository
     {
         return await _context.Specialities
             .Where(s => s.LevelId == levelId && !s.Deleted)
+            .Take(MaxQuerySize)
             .ToListAsync(cancellationToken);
     }
 
@@ -29,6 +32,7 @@ public class SpecialityReadOnlyRepository : ISpecialityReadOnlyRepository
     {
         return await _context.Specialities
             .Where(s => !s.Deleted)
+            .Take(MaxQuerySize)
             .ToListAsync(cancellationToken);
     }
 }

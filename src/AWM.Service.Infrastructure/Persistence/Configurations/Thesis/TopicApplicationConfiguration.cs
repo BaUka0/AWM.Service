@@ -59,12 +59,6 @@ public class TopicApplicationConfiguration : SoftDeletableEntityConfiguration<To
             .HasConstraintName("FK_Applications_Student")
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne<ApplicationStatus>()
-            .WithMany()
-            .HasForeignKey(e => e.StatusId)
-            .HasConstraintName("FK_Applications_Status")
-            .OnDelete(DeleteBehavior.Restrict);
-
         // Indexes
         builder.HasIndex(e => new { e.StatusId, e.TopicId })
             .HasDatabaseName("IX_Applications_Status");

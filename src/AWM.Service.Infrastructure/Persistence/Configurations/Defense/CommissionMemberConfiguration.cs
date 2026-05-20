@@ -43,12 +43,6 @@ public class CommissionMemberConfiguration : AuditableEntityConfiguration<Commis
             .HasConstraintName("FK_CommMembers_User")
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne<CommissionRole>()
-            .WithMany()
-            .HasForeignKey(e => e.CommissionRoleId)
-            .HasConstraintName("FK_CommMembers_Role")
-            .OnDelete(DeleteBehavior.Restrict);
-
         // Unique constraint - one user per commission
         builder.HasIndex(e => new { e.CommissionId, e.UserId })
             .IsUnique()

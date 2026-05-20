@@ -44,6 +44,7 @@ public class WorkTypeConfiguration : SoftDeletableEntityConfiguration<WorkType, 
         // Unique constraint on Name
         builder.HasIndex(e => e.Name)
             .IsUnique()
+            .HasFilter("[IsDeleted] = 0")
             .HasDatabaseName("UQ_WorkType_Name");
     }
 }

@@ -76,6 +76,18 @@ public interface IStudentWorkRepository
     Task AddAsync(StudentWork work, CancellationToken cancellationToken = default);
     Task UpdateAsync(StudentWork work, CancellationToken cancellationToken = default);
 }
+
+/// <summary>
+/// Repository for mandatory check types configured for each speciality.
+/// </summary>
+public interface ISpecialityCheckTypeRepository
+{
+    Task<IReadOnlyList<SpecialityCheckType>> GetBySpecialityAsync(int specialityId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<SpecialityCheckType>> GetBySpecialitiesAsync(IEnumerable<int> specialityIds, CancellationToken cancellationToken = default);
+    Task AddAsync(SpecialityCheckType specialityCheckType, CancellationToken cancellationToken = default);
+    Task DeleteAsync(SpecialityCheckType specialityCheckType, CancellationToken cancellationToken = default);
+}
+
 public interface ITopicApplicationRepository
 {
     /// <summary>

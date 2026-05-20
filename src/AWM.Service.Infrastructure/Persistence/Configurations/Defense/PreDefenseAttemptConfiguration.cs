@@ -61,12 +61,6 @@ public class PreDefenseAttemptConfiguration : AuditableEntityConfiguration<PreDe
             .HasConstraintName("FK_PreDef_Schedule")
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne<AttendanceStatus>()
-            .WithMany()
-            .HasForeignKey(e => e.AttendanceStatusId)
-            .HasConstraintName("FK_PreDef_AttendanceStatus")
-            .OnDelete(DeleteBehavior.Restrict);
-
         // Unique constraint - one attempt per work per pre-defense number
         builder.HasIndex(e => new { e.WorkId, e.PreDefenseNumber })
             .IsUnique()

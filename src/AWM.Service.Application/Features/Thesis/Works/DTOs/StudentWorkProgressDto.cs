@@ -12,6 +12,7 @@ public sealed record StudentWorkProgressDto
     public string? CurrentStateName { get; init; }
     public bool IsDefended { get; init; }
     public string? FinalGrade { get; init; }
+    public bool IsEligibleForDefense { get; init; }
     public DateTime CreatedAt { get; init; }
     public string? RepositoryUrl { get; init; }
 

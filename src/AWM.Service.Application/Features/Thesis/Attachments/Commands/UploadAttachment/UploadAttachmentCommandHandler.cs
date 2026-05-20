@@ -38,8 +38,9 @@ public sealed class UploadAttachmentCommandHandler : IRequestHandler<UploadAttac
                 return Result.Failure<long>(new Error("404", $"StudentWork with ID {request.WorkId} not found."));
 
             // Block uploading new work versions (Draft/Final) after NormControl is passed
+            // For now ID 1 = NormControl, 2 = WorkDraft, 3 = FinalWork
             if (work.HasPassedCheck(1)
-                && (request.AttachmentTypeId == 1 || request.AttachmentTypeId == 2))
+                && (request.AttachmentTypeId == 2 || request.AttachmentTypeId == 3))
             {
                 return Result.Failure<long>(new Error("BusinessRule.Attachment",
                     "Cannot upload new work versions after NormControl has been passed."));

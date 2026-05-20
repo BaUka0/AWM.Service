@@ -8,6 +8,8 @@ public class SemesterReadOnlyRepository : ISemesterReadOnlyRepository
 {
     private readonly UniversityDbContext _context;
 
+    private const int MaxQuerySize = 1000;
+
     public SemesterReadOnlyRepository(UniversityDbContext context)
     {
         _context = context;
@@ -32,6 +34,7 @@ public class SemesterReadOnlyRepository : ISemesterReadOnlyRepository
         return await _context.Semesters
             .Where(s => s.StudyYear == studyYear)
             .OrderBy(s => s.StartsOn)
+            .Take(MaxQuerySize)
             .ToListAsync(cancellationToken);
     }
 
@@ -40,6 +43,7 @@ public class SemesterReadOnlyRepository : ISemesterReadOnlyRepository
         return await _context.Semesters
             .OrderByDescending(s => s.StudyYear)
             .ThenBy(s => s.SemesterTypeId)
+            .Take(MaxQuerySize)
             .ToListAsync(cancellationToken);
     }
 }

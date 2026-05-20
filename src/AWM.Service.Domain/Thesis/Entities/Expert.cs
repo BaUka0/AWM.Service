@@ -1,6 +1,7 @@
 namespace AWM.Service.Domain.Thesis.Entities;
 
 using AWM.Service.Domain.Common;
+using AWM.Service.Domain.Thesis.Enums;
 
 /// <summary>
 /// Expert entity - department staff member assigned for quality checks.

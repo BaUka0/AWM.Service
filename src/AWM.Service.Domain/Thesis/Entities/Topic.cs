@@ -7,7 +7,7 @@ using AWM.Service.Domain.Thesis.Events;
 
 /// <summary>
 /// Topic entity - thesis topic proposed by supervisors.
-/// Can be linked to a direction, supports team works (1-5 participants).
+/// Can be linked to a direction, supports team works (1-3 participants).
 /// </summary>
 public class Topic : AggregateRoot<long>, IAuditable, ISoftDeletable
 {

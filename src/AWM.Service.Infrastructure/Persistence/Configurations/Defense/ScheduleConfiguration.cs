@@ -60,6 +60,7 @@ public class ScheduleConfiguration : SoftDeletableEntityConfiguration<Schedule, 
         // Unique constraint - one schedule per work per commission
         builder.HasIndex(e => new { e.CommissionId, e.WorkId })
             .IsUnique()
+            .HasFilter("[IsDeleted] = 0")
             .HasDatabaseName("UQ_Schedule_Commission_Work");
     }
 }

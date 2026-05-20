@@ -7,7 +7,7 @@ namespace AWM.Service.Infrastructure.Persistence.Interceptors;
 /// <summary>
 /// EF Core interceptor to automatically populate audit properties (IAuditable).
 /// </summary>
-internal sealed class AuditableEntityInterceptor : SaveChangesInterceptor
+public sealed class AuditableEntityInterceptor : SaveChangesInterceptor
 {
     private readonly ICurrentUserProvider _currentUserProvider;
 

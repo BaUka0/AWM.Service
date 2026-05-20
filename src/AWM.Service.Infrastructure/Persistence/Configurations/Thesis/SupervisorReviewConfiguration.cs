@@ -51,6 +51,7 @@ public class SupervisorReviewConfiguration : SoftDeletableEntityConfiguration<Su
         // Unique constraint - one supervisor review per work
         builder.HasIndex(e => new { e.WorkId, e.EmployeeId })
             .IsUnique()
+            .HasFilter("[IsDeleted] = 0")
             .HasDatabaseName("UQ_SupReview_Work_Supervisor");
     }
 }

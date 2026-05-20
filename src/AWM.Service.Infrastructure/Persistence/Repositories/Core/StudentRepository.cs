@@ -8,6 +8,8 @@ public class StudentRepository : IStudentRepository
 {
     private readonly UniversityDbContext _context;
 
+    private const int MaxQuerySize = 1000;
+
     public StudentRepository(UniversityDbContext context)
     {
         _context = context;
@@ -28,6 +30,7 @@ public class StudentRepository : IStudentRepository
     {
         return await _context.Students
             .Where(s => ids.Contains(s.Id))
+            .Take(MaxQuerySize)
             .ToListAsync(cancellationToken);
     }
 
@@ -35,6 +38,7 @@ public class StudentRepository : IStudentRepository
     {
         return await _context.Students
             .Where(s => s.SpecialityId == specialityId)
+            .Take(MaxQuerySize)
             .ToListAsync(cancellationToken);
     }
 
@@ -42,11 +46,12 @@ public class StudentRepository : IStudentRepository
     {
         return await _context.Students
             .Where(s => s.StatusId == statusId)
+            .Take(MaxQuerySize)
             .ToListAsync(cancellationToken);
     }
 
     public async Task<IReadOnlyList<Student>> GetAllAsync(CancellationToken cancellationToken = default)
     {
-        return await _context.Students.ToListAsync(cancellationToken);
+        return await _context.Students.Take(MaxQuerySize).ToListAsync(cancellationToken);
     }
 }

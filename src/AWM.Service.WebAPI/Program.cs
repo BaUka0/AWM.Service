@@ -140,13 +140,19 @@ builder.Services.AddScoped<AWM.Service.Domain.Auth.Interfaces.IJwtTokenService, 
 
 var app = builder.Build();
 
-// Seed and migrate database
+// Apply migrations in all environments
+using (var scope = app.Services.CreateScope())
+{
+    var initialiser = scope.ServiceProvider.GetRequiredService<AWM.Service.Infrastructure.Persistence.ApplicationDbContextInitialiser>();
+    await initialiser.InitialiseAsync();
+}
+
+// Seed demo data only in Development and Staging
 if (app.Environment.IsDevelopment() || app.Environment.IsStaging())
 {
     using (var scope = app.Services.CreateScope())
     {
         var initialiser = scope.ServiceProvider.GetRequiredService<AWM.Service.Infrastructure.Persistence.ApplicationDbContextInitialiser>();
-        await initialiser.InitialiseAsync();
         await initialiser.SeedAsync();
     }
 }

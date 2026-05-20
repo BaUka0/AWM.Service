@@ -65,6 +65,7 @@ public class ProtocolConfiguration : SoftDeletableEntityConfiguration<Protocol, 
         // Unique constraint - one protocol per schedule
         builder.HasIndex(e => e.ScheduleId)
             .IsUnique()
+            .HasFilter("[IsDeleted] = 0")
             .HasDatabaseName("UQ_Protocol_Schedule");
     }
 }

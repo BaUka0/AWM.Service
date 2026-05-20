@@ -8,6 +8,8 @@ public class EmployeeReadOnlyRepository : IEmployeeReadOnlyRepository
 {
     private readonly UniversityDbContext _context;
 
+    private const int MaxQuerySize = 1000;
+
     public EmployeeReadOnlyRepository(UniversityDbContext context)
     {
         _context = context;
@@ -22,6 +24,7 @@ public class EmployeeReadOnlyRepository : IEmployeeReadOnlyRepository
     {
         return await _context.Employees
             .Where(e => ids.Contains(e.Id))
+            .Take(MaxQuerySize)
             .ToListAsync(cancellationToken);
     }
 
@@ -35,11 +38,12 @@ public class EmployeeReadOnlyRepository : IEmployeeReadOnlyRepository
     {
         return await _context.Employees
             .Where(e => e.IsAdvisor)
+            .Take(MaxQuerySize)
             .ToListAsync(cancellationToken);
     }
 
     public async Task<IReadOnlyList<Employee>> GetAllAsync(CancellationToken cancellationToken = default)
     {
-        return await _context.Employees.ToListAsync(cancellationToken);
+        return await _context.Employees.Take(MaxQuerySize).ToListAsync(cancellationToken);
     }
 }

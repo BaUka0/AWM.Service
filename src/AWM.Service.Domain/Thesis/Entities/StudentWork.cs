@@ -1,6 +1,7 @@
 namespace AWM.Service.Domain.Thesis.Entities;
 
 using AWM.Service.Domain.Common;
+using AWM.Service.Domain.Thesis.Enums;
 using AWM.Service.Domain.Thesis.Events;
 
 
@@ -219,6 +220,15 @@ public class StudentWork : AggregateRoot<long>, IAuditable, ISoftDeletable
         FinalGrade = finalGrade;
 
         RaiseDomainEvent(new WorkDefendedEvent(Id, finalGrade));
+    }
+
+    /// <summary>
+    /// Checks if the work is eligible for defense by verifying all mandatory checks are passed.
+    /// </summary>
+    /// <param name="mandatoryCheckTypeIds">List of check type IDs required for the student's speciality.</param>
+    public bool IsEligibleForDefense(IEnumerable<int> mandatoryCheckTypeIds)
+    {
+        return mandatoryCheckTypeIds.All(HasPassedCheck);
     }
 
     /// <summary>

@@ -44,6 +44,7 @@ public class StateConfiguration : SoftDeletableEntityConfiguration<State, int>
         // Unique constraint on (WorkTypeId, SystemName)
         builder.HasIndex(e => new { e.WorkTypeId, e.SystemName })
             .IsUnique()
+            .HasFilter("[IsDeleted] = 0")
             .HasDatabaseName("UQ_State_Type_Name");
     }
 }
