@@ -17,9 +17,4 @@ public sealed record AddParticipantCommand : IRequest<Result<long>>
     /// ID of the student to add.
     /// </summary>
     public int StudentId { get; init; }
-
-    /// <summary>
-    /// Role ID of the participant (FK to Thesis.ParticipantRoles). 1 = Leader, 2 = Member.
-    /// </summary>
-    public int RoleId { get; init; } = 2; // Member = 2
 }

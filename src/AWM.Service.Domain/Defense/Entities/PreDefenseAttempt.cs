@@ -1,6 +1,7 @@
 namespace AWM.Service.Domain.Defense.Entities;
 
 using AWM.Service.Domain.Common;
+using AWM.Service.Domain.Defense.Enums;
 
 /// <summary>
 /// PreDefenseAttempt entity - tracks student's pre-defense attempts.
@@ -20,11 +21,6 @@ public class PreDefenseAttempt : Entity<long>, IAuditable
     public DateTime? LastModifiedAt { get; private set; }
     public int? LastModifiedBy { get; private set; }
 
-    // Seeded reference IDs
-    private const int StatusAttended = 1;
-    private const int StatusAbsent = 2;
-    private const int StatusExcused = 3;
-
     private PreDefenseAttempt() { }
 
     public PreDefenseAttempt(
@@ -32,7 +28,7 @@ public class PreDefenseAttempt : Entity<long>, IAuditable
         int preDefenseNumber,
         int createdBy,
         long? scheduleId = null,
-        int attendanceStatusId = StatusAttended)
+        int attendanceStatusId = (int)PreDefenseStatus.Attended)
     {
         if (preDefenseNumber < 1 || preDefenseNumber > 3)
             throw new DomainException("PreDefenseAttempt.InvalidNumber", "Pre-defense number must be 1, 2, or 3.");
@@ -53,7 +49,7 @@ public class PreDefenseAttempt : Entity<long>, IAuditable
     /// </summary>
     public void RecordResult(decimal averageScore, bool isPassed, int modifiedBy)
     {
-        if (AttendanceStatusId != StatusAttended)
+        if (AttendanceStatusId != (int)PreDefenseStatus.Attended)
             throw new DomainException("PreDefenseAttempt.NotAttended", "Cannot record result for non-attended attempt.");
 
         AverageScore = averageScore;
@@ -68,7 +64,7 @@ public class PreDefenseAttempt : Entity<long>, IAuditable
     /// </summary>
     public void MarkAbsent(int modifiedBy, bool excused = false)
     {
-        AttendanceStatusId = excused ? StatusExcused : StatusAbsent;
+        AttendanceStatusId = excused ? (int)PreDefenseStatus.Excused : (int)PreDefenseStatus.Absent;
         IsPassed = false;
         AverageScore = null;
 

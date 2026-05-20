@@ -64,7 +64,7 @@ public sealed class GetMyReviewerAssignmentsQueryHandler
             cancellationToken);
         var topicsById = topics.ToDictionary(t => t.Id);
         var leaderStudentIds = works
-            .Select(w => w.Participants.FirstOrDefault(p => p.IsLeader)?.StudentId)
+            .Select(w => w.Participants.FirstOrDefault()?.StudentId)
             .Where(studentId => studentId.HasValue)
             .Select(studentId => studentId!.Value)
             .Distinct()
@@ -92,10 +92,10 @@ public sealed class GetMyReviewerAssignmentsQueryHandler
                 : null;
 
             string? studentName = null;
-            var leader = work.Participants.FirstOrDefault(p => p.IsLeader);
-            if (leader is not null)
+            var participant = work.Participants.FirstOrDefault();
+            if (participant is not null)
             {
-                var student = studentsById.GetValueOrDefault(leader.StudentId);
+                var student = studentsById.GetValueOrDefault(participant.StudentId);
                 var studentUser = student is not null
                     ? usersById.GetValueOrDefault(student.Id)
                     : null;

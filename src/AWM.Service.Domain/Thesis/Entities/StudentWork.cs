@@ -65,28 +65,20 @@ public class StudentWork : AggregateRoot<long>, IAuditable, ISoftDeletable
     /// <summary>
     /// Adds a participant to the work.
     /// </summary>
-    // Seeded reference IDs
-    private const int RoleLeader = 1;
-    private const int RoleMember = 2;
-
-    public WorkParticipant AddParticipant(int studentId, int roleId = RoleMember)
+    public WorkParticipant AddParticipant(int studentId)
     {
         // Check if already a participant
         if (_participants.Any(p => p.StudentId == studentId))
             throw new DomainException("StudentWork.AlreadyParticipant", "Student is already a participant.");
 
-        // Check max participants (5)
-        if (_participants.Count >= 5)
-            throw new DomainException("StudentWork.MaxParticipantsExceeded", "Maximum 5 participants allowed.");
+        // Check max participants (3)
+        if (_participants.Count >= 3)
+            throw new DomainException("StudentWork.MaxParticipantsExceeded", "Maximum 3 participants allowed.");
 
-        // Ensure only one leader
-        if (roleId == RoleLeader && _participants.Any(p => p.RoleId == RoleLeader))
-            throw new DomainException("StudentWork.AlreadyHasLeader", "Work already has a leader.");
-
-        var participant = new WorkParticipant(Id, studentId, roleId);
+        var participant = new WorkParticipant(Id, studentId);
         _participants.Add(participant);
 
-        RaiseDomainEvent(new ParticipantJoinedEvent(Id, studentId, roleId.ToString()));
+        RaiseDomainEvent(new ParticipantJoinedEvent(Id, studentId, string.Empty));
         return participant;
     }
 
@@ -100,9 +92,6 @@ public class StudentWork : AggregateRoot<long>, IAuditable, ISoftDeletable
 
         if (_participants.Count == 1)
             throw new DomainException("StudentWork.CannotRemoveLastParticipant", "Cannot remove the last participant from the work.");
-
-        if (participant.RoleId == RoleLeader && _participants.Count > 1)
-            throw new DomainException("StudentWork.CannotRemoveLeader", "Cannot remove the leader while other participants exist. Transfer leadership first.");
 
         _participants.Remove(participant);
     }
@@ -230,14 +219,6 @@ public class StudentWork : AggregateRoot<long>, IAuditable, ISoftDeletable
         FinalGrade = finalGrade;
 
         RaiseDomainEvent(new WorkDefendedEvent(Id, finalGrade));
-    }
-
-    /// <summary>
-    /// Gets the leader of the work.
-    /// </summary>
-    public WorkParticipant? GetLeader()
-    {
-        return _participants.FirstOrDefault(p => p.RoleId == RoleLeader);
     }
 
     /// <summary>

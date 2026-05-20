@@ -35,7 +35,7 @@ public sealed class AddParticipantCommandHandler : IRequestHandler<AddParticipan
         // 2. Add participant (domain entity handles validation: max 5, no duplicates, single leader)
         try
         {
-            var participant = work.AddParticipant(request.StudentId, request.RoleId);
+            var participant = work.AddParticipant(request.StudentId);
 
             // 3. Persist
             await _workRepository.UpdateAsync(work, cancellationToken);

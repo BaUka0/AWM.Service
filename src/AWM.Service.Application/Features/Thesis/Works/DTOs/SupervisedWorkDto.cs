@@ -21,7 +21,5 @@ public sealed record SupervisedStudentDto
 {
     public int StudentId { get; init; }
     public string? Name { get; init; }
-    public string Role { get; init; } = null!;
-    public bool IsLeader { get; init; }
     public decimal? Score { get; init; }
 }

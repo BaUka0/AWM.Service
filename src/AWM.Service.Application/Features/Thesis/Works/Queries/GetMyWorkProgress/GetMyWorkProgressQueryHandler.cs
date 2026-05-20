@@ -143,8 +143,6 @@ public sealed class GetMyWorkProgressQueryHandler
                 Id = participant.Id,
                 StudentId = participant.StudentId,
                 Name = name,
-                Role = participant.RoleId.ToString(),
-                IsLeader = participant.IsLeader,
                 JoinedAt = participant.JoinedAt
             });
         }

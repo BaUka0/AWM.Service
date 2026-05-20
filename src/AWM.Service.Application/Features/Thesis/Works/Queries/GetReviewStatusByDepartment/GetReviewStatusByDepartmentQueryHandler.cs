@@ -69,7 +69,7 @@ public sealed class GetReviewStatusByDepartmentQueryHandler
 
             // Bulk fetch participants / students
             var participantStudentIds = works
-                .SelectMany(w => w.Participants.Where(p => p.IsLeader).Select(p => p.StudentId))
+                .SelectMany(w => w.Participants.Take(1).Select(p => p.StudentId))
                 .Distinct()
                 .ToList();
             var allStudents = await _studentRepository.GetByIdsAsync(participantStudentIds, cancellationToken);
@@ -97,8 +97,8 @@ public sealed class GetReviewStatusByDepartmentQueryHandler
                 }
 
                 string? studentName = null;
-                var leader = work.Participants.FirstOrDefault(p => p.IsLeader);
-                if (leader is not null && studentsById.TryGetValue(leader.StudentId, out var student))
+                var participant = work.Participants.FirstOrDefault();
+                if (participant is not null && studentsById.TryGetValue(participant.StudentId, out var student))
                 {
                     if (usersById.TryGetValue(student.Id, out var studentUser))
                     {

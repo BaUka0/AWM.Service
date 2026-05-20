@@ -454,20 +454,6 @@ public sealed class ApplicationDbContextInitialiser
             );
         }
 
-        // 6. Participant Roles (Thesis)
-        if (!await _context.ParticipantRoles.AnyAsync())
-        {
-            _logger.LogInformation("Seeding ParticipantRoles...");
-            await SeedWithIdentityInsertAsync(
-                _context.ParticipantRoles,
-                "Thesis",
-                "ParticipantRoles",
-                new ParticipantRole(1, "Author"),
-                new ParticipantRole(2, "Consultant"),
-                new ParticipantRole(3, "CoAuthor")
-            );
-        }
-
         // 7. Attachment Types (Thesis)
         if (!await _context.AttachmentTypes.AnyAsync())
         {

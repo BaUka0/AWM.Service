@@ -66,10 +66,10 @@ public sealed class GetAdmittedStudentsQueryHandler
                 if (!workReviews.Any(r => r.IsUploaded)) continue;
 
                 // All checks passed — student is admitted
-                var leader = work.GetLeader();
-                if (leader is null) continue;
+                var participant = work.Participants.FirstOrDefault();
+                if (participant is null) continue;
 
-                var student = studentsById.GetValueOrDefault(leader.StudentId);
+                var student = studentsById.GetValueOrDefault(participant.StudentId);
                 if (student is null) continue;
 
                 admitted.Add(new AdmittedStudentDto

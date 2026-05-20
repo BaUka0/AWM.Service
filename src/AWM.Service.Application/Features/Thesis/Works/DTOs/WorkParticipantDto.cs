@@ -10,8 +10,6 @@ public sealed record WorkParticipantDto
     public long Id { get; init; }
     public long WorkId { get; init; }
     public int StudentId { get; init; }
-    public string Role { get; init; } = null!;
-    public bool IsLeader { get; init; }
     public DateTime JoinedAt { get; init; }
 
     public static WorkParticipantDto FromEntity(WorkParticipant entity)
@@ -21,8 +19,6 @@ public sealed record WorkParticipantDto
             Id = entity.Id,
             WorkId = entity.WorkId,
             StudentId = entity.StudentId,
-            Role = entity.RoleId.ToString(),
-            IsLeader = entity.IsLeader,
             JoinedAt = entity.JoinedAt
         };
     }

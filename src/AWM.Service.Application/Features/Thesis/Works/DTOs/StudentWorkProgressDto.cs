@@ -40,8 +40,6 @@ public sealed record WorkProgressParticipantDto
     public long Id { get; init; }
     public int StudentId { get; init; }
     public string? Name { get; init; }
-    public string Role { get; init; } = null!;
-    public bool IsLeader { get; init; }
     public DateTime JoinedAt { get; init; }
 }
 

@@ -27,9 +27,6 @@ public class WorkParticipantConfiguration : AuditableEntityConfiguration<WorkPar
         builder.Property(e => e.StudentId)
             .IsRequired();
 
-        builder.Property(e => e.RoleId)
-            .IsRequired();
-
         // Ignore computed property
         builder.Ignore(e => e.JoinedAt);
 
@@ -44,12 +41,6 @@ public class WorkParticipantConfiguration : AuditableEntityConfiguration<WorkPar
             .WithMany()
             .HasForeignKey(e => e.StudentId)
             .HasConstraintName("FK_Participants_Student")
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.HasOne<ParticipantRole>()
-            .WithMany()
-            .HasForeignKey(e => e.RoleId)
-            .HasConstraintName("FK_Participants_Role")
             .OnDelete(DeleteBehavior.Restrict);
 
         // Unique constraint on (WorkId, StudentId)

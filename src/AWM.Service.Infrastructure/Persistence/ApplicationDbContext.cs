@@ -70,7 +70,6 @@ public sealed class ApplicationDbContext : DbContext
 
     // Reference tables (replacing enums)
     public DbSet<ApplicationStatus> ApplicationStatuses => Set<ApplicationStatus>();
-    public DbSet<ParticipantRole> ParticipantRoles => Set<ParticipantRole>();
     public DbSet<AttachmentType> AttachmentTypes => Set<AttachmentType>();
     public DbSet<CheckType> CheckTypes => Set<CheckType>();
     #endregion

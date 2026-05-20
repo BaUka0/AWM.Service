@@ -129,8 +129,6 @@ public sealed class GetMySupervisedWorksQueryHandler
                 {
                     StudentId = participant.StudentId,
                     Name = studentUser?.Email ?? studentUser?.FirstName,
-                    Role = participant.RoleId.ToString(),
-                    IsLeader = participant.IsLeader,
                     Score = null
                 });
             }

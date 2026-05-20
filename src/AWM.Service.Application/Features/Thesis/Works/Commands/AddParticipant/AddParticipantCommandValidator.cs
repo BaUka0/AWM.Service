@@ -16,9 +16,5 @@ public sealed class AddParticipantCommandValidator : AbstractValidator<AddPartic
         RuleFor(x => x.StudentId)
             .GreaterThan(0)
             .WithMessage("StudentId must be a positive number.");
-
-        RuleFor(x => x.RoleId)
-            .InclusiveBetween(1, 2)
-            .WithMessage("RoleId must be 1 (Leader) or 2 (Member).");
     }
 }

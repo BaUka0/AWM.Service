@@ -1,6 +1,7 @@
 namespace AWM.Service.Domain.Defense.Entities;
 
 using AWM.Service.Domain.Common;
+using AWM.Service.Domain.Defense.Enums;
 
 /// <summary>
 /// CommissionMember entity - member of a defense commission.
@@ -15,10 +16,6 @@ public class CommissionMember : Entity<int>, IAuditable
     public int CreatedBy { get; private set; }
     public DateTime? LastModifiedAt { get; private set; }
     public int? LastModifiedBy { get; private set; }
-
-    // Seeded reference IDs
-    private const int RoleChairman = 1;
-    private const int RoleSecretary = 2;
 
     private CommissionMember() { }
 
@@ -45,10 +42,10 @@ public class CommissionMember : Entity<int>, IAuditable
     /// <summary>
     /// Checks if this member is the chairman.
     /// </summary>
-    public bool IsChairman => CommissionRoleId == RoleChairman;
+    public bool IsChairman => CommissionRoleId == (int)CommissionRoles.Chairman;
 
     /// <summary>
     /// Checks if this member is the secretary.
     /// </summary>
-    public bool IsSecretary => CommissionRoleId == RoleSecretary;
+    public bool IsSecretary => CommissionRoleId == (int)CommissionRoles.Secretary;
 }

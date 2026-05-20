@@ -83,7 +83,7 @@ public sealed class CreateStudentWorkCommandHandler : IRequestHandler<CreateStud
             return Result.Failure<long>(new Error("NotFound.Student",
                 $"Student with ID {request.StudentId} not found."));
 
-        work.AddParticipant(request.StudentId, 1); // Leader = 1
+        work.AddParticipant(request.StudentId);
 
         // 5. Persist
         await _workRepository.AddAsync(work, cancellationToken);

@@ -1,6 +1,7 @@
 namespace AWM.Service.Domain.Defense.Entities;
 
 using AWM.Service.Domain.Common;
+using AWM.Service.Domain.Defense.Enums;
 
 /// <summary>
 /// Commission entity - defense commission (PreDefense or GAK).
@@ -22,10 +23,6 @@ public class Commission : AggregateRoot<int>, IAuditable, ISoftDeletable
     public DateTime? DeletedAt { get; private set; }
     public int? DeletedBy { get; private set; }
 
-    // Seeded reference IDs
-    private const int TypePreDefense = 1;
-    private const int TypeGAK = 2;
-
     private readonly List<CommissionMember> _members = new();
     public IReadOnlyCollection<CommissionMember> Members => _members.AsReadOnly();
 
@@ -39,7 +36,7 @@ public class Commission : AggregateRoot<int>, IAuditable, ISoftDeletable
         string? name = null,
         int? preDefenseNumber = null)
     {
-        if (commissionTypeId == TypePreDefense && preDefenseNumber.HasValue)
+        if (commissionTypeId == (int)CommissionTypes.PreDefense && preDefenseNumber.HasValue)
         {
             if (preDefenseNumber < 1 || preDefenseNumber > 3)
                 throw new DomainException("Commission.InvalidPreDefenseNumber", "Pre-defense number must be 1, 2, or 3.");
@@ -58,12 +55,12 @@ public class Commission : AggregateRoot<int>, IAuditable, ISoftDeletable
 
     private static string GetDefaultName(int typeId, int? preDefenseNumber)
     {
-        return typeId switch
-        {
-            TypePreDefense => $"Комиссия предзащиты №{preDefenseNumber ?? 1}",
-            TypeGAK => "Государственная аттестационная комиссия",
-            _ => "Комиссия"
-        };
+        if (typeId == (int)CommissionTypes.PreDefense)
+            return $"Комиссия предзащиты №{preDefenseNumber ?? 1}";
+        if (typeId == (int)CommissionTypes.GAK)
+            return "Государственная аттестационная комиссия";
+        
+        return "Комиссия";
     }
 
     /// <summary>
@@ -71,15 +68,11 @@ public class Commission : AggregateRoot<int>, IAuditable, ISoftDeletable
     /// </summary>
     public CommissionMember AddMember(int userId, int commissionRoleId)
     {
-        // Seeded reference IDs
-        const int roleChairman = 1;
-        const int roleSecretary = 2;
-
         // Ensure only one chairman and one secretary
-        if (commissionRoleId == roleChairman && _members.Any(m => m.CommissionRoleId == roleChairman))
+        if (commissionRoleId == (int)CommissionRoles.Chairman && _members.Any(m => m.CommissionRoleId == (int)CommissionRoles.Chairman))
             throw new DomainException("Commission.ChairmanAlreadyExists", "Commission already has a chairman.");
 
-        if (commissionRoleId == roleSecretary && _members.Any(m => m.CommissionRoleId == roleSecretary))
+        if (commissionRoleId == (int)CommissionRoles.Secretary && _members.Any(m => m.CommissionRoleId == (int)CommissionRoles.Secretary))
             throw new DomainException("Commission.SecretaryAlreadyExists", "Commission already has a secretary.");
 
         var member = new CommissionMember(Id, userId, commissionRoleId);
@@ -94,8 +87,7 @@ public class Commission : AggregateRoot<int>, IAuditable, ISoftDeletable
     /// </summary>
     public CommissionMember? GetChairman()
     {
-        const int roleChairman = 1;
-        return _members.FirstOrDefault(m => m.CommissionRoleId == roleChairman);
+        return _members.FirstOrDefault(m => m.CommissionRoleId == (int)CommissionRoles.Chairman);
     }
 
     /// <summary>
@@ -103,8 +95,7 @@ public class Commission : AggregateRoot<int>, IAuditable, ISoftDeletable
     /// </summary>
     public CommissionMember? GetSecretary()
     {
-        const int roleSecretary = 2;
-        return _members.FirstOrDefault(m => m.CommissionRoleId == roleSecretary);
+        return _members.FirstOrDefault(m => m.CommissionRoleId == (int)CommissionRoles.Secretary);
     }
 
     /// <summary>

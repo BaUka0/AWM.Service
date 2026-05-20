@@ -2,6 +2,7 @@ namespace AWM.Service.Domain.Thesis.Entities;
 
 using AWM.Service.Domain.Common;
 using AWM.Service.Domain.Primitives;
+using AWM.Service.Domain.Thesis.Enums;
 using AWM.Service.Domain.Thesis.Events;
 
 /// <summary>
@@ -58,8 +59,8 @@ public class Topic : AggregateRoot<long>, IAuditable, ISoftDeletable
     {
         if (string.IsNullOrWhiteSpace(titleRu))
             throw new DomainException("Topic.TitleRuRequired", "Russian title is required.");
-        if (maxParticipants < 1 || maxParticipants > 5)
-            throw new DomainException("Topic.MaxParticipantsOutOfRange", "Max participants must be between 1 and 5.");
+        if (maxParticipants < 1 || maxParticipants > 3)
+            throw new DomainException("Topic.MaxParticipantsOutOfRange", "Max participants must be between 1 and 3.");
 
         DirectionId = directionId;
         OrgUnitId = orgUnitId;
@@ -120,8 +121,8 @@ public class Topic : AggregateRoot<long>, IAuditable, ISoftDeletable
     /// </summary>
     public void UpdateMaxParticipants(int maxParticipants)
     {
-        if (maxParticipants < 1 || maxParticipants > 5)
-            throw new DomainException("Topic.MaxParticipantsOutOfRange", "Max participants must be between 1 and 5.");
+        if (maxParticipants < 1 || maxParticipants > 3)
+            throw new DomainException("Topic.MaxParticipantsOutOfRange", "Max participants must be between 1 and 3.");
 
         MaxParticipants = maxParticipants;
     }
@@ -189,8 +190,7 @@ public class Topic : AggregateRoot<long>, IAuditable, ISoftDeletable
         if (!IsApproved || IsClosed)
             return false;
 
-        const int StatusAccepted = 2;
-        var acceptedCount = _applications.Count(a => a.StatusId == StatusAccepted);
+        var acceptedCount = _applications.Count(a => a.StatusId == (int)ApplicationStatusType.Accepted);
         return acceptedCount < MaxParticipants;
     }
 
@@ -199,8 +199,7 @@ public class Topic : AggregateRoot<long>, IAuditable, ISoftDeletable
     /// </summary>
     public int GetAvailableSpots()
     {
-        const int StatusAccepted = 2;
-        var acceptedCount = _applications.Count(a => a.StatusId == StatusAccepted);
+        var acceptedCount = _applications.Count(a => a.StatusId == (int)ApplicationStatusType.Accepted);
         return Math.Max(0, MaxParticipants - acceptedCount);
     }
 
