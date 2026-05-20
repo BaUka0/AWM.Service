@@ -18,7 +18,7 @@ public sealed class CreateDirectionCommandHandler
     private readonly IDirectionRepository _directionRepository;
     private readonly IWorkflowRepository _workflowRepository;
     private readonly IOrganizationLookupRepository _organizationLookupRepository;
-    private readonly IStaffRepository _staffRepository;
+    private readonly IEmployeeRepository _EmployeeRepository;
     private readonly ICurrentUserProvider _currentUserProvider;
     private readonly IStageValidationService _stageValidationService;
     private readonly IUnitOfWork _unitOfWork;
@@ -28,7 +28,7 @@ public sealed class CreateDirectionCommandHandler
         IDirectionRepository directionRepository,
         IWorkflowRepository workflowRepository,
         IOrganizationLookupRepository organizationLookupRepository,
-        IStaffRepository staffRepository,
+        IEmployeeRepository EmployeeRepository,
         ICurrentUserProvider currentUserProvider,
         IStageValidationService stageValidationService,
         IUnitOfWork unitOfWork,
@@ -37,7 +37,7 @@ public sealed class CreateDirectionCommandHandler
         _directionRepository = directionRepository;
         _workflowRepository = workflowRepository;
         _organizationLookupRepository = organizationLookupRepository;
-        _staffRepository = staffRepository;
+        _EmployeeRepository = EmployeeRepository;
         _currentUserProvider = currentUserProvider;
         _stageValidationService = stageValidationService;
         _unitOfWork = unitOfWork;
@@ -110,7 +110,7 @@ public sealed class CreateDirectionCommandHandler
             var supervisorId = request.SupervisorId;
             if (supervisorId <= 0)
             {
-                var staff = await _staffRepository.GetByUserIdAsync(currentUserId.Value, cancellationToken);
+                var staff = await _EmployeeRepository.GetByUserIdAsync(currentUserId.Value, cancellationToken);
                 if (staff is null)
                 {
                     return Result.Failure<long>(new Error("403", "User does not have an associated staff profile to act as a supervisor."));

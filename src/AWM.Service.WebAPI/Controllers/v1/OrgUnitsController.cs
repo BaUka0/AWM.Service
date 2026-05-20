@@ -1,21 +1,16 @@
 namespace AWM.Service.WebAPI.Controllers.v1;
 
-using AWM.Service.Application.Features.Org.Institutes.Queries.GetAllInstitutes;
-using AWM.Service.Application.Features.Org.Institutes.Queries.GetInstituteById;
-using AWM.Service.Application.Features.Org.Departments.Queries.GetDepartmentsByInstitute;
-using AWM.Service.Application.Features.Org.Departments.Queries.GetAllDepartments;
-using AWM.Service.WebAPI.Common.Contracts.Responses.Org;
+using AWM.Service.Application.Features.Org.OrgUnits.Queries.GetAllOrgUnits;
+using AWM.Service.Application.Features.Org.OrgUnits.Queries.GetOrgUnitById;
+using AWM.Service.Application.Features.Org.OrgUnits.Queries.GetOrgUnitChildren;
 using AWM.Service.WebAPI.Authorization;
+using AWM.Service.WebAPI.Common.Contracts.Responses.Org;
+using Mapster;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Http;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 
 /// <summary>
-/// Controller for managing organizational units (Institutes and Departments).
+/// Controller for managing organizational units (institutes, departments, etc.).
 /// </summary>
 [ApiVersion("1.0")]
 [Route("api/v{version:apiVersion}/org-units")]
@@ -31,117 +26,51 @@ public sealed class OrgUnitsController : BaseController
     }
 
     /// <summary>
-    /// Get all institutes.
+    /// Get all organizational units with optional type filter.
     /// </summary>
-    [HttpGet("institutes")]
-    [HttpGet("~/api/v{version:apiVersion}/institutes")]
-    [RequireAccess("Org_Institutes", "Read")]
+    /// <param name="typeId">Optional OrgUnitType ID filter (from /dictionaries/org-unit-types).</param>
+    [HttpGet]
+    [RequireAccess("Organization", "Read")]
     [ProducesResponseType(typeof(IReadOnlyList<OrgUnitResponse>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetInstitutes([FromQuery] bool includeDepartments = false, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> GetAll(
+        [FromQuery] int? typeId = null,
+        CancellationToken cancellationToken = default)
     {
-        var query = new GetAllInstitutesQuery { IncludeDepartments = includeDepartments };
+        var query = new GetAllOrgUnitsQuery { TypeId = typeId };
         var result = await _sender.Send(query, cancellationToken);
         if (result.IsFailed) return HandleResultError(result.Error);
 
-        var response = result.Value.Select(i => new OrgUnitResponse
-        {
-            Id = i.Id,
-            ParentId = null,
-            Name = i.Name,
-            TypeId = 2, // Institute
-            Children = i.Departments?.Select(d => new OrgUnitResponse
-            {
-                Id = d.Id,
-                ParentId = d.InstituteId,
-                Name = d.Name,
-                Code = d.Code,
-                TypeId = 1 // Department
-            }).ToList()
-        }).ToList();
-
-        return Ok(response);
+        return Ok(result.Value.Adapt<IReadOnlyList<OrgUnitResponse>>());
     }
 
     /// <summary>
-    /// Get a specific institute by ID.
+    /// Get a specific organizational unit by ID.
     /// </summary>
-    [HttpGet("institutes/{instituteId}")]
-    [HttpGet("~/api/v{version:apiVersion}/institutes/{instituteId}")]
-    [RequireAccess("Org_Institutes", "Read")]
+    [HttpGet("{id:int}")]
+    [RequireAccess("Organization", "Read")]
     [ProducesResponseType(typeof(OrgUnitResponse), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetInstituteById(int instituteId, [FromQuery] bool includeDepartments = false, CancellationToken cancellationToken = default)
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetById(int id, CancellationToken cancellationToken = default)
     {
-        var query = new GetInstituteByIdQuery { InstituteId = instituteId, IncludeDepartments = includeDepartments };
+        var query = new GetOrgUnitByIdQuery(id);
         var result = await _sender.Send(query, cancellationToken);
         if (result.IsFailed) return HandleResultError(result.Error);
 
-        var i = result.Value;
-        var response = new OrgUnitResponse
-        {
-            Id = i.Id,
-            ParentId = null,
-            Name = i.Name,
-            TypeId = 2, // Institute
-            Children = i.Departments?.Select(d => new OrgUnitResponse
-            {
-                Id = d.Id,
-                ParentId = d.InstituteId,
-                Name = d.Name,
-                Code = d.Code,
-                TypeId = 1 // Department
-            }).ToList()
-        };
-
-        return Ok(response);
+        return Ok(result.Value.Adapt<OrgUnitResponse>());
     }
 
     /// <summary>
-    /// Get all departments.
+    /// Get children of an organizational unit (e.g., departments of an institute).
     /// </summary>
-    [HttpGet("departments")]
-    [HttpGet("~/api/v{version:apiVersion}/departments")]
-    [RequireAccess("Org_Departments", "Read")]
+    [HttpGet("{id:int}/children")]
+    [RequireAccess("Organization", "Read")]
     [ProducesResponseType(typeof(IReadOnlyList<OrgUnitResponse>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetDepartments(CancellationToken cancellationToken = default)
+    public async Task<IActionResult> GetChildren(int id, CancellationToken cancellationToken = default)
     {
-        var query = new GetAllDepartmentsQuery();
+        var query = new GetOrgUnitChildrenQuery(id);
         var result = await _sender.Send(query, cancellationToken);
         if (result.IsFailed) return HandleResultError(result.Error);
 
-        var response = result.Value.Select(d => new OrgUnitResponse
-        {
-            Id = d.Id,
-            ParentId = d.InstituteId,
-            Name = d.Name,
-            Code = d.Code,
-            TypeId = 1 // Department
-        }).ToList();
-
-        return Ok(response);
-    }
-
-    /// <summary>
-    /// Get all departments belonging to a specific institute.
-    /// </summary>
-    [HttpGet("institutes/{instituteId}/departments")]
-    [HttpGet("~/api/v{version:apiVersion}/institutes/{instituteId}/departments")]
-    [RequireAccess("Org_Departments", "Read")]
-    [ProducesResponseType(typeof(IReadOnlyList<OrgUnitResponse>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetDepartmentsByInstitute(int instituteId, CancellationToken cancellationToken = default)
-    {
-        var query = new GetDepartmentsByInstituteQuery { InstituteId = instituteId };
-        var result = await _sender.Send(query, cancellationToken);
-        if (result.IsFailed) return HandleResultError(result.Error);
-
-        var response = result.Value.Select(d => new OrgUnitResponse
-        {
-            Id = d.Id,
-            ParentId = d.InstituteId,
-            Name = d.Name,
-            Code = d.Code,
-            TypeId = 1 // Department
-        }).ToList();
-
-        return Ok(response);
+        return Ok(result.Value.Adapt<IReadOnlyList<OrgUnitResponse>>());
     }
 }

@@ -15,7 +15,7 @@ public sealed class CreateTopicCommandHandler : IRequestHandler<CreateTopicComma
 {
     private readonly ITopicRepository _topicRepository;
     private readonly IDirectionRepository _directionRepository;
-    private readonly IStaffRepository _staffRepository;
+    private readonly IEmployeeRepository _EmployeeRepository;
     private readonly IStageValidationService _stageValidationService;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICurrentUserProvider _currentUserProvider;
@@ -24,7 +24,7 @@ public sealed class CreateTopicCommandHandler : IRequestHandler<CreateTopicComma
     public CreateTopicCommandHandler(
         ITopicRepository topicRepository,
         IDirectionRepository directionRepository,
-        IStaffRepository staffRepository,
+        IEmployeeRepository EmployeeRepository,
         IStageValidationService stageValidationService,
         IUnitOfWork unitOfWork,
         ICurrentUserProvider currentUserProvider,
@@ -32,7 +32,7 @@ public sealed class CreateTopicCommandHandler : IRequestHandler<CreateTopicComma
     {
         _topicRepository = topicRepository ?? throw new ArgumentNullException(nameof(topicRepository));
         _directionRepository = directionRepository ?? throw new ArgumentNullException(nameof(directionRepository));
-        _staffRepository = staffRepository ?? throw new ArgumentNullException(nameof(staffRepository));
+        _EmployeeRepository = EmployeeRepository ?? throw new ArgumentNullException(nameof(EmployeeRepository));
         _stageValidationService = stageValidationService ?? throw new ArgumentNullException(nameof(stageValidationService));
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
         _currentUserProvider = currentUserProvider ?? throw new ArgumentNullException(nameof(currentUserProvider));
@@ -83,7 +83,7 @@ public sealed class CreateTopicCommandHandler : IRequestHandler<CreateTopicComma
             var supervisorId = request.SupervisorId;
             if (supervisorId <= 0)
             {
-                var staff = await _staffRepository.GetByUserIdAsync(currentUserId.Value, cancellationToken);
+                var staff = await _EmployeeRepository.GetByUserIdAsync(currentUserId.Value, cancellationToken);
                 if (staff is null)
                 {
                     return Result.Failure<long>(new Error("403", "User does not have an associated staff profile to act as a supervisor."));

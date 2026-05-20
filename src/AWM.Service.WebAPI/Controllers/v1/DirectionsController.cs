@@ -217,7 +217,7 @@ public sealed class DirectionsController : BaseController
     /// <param name="id">Direction ID.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>No content on success.</returns>
-    [HttpPost("{id}/submit")]
+    [HttpPatch("{id}/submit")]
     [RequireAccess("Directions", "Create")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -248,7 +248,7 @@ public sealed class DirectionsController : BaseController
     /// <param name="id">Direction ID.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>No content on success.</returns>
-    [HttpPost("{id}/approve")]
+    [HttpPatch("{id}/approve")]
     [RequireAccess("Directions_Approval", "Update")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -280,7 +280,7 @@ public sealed class DirectionsController : BaseController
     /// <param name="request">Rejection data with optional comment.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>No content on success.</returns>
-    [HttpPost("{id}/reject")]
+    [HttpPatch("{id}/reject")]
     [RequireAccess("Directions", "Delete")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -314,7 +314,7 @@ public sealed class DirectionsController : BaseController
     /// <param name="request">Revision request with required comment.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>No content on success.</returns>
-    [HttpPost("{id}/request-revision")]
+    [HttpPatch("{id}/request-revision")]
     [RequireAccess("Directions", "Update")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

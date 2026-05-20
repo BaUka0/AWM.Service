@@ -16,7 +16,7 @@ using Microsoft.AspNetCore.Mvc;
 /// Controller for managing file attachments of a student work.
 /// </summary>
 [ApiVersion("1.0")]
-[Route("api/v{version:apiVersion}/works/{workId:long}/[controller]")]
+[Route("api/v{version:apiVersion}/student-works/{workId:long}/[controller]")]
 [ApiController]
 [Produces("application/json")]
 public sealed class AttachmentsController : BaseController

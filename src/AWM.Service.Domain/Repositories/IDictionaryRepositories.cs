@@ -17,9 +17,8 @@ public interface INotificationTemplateRepository
 
 /// <summary>
 /// Repository for Speciality (read-only, from University).
-/// Replaces IAcademicProgramRepository.
 /// </summary>
-public interface IAcademicProgramRepository
+public interface ISpecialityRepository
 {
     Task<Speciality?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Speciality>> GetByLevelAsync(int levelId, CancellationToken cancellationToken = default);
@@ -28,9 +27,8 @@ public interface IAcademicProgramRepository
 
 /// <summary>
 /// Repository for SpecialityLevel (read-only, from University).
-/// Replaces IDegreeLevelRepository.
 /// </summary>
-public interface IDegreeLevelRepository
+public interface ISpecialityLevelRepository
 {
     Task<SpecialityLevel?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<SpecialityLevel>> GetAllAsync(CancellationToken cancellationToken = default);

@@ -20,9 +20,9 @@ using Microsoft.AspNetCore.Mvc;
 /// </summary>
 [ApiVersion("1.0")]
 [ApiController]
-[Route("api/v{version:apiVersion}/defense-schedule")]
+[Route("api/v{version:apiVersion}/defense-schedules")]
 [Produces("application/json")]
-public class DefenseScheduleController : BaseController
+public sealed class DefenseScheduleController : BaseController
 {
     private readonly ISender _sender;
 
@@ -42,10 +42,10 @@ public class DefenseScheduleController : BaseController
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> GetSchedule([FromQuery] int commissionId)
+    public async Task<IActionResult> GetSchedule([FromQuery] int commissionId, CancellationToken cancellationToken = default)
     {
         var query = new GetDefenseScheduleQuery { CommissionId = commissionId };
-        var result = await _sender.Send(query);
+        var result = await _sender.Send(query, cancellationToken);
 
         if (result.IsFailed)
             return HandleResultError(result.Error);
@@ -67,10 +67,10 @@ public class DefenseScheduleController : BaseController
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> GetSlotById(long slotId)
+    public async Task<IActionResult> GetSlotById(long slotId, CancellationToken cancellationToken = default)
     {
         var query = new GetDefenseSlotByIdQuery { SlotId = slotId };
-        var result = await _sender.Send(query);
+        var result = await _sender.Send(query, cancellationToken);
 
         if (result.IsFailed)
             return HandleResultError(result.Error);
@@ -93,11 +93,11 @@ public class DefenseScheduleController : BaseController
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> Create([FromBody] CreateDefenseScheduleRequest request)
+    public async Task<IActionResult> Create([FromBody] CreateDefenseScheduleRequest request, CancellationToken cancellationToken = default)
     {
         var command = request.Adapt<CreateDefenseScheduleCommand>();
 
-        var result = await _sender.Send(command);
+        var result = await _sender.Send(command, cancellationToken);
 
         if (result.IsFailed)
             return HandleResultError(result.Error);
@@ -119,11 +119,11 @@ public class DefenseScheduleController : BaseController
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> Update(long scheduleId, [FromBody] UpdateDefenseScheduleRequest request)
+    public async Task<IActionResult> Update(long scheduleId, [FromBody] UpdateDefenseScheduleRequest request, CancellationToken cancellationToken = default)
     {
         var command = request.Adapt<UpdateDefenseScheduleCommand>() with { ScheduleId = scheduleId };
 
-        var result = await _sender.Send(command);
+        var result = await _sender.Send(command, cancellationToken);
 
         if (result.IsFailed)
             return HandleResultError(result.Error);
@@ -146,11 +146,11 @@ public class DefenseScheduleController : BaseController
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> AssignWork(long scheduleId, [FromBody] AssignWorkToSlotRequest request)
+    public async Task<IActionResult> AssignWork(long scheduleId, [FromBody] AssignWorkToSlotRequest request, CancellationToken cancellationToken = default)
     {
         var command = request.Adapt<AssignWorkToSlotCommand>() with { ScheduleId = scheduleId };
 
-        var result = await _sender.Send(command);
+        var result = await _sender.Send(command, cancellationToken);
 
         if (result.IsFailed)
             return HandleResultError(result.Error);
@@ -170,7 +170,8 @@ public class DefenseScheduleController : BaseController
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GenerateDefenseSlots(
-        [FromBody] GenerateDefenseSlotsRequest request)
+        [FromBody] GenerateDefenseSlotsRequest request,
+        CancellationToken cancellationToken = default)
     {
         var command = new GenerateDefenseSlotsCommand
         {
@@ -182,7 +183,7 @@ public class DefenseScheduleController : BaseController
             Location = request.Location
         };
 
-        var result = await _sender.Send(command);
+        var result = await _sender.Send(command, cancellationToken);
 
         if (result.IsFailed)
             return HandleResultError(result.Error);
@@ -200,10 +201,10 @@ public class DefenseScheduleController : BaseController
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> StartReconciliation(long scheduleId)
+    public async Task<IActionResult> StartReconciliation(long scheduleId, CancellationToken cancellationToken = default)
     {
         var command = new StartReconciliationCommand { ScheduleId = scheduleId };
-        var result = await _sender.Send(command);
+        var result = await _sender.Send(command, cancellationToken);
 
         if (result.IsFailed)
             return HandleResultError(result.Error);

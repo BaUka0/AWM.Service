@@ -16,7 +16,7 @@ public sealed class AcceptApplicationCommandHandler : IRequestHandler<AcceptAppl
 {
     private readonly ITopicApplicationRepository _applicationRepository;
     private readonly ITopicRepository _topicRepository;
-    private readonly IStaffRepository _staffRepository;
+    private readonly IEmployeeRepository _EmployeeRepository;
     private readonly IStudentRepository _studentRepository;
     private readonly IMediator _mediator;
     private readonly IUnitOfWork _unitOfWork;
@@ -27,7 +27,7 @@ public sealed class AcceptApplicationCommandHandler : IRequestHandler<AcceptAppl
     public AcceptApplicationCommandHandler(
         ITopicApplicationRepository applicationRepository,
         ITopicRepository topicRepository,
-        IStaffRepository staffRepository,
+        IEmployeeRepository EmployeeRepository,
         IStudentRepository studentRepository,
         IMediator mediator,
         IUnitOfWork unitOfWork,
@@ -37,7 +37,7 @@ public sealed class AcceptApplicationCommandHandler : IRequestHandler<AcceptAppl
     {
         _applicationRepository = applicationRepository;
         _topicRepository = topicRepository;
-        _staffRepository = staffRepository;
+        _EmployeeRepository = EmployeeRepository;
         _studentRepository = studentRepository;
         _mediator = mediator;
         _unitOfWork = unitOfWork;
@@ -58,7 +58,7 @@ public sealed class AcceptApplicationCommandHandler : IRequestHandler<AcceptAppl
         }
 
         // Resolve staff profile — one user may also be a student; we need Staff.Id for topic authorization
-        var currentStaff = await _staffRepository.GetByUserIdAsync(userId.Value, cancellationToken);
+        var currentStaff = await _EmployeeRepository.GetByUserIdAsync(userId.Value, cancellationToken);
         if (currentStaff is null)
         {
             _logger.LogWarning("AcceptApplication failed: User {UserId} does not have a staff profile.", userId.Value);
@@ -172,7 +172,7 @@ public sealed class AcceptApplicationCommandHandler : IRequestHandler<AcceptAppl
             if (studentProfile is not null)
             {
                 await _notificationService.SendAsync(
-                    userId: studentProfile.UserId,
+                    userId: studentProfile.Id,
                     title: "Заявка принята",
                     createdBy: userId.Value,
                     body: $"Ваша заявка на тему «{topic.TitleRu}» была принята.",

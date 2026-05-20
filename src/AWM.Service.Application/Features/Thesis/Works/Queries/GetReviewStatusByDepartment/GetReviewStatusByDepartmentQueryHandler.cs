@@ -76,7 +76,7 @@ public sealed class GetReviewStatusByDepartmentQueryHandler
             var studentsById = allStudents.ToDictionary(s => s.Id);
 
             // Bulk fetch users for student names
-            var userIds = allStudents.Select(s => s.UserId).Distinct().ToList();
+            var userIds = allStudents.Select(s => s.Id).Distinct().ToList();
             var allUsers = await _userRepository.GetByIdsAsync(userIds, cancellationToken);
             var usersById = allUsers.ToDictionary(u => u.Id);
 
@@ -100,7 +100,7 @@ public sealed class GetReviewStatusByDepartmentQueryHandler
                 var leader = work.Participants.FirstOrDefault(p => p.IsLeader);
                 if (leader is not null && studentsById.TryGetValue(leader.StudentId, out var student))
                 {
-                    if (usersById.TryGetValue(student.UserId, out var studentUser))
+                    if (usersById.TryGetValue(student.Id, out var studentUser))
                     {
                         studentName = studentUser.Email ?? studentUser.FirstName;
                     }

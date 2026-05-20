@@ -19,7 +19,7 @@ using Microsoft.AspNetCore.Mvc;
 [ApiController]
 [Route("api/v{version:apiVersion}/evaluation")]
 [Produces("application/json")]
-public class EvaluationController : BaseController
+public sealed class EvaluationController : BaseController
 {
     private readonly ISender _sender;
 
@@ -40,7 +40,7 @@ public class EvaluationController : BaseController
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> GetCriteria([FromQuery] int workTypeId, [FromQuery] int? departmentId = null)
+    public async Task<IActionResult> GetCriteria([FromQuery] int workTypeId, [FromQuery] int? departmentId = null, CancellationToken cancellationToken = default)
     {
         var query = new GetEvaluationCriteriaQuery
         {
@@ -48,7 +48,7 @@ public class EvaluationController : BaseController
             OrgUnitId = departmentId
         };
 
-        var result = await _sender.Send(query);
+        var result = await _sender.Send(query, cancellationToken);
 
         if (result.IsFailed)
             return HandleResultError(result.Error);
@@ -70,10 +70,10 @@ public class EvaluationController : BaseController
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> GetGrades(long scheduleId)
+    public async Task<IActionResult> GetGrades(long scheduleId, CancellationToken cancellationToken = default)
     {
         var query = new GetGradesByWorkQuery { ScheduleId = scheduleId };
-        var result = await _sender.Send(query);
+        var result = await _sender.Send(query, cancellationToken);
 
         if (result.IsFailed)
             return HandleResultError(result.Error);
@@ -98,11 +98,11 @@ public class EvaluationController : BaseController
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> SubmitGrade(long scheduleId, [FromBody] SubmitGradeRequest request)
+    public async Task<IActionResult> SubmitGrade(long scheduleId, [FromBody] SubmitGradeRequest request, CancellationToken cancellationToken = default)
     {
         var command = request.Adapt<SubmitGradeCommand>() with { ScheduleId = scheduleId };
 
-        var result = await _sender.Send(command);
+        var result = await _sender.Send(command, cancellationToken);
 
         if (result.IsFailed)
             return HandleResultError(result.Error);
@@ -124,10 +124,10 @@ public class EvaluationController : BaseController
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> FinalizeDefense(long scheduleId)
+    public async Task<IActionResult> FinalizeDefense(long scheduleId, CancellationToken cancellationToken = default)
     {
         var command = new FinalizeDefenseCommand { ScheduleId = scheduleId };
-        var result = await _sender.Send(command);
+        var result = await _sender.Send(command, cancellationToken);
 
         if (result.IsFailed)
             return HandleResultError(result.Error);

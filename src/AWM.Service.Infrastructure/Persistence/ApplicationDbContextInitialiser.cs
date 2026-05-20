@@ -60,44 +60,60 @@ public sealed class ApplicationDbContextInitialiser
         _logger.LogInformation("Seeding reference data...");
 
         // 0. University Master Data (Edu_* tables)
-        if (!await _universityContext.SpecialityLevels.AnyAsync())
+        if (!await _universityContext.Users.AnyAsync())
         {
             _logger.LogInformation("Seeding University Master Data via Raw SQL...");
             
             // Edu_SpecialityLevels
-            await _context.Database.ExecuteSqlRawAsync("INSERT INTO Edu_SpecialityLevels (ID, Title) VALUES (1, N'Бакалавриат'), (2, N'Магистратура'), (3, N'Докторантура')");
+            await _context.Database.ExecuteSqlRawAsync(
+                "IF NOT EXISTS (SELECT 1 FROM Edu_SpecialityLevels WHERE ID = 1) INSERT INTO Edu_SpecialityLevels (ID, Title) VALUES (1, N'Бакалавриат'); " +
+                "IF NOT EXISTS (SELECT 1 FROM Edu_SpecialityLevels WHERE ID = 2) INSERT INTO Edu_SpecialityLevels (ID, Title) VALUES (2, N'Магистратура'); " +
+                "IF NOT EXISTS (SELECT 1 FROM Edu_SpecialityLevels WHERE ID = 3) INSERT INTO Edu_SpecialityLevels (ID, Title) VALUES (3, N'Докторантура');");
             
             // Edu_Specialities
-            await _context.Database.ExecuteSqlRawAsync("INSERT INTO Edu_Specialities (ID, Code, Title, YearsOfStudy, Deleted, LevelID) VALUES (1, '5B070300', N'Информационные системы', 4, 0, 1)");
+            await _context.Database.ExecuteSqlRawAsync(
+                "IF NOT EXISTS (SELECT 1 FROM Edu_Specialities WHERE ID = 1) INSERT INTO Edu_Specialities (ID, Code, Title, YearsOfStudy, Deleted, LevelID) VALUES (1, '5B070300', N'Информационные системы', 4, 0, 1);");
             
             // Edu_SemesterTypes
-            await _context.Database.ExecuteSqlRawAsync("INSERT INTO Edu_SemesterTypes (ID, Title, OrderBy) VALUES (1, N'Осенний', 1), (2, N'Весенний', 2)");
+            await _context.Database.ExecuteSqlRawAsync(
+                "IF NOT EXISTS (SELECT 1 FROM Edu_SemesterTypes WHERE ID = 1) INSERT INTO Edu_SemesterTypes (ID, Title, OrderBy) VALUES (1, N'Осенний', 1); " +
+                "IF NOT EXISTS (SELECT 1 FROM Edu_SemesterTypes WHERE ID = 2) INSERT INTO Edu_SemesterTypes (ID, Title, OrderBy) VALUES (2, N'Весенний', 2);");
             
             // Edu_Semesters
-            await _context.Database.ExecuteSqlRawAsync("INSERT INTO Edu_Semesters (ID, Title, StartsOn, EndsOn, StudyYear, SemesterTypeID) VALUES (1, N'Осенний семестр 2025-2026', '2025-09-01', '2026-01-31', 2025, 1)");
+            await _context.Database.ExecuteSqlRawAsync(
+                "IF NOT EXISTS (SELECT 1 FROM Edu_Semesters WHERE ID = 1) INSERT INTO Edu_Semesters (ID, Title, StartsOn, EndsOn, StudyYear, SemesterTypeID) VALUES (1, N'Осенний семестр 2025-2026', '2025-09-01', '2026-01-31', 2025, 1);");
             
             // Edu_OrgUnitTypes
-            await _context.Database.ExecuteSqlRawAsync("INSERT INTO Edu_OrgUnitTypes (ID, Title) VALUES (1, N'Кафедра'), (2, N'Факультет')");
+            await _context.Database.ExecuteSqlRawAsync(
+                "IF NOT EXISTS (SELECT 1 FROM Edu_OrgUnitTypes WHERE ID = 1) INSERT INTO Edu_OrgUnitTypes (ID, Title) VALUES (1, N'Кафедра'); " +
+                "IF NOT EXISTS (SELECT 1 FROM Edu_OrgUnitTypes WHERE ID = 2) INSERT INTO Edu_OrgUnitTypes (ID, Title) VALUES (2, N'Факультет');");
             
             // Edu_OrgUnits
-            await _context.Database.ExecuteSqlRawAsync("INSERT INTO Edu_OrgUnits (ID, Title, Deleted, TypeID) VALUES (1, N'Департамент компьютерных наук', 0, 1)");
+            await _context.Database.ExecuteSqlRawAsync(
+                "IF NOT EXISTS (SELECT 1 FROM Edu_OrgUnits WHERE ID = 1) INSERT INTO Edu_OrgUnits (ID, Title, Deleted, TypeID) VALUES (1, N'Департамент компьютерных наук', 0, 1);");
             
             // Edu_Positions
-            await _context.Database.ExecuteSqlRawAsync("INSERT INTO Edu_Positions (ID, Title, Deleted) VALUES (1, N'Профессор', 0)");
+            await _context.Database.ExecuteSqlRawAsync(
+                "IF NOT EXISTS (SELECT 1 FROM Edu_Positions WHERE ID = 1) INSERT INTO Edu_Positions (ID, Title, Deleted) VALUES (1, N'Профессор', 0);");
             
             // Edu_StudentStatuses
-            await _context.Database.ExecuteSqlRawAsync("INSERT INTO Edu_StudentStatuses (ID, Title) VALUES (1, N'Активный')");
+            await _context.Database.ExecuteSqlRawAsync(
+                "IF NOT EXISTS (SELECT 1 FROM Edu_StudentStatuses WHERE ID = 1) INSERT INTO Edu_StudentStatuses (ID, Title) VALUES (1, N'Активный');");
             
             // Edu_Users
             await _context.Database.ExecuteSqlRawAsync("INSERT INTO Edu_Users (ID, LastName, FirstName, Email, DOB, Male, MobilePhone, IIN) VALUES " +
                 "(100, N'Студентов', N'Студент', 'student@univ.edu', '2004-01-01', 1, '87771112233', '040101123456'), " +
-                "(200, N'Преподавателев', N'Преподаватель', 'teacher@univ.edu', '1980-01-01', 1, '87774445566', '800101123456')");
+                "(200, N'Преподавателев', N'Преподаватель', 'teacher@univ.edu', '1980-01-01', 1, '87774445566', '800101123456'), " +
+                "(300, N'Заведующий', N'Завкафедрой', 'head@univ.edu', '1975-01-01', 1, '87779998877', '750101123456'), " +
+                "(400, N'Администраторов', N'Администратор', 'admin@univ.edu', '1990-01-01', 1, '87777777777', '900101123456')");
             
             // Edu_Employees
-            await _context.Database.ExecuteSqlRawAsync("INSERT INTO Edu_Employees (ID, IsAdvisor) VALUES (200, 1)");
+            await _context.Database.ExecuteSqlRawAsync("INSERT INTO Edu_Employees (ID, IsAdvisor) VALUES (200, 1), (300, 1)");
             
             // Edu_EmployeePositions
-            await _context.Database.ExecuteSqlRawAsync("INSERT INTO Edu_EmployeePositions (ID, StartedOn, Rate, IsMainPosition, OrgUnitID, PositionID, EmployeeID) VALUES (1, '2020-09-01', 1.0, 1, 1, 1, 200)");
+            await _context.Database.ExecuteSqlRawAsync("INSERT INTO Edu_EmployeePositions (ID, StartedOn, Rate, IsMainPosition, OrgUnitID, PositionID, EmployeeID) VALUES " +
+                "(1, '2020-09-01', 1.0, 1, 1, 1, 200), " +
+                "(2, '2018-09-01', 1.0, 1, 1, 1, 300)");
             
             // Edu_Students
             await _context.Database.ExecuteSqlRawAsync("INSERT INTO Edu_Students (StudentID, SpecialityID, StatusID, Year, NeedsDorm, AdvisorID) VALUES (100, 1, 1, 4, 0, 200)");
@@ -134,6 +150,34 @@ public sealed class ApplicationDbContextInitialiser
                 new RoleAccess("COMMISSION_CHAIR", "Председатель комиссии", "Комиссия төрағасы", "Commission Chair", 1)
             };
             _context.RoleAccesses.AddRange(roles);
+            await _context.SaveChangesAsync();
+        }
+
+        // 2.5. Local Accounts & User Accesses
+        if (!await _context.LocalAccounts.AnyAsync())
+        {
+            _logger.LogInformation("Seeding LocalAccounts...");
+            var hash = "$2a$11$ergkPUv8BMR4PqbrmCJw7uL99CPl7945xl.f5w3sQvNdWnYvkosaW"; // password123
+            
+            var studentAccount = new LocalAccount(100, hash, createdBy: 0);
+            var teacherAccount = new LocalAccount(200, hash, createdBy: 0);
+            var headAccount = new LocalAccount(300, hash, createdBy: 0);
+            var adminAccount = new LocalAccount(400, hash, createdBy: 0);
+
+            _context.LocalAccounts.AddRange(studentAccount, teacherAccount, headAccount, adminAccount);
+            await _context.SaveChangesAsync();
+        }
+
+        if (!await _context.UserAccesses.AnyAsync())
+        {
+            _logger.LogInformation("Seeding UserAccesses...");
+            
+            var studentAccess = new UserAccess(100, 2, assignedBy: 0); // STUDENT role ID = 2
+            var supervisorAccess = new UserAccess(200, 3, assignedBy: 0); // SUPERVISOR role ID = 3
+            var headAccess = new UserAccess(300, 4, assignedBy: 0); // HEAD_OF_DEPARTMENT role ID = 4
+            var adminAccess = new UserAccess(400, 1, assignedBy: 0); // ADMIN role ID = 1
+
+            _context.UserAccesses.AddRange(studentAccess, supervisorAccess, headAccess, adminAccess);
             await _context.SaveChangesAsync();
         }
 

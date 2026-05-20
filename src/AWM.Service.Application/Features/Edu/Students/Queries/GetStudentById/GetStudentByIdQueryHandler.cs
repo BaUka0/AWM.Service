@@ -26,12 +26,12 @@ public sealed class GetStudentByIdQueryHandler : IRequestHandler<GetStudentByIdQ
             if (student is null)
                 return Result.Failure<StudentDto>(new Error("404", $"Student with ID {request.StudentId} not found."));
 
-            var user = await _userRepository.GetByIdAsync(student.UserId, cancellationToken);
+            var user = await _userRepository.GetByIdAsync(student.Id, cancellationToken);
 
             var dto = new StudentDto
             {
                 Id = student.Id,
-                UserId = student.UserId,
+                UserId = student.Id,
                 FullName = user?.Email,
                 Email = user?.Email,
                 GroupCode = null,

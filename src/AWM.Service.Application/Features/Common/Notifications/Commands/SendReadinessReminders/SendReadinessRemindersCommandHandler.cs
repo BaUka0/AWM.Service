@@ -93,7 +93,7 @@ public sealed class SendReadinessRemindersCommandHandler
                 {
                     var student = studentsById.GetValueOrDefault(participant.StudentId);
                     if (student is not null)
-                        studentUserIds.Add(student.UserId);
+                        studentUserIds.Add(student.Id);
                 }
 
                 if (studentUserIds.Count > 0)

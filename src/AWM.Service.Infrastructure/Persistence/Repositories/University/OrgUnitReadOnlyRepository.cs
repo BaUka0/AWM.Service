@@ -63,4 +63,11 @@ public class OrgUnitReadOnlyRepository : IOrgUnitReadOnlyRepository
             .Where(o => !o.Deleted)
             .ToListAsync(cancellationToken);
     }
+
+    public async Task<IReadOnlyList<OrgUnitType>> GetAllTypesAsync(CancellationToken cancellationToken = default)
+    {
+        return await _context.OrgUnitTypes
+            .AsNoTracking()
+            .ToListAsync(cancellationToken);
+    }
 }

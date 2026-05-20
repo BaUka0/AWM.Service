@@ -17,7 +17,7 @@ public sealed class GetApplicationsByStudentQueryHandler
     private readonly ITopicApplicationRepository _applicationRepository;
     private readonly ITopicRepository _topicRepository;
     private readonly IStudentRepository _studentRepository;
-    private readonly IStaffRepository _staffRepository;
+    private readonly IEmployeeRepository _EmployeeRepository;
     private readonly IUserRepository _userRepository;
     private readonly IDirectionRepository _directionRepository;
     private readonly IWorkflowRepository _workflowRepository;
@@ -27,7 +27,7 @@ public sealed class GetApplicationsByStudentQueryHandler
         ITopicApplicationRepository applicationRepository,
         ITopicRepository topicRepository,
         IStudentRepository studentRepository,
-        IStaffRepository staffRepository,
+        IEmployeeRepository EmployeeRepository,
         IUserRepository userRepository,
         IDirectionRepository directionRepository,
         IWorkflowRepository workflowRepository,
@@ -36,7 +36,7 @@ public sealed class GetApplicationsByStudentQueryHandler
         _applicationRepository = applicationRepository;
         _topicRepository = topicRepository;
         _studentRepository = studentRepository;
-        _staffRepository = staffRepository;
+        _EmployeeRepository = EmployeeRepository;
         _userRepository = userRepository;
         _directionRepository = directionRepository;
         _workflowRepository = workflowRepository;
@@ -101,7 +101,7 @@ public sealed class GetApplicationsByStudentQueryHandler
         var studentsById = students.ToDictionary(s => s.Id);
 
         var supervisorIds = topics.Select(t => t.EmployeeId).Distinct().ToList();
-        var supervisors = await _staffRepository.GetByIdsAsync(supervisorIds, cancellationToken);
+        var supervisors = await _EmployeeRepository.GetByIdsAsync(supervisorIds, cancellationToken);
         var supervisorsById = supervisors.ToDictionary(s => s.Id);
 
         var directionIds = topics.Where(t => t.DirectionId.HasValue).Select(t => t.DirectionId!.Value).Distinct().ToList();
@@ -112,7 +112,7 @@ public sealed class GetApplicationsByStudentQueryHandler
         var workTypes = await _workflowRepository.GetWorkTypesByIdsAsync(workTypeIds, cancellationToken);
         var workTypesById = workTypes.ToDictionary(w => w.Id);
 
-        var userIds = students.Select(s => s.UserId)
+        var userIds = students.Select(s => s.Id)
             .Concat(supervisors.Select(s => s.Id))
             .Distinct()
             .ToList();
@@ -129,7 +129,7 @@ public sealed class GetApplicationsByStudentQueryHandler
 
             var applicationStudent = studentsById.GetValueOrDefault(application.StudentId);
             var studentUser = applicationStudent is not null
-                ? usersById.GetValueOrDefault(applicationStudent.UserId)
+                ? usersById.GetValueOrDefault(applicationStudent.Id)
                 : null;
             var supervisor = supervisorsById.GetValueOrDefault(topic.EmployeeId);
             var supervisorUser = supervisor is not null

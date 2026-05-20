@@ -21,7 +21,7 @@ using Microsoft.AspNetCore.Mvc;
 [ApiController]
 [Route("api/v{version:apiVersion}/commissions")]
 [Produces("application/json")]
-public class CommissionsController : BaseController
+public sealed class CommissionsController : BaseController
 {
     private readonly ISender _sender;
 
@@ -44,7 +44,8 @@ public class CommissionsController : BaseController
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetByDepartment(
         [FromQuery] int departmentId,
-        [FromQuery] int academicYearId)
+        [FromQuery] int academicYearId,
+        CancellationToken cancellationToken = default)
     {
         var query = new GetCommissionsByDepartmentQuery
         {
@@ -52,7 +53,7 @@ public class CommissionsController : BaseController
             SemesterId = academicYearId
         };
 
-        var result = await _sender.Send(query);
+        var result = await _sender.Send(query, cancellationToken);
 
         if (result.IsFailed)
             return HandleResultError(result.Error);
@@ -72,10 +73,10 @@ public class CommissionsController : BaseController
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> GetById(int id)
+    public async Task<IActionResult> GetById(int id, CancellationToken cancellationToken = default)
     {
         var query = new GetCommissionByIdQuery { CommissionId = id };
-        var result = await _sender.Send(query);
+        var result = await _sender.Send(query, cancellationToken);
 
         if (result.IsFailed)
             return HandleResultError(result.Error);
@@ -94,11 +95,11 @@ public class CommissionsController : BaseController
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> Create([FromBody] CreateCommissionRequest request)
+    public async Task<IActionResult> Create([FromBody] CreateCommissionRequest request, CancellationToken cancellationToken = default)
     {
         var command = request.Adapt<CreateCommissionCommand>();
 
-        var result = await _sender.Send(command);
+        var result = await _sender.Send(command, cancellationToken);
 
         if (result.IsFailed)
             return HandleResultError(result.Error);
@@ -119,11 +120,11 @@ public class CommissionsController : BaseController
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> Update(int id, [FromBody] UpdateCommissionRequest request)
+    public async Task<IActionResult> Update(int id, [FromBody] UpdateCommissionRequest request, CancellationToken cancellationToken = default)
     {
         var command = request.Adapt<UpdateCommissionCommand>() with { CommissionId = id };
 
-        var result = await _sender.Send(command);
+        var result = await _sender.Send(command, cancellationToken);
 
         if (result.IsFailed)
             return HandleResultError(result.Error);
@@ -144,11 +145,11 @@ public class CommissionsController : BaseController
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> AddMember(int id, [FromBody] AddCommissionMemberRequest request)
+    public async Task<IActionResult> AddMember(int id, [FromBody] AddCommissionMemberRequest request, CancellationToken cancellationToken = default)
     {
         var command = request.Adapt<AddCommissionMemberCommand>() with { CommissionId = id };
 
-        var result = await _sender.Send(command);
+        var result = await _sender.Send(command, cancellationToken);
 
         if (result.IsFailed)
             return HandleResultError(result.Error);
@@ -167,7 +168,7 @@ public class CommissionsController : BaseController
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> RemoveMember(int id, int memberId)
+    public async Task<IActionResult> RemoveMember(int id, int memberId, CancellationToken cancellationToken = default)
     {
         var command = new RemoveCommissionMemberCommand
         {
@@ -175,7 +176,7 @@ public class CommissionsController : BaseController
             MemberId = memberId
         };
 
-        var result = await _sender.Send(command);
+        var result = await _sender.Send(command, cancellationToken);
 
         if (result.IsFailed)
             return HandleResultError(result.Error);
@@ -193,10 +194,10 @@ public class CommissionsController : BaseController
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> Delete(int id)
+    public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken = default)
     {
         var command = new DeleteCommissionCommand { CommissionId = id };
-        var result = await _sender.Send(command);
+        var result = await _sender.Send(command, cancellationToken);
 
         if (result.IsFailed)
             return HandleResultError(result.Error);

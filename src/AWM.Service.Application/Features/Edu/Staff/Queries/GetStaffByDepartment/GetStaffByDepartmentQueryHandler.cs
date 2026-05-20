@@ -7,33 +7,47 @@ using MediatR;
 
 public sealed class GetStaffByDepartmentQueryHandler : IRequestHandler<GetStaffByDepartmentQuery, Result<IReadOnlyList<StaffDto>>>
 {
-    private readonly IStaffRepository _staffRepository;
+    private readonly IEmployeeRepository _EmployeeRepository;
     private readonly IUserRepository _userRepository;
 
     public GetStaffByDepartmentQueryHandler(
-        IStaffRepository staffRepository,
+        IEmployeeRepository EmployeeRepository,
         IUserRepository userRepository)
     {
-        _staffRepository = staffRepository ?? throw new ArgumentNullException(nameof(staffRepository));
+        _EmployeeRepository = EmployeeRepository ?? throw new ArgumentNullException(nameof(EmployeeRepository));
         _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
     }
 
     public async Task<Result<IReadOnlyList<StaffDto>>> Handle(GetStaffByDepartmentQuery request, CancellationToken cancellationToken)
     {
-        return Result.Failure<IReadOnlyList<StaffDto>>(new Error("NotImplemented", "Not implemented - University entities are read-only"));
+        var staffList = await _EmployeeRepository.GetByDepartmentAsync(request.DepartmentId, cancellationToken);
+        var userIds = staffList.Select(s => s.Id).Distinct().ToList();
+        var users = (await _userRepository.GetByIdsAsync(userIds, cancellationToken)).ToDictionary(u => u.Id);
+
+        var dtos = staffList.Select(s =>
+        {
+            users.TryGetValue(s.Id, out var user);
+            return MapToDto(s, user, request.DepartmentId);
+        }).ToList();
+
+        return Result.Success<IReadOnlyList<StaffDto>>(dtos);
     }
 
-    private static StaffDto MapToDto(Domain.University.Employee staff, Domain.University.User? user)
+    private static StaffDto MapToDto(Domain.University.Employee staff, Domain.University.User? user, int departmentId)
     {
+        var mainPosition = staff.Positions.FirstOrDefault(p => p.OrgUnitId == departmentId && p.IsMainPosition) 
+                           ?? staff.Positions.FirstOrDefault(p => p.OrgUnitId == departmentId);
+
         return new StaffDto
         {
             Id = staff.Id,
             UserId = staff.Id,
-            FullName = user?.Email,
+            FullName = user != null ? $"{user.LastName} {user.FirstName} {user.MiddleName}".Trim() : string.Empty,
             Email = user?.Email,
-            Position = "",
+            Position = mainPosition?.Position?.Title ?? string.Empty,
             AcademicDegree = null,
-            DepartmentId = 0,
+            DepartmentId = departmentId,
+            DepartmentName = mainPosition?.OrgUnit?.Title ?? string.Empty,
             MaxStudentsLoad = 0,
             CreatedAt = default,
             CreatedBy = 0,

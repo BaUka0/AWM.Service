@@ -16,19 +16,19 @@ using System.Threading.Tasks;
 public sealed class GetAcademicProgramsQueryHandler 
     : IRequestHandler<GetAcademicProgramsQuery, Result<IReadOnlyList<AcademicProgramDto>>>
 {
-    private readonly IAcademicProgramRepository _academicProgramRepository;
+    private readonly ISpecialityRepository _SpecialityRepository;
 
     public GetAcademicProgramsQueryHandler(
-        IAcademicProgramRepository academicProgramRepository)
+        ISpecialityRepository SpecialityRepository)
     {
-        _academicProgramRepository = academicProgramRepository;
+        _SpecialityRepository = SpecialityRepository;
     }
 
     public async Task<Result<IReadOnlyList<AcademicProgramDto>>> Handle(
         GetAcademicProgramsQuery request, 
         CancellationToken cancellationToken)
     {
-        var specialities = await _academicProgramRepository.GetAllAsync(cancellationToken);
+        var specialities = await _SpecialityRepository.GetAllAsync(cancellationToken);
         
         var queryable = specialities.AsEnumerable();
 

@@ -15,7 +15,7 @@ public sealed class GetCurrentUserProfileQueryHandler
 {
     private readonly IUserRepository _userRepository;
     private readonly IStudentRepository _studentRepository;
-    private readonly IStaffRepository _staffRepository;
+    private readonly IEmployeeRepository _EmployeeRepository;
     private readonly IReviewerRepository _reviewerRepository;
     private readonly IOrganizationLookupRepository _orgLookupRepository;
     private readonly IUserAccessRepository _userAccessRepository;
@@ -25,7 +25,7 @@ public sealed class GetCurrentUserProfileQueryHandler
     public GetCurrentUserProfileQueryHandler(
         IUserRepository userRepository,
         IStudentRepository studentRepository,
-        IStaffRepository staffRepository,
+        IEmployeeRepository EmployeeRepository,
         IReviewerRepository reviewerRepository,
         IOrganizationLookupRepository orgLookupRepository,
         IUserAccessRepository userAccessRepository,
@@ -34,7 +34,7 @@ public sealed class GetCurrentUserProfileQueryHandler
     {
         _userRepository = userRepository;
         _studentRepository = studentRepository;
-        _staffRepository = staffRepository;
+        _EmployeeRepository = EmployeeRepository;
         _reviewerRepository = reviewerRepository;
         _orgLookupRepository = orgLookupRepository;
         _userAccessRepository = userAccessRepository;
@@ -59,11 +59,13 @@ public sealed class GetCurrentUserProfileQueryHandler
 
         var currentSemester = await _semesterRepository.GetCurrentAsync(cancellationToken);
 
+        var fullName = $"{user.LastName} {user.FirstName} {user.MiddleName}".Trim();
         var profile = new UserProfileDto
         {
             UserId = user.Id,
             Login = user.Email ?? string.Empty,
             Email = user.Email ?? string.Empty,
+            Name = fullName,
             Roles = roles,
             CurrentAcademicYearId = currentSemester?.Id,
             CurrentAcademicYearName = currentSemester?.Title
@@ -79,7 +81,7 @@ public sealed class GetCurrentUserProfileQueryHandler
             };
         }
 
-        var employee = await _staffRepository.GetByUserIdAsync(user.Id, cancellationToken);
+        var employee = await _EmployeeRepository.GetByUserIdAsync(user.Id, cancellationToken);
         if (employee != null)
         {
             profile = profile with

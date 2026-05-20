@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -11,6 +11,182 @@ namespace AWM.Service.Infrastructure.Persistence.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            // Create legacy university tables (must exist before FKs reference them)
+            migrationBuilder.Sql(@"
+IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name = 'Edu_Users' AND schema_id = SCHEMA_ID('dbo'))
+BEGIN
+    CREATE TABLE Edu_Users (
+        ID            int           NOT NULL PRIMARY KEY,
+        LastName      nvarchar(max) NOT NULL,
+        FirstName     nvarchar(max),
+        MiddleName    nvarchar(max),
+        Email         nvarchar(max),
+        DOB           date,
+        Male          bit,
+        MobilePhone   nvarchar(max),
+        IIN           nvarchar(max),
+        PhotoFileName nvarchar(255)
+    );
+END
+");
+
+            migrationBuilder.Sql(@"
+IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name = 'Edu_OrgUnitTypes' AND schema_id = SCHEMA_ID('dbo'))
+BEGIN
+    CREATE TABLE Edu_OrgUnitTypes (
+        ID    int           NOT NULL PRIMARY KEY,
+        Title nvarchar(max)
+    );
+END
+");
+
+            migrationBuilder.Sql(@"
+IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name = 'Edu_OrgUnits' AND schema_id = SCHEMA_ID('dbo'))
+BEGIN
+    CREATE TABLE Edu_OrgUnits (
+        ID         int           NOT NULL PRIMARY KEY,
+        ParentID   int,
+        Title      nvarchar(max) NOT NULL,
+        Deleted    bit           NOT NULL,
+        ShortTitle nvarchar(max),
+        TypeID     int           NOT NULL,
+        CONSTRAINT FK_Edu_OrgUnits_ParentID_Edu_OrgUnits FOREIGN KEY (ParentID) REFERENCES Edu_OrgUnits(ID),
+        CONSTRAINT FK_Edu_OrgUnits_TypeID_Edu_OrgUnitTypes FOREIGN KEY (TypeID) REFERENCES Edu_OrgUnitTypes(ID)
+    );
+END
+");
+
+            migrationBuilder.Sql(@"
+IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name = 'Edu_Employees' AND schema_id = SCHEMA_ID('dbo'))
+BEGIN
+    CREATE TABLE Edu_Employees (
+        ID        int NOT NULL PRIMARY KEY,
+        IsAdvisor bit NOT NULL,
+        CONSTRAINT FK_Edu_Employees_ID_Edu_Users FOREIGN KEY (ID) REFERENCES Edu_Users(ID)
+    );
+END
+");
+
+            migrationBuilder.Sql(@"
+IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name = 'Edu_SemesterTypes' AND schema_id = SCHEMA_ID('dbo'))
+BEGIN
+    CREATE TABLE Edu_SemesterTypes (
+        ID      int           NOT NULL PRIMARY KEY,
+        Title   nvarchar(max) NOT NULL,
+        OrderBy int           NOT NULL
+    );
+END
+");
+
+            migrationBuilder.Sql(@"
+IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name = 'Edu_Semesters' AND schema_id = SCHEMA_ID('dbo'))
+BEGIN
+    CREATE TABLE Edu_Semesters (
+        ID             int           NOT NULL PRIMARY KEY,
+        Title          nvarchar(max) NOT NULL,
+        StartsOn       datetime2     NOT NULL,
+        EndsOn         datetime2     NOT NULL,
+        StudyYear      int           NOT NULL,
+        SemesterTypeID int           NOT NULL,
+        CONSTRAINT FK_Edu_Semesters_SemesterTypeID_Edu_SemesterTypes FOREIGN KEY (SemesterTypeID) REFERENCES Edu_SemesterTypes(ID)
+    );
+END
+");
+
+            migrationBuilder.Sql(@"
+IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name = 'Edu_SpecialityLevels' AND schema_id = SCHEMA_ID('dbo'))
+BEGIN
+    CREATE TABLE Edu_SpecialityLevels (
+        ID     int           NOT NULL PRIMARY KEY,
+        Title  nvarchar(max) NOT NULL,
+        NoBDID nvarchar(max)
+    );
+END
+");
+
+            migrationBuilder.Sql(@"
+IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name = 'Edu_Specialities' AND schema_id = SCHEMA_ID('dbo'))
+BEGIN
+    CREATE TABLE Edu_Specialities (
+        ID           int           NOT NULL PRIMARY KEY,
+        Code         nvarchar(max) NOT NULL,
+        Title        nvarchar(max) NOT NULL,
+        YearsOfStudy int,
+        Deleted      bit           NOT NULL,
+        ShortTitle   nvarchar(max),
+        LevelID      int           NOT NULL,
+        CONSTRAINT FK_Edu_Specialities_LevelID_Edu_SpecialityLevels FOREIGN KEY (LevelID) REFERENCES Edu_SpecialityLevels(ID)
+    );
+END
+");
+
+            migrationBuilder.Sql(@"
+IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name = 'Edu_StudentStatuses' AND schema_id = SCHEMA_ID('dbo'))
+BEGIN
+    CREATE TABLE Edu_StudentStatuses (
+        ID    int           NOT NULL PRIMARY KEY,
+        Title nvarchar(max)
+    );
+END
+");
+
+            migrationBuilder.Sql(@"
+IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name = 'Edu_Students' AND schema_id = SCHEMA_ID('dbo'))
+BEGIN
+    CREATE TABLE Edu_Students (
+        StudentID        int NOT NULL PRIMARY KEY,
+        SpecialityID     int,
+        StatusID         int,
+        CategoryID       int,
+        Year             int NOT NULL,
+        GPA              float,
+        EctsGPA          float,
+        EducationTypeID  int,
+        GrantTypeID      int,
+        AdvisorID        int,
+        StudyLanguageID  int,
+        AcademicStatusID int,
+        IsScholarship    bit,
+        NeedsDorm        bit NOT NULL,
+        EntryDate        date,
+        CONSTRAINT FK_Edu_Students_StudentID_Edu_Users FOREIGN KEY (StudentID) REFERENCES Edu_Users(ID),
+        CONSTRAINT FK_Edu_Students_SpecialityID_Edu_Specialities FOREIGN KEY (SpecialityID) REFERENCES Edu_Specialities(ID),
+        CONSTRAINT FK_Edu_Students_StatusID_Edu_StudentStatuses FOREIGN KEY (StatusID) REFERENCES Edu_StudentStatuses(ID),
+        CONSTRAINT FK_Edu_Students_AdvisorID_Edu_Employees FOREIGN KEY (AdvisorID) REFERENCES Edu_Employees(ID)
+    );
+END
+");
+
+            migrationBuilder.Sql(@"
+IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name = 'Edu_Positions' AND schema_id = SCHEMA_ID('dbo'))
+BEGIN
+    CREATE TABLE Edu_Positions (
+        ID      int NOT NULL PRIMARY KEY,
+        Title   nvarchar(max),
+        Deleted bit NOT NULL
+    );
+END
+");
+
+            migrationBuilder.Sql(@"
+IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name = 'Edu_EmployeePositions' AND schema_id = SCHEMA_ID('dbo'))
+BEGIN
+    CREATE TABLE Edu_EmployeePositions (
+        ID             int  NOT NULL PRIMARY KEY,
+        StartedOn      date NOT NULL,
+        EndedOn        date,
+        Rate           float,
+        IsMainPosition bit,
+        OrgUnitID      int  NOT NULL,
+        PositionID     int  NOT NULL,
+        EmployeeID     int  NOT NULL,
+        CONSTRAINT FK_Edu_EmployeePositions_OrgUnitID_Edu_OrgUnits FOREIGN KEY (OrgUnitID) REFERENCES Edu_OrgUnits(ID),
+        CONSTRAINT FK_Edu_EmployeePositions_PositionID_Edu_Positions FOREIGN KEY (PositionID) REFERENCES Edu_Positions(ID),
+        CONSTRAINT FK_Edu_EmployeePositions_EmployeeID_Edu_Employees FOREIGN KEY (EmployeeID) REFERENCES Edu_Employees(ID)
+    );
+END
+");
+
             migrationBuilder.DropForeignKey(
                 name: "FK_CommMembers_User",
                 schema: "Defense",

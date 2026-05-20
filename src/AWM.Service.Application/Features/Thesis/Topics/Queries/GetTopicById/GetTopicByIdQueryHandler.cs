@@ -14,7 +14,7 @@ public sealed class GetTopicByIdQueryHandler : IRequestHandler<GetTopicByIdQuery
 {
     private readonly ITopicRepository _topicRepository;
     private readonly IDirectionRepository _directionRepository;
-    private readonly IStaffRepository _staffRepository;
+    private readonly IEmployeeRepository _EmployeeRepository;
     private readonly IStudentRepository _studentRepository;
     private readonly IUserRepository _userRepository;
     private readonly IWorkflowRepository _workflowRepository;
@@ -22,14 +22,14 @@ public sealed class GetTopicByIdQueryHandler : IRequestHandler<GetTopicByIdQuery
     public GetTopicByIdQueryHandler(
         ITopicRepository topicRepository,
         IDirectionRepository directionRepository,
-        IStaffRepository staffRepository,
+        IEmployeeRepository EmployeeRepository,
         IStudentRepository studentRepository,
         IUserRepository userRepository,
         IWorkflowRepository workflowRepository)
     {
         _topicRepository = topicRepository ?? throw new ArgumentNullException(nameof(topicRepository));
         _directionRepository = directionRepository ?? throw new ArgumentNullException(nameof(directionRepository));
-        _staffRepository = staffRepository ?? throw new ArgumentNullException(nameof(staffRepository));
+        _EmployeeRepository = EmployeeRepository ?? throw new ArgumentNullException(nameof(EmployeeRepository));
         _studentRepository = studentRepository ?? throw new ArgumentNullException(nameof(studentRepository));
         _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
         _workflowRepository = workflowRepository ?? throw new ArgumentNullException(nameof(workflowRepository));
@@ -61,7 +61,7 @@ public sealed class GetTopicByIdQueryHandler : IRequestHandler<GetTopicByIdQuery
                     cancellationToken)).FirstOrDefault();
             }
 
-            var supervisorStaff = (await _staffRepository.GetByIdsAsync(
+            var supervisorStaff = (await _EmployeeRepository.GetByIdsAsync(
                 new[] { topic.EmployeeId },
                 cancellationToken)).FirstOrDefault();
             var students = await _studentRepository.GetByIdsAsync(
@@ -69,7 +69,7 @@ public sealed class GetTopicByIdQueryHandler : IRequestHandler<GetTopicByIdQuery
                 cancellationToken);
             var studentsById = students.ToDictionary(student => student.Id);
 
-            var userIds = students.Select(student => student.UserId).ToList();
+            var userIds = students.Select(student => student.Id).ToList();
             if (supervisorStaff is not null)
             {
                 userIds.Add(supervisorStaff.Id);
@@ -90,7 +90,7 @@ public sealed class GetTopicByIdQueryHandler : IRequestHandler<GetTopicByIdQuery
                 var student = studentsById.GetValueOrDefault(application.StudentId);
                 var studentUser = student is null
                     ? null
-                    : usersById.GetValueOrDefault(student.UserId);
+                    : usersById.GetValueOrDefault(student.Id);
 
                 return TopicApplicationDtoFactory.Create(
                     application,

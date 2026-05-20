@@ -15,8 +15,8 @@ using Microsoft.Extensions.Logging;
 public sealed class ApproveInitialStagesCommandHandler : IRequestHandler<ApproveInitialStagesCommand, Result>
 {
     private readonly IStageRepository _stageRepository;
-    private readonly IStaffRepository _staffRepository;
-    private readonly IAcademicProgramRepository _academicProgramRepository;
+    private readonly IEmployeeRepository _EmployeeRepository;
+    private readonly ISpecialityRepository _SpecialityRepository;
     private readonly IStudentRepository _studentRepository;
     private readonly ICurrentUserProvider _currentUserProvider;
     private readonly INotificationService _notificationService;
@@ -25,8 +25,8 @@ public sealed class ApproveInitialStagesCommandHandler : IRequestHandler<Approve
 
     public ApproveInitialStagesCommandHandler(
         IStageRepository stageRepository,
-        IStaffRepository staffRepository,
-        IAcademicProgramRepository academicProgramRepository,
+        IEmployeeRepository EmployeeRepository,
+        ISpecialityRepository SpecialityRepository,
         IStudentRepository studentRepository,
         ICurrentUserProvider currentUserProvider,
         INotificationService notificationService,
@@ -34,8 +34,8 @@ public sealed class ApproveInitialStagesCommandHandler : IRequestHandler<Approve
         ILogger<ApproveInitialStagesCommandHandler> logger)
     {
         _stageRepository = stageRepository ?? throw new ArgumentNullException(nameof(stageRepository));
-        _staffRepository = staffRepository ?? throw new ArgumentNullException(nameof(staffRepository));
-        _academicProgramRepository = academicProgramRepository ?? throw new ArgumentNullException(nameof(academicProgramRepository));
+        _EmployeeRepository = EmployeeRepository ?? throw new ArgumentNullException(nameof(EmployeeRepository));
+        _SpecialityRepository = SpecialityRepository ?? throw new ArgumentNullException(nameof(SpecialityRepository));
         _studentRepository = studentRepository ?? throw new ArgumentNullException(nameof(studentRepository));
         _currentUserProvider = currentUserProvider ?? throw new ArgumentNullException(nameof(currentUserProvider));
         _notificationService = notificationService ?? throw new ArgumentNullException(nameof(notificationService));
@@ -45,6 +45,58 @@ public sealed class ApproveInitialStagesCommandHandler : IRequestHandler<Approve
 
     public async Task<Result> Handle(ApproveInitialStagesCommand request, CancellationToken cancellationToken)
     {
-        return Result.Failure(new Error("NotImplemented", "Not implemented - University entities are read-only"));
+        var userId = _currentUserProvider.UserId;
+        _logger.LogInformation("ApproveInitialStages for Dept={DeptId}, Semester={SemesterId} by User={UserId}",
+            request.DepartmentId, request.SemesterId, userId);
+
+        if (!userId.HasValue)
+            return Result.Failure(new Error("401", "User ID is not available."));
+
+        var existingStages = await _stageRepository.GetTrackedByDepartmentAsync(
+            request.DepartmentId, request.SemesterId, cancellationToken);
+        var activeStages = existingStages.Where(p => !p.IsDeleted).ToList();
+
+        var groupedStages = request.Stages
+            .GroupBy(p => p.WorkflowStageId)
+            .Select(g => g.First())
+            .ToList();
+
+        foreach (var requestedStage in groupedStages)
+        {
+            var existing = activeStages.FirstOrDefault(p => p.WorkflowStageId == requestedStage.WorkflowStageId);
+            if (existing != null)
+            {
+                existing.UpdateDates(requestedStage.StartDate, requestedStage.EndDate, userId.Value);
+                await _stageRepository.UpdateAsync(existing, cancellationToken);
+            }
+            else
+            {
+                var newStage = new Stage(
+                    request.DepartmentId,
+                    request.SemesterId,
+                    requestedStage.WorkflowStageId,
+                    requestedStage.StartDate,
+                    requestedStage.EndDate,
+                    userId.Value);
+                await _stageRepository.AddAsync(newStage, cancellationToken);
+            }
+        }
+
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        var staffList = await _EmployeeRepository.GetByDepartmentAsync(request.DepartmentId, cancellationToken);
+        var staffUserIds = staffList.Select(s => s.Id).Distinct().ToList();
+
+        if (staffUserIds.Any())
+        {
+            await _notificationService.SendToManyAsync(
+                staffUserIds,
+                "Утверждены сроки начальных этапов дипломных работ",
+                userId.Value,
+                $"Сроки начальных этапов (выбор темы, подготовка и т.д.) для вашей кафедры на текущий семестр были успешно утверждены.",
+                cancellationToken: cancellationToken);
+        }
+
+        return Result.Success();
     }
 }

@@ -16,7 +16,7 @@ public sealed class SubmitDirectionCommandHandler
 {
     private readonly IDirectionRepository _directionRepository;
     private readonly IWorkflowRepository _workflowRepository;
-    private readonly IStaffRepository _staffRepository;
+    private readonly IEmployeeRepository _EmployeeRepository;
     private readonly ICurrentUserProvider _currentUserProvider;
     private readonly IStageValidationService _stageValidationService;
     private readonly IUnitOfWork _unitOfWork;
@@ -25,7 +25,7 @@ public sealed class SubmitDirectionCommandHandler
     public SubmitDirectionCommandHandler(
         IDirectionRepository directionRepository,
         IWorkflowRepository workflowRepository,
-        IStaffRepository staffRepository,
+        IEmployeeRepository EmployeeRepository,
         ICurrentUserProvider currentUserProvider,
         IStageValidationService stageValidationService,
         IUnitOfWork unitOfWork,
@@ -33,7 +33,7 @@ public sealed class SubmitDirectionCommandHandler
     {
         _directionRepository = directionRepository;
         _workflowRepository = workflowRepository;
-        _staffRepository = staffRepository;
+        _EmployeeRepository = EmployeeRepository;
         _currentUserProvider = currentUserProvider;
         _stageValidationService = stageValidationService;
         _unitOfWork = unitOfWork;
@@ -86,7 +86,7 @@ public sealed class SubmitDirectionCommandHandler
         }
 
         // Verify user is the supervisor (authorization check)
-        var staff = await _staffRepository.GetByUserIdAsync(userId.Value, cancellationToken);
+        var staff = await _EmployeeRepository.GetByUserIdAsync(userId.Value, cancellationToken);
         if (staff is null || direction.EmployeeId != staff.Id)
         {
             _logger.LogWarning("SubmitDirection failed: User={UserId} (StaffId={StaffId}) is not the supervisor for Direction={DirectionId}",

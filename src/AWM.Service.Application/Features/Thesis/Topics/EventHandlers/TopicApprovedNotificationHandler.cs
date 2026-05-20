@@ -12,18 +12,18 @@ using Microsoft.Extensions.Logging;
 public sealed class TopicApprovedNotificationHandler : INotificationHandler<TopicApprovedEvent>
 {
     private readonly ITopicRepository _topicRepository;
-    private readonly IStaffRepository _staffRepository;
+    private readonly IEmployeeRepository _EmployeeRepository;
     private readonly INotificationService _notificationService;
     private readonly ILogger<TopicApprovedNotificationHandler> _logger;
 
     public TopicApprovedNotificationHandler(
         ITopicRepository topicRepository,
-        IStaffRepository staffRepository,
+        IEmployeeRepository EmployeeRepository,
         INotificationService notificationService,
         ILogger<TopicApprovedNotificationHandler> logger)
     {
         _topicRepository = topicRepository;
-        _staffRepository = staffRepository;
+        _EmployeeRepository = EmployeeRepository;
         _notificationService = notificationService;
         _logger = logger;
     }
@@ -34,7 +34,7 @@ public sealed class TopicApprovedNotificationHandler : INotificationHandler<Topi
         if (topic is null) return;
 
         // Resolve Staff -> UserId for notification
-        var staff = await _staffRepository.GetByIdAsync(topic.EmployeeId, cancellationToken);
+        var staff = await _EmployeeRepository.GetByIdAsync(topic.EmployeeId, cancellationToken);
         if (staff is null)
         {
             _logger.LogWarning("Cannot send notification: Staff {StaffId} not found for topic {TopicId}", topic.EmployeeId, topic.Id);

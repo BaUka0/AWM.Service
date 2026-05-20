@@ -15,7 +15,7 @@ using Microsoft.AspNetCore.Mvc;
 /// Controller for managing supervisor and external reviews of student works.
 /// </summary>
 [ApiVersion("1.0")]
-[Route("api/v{version:apiVersion}/works/{workId:long}/[controller]")]
+[Route("api/v{version:apiVersion}/student-works/{workId:long}/[controller]")]
 [ApiController]
 [Produces("application/json")]
 public sealed class ReviewsController : BaseController
@@ -25,26 +25,6 @@ public sealed class ReviewsController : BaseController
     public ReviewsController(ISender sender)
     {
         _sender = sender;
-    }
-
-    /// <summary>
-    /// Get assignments for the current reviewer ("My Reviews").
-    /// </summary>
-    [HttpGet("my-assignments")]
-    [RequireAccess("Reviews", "Read")]
-    [ProducesResponseType(typeof(IReadOnlyList<ReviewerAssignmentResponse>), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> GetMyAssignments(CancellationToken cancellationToken = default)
-    {
-        var query = new GetMyReviewerAssignmentsQuery();
-        var result = await _sender.Send(query, cancellationToken);
-
-        if (result.IsFailed)
-            return HandleResultError(result.Error);
-
-        return Ok(result.Value.Adapt<IReadOnlyList<ReviewerAssignmentResponse>>());
     }
 
     /// <summary>

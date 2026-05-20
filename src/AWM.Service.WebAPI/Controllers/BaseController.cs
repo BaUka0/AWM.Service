@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace AWM.Service.WebAPI.Controllers
 {
+    [ApiConventionType(typeof(DefaultApiConventions))]
     public abstract class BaseController : ControllerBase
     {
         protected IActionResult HandleResultError(Error error)

@@ -17,7 +17,7 @@ using Microsoft.AspNetCore.Mvc;
 [ApiController]
 [Route("api/v{version:apiVersion}/protocols")]
 [Produces("application/json")]
-public class ProtocolsController : BaseController
+public sealed class ProtocolsController : BaseController
 {
     private readonly ISender _sender;
 
@@ -38,10 +38,10 @@ public class ProtocolsController : BaseController
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> GetById(long protocolId)
+    public async Task<IActionResult> GetById(long protocolId, CancellationToken cancellationToken = default)
     {
         var query = new GetProtocolQuery { ProtocolId = protocolId };
-        var result = await _sender.Send(query);
+        var result = await _sender.Send(query, cancellationToken);
 
         if (result.IsFailed)
             return HandleResultError(result.Error);
@@ -66,11 +66,11 @@ public class ProtocolsController : BaseController
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> Generate([FromBody] GenerateProtocolRequest request)
+    public async Task<IActionResult> Generate([FromBody] GenerateProtocolRequest request, CancellationToken cancellationToken = default)
     {
         var command = request.Adapt<GenerateProtocolCommand>();
 
-        var result = await _sender.Send(command);
+        var result = await _sender.Send(command, cancellationToken);
 
         if (result.IsFailed)
             return HandleResultError(result.Error);

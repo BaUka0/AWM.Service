@@ -43,6 +43,11 @@ public interface IOrgUnitReadOnlyRepository
     Task<IReadOnlyList<OrgUnit>> GetInstitutesAsync(CancellationToken cancellationToken = default);
     Task<IReadOnlyList<OrgUnit>> GetChildrenAsync(int parentId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<OrgUnit>> GetAllAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets all org unit types (reference dictionary).
+    /// </summary>
+    Task<IReadOnlyList<OrgUnitType>> GetAllTypesAsync(CancellationToken cancellationToken = default);
 }
 
 public interface ISemesterReadOnlyRepository

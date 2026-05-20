@@ -14,7 +14,7 @@ public sealed class GetTopicCoordinationSummaryQueryHandler
 {
     private readonly ITopicRepository _topicRepository;
     private readonly ITopicApplicationRepository _applicationRepository;
-    private readonly IStaffRepository _staffRepository;
+    private readonly IEmployeeRepository _EmployeeRepository;
     private readonly IUserRepository _userRepository;
     private readonly ICurrentUserProvider _currentUserProvider;
     private readonly ILogger<GetTopicCoordinationSummaryQueryHandler> _logger;
@@ -22,14 +22,14 @@ public sealed class GetTopicCoordinationSummaryQueryHandler
     public GetTopicCoordinationSummaryQueryHandler(
         ITopicRepository topicRepository,
         ITopicApplicationRepository applicationRepository,
-        IStaffRepository staffRepository,
+        IEmployeeRepository EmployeeRepository,
         IUserRepository userRepository,
         ICurrentUserProvider currentUserProvider,
         ILogger<GetTopicCoordinationSummaryQueryHandler> logger)
     {
         _topicRepository = topicRepository;
         _applicationRepository = applicationRepository;
-        _staffRepository = staffRepository;
+        _EmployeeRepository = EmployeeRepository;
         _userRepository = userRepository;
         _currentUserProvider = currentUserProvider;
         _logger = logger;
@@ -58,7 +58,7 @@ public sealed class GetTopicCoordinationSummaryQueryHandler
         var allApplications = await _applicationRepository.GetByTopicIdsAsync(topicIds, cancellationToken);
         var applicationsByTopicId = allApplications.GroupBy(a => a.TopicId)
             .ToDictionary(g => g.Key, g => g.ToList());
-        var supervisors = await _staffRepository.GetByIdsAsync(
+        var supervisors = await _EmployeeRepository.GetByIdsAsync(
             topics.Select(t => t.EmployeeId).Distinct(),
             cancellationToken);
         var supervisorsById = supervisors.ToDictionary(s => s.Id);

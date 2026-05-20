@@ -12,18 +12,18 @@ using Microsoft.Extensions.Logging;
 public sealed class DirectionApprovedNotificationHandler : INotificationHandler<DirectionApprovedEvent>
 {
     private readonly IDirectionRepository _directionRepository;
-    private readonly IStaffRepository _staffRepository;
+    private readonly IEmployeeRepository _EmployeeRepository;
     private readonly INotificationService _notificationService;
     private readonly ILogger<DirectionApprovedNotificationHandler> _logger;
 
     public DirectionApprovedNotificationHandler(
         IDirectionRepository directionRepository,
-        IStaffRepository staffRepository,
+        IEmployeeRepository EmployeeRepository,
         INotificationService notificationService,
         ILogger<DirectionApprovedNotificationHandler> logger)
     {
         _directionRepository = directionRepository;
-        _staffRepository = staffRepository;
+        _EmployeeRepository = EmployeeRepository;
         _notificationService = notificationService;
         _logger = logger;
     }
@@ -33,7 +33,7 @@ public sealed class DirectionApprovedNotificationHandler : INotificationHandler<
         var direction = await _directionRepository.GetByIdAsync(notification.DirectionId, cancellationToken);
         if (direction is null) return;
 
-        var staff = await _staffRepository.GetByIdAsync(direction.EmployeeId, cancellationToken);
+        var staff = await _EmployeeRepository.GetByIdAsync(direction.EmployeeId, cancellationToken);
         if (staff is null)
         {
             _logger.LogWarning("Cannot send notification: Staff {StaffId} not found for direction {DirectionId}", direction.EmployeeId, direction.Id);
@@ -60,18 +60,18 @@ public sealed class DirectionApprovedNotificationHandler : INotificationHandler<
 public sealed class DirectionRejectedNotificationHandler : INotificationHandler<DirectionRejectedEvent>
 {
     private readonly IDirectionRepository _directionRepository;
-    private readonly IStaffRepository _staffRepository;
+    private readonly IEmployeeRepository _EmployeeRepository;
     private readonly INotificationService _notificationService;
     private readonly ILogger<DirectionRejectedNotificationHandler> _logger;
 
     public DirectionRejectedNotificationHandler(
         IDirectionRepository directionRepository,
-        IStaffRepository staffRepository,
+        IEmployeeRepository EmployeeRepository,
         INotificationService notificationService,
         ILogger<DirectionRejectedNotificationHandler> logger)
     {
         _directionRepository = directionRepository;
-        _staffRepository = staffRepository;
+        _EmployeeRepository = EmployeeRepository;
         _notificationService = notificationService;
         _logger = logger;
     }
@@ -81,7 +81,7 @@ public sealed class DirectionRejectedNotificationHandler : INotificationHandler<
         var direction = await _directionRepository.GetByIdAsync(notification.DirectionId, cancellationToken);
         if (direction is null) return;
 
-        var staff = await _staffRepository.GetByIdAsync(direction.EmployeeId, cancellationToken);
+        var staff = await _EmployeeRepository.GetByIdAsync(direction.EmployeeId, cancellationToken);
         if (staff is null)
         {
             _logger.LogWarning("Cannot send notification: Staff {StaffId} not found for direction {DirectionId}", direction.EmployeeId, direction.Id);
@@ -112,18 +112,18 @@ public sealed class DirectionRejectedNotificationHandler : INotificationHandler<
 public sealed class DirectionRequiresRevisionNotificationHandler : INotificationHandler<DirectionRequiresRevisionEvent>
 {
     private readonly IDirectionRepository _directionRepository;
-    private readonly IStaffRepository _staffRepository;
+    private readonly IEmployeeRepository _EmployeeRepository;
     private readonly INotificationService _notificationService;
     private readonly ILogger<DirectionRequiresRevisionNotificationHandler> _logger;
 
     public DirectionRequiresRevisionNotificationHandler(
         IDirectionRepository directionRepository,
-        IStaffRepository staffRepository,
+        IEmployeeRepository EmployeeRepository,
         INotificationService notificationService,
         ILogger<DirectionRequiresRevisionNotificationHandler> logger)
     {
         _directionRepository = directionRepository;
-        _staffRepository = staffRepository;
+        _EmployeeRepository = EmployeeRepository;
         _notificationService = notificationService;
         _logger = logger;
     }
@@ -133,7 +133,7 @@ public sealed class DirectionRequiresRevisionNotificationHandler : INotification
         var direction = await _directionRepository.GetByIdAsync(notification.DirectionId, cancellationToken);
         if (direction is null) return;
 
-        var staff = await _staffRepository.GetByIdAsync(direction.EmployeeId, cancellationToken);
+        var staff = await _EmployeeRepository.GetByIdAsync(direction.EmployeeId, cancellationToken);
         if (staff is null)
         {
             _logger.LogWarning("Cannot send notification: Staff {StaffId} not found for direction {DirectionId}", direction.EmployeeId, direction.Id);

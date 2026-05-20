@@ -13,20 +13,20 @@ public sealed class GetTopicsByDirectionQueryHandler
 {
     private readonly IDirectionRepository _directionRepository;
     private readonly ITopicApplicationRepository _applicationRepository;
-    private readonly IStaffRepository _staffRepository;
+    private readonly IEmployeeRepository _EmployeeRepository;
     private readonly IUserRepository _userRepository;
     private readonly IWorkflowRepository _workflowRepository;
 
     public GetTopicsByDirectionQueryHandler(
         IDirectionRepository directionRepository,
         ITopicApplicationRepository applicationRepository,
-        IStaffRepository staffRepository,
+        IEmployeeRepository EmployeeRepository,
         IUserRepository userRepository,
         IWorkflowRepository workflowRepository)
     {
         _directionRepository = directionRepository ?? throw new ArgumentNullException(nameof(directionRepository));
         _applicationRepository = applicationRepository ?? throw new ArgumentNullException(nameof(applicationRepository));
-        _staffRepository = staffRepository ?? throw new ArgumentNullException(nameof(staffRepository));
+        _EmployeeRepository = EmployeeRepository ?? throw new ArgumentNullException(nameof(EmployeeRepository));
         _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
         _workflowRepository = workflowRepository ?? throw new ArgumentNullException(nameof(workflowRepository));
     }
@@ -56,7 +56,7 @@ public sealed class GetTopicsByDirectionQueryHandler
             var supervisorIds = activeTopics.Select(t => t.EmployeeId).Distinct();
             var workTypeIds = activeTopics.Select(t => t.WorkTypeId).Distinct();
 
-            var staff = await _staffRepository.GetByIdsAsync(supervisorIds, cancellationToken);
+            var staff = await _EmployeeRepository.GetByIdsAsync(supervisorIds, cancellationToken);
             var workTypes = await _workflowRepository.GetWorkTypesByIdsAsync(workTypeIds, cancellationToken);
 
             var userIds = staff.Select(s => s.Id).Distinct();

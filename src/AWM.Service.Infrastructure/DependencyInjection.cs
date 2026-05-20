@@ -8,7 +8,7 @@ using AWM.Service.Infrastructure.Persistence.Repositories.Common;
 using AWM.Service.Infrastructure.Persistence.Repositories.Core;
 using AWM.Service.Infrastructure.Persistence.Repositories.Defense;
 using AWM.Service.Infrastructure.Persistence.Repositories.Dictionary;
-using AWM.Service.Infrastructure.Persistence.Repositories.RbacPlus;
+using AWM.Service.Infrastructure.Persistence.Repositories.Auth;
 using AWM.Service.Infrastructure.Persistence.Repositories.Thesis;
 using AWM.Service.Infrastructure.Persistence.Repositories.University;
 using AWM.Service.Infrastructure.Persistence.Repositories.Workflow;
@@ -94,7 +94,7 @@ public static class DependencyInjection
         // Register Core Repositories
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IStudentRepository, StudentRepository>();
-        services.AddScoped<IStaffRepository, StaffRepository>();
+        services.AddScoped<IEmployeeRepository, EmployeeRepository>();
 
         // Register Defense Repositories
         services.AddScoped<ICommissionRepository, CommissionRepository>();
@@ -114,12 +114,12 @@ public static class DependencyInjection
         services.AddScoped<IReviewRepository, ReviewRepository>();
 
         // Register Dictionary/Lookup Repositories
-        services.AddScoped<IAcademicProgramRepository, AcademicProgramRepository>();
-        services.AddScoped<IDegreeLevelRepository, DegreeLevelRepository>();
+        services.AddScoped<ISpecialityRepository, SpecialityRepository>();
+        services.AddScoped<ISpecialityLevelRepository, SpecialityLevelRepository>();
         services.AddScoped<IRoleRepository, RoleRepository>();
         services.AddScoped<IOrganizationLookupRepository, OrganizationLookupRepository>();
 
-        // Register RBAC+ Repositories
+        // Register Auth Repositories
         services.AddScoped<IRoleAccessRepository, RoleAccessRepository>();
         services.AddScoped<IRoleOperationRepository, RoleOperationRepository>();
         services.AddScoped<IRoleActionTypeRepository, RoleActionTypeRepository>();

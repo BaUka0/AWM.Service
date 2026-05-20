@@ -16,7 +16,7 @@ public sealed class GetApplicationsByTopicQueryHandler
 {
     private readonly ITopicApplicationRepository _applicationRepository;
     private readonly ITopicRepository _topicRepository;
-    private readonly IStaffRepository _staffRepository;
+    private readonly IEmployeeRepository _EmployeeRepository;
     private readonly IStudentRepository _studentRepository;
     private readonly IUserRepository _userRepository;
     private readonly IDirectionRepository _directionRepository;
@@ -26,7 +26,7 @@ public sealed class GetApplicationsByTopicQueryHandler
     public GetApplicationsByTopicQueryHandler(
         ITopicApplicationRepository applicationRepository,
         ITopicRepository topicRepository,
-        IStaffRepository staffRepository,
+        IEmployeeRepository EmployeeRepository,
         IStudentRepository studentRepository,
         IUserRepository userRepository,
         IDirectionRepository directionRepository,
@@ -35,7 +35,7 @@ public sealed class GetApplicationsByTopicQueryHandler
     {
         _applicationRepository = applicationRepository;
         _topicRepository = topicRepository;
-        _staffRepository = staffRepository;
+        _EmployeeRepository = EmployeeRepository;
         _studentRepository = studentRepository;
         _userRepository = userRepository;
         _directionRepository = directionRepository;
@@ -55,7 +55,7 @@ public sealed class GetApplicationsByTopicQueryHandler
         var userId = _currentUserProvider.UserId.Value;
 
         // Resolve staff profile — topic.EmployeeId is Staff.Id, not Auth.Users.Id
-        var currentStaff = await _staffRepository.GetByUserIdAsync(userId, cancellationToken);
+        var currentStaff = await _EmployeeRepository.GetByUserIdAsync(userId, cancellationToken);
         if (currentStaff is null)
         {
             return Result.Failure<IReadOnlyList<TopicApplicationDto>>(
@@ -105,7 +105,7 @@ public sealed class GetApplicationsByTopicQueryHandler
             ? await _directionRepository.GetByIdAsync(topic.DirectionId.Value, cancellationToken)
             : null;
         var workType = await _workflowRepository.GetWorkTypeByIdAsync(topic.WorkTypeId, cancellationToken);
-        var userIds = students.Select(s => s.UserId)
+        var userIds = students.Select(s => s.Id)
             .Append(currentStaff.Id)
             .Distinct()
             .ToList();
@@ -119,7 +119,7 @@ public sealed class GetApplicationsByTopicQueryHandler
         {
             var applicationStudent = studentsById.GetValueOrDefault(application.StudentId);
             var studentUser = applicationStudent is not null
-                ? usersById.GetValueOrDefault(applicationStudent.UserId)
+                ? usersById.GetValueOrDefault(applicationStudent.Id)
                 : null;
 
             dtos.Add(TopicApplicationDtoFactory.Create(

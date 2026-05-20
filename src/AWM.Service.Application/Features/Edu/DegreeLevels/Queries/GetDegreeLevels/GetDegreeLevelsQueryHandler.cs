@@ -16,19 +16,19 @@ using System.Threading.Tasks;
 public sealed class GetDegreeLevelsQueryHandler 
     : IRequestHandler<GetDegreeLevelsQuery, Result<IReadOnlyList<DegreeLevelDto>>>
 {
-    private readonly IDegreeLevelRepository _degreeLevelRepository;
+    private readonly ISpecialityLevelRepository _SpecialityLevelRepository;
 
     public GetDegreeLevelsQueryHandler(
-        IDegreeLevelRepository degreeLevelRepository)
+        ISpecialityLevelRepository SpecialityLevelRepository)
     {
-        _degreeLevelRepository = degreeLevelRepository;
+        _SpecialityLevelRepository = SpecialityLevelRepository;
     }
 
     public async Task<Result<IReadOnlyList<DegreeLevelDto>>> Handle(
         GetDegreeLevelsQuery request, 
         CancellationToken cancellationToken)
     {
-        var levels = await _degreeLevelRepository.GetAllAsync(cancellationToken);
+        var levels = await _SpecialityLevelRepository.GetAllAsync(cancellationToken);
         
         var queryable = levels.AsEnumerable();
 

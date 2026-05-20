@@ -32,11 +32,14 @@ public interface IStudentRepository
 /// <summary>
 /// Repository interface for Employee (read-only, from University).
 /// </summary>
-public interface IStaffRepository
+public interface IEmployeeRepository
 {
     Task<Employee?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
     Task<Employee?> GetByUserIdAsync(int userId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Employee>> GetByIdsAsync(IEnumerable<int> ids, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Employee>> GetAdvisorsAsync(CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<Employee>> GetByDepartmentAsync(int departmentId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<Employee>> GetAllWithPositionsAsync(CancellationToken cancellationToken = default);
+    Task<Employee?> GetByIdWithPositionsAsync(int id, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Employee>> GetAllAsync(CancellationToken cancellationToken = default);
 }

@@ -14,7 +14,7 @@ public sealed class CreateSupervisorReviewCommandHandler : IRequestHandler<Creat
     private readonly IStudentWorkRepository _workRepository;
     private readonly ISupervisorReviewRepository _reviewRepository;
     private readonly IAttachmentService _attachmentService;
-    private readonly IStaffRepository _staffRepository;
+    private readonly IEmployeeRepository _EmployeeRepository;
     private readonly ICurrentUserProvider _currentUserProvider;
     private readonly IUnitOfWork _unitOfWork;
 
@@ -22,14 +22,14 @@ public sealed class CreateSupervisorReviewCommandHandler : IRequestHandler<Creat
         IStudentWorkRepository workRepository,
         ISupervisorReviewRepository reviewRepository,
         IAttachmentService attachmentService,
-        IStaffRepository staffRepository,
+        IEmployeeRepository EmployeeRepository,
         ICurrentUserProvider currentUserProvider,
         IUnitOfWork unitOfWork)
     {
         _workRepository = workRepository ?? throw new ArgumentNullException(nameof(workRepository));
         _reviewRepository = reviewRepository ?? throw new ArgumentNullException(nameof(reviewRepository));
         _attachmentService = attachmentService ?? throw new ArgumentNullException(nameof(attachmentService));
-        _staffRepository = staffRepository ?? throw new ArgumentNullException(nameof(staffRepository));
+        _EmployeeRepository = EmployeeRepository ?? throw new ArgumentNullException(nameof(EmployeeRepository));
         _currentUserProvider = currentUserProvider ?? throw new ArgumentNullException(nameof(currentUserProvider));
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
     }
@@ -41,7 +41,7 @@ public sealed class CreateSupervisorReviewCommandHandler : IRequestHandler<Creat
             return Result.Failure<long>(new Error("401", "User is not authenticated."));
 
         // Resolve staff profile — SupervisorReview.SupervisorId is Staff.Id (FK to Edu.Staff), not Auth.Users.Id
-        var currentStaff = await _staffRepository.GetByUserIdAsync(userId.Value, cancellationToken);
+        var currentStaff = await _EmployeeRepository.GetByUserIdAsync(userId.Value, cancellationToken);
         if (currentStaff is null)
             return Result.Failure<long>(new Error("403", "User does not have a staff profile."));
 

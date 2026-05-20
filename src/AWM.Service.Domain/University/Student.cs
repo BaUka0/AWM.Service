@@ -8,7 +8,6 @@ using AWM.Service.Domain.Common;
 /// </summary>
 public class Student : Entity<int>
 {
-    public int UserId { get; private set; }
     public int SpecialityId { get; private set; }
     public int StatusId { get; private set; }
     public int? CategoryId { get; private set; }
@@ -20,7 +19,7 @@ public class Student : Entity<int>
     public int? AdvisorId { get; private set; }
     public int? StudyLanguageId { get; private set; }
     public int? AcademicStatusId { get; private set; }
-    public bool IsScholarship { get; private set; }
+    public bool? IsScholarship { get; private set; }
     public bool NeedsDorm { get; private set; }
     public DateTime? EntryDate { get; private set; }
 

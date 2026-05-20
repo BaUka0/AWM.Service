@@ -20,7 +20,7 @@ using Microsoft.AspNetCore.Mvc;
 [ApiController]
 [Route("api/v{version:apiVersion}/quality-checks")]
 [Produces("application/json")]
-public class QualityChecksController : BaseController
+public sealed class QualityChecksController : BaseController
 {
     private readonly ISender _sender;
 
@@ -41,10 +41,10 @@ public class QualityChecksController : BaseController
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> GetByWork(long workId)
+    public async Task<IActionResult> GetByWork(long workId, CancellationToken cancellationToken = default)
     {
         var query = new GetChecksByWorkQuery { WorkId = workId };
-        var result = await _sender.Send(query);
+        var result = await _sender.Send(query, cancellationToken);
 
         if (result.IsFailed)
             return HandleResultError(result.Error);
@@ -68,7 +68,8 @@ public class QualityChecksController : BaseController
     public async Task<IActionResult> GetPending(
         [FromQuery] int departmentId,
         [FromQuery] int academicYearId,
-        [FromQuery] int? checkType = null)
+        [FromQuery] int? checkType = null,
+        CancellationToken cancellationToken = default)
     {
         var query = new GetPendingChecksQuery
         {
@@ -77,7 +78,7 @@ public class QualityChecksController : BaseController
             CheckTypeId = checkType
         };
 
-        var result = await _sender.Send(query);
+        var result = await _sender.Send(query, cancellationToken);
 
         if (result.IsFailed)
             return HandleResultError(result.Error);
@@ -92,7 +93,7 @@ public class QualityChecksController : BaseController
     /// <param name="workId">StudentWork ID</param>
     /// <param name="request">Submit request with check type</param>
     /// <returns>Created quality check ID</returns>
-    [HttpPost("works/{workId:long}/submit")]
+    [HttpPost("~/api/v{version:apiVersion}/student-works/{workId:long}/quality-checks")]
     [RequireAccess("QualityChecks", "Create")]
     [ProducesResponseType(typeof(long), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -100,11 +101,11 @@ public class QualityChecksController : BaseController
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> Submit(long workId, [FromBody] SubmitForCheckRequest request)
+    public async Task<IActionResult> Submit(long workId, [FromBody] SubmitForCheckRequest request, CancellationToken cancellationToken = default)
     {
         var command = request.Adapt<SubmitForCheckCommand>() with { WorkId = workId };
 
-        var result = await _sender.Send(command);
+        var result = await _sender.Send(command, cancellationToken);
 
         if (result.IsFailed)
             return HandleResultError(result.Error);
@@ -120,7 +121,7 @@ public class QualityChecksController : BaseController
     /// <param name="checkId">ID of the pending QualityCheck to complete (returned by SubmitForCheck)</param>
     /// <param name="request">Check result details</param>
     /// <returns>Updated quality check ID</returns>
-    [HttpPut("works/{workId:long}/checks/{checkId:long}/record")]
+    [HttpPut("~/api/v{version:apiVersion}/student-works/{workId:long}/quality-checks/{checkId:long}")]
     [RequireAccess("QualityChecks", "Update")]
     [ProducesResponseType(typeof(long), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -128,11 +129,11 @@ public class QualityChecksController : BaseController
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> RecordResult(long workId, long checkId, [FromBody] RecordCheckResultRequest request)
+    public async Task<IActionResult> RecordResult(long workId, long checkId, [FromBody] RecordCheckResultRequest request, CancellationToken cancellationToken = default)
     {
         var command = request.Adapt<RecordCheckResultCommand>() with { WorkId = workId, CheckId = checkId };
 
-        var result = await _sender.Send(command);
+        var result = await _sender.Send(command, cancellationToken);
 
         if (result.IsFailed)
             return HandleResultError(result.Error);
@@ -153,7 +154,7 @@ public class QualityChecksController : BaseController
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> AssignExperts([FromBody] AssignExpertsRequest request)
+    public async Task<IActionResult> AssignExperts([FromBody] AssignExpertsRequest request, CancellationToken cancellationToken = default)
     {
         var assignments = request.Assignments
             .Select(a => new ExpertAssignmentDto(a.UserId, a.ExpertiseType))
@@ -165,7 +166,7 @@ public class QualityChecksController : BaseController
             Assignments = assignments
         };
 
-        var result = await _sender.Send(command);
+        var result = await _sender.Send(command, cancellationToken);
 
         if (result.IsFailed)
             return HandleResultError(result.Error);

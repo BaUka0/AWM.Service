@@ -3,8 +3,8 @@ namespace AWM.Service.WebAPI.Controllers.v1;
 using AWM.Service.Application.Features.Common.Notifications.Commands.MarkAllAsRead;
 using AWM.Service.Application.Features.Common.Notifications.Commands.MarkAsRead;
 using AWM.Service.Application.Features.Common.Notifications.Queries.GetMyNotifications;
+using AWM.Service.Application.Features.Common.Notifications.Queries.GetUnreadCount;
 using AWM.Service.Domain.Common;
-using AWM.Service.Domain.Repositories;
 using AWM.Service.WebAPI.Authorization;
 using AWM.Service.WebAPI.Common.Contracts.Responses.Common;
 using Mapster;
@@ -21,16 +21,13 @@ using Microsoft.AspNetCore.Mvc;
 public sealed class NotificationsController : BaseController
 {
     private readonly ISender _sender;
-    private readonly INotificationRepository _notificationRepository;
     private readonly ICurrentUserProvider _currentUserProvider;
 
     public NotificationsController(
         ISender sender,
-        INotificationRepository notificationRepository,
         ICurrentUserProvider currentUserProvider)
     {
         _sender = sender;
-        _notificationRepository = notificationRepository ?? throw new ArgumentNullException(nameof(notificationRepository));
         _currentUserProvider = currentUserProvider ?? throw new ArgumentNullException(nameof(currentUserProvider));
     }
 
@@ -144,7 +141,8 @@ public sealed class NotificationsController : BaseController
         if (!userId.HasValue)
             return Unauthorized();
 
-        var count = await _notificationRepository.GetUnreadCountAsync(userId.Value, cancellationToken);
+        var query = new GetUnreadNotificationsCountQuery(userId.Value);
+        var count = await _sender.Send(query, cancellationToken);
         return Ok(count);
     }
 }

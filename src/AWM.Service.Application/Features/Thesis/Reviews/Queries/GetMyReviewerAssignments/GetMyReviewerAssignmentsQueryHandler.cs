@@ -72,7 +72,7 @@ public sealed class GetMyReviewerAssignmentsQueryHandler
         var students = await _studentRepository.GetByIdsAsync(leaderStudentIds, cancellationToken);
         var studentsById = students.ToDictionary(s => s.Id);
         var users = await _userRepository.GetByIdsAsync(
-            students.Select(s => s.UserId).Distinct(),
+            students.Select(s => s.Id).Distinct(),
             cancellationToken);
         var usersById = users.ToDictionary(u => u.Id);
         var departments = await _orgLookupRepository.GetDepartmentsByIdsAsync(
@@ -97,7 +97,7 @@ public sealed class GetMyReviewerAssignmentsQueryHandler
             {
                 var student = studentsById.GetValueOrDefault(leader.StudentId);
                 var studentUser = student is not null
-                    ? usersById.GetValueOrDefault(student.UserId)
+                    ? usersById.GetValueOrDefault(student.Id)
                     : null;
                 studentName = studentUser?.Email ?? studentUser?.FirstName;
             }

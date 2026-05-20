@@ -11,7 +11,7 @@ public sealed class GetTopicsBySupervisorQueryHandler
     private readonly ITopicRepository _topicRepository;
     private readonly ITopicApplicationRepository _applicationRepository;
     private readonly IDirectionRepository _directionRepository;
-    private readonly IStaffRepository _staffRepository;
+    private readonly IEmployeeRepository _EmployeeRepository;
     private readonly IUserRepository _userRepository;
     private readonly IWorkflowRepository _workflowRepository;
 
@@ -19,14 +19,14 @@ public sealed class GetTopicsBySupervisorQueryHandler
         ITopicRepository topicRepository,
         ITopicApplicationRepository applicationRepository,
         IDirectionRepository directionRepository,
-        IStaffRepository staffRepository,
+        IEmployeeRepository EmployeeRepository,
         IUserRepository userRepository,
         IWorkflowRepository workflowRepository)
     {
         _topicRepository = topicRepository ?? throw new ArgumentNullException(nameof(topicRepository));
         _applicationRepository = applicationRepository ?? throw new ArgumentNullException(nameof(applicationRepository));
         _directionRepository = directionRepository ?? throw new ArgumentNullException(nameof(directionRepository));
-        _staffRepository = staffRepository ?? throw new ArgumentNullException(nameof(staffRepository));
+        _EmployeeRepository = EmployeeRepository ?? throw new ArgumentNullException(nameof(EmployeeRepository));
         _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
         _workflowRepository = workflowRepository ?? throw new ArgumentNullException(nameof(workflowRepository));
     }
@@ -53,7 +53,7 @@ public sealed class GetTopicsBySupervisorQueryHandler
         var workTypeIds = activeTopics.Select(t => t.WorkTypeId).Distinct();
 
         var directions = await _directionRepository.GetByIdsAsync(directionIds, cancellationToken);
-        var staff = await _staffRepository.GetByIdsAsync(supervisorIds, cancellationToken);
+        var staff = await _EmployeeRepository.GetByIdsAsync(supervisorIds, cancellationToken);
         var workTypes = await _workflowRepository.GetWorkTypesByIdsAsync(workTypeIds, cancellationToken);
 
         var userIds = staff.Select(s => s.Id).Distinct();

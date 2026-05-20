@@ -227,7 +227,7 @@ public sealed class TopicsController : BaseController
     /// <param name="id">Topic ID</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>No content on success</returns>
-    [HttpPost("{id}/approve")]
+    [HttpPatch("{id}/approve")]
     [RequireAccess("Topics_Approval", "Update")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -256,7 +256,7 @@ public sealed class TopicsController : BaseController
     /// <param name="id">Topic ID</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>No content on success</returns>
-    [HttpPost("{id}/close")]
+    [HttpPatch("{id}/close")]
     [RequireAccess("Topics", "Update")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -285,7 +285,7 @@ public sealed class TopicsController : BaseController
     /// <param name="request">List of topic IDs to submit</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>No content on success</returns>
-    [HttpPost("submit-for-approval")]
+    [HttpPatch("submit-for-approval")]
     [RequireAccess("Topics", "Create")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -313,7 +313,7 @@ public sealed class TopicsController : BaseController
     /// <param name="request">List of topic IDs to approve</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>No content on success</returns>
-    [HttpPost("bulk-approve")]
+    [HttpPatch("bulk-approve")]
     [RequireAccess("Topics_Approval", "Update")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -376,7 +376,7 @@ public sealed class TopicsController : BaseController
     /// <param name="id">Topic ID to deactivate</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>No content on success</returns>
-    [HttpPost("{id}/deactivate")]
+    [HttpPatch("{id}/deactivate")]
     [RequireAccess("Topics", "Delete")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -403,7 +403,7 @@ public sealed class TopicsController : BaseController
     /// <param name="request">Coordination completion request</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>No content on success</returns>
-    [HttpPost("complete-coordination")]
+    [HttpPatch("complete-coordination")]
     [RequireAccess("Topics_Approval", "Update")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

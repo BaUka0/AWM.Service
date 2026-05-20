@@ -15,9 +15,6 @@ public class StudentConfiguration : IEntityTypeConfiguration<Student>
             .HasColumnName("StudentID")
             .ValueGeneratedNever();
 
-        builder.Property(e => e.UserId)
-            .IsRequired();
-
         builder.Property(e => e.SpecialityId)
             .IsRequired();
 
@@ -33,8 +30,7 @@ public class StudentConfiguration : IEntityTypeConfiguration<Student>
         builder.Property(e => e.EctsGPA)
             .HasColumnType("decimal(5,2)");
 
-        builder.Property(e => e.IsScholarship)
-            .IsRequired();
+        builder.Property(e => e.IsScholarship);
 
         builder.Property(e => e.NeedsDorm)
             .IsRequired();
@@ -44,9 +40,9 @@ public class StudentConfiguration : IEntityTypeConfiguration<Student>
 
         // Foreign keys
         builder.HasOne(e => e.User)
-            .WithMany()
-            .HasForeignKey(e => e.UserId)
-            .HasConstraintName("FK_Edu_Students_User")
+            .WithOne()
+            .HasForeignKey<Student>(e => e.Id)
+            .HasConstraintName("FK_Edu_Students_StudentID_Edu_Users")
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(e => e.Speciality)
@@ -60,8 +56,5 @@ public class StudentConfiguration : IEntityTypeConfiguration<Student>
             .HasForeignKey(e => e.StatusId)
             .HasConstraintName("FK_Edu_Students_Status")
             .OnDelete(DeleteBehavior.Restrict);
-
-        builder.HasIndex(e => e.UserId)
-            .HasDatabaseName("IX_Edu_Students_UserId");
     }
 }

@@ -15,7 +15,7 @@ public sealed class RejectApplicationCommandHandler : IRequestHandler<RejectAppl
 {
     private readonly ITopicApplicationRepository _applicationRepository;
     private readonly ITopicRepository _topicRepository;
-    private readonly IStaffRepository _staffRepository;
+    private readonly IEmployeeRepository _EmployeeRepository;
     private readonly IStudentRepository _studentRepository;
     private readonly ICurrentUserProvider _currentUserProvider;
     private readonly INotificationService _notificationService;
@@ -25,7 +25,7 @@ public sealed class RejectApplicationCommandHandler : IRequestHandler<RejectAppl
     public RejectApplicationCommandHandler(
         ITopicApplicationRepository applicationRepository,
         ITopicRepository topicRepository,
-        IStaffRepository staffRepository,
+        IEmployeeRepository EmployeeRepository,
         IStudentRepository studentRepository,
         ICurrentUserProvider currentUserProvider,
         INotificationService notificationService,
@@ -34,7 +34,7 @@ public sealed class RejectApplicationCommandHandler : IRequestHandler<RejectAppl
     {
         _applicationRepository = applicationRepository;
         _topicRepository = topicRepository;
-        _staffRepository = staffRepository;
+        _EmployeeRepository = EmployeeRepository;
         _studentRepository = studentRepository;
         _currentUserProvider = currentUserProvider;
         _notificationService = notificationService;
@@ -56,7 +56,7 @@ public sealed class RejectApplicationCommandHandler : IRequestHandler<RejectAppl
         var supervisorUserId = userId.Value;
 
         // Resolve current user's StaffId
-        var currentStaff = await _staffRepository.GetByUserIdAsync(supervisorUserId, cancellationToken);
+        var currentStaff = await _EmployeeRepository.GetByUserIdAsync(supervisorUserId, cancellationToken);
         if (currentStaff is null)
         {
             _logger.LogWarning("RejectApplication failed: User {UserId} does not have an associated staff profile.", supervisorUserId);
@@ -131,7 +131,7 @@ public sealed class RejectApplicationCommandHandler : IRequestHandler<RejectAppl
             if (studentProfile is not null)
             {
                 await _notificationService.SendAsync(
-                    userId: studentProfile.UserId,
+                    userId: studentProfile.Id,
                     title: "Заявка отклонена",
                     createdBy: supervisorUserId,
                     body: body,

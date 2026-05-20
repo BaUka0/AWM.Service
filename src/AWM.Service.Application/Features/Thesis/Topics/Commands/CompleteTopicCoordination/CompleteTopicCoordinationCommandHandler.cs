@@ -16,7 +16,7 @@ public sealed class CompleteTopicCoordinationCommandHandler
 {
     private readonly ITopicRepository _topicRepository;
     private readonly ITopicApplicationRepository _applicationRepository;
-    private readonly IStaffRepository _staffRepository;
+    private readonly IEmployeeRepository _EmployeeRepository;
     private readonly IStudentRepository _studentRepository;
     private readonly INotificationService _notificationService;
     private readonly ICurrentUserProvider _currentUserProvider;
@@ -26,7 +26,7 @@ public sealed class CompleteTopicCoordinationCommandHandler
     public CompleteTopicCoordinationCommandHandler(
         ITopicRepository topicRepository,
         ITopicApplicationRepository applicationRepository,
-        IStaffRepository staffRepository,
+        IEmployeeRepository EmployeeRepository,
         IStudentRepository studentRepository,
         INotificationService notificationService,
         ICurrentUserProvider currentUserProvider,
@@ -35,7 +35,7 @@ public sealed class CompleteTopicCoordinationCommandHandler
     {
         _topicRepository = topicRepository;
         _applicationRepository = applicationRepository;
-        _staffRepository = staffRepository;
+        _EmployeeRepository = EmployeeRepository;
         _studentRepository = studentRepository;
         _notificationService = notificationService;
         _currentUserProvider = currentUserProvider;
@@ -69,7 +69,7 @@ public sealed class CompleteTopicCoordinationCommandHandler
         // Students: app.StudentId is Student.Id — resolve to UserId.
         var supervisorUserIds = new HashSet<int>();
         var notifiedStudentUserIds = new HashSet<int>();
-        var supervisors = await _staffRepository.GetByIdsAsync(
+        var supervisors = await _EmployeeRepository.GetByIdsAsync(
             topics.Select(t => t.EmployeeId).Distinct(),
             cancellationToken);
         var supervisorsById = supervisors.ToDictionary(s => s.Id);
@@ -111,7 +111,7 @@ public sealed class CompleteTopicCoordinationCommandHandler
                     // Resolve student UserId for notification
                     var studentProfile = studentsById.GetValueOrDefault(app.StudentId);
                     if (studentProfile is not null)
-                        notifiedStudentUserIds.Add(studentProfile.UserId);
+                        notifiedStudentUserIds.Add(studentProfile.Id);
                     else
                         _logger.LogWarning("CompleteTopicCoordination: Student not found for StudentId={StudentId}, student notification will be skipped.", app.StudentId);
                 }

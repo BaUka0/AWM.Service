@@ -66,6 +66,7 @@ public interface IUserAccessRepository
     Task<UserAccess?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<UserAccess>> GetByUserIdAsync(int userId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<UserAccess>> GetByRoleAccessIdAsync(int roleAccessId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<UserAccess>> GetAllAsync(CancellationToken cancellationToken = default);
     Task<bool> ExistsAsync(int userId, int roleAccessId, CancellationToken cancellationToken = default);
     Task AddAsync(UserAccess userAccess, CancellationToken cancellationToken = default);
     Task RemoveAsync(UserAccess userAccess, CancellationToken cancellationToken = default);
@@ -91,6 +92,7 @@ public interface ILocalAccountRepository
 {
     Task<LocalAccount?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
     Task<LocalAccount?> GetByUserIdAsync(int userId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<LocalAccount>> GetAllAsync(CancellationToken cancellationToken = default);
     Task<LocalAccount?> GetByRefreshTokenAsync(string refreshToken, CancellationToken cancellationToken = default);
     Task AddAsync(LocalAccount localAccount, CancellationToken cancellationToken = default);
     Task UpdateAsync(LocalAccount localAccount, CancellationToken cancellationToken = default);

@@ -21,9 +21,9 @@ using Microsoft.AspNetCore.Mvc;
 /// </summary>
 [ApiVersion("1.0")]
 [ApiController]
-[Route("api/v{version:apiVersion}/applications")]
+[Route("api/v{version:apiVersion}/topic-applications")]
 [Produces("application/json")]
-public class TopicApplicationsController : BaseController
+public sealed class TopicApplicationsController : BaseController
 {
     private readonly ISender _sender;
 
@@ -130,7 +130,7 @@ public class TopicApplicationsController : BaseController
     /// <param name="applicationId">Application ID to accept</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>No content on success</returns>
-    [HttpPost("{applicationId:long}/accept")]
+    [HttpPatch("{applicationId:long}/accept")]
     [RequireAccess("TopicApplications", "Update")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -162,7 +162,7 @@ public class TopicApplicationsController : BaseController
     /// <param name="request">Rejection details with reason</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>No content on success</returns>
-    [HttpPost("{applicationId:long}/reject")]
+    [HttpPatch("{applicationId:long}/reject")]
     [RequireAccess("TopicApplications", "Delete")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

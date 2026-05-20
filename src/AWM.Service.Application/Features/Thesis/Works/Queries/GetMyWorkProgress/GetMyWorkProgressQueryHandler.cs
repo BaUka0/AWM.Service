@@ -14,7 +14,7 @@ public sealed class GetMyWorkProgressQueryHandler
     private readonly IStudentWorkRepository _workRepository;
     private readonly ITopicRepository _topicRepository;
     private readonly IDirectionRepository _directionRepository;
-    private readonly IStaffRepository _staffRepository;
+    private readonly IEmployeeRepository _EmployeeRepository;
     private readonly IUserRepository _userRepository;
     private readonly IWorkflowRepository _workflowRepository;
 
@@ -24,7 +24,7 @@ public sealed class GetMyWorkProgressQueryHandler
         IStudentWorkRepository workRepository,
         ITopicRepository topicRepository,
         IDirectionRepository directionRepository,
-        IStaffRepository staffRepository,
+        IEmployeeRepository EmployeeRepository,
         IUserRepository userRepository,
         IWorkflowRepository workflowRepository)
     {
@@ -33,7 +33,7 @@ public sealed class GetMyWorkProgressQueryHandler
         _workRepository = workRepository ?? throw new ArgumentNullException(nameof(workRepository));
         _topicRepository = topicRepository ?? throw new ArgumentNullException(nameof(topicRepository));
         _directionRepository = directionRepository ?? throw new ArgumentNullException(nameof(directionRepository));
-        _staffRepository = staffRepository ?? throw new ArgumentNullException(nameof(staffRepository));
+        _EmployeeRepository = EmployeeRepository ?? throw new ArgumentNullException(nameof(EmployeeRepository));
         _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
         _workflowRepository = workflowRepository ?? throw new ArgumentNullException(nameof(workflowRepository));
     }
@@ -97,7 +97,7 @@ public sealed class GetMyWorkProgressQueryHandler
 
         if (topic is not null)
         {
-            var supervisor = await _staffRepository.GetByIdAsync(topic.EmployeeId, cancellationToken);
+            var supervisor = await _EmployeeRepository.GetByIdAsync(topic.EmployeeId, cancellationToken);
             if (supervisor is not null)
             {
                 var supervisorUser = await _userRepository.GetByIdAsync(supervisor.Id, cancellationToken);
@@ -125,7 +125,7 @@ public sealed class GetMyWorkProgressQueryHandler
             cancellationToken);
         var participantStudentsById = participantStudents.ToDictionary(s => s.Id);
         var participantUsers = await _userRepository.GetByIdsAsync(
-            participantStudents.Select(s => s.UserId).Distinct(),
+            participantStudents.Select(s => s.Id).Distinct(),
             cancellationToken);
         var participantUsersById = participantUsers.ToDictionary(u => u.Id);
 
@@ -134,7 +134,7 @@ public sealed class GetMyWorkProgressQueryHandler
         {
             var studentEntity = participantStudentsById.GetValueOrDefault(participant.StudentId);
             var studentUser = studentEntity is not null
-                ? participantUsersById.GetValueOrDefault(studentEntity.UserId)
+                ? participantUsersById.GetValueOrDefault(studentEntity.Id)
                 : null;
             var name = studentUser?.Email ?? studentUser?.FirstName;
 

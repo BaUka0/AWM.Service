@@ -10,7 +10,7 @@ public sealed class GetMySupervisedWorksQueryHandler
     : IRequestHandler<GetMySupervisedWorksQuery, Result<IReadOnlyList<SupervisedWorkDto>>>
 {
     private readonly ICurrentUserProvider _currentUserProvider;
-    private readonly IStaffRepository _staffRepository;
+    private readonly IEmployeeRepository _EmployeeRepository;
     private readonly IStudentWorkRepository _workRepository;
     private readonly ITopicRepository _topicRepository;
     private readonly IDirectionRepository _directionRepository;
@@ -20,7 +20,7 @@ public sealed class GetMySupervisedWorksQueryHandler
 
     public GetMySupervisedWorksQueryHandler(
         ICurrentUserProvider currentUserProvider,
-        IStaffRepository staffRepository,
+        IEmployeeRepository EmployeeRepository,
         IStudentWorkRepository workRepository,
         ITopicRepository topicRepository,
         IDirectionRepository directionRepository,
@@ -29,7 +29,7 @@ public sealed class GetMySupervisedWorksQueryHandler
         IUserRepository userRepository)
     {
         _currentUserProvider = currentUserProvider ?? throw new ArgumentNullException(nameof(currentUserProvider));
-        _staffRepository = staffRepository ?? throw new ArgumentNullException(nameof(staffRepository));
+        _EmployeeRepository = EmployeeRepository ?? throw new ArgumentNullException(nameof(EmployeeRepository));
         _workRepository = workRepository ?? throw new ArgumentNullException(nameof(workRepository));
         _topicRepository = topicRepository ?? throw new ArgumentNullException(nameof(topicRepository));
         _directionRepository = directionRepository ?? throw new ArgumentNullException(nameof(directionRepository));
@@ -50,7 +50,7 @@ public sealed class GetMySupervisedWorksQueryHandler
 
         var userId = _currentUserProvider.UserId.Value;
 
-        var staff = await _staffRepository.GetByUserIdAsync(userId, cancellationToken);
+        var staff = await _EmployeeRepository.GetByUserIdAsync(userId, cancellationToken);
         if (staff is null)
         {
             return Result.Failure<IReadOnlyList<SupervisedWorkDto>>(
@@ -82,7 +82,7 @@ public sealed class GetMySupervisedWorksQueryHandler
             cancellationToken);
         var studentsById = studentEntities.ToDictionary(s => s.Id);
         var users = await _userRepository.GetByIdsAsync(
-            studentEntities.Select(s => s.UserId).Distinct(),
+            studentEntities.Select(s => s.Id).Distinct(),
             cancellationToken);
         var usersById = users.ToDictionary(u => u.Id);
 
@@ -122,7 +122,7 @@ public sealed class GetMySupervisedWorksQueryHandler
             {
                 var student = studentsById.GetValueOrDefault(participant.StudentId);
                 var studentUser = student is not null
-                    ? usersById.GetValueOrDefault(student.UserId)
+                    ? usersById.GetValueOrDefault(student.Id)
                     : null;
 
                 students.Add(new SupervisedStudentDto

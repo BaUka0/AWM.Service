@@ -142,7 +142,7 @@ public sealed class DistributeStudentsToCommissionsCommandHandler
                 .ToList();
             var students = await _studentRepository.GetByIdsAsync(studentIds, cancellationToken);
             var studentUserIds = students
-                .Select(s => s.UserId)
+                .Select(s => s.Id)
                 .Distinct()
                 .ToList();
 

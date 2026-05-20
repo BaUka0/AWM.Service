@@ -34,6 +34,31 @@ public sealed class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand
 
     public async Task<Result> Handle(UpdateUserCommand request, CancellationToken cancellationToken)
     {
-        return Result.Failure(new Error("NotImplemented", "Not implemented - University entities are read-only"));
+        var localAccount = await _userRepository.GetByIdAsync(request.UserId, cancellationToken);
+        if (localAccount == null)
+        {
+            return Result.Failure(new Error("Admin.UserNotFound", "Пользователь не найден."));
+        }
+
+        var role = await _roleRepository.GetByIdAsync(request.RoleId, cancellationToken);
+        if (role == null)
+        {
+            return Result.Failure(new Error("Admin.RoleNotFound", "Роль не найдена."));
+        }
+
+        var currentUserId = _currentUserProvider.UserId ?? 0;
+
+        var existingAccesses = await _userAccessRepository.GetByUserIdAsync(request.UserId, cancellationToken);
+        foreach (var access in existingAccesses)
+        {
+            await _userAccessRepository.RemoveAsync(access, cancellationToken);
+        }
+
+        var newAccess = new AWM.Service.Domain.Auth.Entities.UserAccess(request.UserId, role.Id, currentUserId);
+        await _userAccessRepository.AddAsync(newAccess, cancellationToken);
+
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        return Result.Success();
     }
 }

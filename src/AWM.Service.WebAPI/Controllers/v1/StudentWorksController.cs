@@ -31,9 +31,9 @@ using Microsoft.AspNetCore.Mvc;
 /// </summary>
 [ApiVersion("1.0")]
 [ApiController]
-[Route("api/v{version:apiVersion}/works")]
+[Route("api/v{version:apiVersion}/student-works")]
 [Produces("application/json")]
-public class StudentWorksController : BaseController
+public sealed class StudentWorksController : BaseController
 {
     private readonly ISender _sender;
 

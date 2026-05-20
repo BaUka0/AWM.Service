@@ -12,7 +12,7 @@ using Microsoft.AspNetCore.Mvc;
 /// </summary>
 [ApiVersion("1.0")]
 [ApiController]
-[Route("api/v{version:apiVersion}/[controller]")]
+[Route("api/v{version:apiVersion}/work-types")]
 [Produces("application/json")]
 public sealed class WorkTypesController : BaseController
 {
@@ -31,7 +31,7 @@ public sealed class WorkTypesController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>List of all work types</returns>
     [HttpGet]
-    [RequireAccess("Topics", "Read")]
+    [RequireAccess("Org_Departments", "Read")]
     [ProducesResponseType(typeof(IReadOnlyList<WorkTypeResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken = default)

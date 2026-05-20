@@ -1,13 +1,13 @@
 namespace AWM.Service.WebAPI.Authorization;
 
-using AWM.Service.Application.Features.Auth.RbacPlus.Queries.CheckUserAccess;
+using AWM.Service.Application.Features.Auth.Auth.Queries.CheckUserAccess;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 
 /// <summary>
 /// Authorization attribute that checks user access for a specific operation and action.
-/// Uses RBAC+ permission matrix via CheckUserAccessQuery.
+/// Uses Auth permission matrix via CheckUserAccessQuery.
 /// </summary>
 [AttributeUsage(AttributeTargets.Method | AttributeTargets.Class, AllowMultiple = true, Inherited = true)]
 public class RequireAccessAttribute : Attribute, IAsyncAuthorizationFilter

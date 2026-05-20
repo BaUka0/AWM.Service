@@ -73,7 +73,7 @@ public sealed class FinalizeDefenseCommandHandler : IRequestHandler<FinalizeDefe
                         work.Participants.Select(p => p.StudentId).Distinct(),
                         cancellationToken);
                     var studentUserIds = students
-                        .Select(s => s.UserId)
+                        .Select(s => s.Id)
                         .Distinct()
                         .ToList();
 

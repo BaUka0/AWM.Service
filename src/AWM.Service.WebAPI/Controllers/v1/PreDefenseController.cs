@@ -23,9 +23,9 @@ using Microsoft.AspNetCore.Mvc;
 /// </summary>
 [ApiVersion("1.0")]
 [ApiController]
-[Route("api/v{version:apiVersion}/pre-defense")]
+[Route("api/v{version:apiVersion}/pre-defenses")]
 [Produces("application/json")]
-public class PreDefenseController : BaseController
+public sealed class PreDefenseController : BaseController
 {
     private readonly ISender _sender;
 
@@ -45,10 +45,10 @@ public class PreDefenseController : BaseController
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> GetSchedule([FromQuery] int commissionId)
+    public async Task<IActionResult> GetSchedule([FromQuery] int commissionId, CancellationToken cancellationToken = default)
     {
         var query = new GetPreDefenseScheduleQuery { CommissionId = commissionId };
-        var result = await _sender.Send(query);
+        var result = await _sender.Send(query, cancellationToken);
 
         if (result.IsFailed)
             return HandleResultError(result.Error);
@@ -68,10 +68,10 @@ public class PreDefenseController : BaseController
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> GetAttempts(long workId)
+    public async Task<IActionResult> GetAttempts(long workId, CancellationToken cancellationToken = default)
     {
         var query = new GetPreDefenseAttemptsQuery { WorkId = workId };
-        var result = await _sender.Send(query);
+        var result = await _sender.Send(query, cancellationToken);
 
         if (result.IsFailed)
             return HandleResultError(result.Error);
@@ -95,7 +95,8 @@ public class PreDefenseController : BaseController
     public async Task<IActionResult> GetFailedStudents(
         [FromQuery] int departmentId,
         [FromQuery] int academicYearId,
-        [FromQuery] int? preDefenseNumber = null)
+        [FromQuery] int? preDefenseNumber = null,
+        CancellationToken cancellationToken = default)
     {
         var query = new GetFailedPreDefenseStudentsQuery
         {
@@ -104,7 +105,7 @@ public class PreDefenseController : BaseController
             PreDefenseNumber = preDefenseNumber
         };
 
-        var result = await _sender.Send(query);
+        var result = await _sender.Send(query, cancellationToken);
 
         if (result.IsFailed)
             return HandleResultError(result.Error);
@@ -127,11 +128,11 @@ public class PreDefenseController : BaseController
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> Schedule(long workId, [FromBody] SchedulePreDefenseRequest request)
+    public async Task<IActionResult> Schedule(long workId, [FromBody] SchedulePreDefenseRequest request, CancellationToken cancellationToken = default)
     {
         var command = request.Adapt<SchedulePreDefenseCommand>() with { WorkId = workId };
 
-        var result = await _sender.Send(command);
+        var result = await _sender.Send(command, cancellationToken);
 
         if (result.IsFailed)
             return HandleResultError(result.Error);
@@ -153,11 +154,11 @@ public class PreDefenseController : BaseController
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> RecordAttendance(long attemptId, [FromBody] RecordAttendanceRequest request)
+    public async Task<IActionResult> RecordAttendance(long attemptId, [FromBody] RecordAttendanceRequest request, CancellationToken cancellationToken = default)
     {
         var command = request.Adapt<RecordAttendanceCommand>() with { AttemptId = attemptId };
 
-        var result = await _sender.Send(command);
+        var result = await _sender.Send(command, cancellationToken);
 
         if (result.IsFailed)
             return HandleResultError(result.Error);
@@ -180,11 +181,11 @@ public class PreDefenseController : BaseController
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> SubmitGrade(long scheduleId, [FromBody] SubmitPreDefenseGradeRequest request)
+    public async Task<IActionResult> SubmitGrade(long scheduleId, [FromBody] SubmitPreDefenseGradeRequest request, CancellationToken cancellationToken = default)
     {
         var command = request.Adapt<SubmitPreDefenseGradeCommand>() with { ScheduleId = scheduleId };
 
-        var result = await _sender.Send(command);
+        var result = await _sender.Send(command, cancellationToken);
 
         if (result.IsFailed)
             return HandleResultError(result.Error);
@@ -206,11 +207,11 @@ public class PreDefenseController : BaseController
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> Finalize(long attemptId, [FromBody] FinalizePreDefenseRequest request)
+    public async Task<IActionResult> Finalize(long attemptId, [FromBody] FinalizePreDefenseRequest request, CancellationToken cancellationToken = default)
     {
         var command = request.Adapt<FinalizePreDefenseCommand>() with { AttemptId = attemptId };
 
-        var result = await _sender.Send(command);
+        var result = await _sender.Send(command, cancellationToken);
 
         if (result.IsFailed)
             return HandleResultError(result.Error);
@@ -232,11 +233,10 @@ public class PreDefenseController : BaseController
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> StartReconciliation(long scheduleId)
+    public async Task<IActionResult> StartReconciliation(long scheduleId, CancellationToken cancellationToken = default)
     {
         var command = new StartReconciliationCommand { ScheduleId = scheduleId };
-
-        var result = await _sender.Send(command);
+        var result = await _sender.Send(command, cancellationToken);
 
         if (result.IsFailed)
             return HandleResultError(result.Error);
@@ -257,11 +257,11 @@ public class PreDefenseController : BaseController
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> Distribute([FromBody] DistributeStudentsRequest request)
+    public async Task<IActionResult> Distribute([FromBody] DistributeStudentsRequest request, CancellationToken cancellationToken = default)
     {
         var command = request.Adapt<DistributeStudentsToCommissionsCommand>();
 
-        var result = await _sender.Send(command);
+        var result = await _sender.Send(command, cancellationToken);
 
         if (result.IsFailed)
             return HandleResultError(result.Error);
@@ -282,11 +282,11 @@ public class PreDefenseController : BaseController
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> GenerateSlots([FromBody] GeneratePreDefenseSlotsRequest request)
+    public async Task<IActionResult> GenerateSlots([FromBody] GeneratePreDefenseSlotsRequest request, CancellationToken cancellationToken = default)
     {
         var command = request.Adapt<GeneratePreDefenseSlotsCommand>();
 
-        var result = await _sender.Send(command);
+        var result = await _sender.Send(command, cancellationToken);
 
         if (result.IsFailed)
             return HandleResultError(result.Error);
@@ -307,11 +307,11 @@ public class PreDefenseController : BaseController
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> GenerateProtocol([FromBody] GeneratePreDefenseProtocolRequest request)
+    public async Task<IActionResult> GenerateProtocol([FromBody] GeneratePreDefenseProtocolRequest request, CancellationToken cancellationToken = default)
     {
         var command = request.Adapt<GeneratePreDefenseProtocolCommand>();
 
-        var result = await _sender.Send(command);
+        var result = await _sender.Send(command, cancellationToken);
 
         if (result.IsFailed)
             return HandleResultError(result.Error);

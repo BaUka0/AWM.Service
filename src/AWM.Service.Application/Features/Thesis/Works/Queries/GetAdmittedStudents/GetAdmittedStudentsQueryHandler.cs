@@ -76,7 +76,7 @@ public sealed class GetAdmittedStudentsQueryHandler
                 {
                     WorkId = work.Id,
                     StudentId = student.Id,
-                    UserId = student.UserId
+                    UserId = student.Id
                 });
             }
 

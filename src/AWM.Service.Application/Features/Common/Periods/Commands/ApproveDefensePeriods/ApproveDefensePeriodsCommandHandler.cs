@@ -115,7 +115,7 @@ public sealed class ApproveDefenseStagesCommandHandler : IRequestHandler<Approve
                         .Distinct(),
                     cancellationToken);
                 var studentUserIds = students
-                    .Select(s => s.UserId)
+                    .Select(s => s.Id)
                     .Distinct()
                     .ToList();
 

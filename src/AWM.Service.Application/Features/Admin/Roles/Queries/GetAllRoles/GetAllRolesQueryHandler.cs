@@ -12,16 +12,34 @@ using MediatR;
 public sealed class GetAllRolesQueryHandler : IRequestHandler<GetAllRolesQuery, Result<IReadOnlyList<AdminRoleDto>>>
 {
     private readonly IRoleRepository _roleRepository;
-    private readonly IUserRepository _userRepository;
+    private readonly AWM.Service.Domain.Auth.Repositories.IUserAccessRepository _userAccessRepository;
 
-    public GetAllRolesQueryHandler(IRoleRepository roleRepository, IUserRepository userRepository)
+    public GetAllRolesQueryHandler(
+        IRoleRepository roleRepository,
+        AWM.Service.Domain.Auth.Repositories.IUserAccessRepository userAccessRepository)
     {
         _roleRepository = roleRepository;
-        _userRepository = userRepository;
+        _userAccessRepository = userAccessRepository;
     }
 
     public async Task<Result<IReadOnlyList<AdminRoleDto>>> Handle(GetAllRolesQuery request, CancellationToken cancellationToken)
     {
-        return Result.Failure<IReadOnlyList<AdminRoleDto>>(new Error("NotImplemented", "Not implemented - University entities are read-only"));
+        var roles = await _roleRepository.GetAllAsync(cancellationToken);
+        var userAccesses = await _userAccessRepository.GetAllAsync(cancellationToken);
+
+        var activeUsersCount = userAccesses
+            .GroupBy(ua => ua.RoleAccessId)
+            .ToDictionary(g => g.Key, g => g.Select(ua => ua.UserId).Distinct().Count());
+
+        var dtos = roles.Select(r => new AdminRoleDto
+        {
+            RoleId = r.Id,
+            SystemName = r.Code,
+            DisplayName = r.NameRu, // Using NameRu as DisplayName
+            ScopeLevel = "Global", // Default scope level for RBAC+ roles
+            UsersCount = activeUsersCount.TryGetValue(r.Id, out var count) ? count : 0
+        }).ToList();
+
+        return Result.Success<IReadOnlyList<AdminRoleDto>>(dtos);
     }
 }

@@ -17,7 +17,7 @@ public sealed class CreateApplicationCommandHandler : IRequestHandler<CreateAppl
     private readonly ITopicRepository _topicRepository;
     private readonly ITopicApplicationRepository _applicationRepository;
     private readonly IStudentRepository _studentRepository;
-    private readonly IStaffRepository _staffRepository;
+    private readonly IEmployeeRepository _EmployeeRepository;
     private readonly ICurrentUserProvider _currentUserProvider;
     private readonly IStageValidationService _stageValidationService;
     private readonly INotificationService _notificationService;
@@ -28,7 +28,7 @@ public sealed class CreateApplicationCommandHandler : IRequestHandler<CreateAppl
         ITopicRepository topicRepository,
         ITopicApplicationRepository applicationRepository,
         IStudentRepository studentRepository,
-        IStaffRepository staffRepository,
+        IEmployeeRepository EmployeeRepository,
         ICurrentUserProvider currentUserProvider,
         IStageValidationService stageValidationService,
         INotificationService notificationService,
@@ -38,7 +38,7 @@ public sealed class CreateApplicationCommandHandler : IRequestHandler<CreateAppl
         _topicRepository = topicRepository;
         _applicationRepository = applicationRepository;
         _studentRepository = studentRepository;
-        _staffRepository = staffRepository;
+        _EmployeeRepository = EmployeeRepository;
         _currentUserProvider = currentUserProvider;
         _stageValidationService = stageValidationService;
         _notificationService = notificationService;
@@ -154,7 +154,7 @@ public sealed class CreateApplicationCommandHandler : IRequestHandler<CreateAppl
 
             // Notify supervisor about new application.
             // topic.SupervisorId is Staff.Id — must resolve staff to get Auth.Users.Id for notification.
-            var supervisorStaff = await _staffRepository.GetByIdAsync(topic.EmployeeId, cancellationToken);
+            var supervisorStaff = await _EmployeeRepository.GetByIdAsync(topic.EmployeeId, cancellationToken);
             if (supervisorStaff is not null)
             {
                 await _notificationService.SendAsync(
