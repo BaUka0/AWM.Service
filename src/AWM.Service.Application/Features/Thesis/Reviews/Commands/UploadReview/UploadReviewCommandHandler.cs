@@ -6,6 +6,7 @@ using AWM.Service.Domain.Repositories;
 using KDS.Primitives.FluentResult;
 using MediatR;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using System.IO;
 
 public sealed class UploadReviewCommandHandler : IRequestHandler<UploadReviewCommand, Result>
@@ -15,19 +16,22 @@ public sealed class UploadReviewCommandHandler : IRequestHandler<UploadReviewCom
     private readonly ICurrentUserProvider _currentUserProvider;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ISupervisorReviewRepository _supervisorReviewRepository;
+    private readonly ILogger<UploadReviewCommandHandler> _logger;
 
     public UploadReviewCommandHandler(
         IReviewRepository reviewRepository,
         IAttachmentService attachmentService,
         ICurrentUserProvider currentUserProvider,
         IUnitOfWork unitOfWork,
-        ISupervisorReviewRepository supervisorReviewRepository)
+        ISupervisorReviewRepository supervisorReviewRepository,
+        ILogger<UploadReviewCommandHandler> logger)
     {
         _reviewRepository = reviewRepository ?? throw new ArgumentNullException(nameof(reviewRepository));
         _attachmentService = attachmentService ?? throw new ArgumentNullException(nameof(attachmentService));
         _currentUserProvider = currentUserProvider ?? throw new ArgumentNullException(nameof(currentUserProvider));
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
         _supervisorReviewRepository = supervisorReviewRepository ?? throw new ArgumentNullException(nameof(supervisorReviewRepository));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     public async Task<Result> Handle(UploadReviewCommand request, CancellationToken cancellationToken)
@@ -64,9 +68,9 @@ public sealed class UploadReviewCommandHandler : IRequestHandler<UploadReviewCom
                 {
                     await _attachmentService.DeleteAsync(storagePath, cancellationToken);
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // Ignore deletion error
+                    _logger.LogWarning(ex, "Failed to delete old review physical file at path '{StoragePath}'.", storagePath);
                 }
             }
 

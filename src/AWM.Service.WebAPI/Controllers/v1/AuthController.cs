@@ -17,6 +17,7 @@ namespace AWM.Service.WebAPI.Controllers.v1;
 [Route("api/v{version:apiVersion}/[controller]")]
 [ApiController]
 [AllowAnonymous]
+[Microsoft.AspNetCore.RateLimiting.EnableRateLimiting("AuthLimiter")]
 public sealed class AuthController : BaseController
 {
     private readonly ISender _sender;

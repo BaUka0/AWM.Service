@@ -4,9 +4,11 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using AWM.Service.Domain.CommonDomain.Constants;
 using AWM.Service.Domain.Common;
 using AWM.Service.Domain.CommonDomain.Services;
 using AWM.Service.Domain.Defense.Entities;
+using AWM.Service.Domain.Defense.Enums;
 using AWM.Service.Domain.Repositories;
 using KDS.Primitives.FluentResult;
 using MediatR;
@@ -64,10 +66,10 @@ public sealed class DistributeStudentsToCommissionsCommandHandler
             // Validate pre-defense stage is open
             var workflowStageId = request.PreDefenseNumber switch
             {
-                1 => 4,
-                2 => 5,
-                3 => 6,
-                _ => 4
+                1 => WorkflowStageIds.PreDefense1,
+                2 => WorkflowStageIds.PreDefense2,
+                3 => WorkflowStageIds.PreDefense3,
+                _ => WorkflowStageIds.PreDefense1
             };
 
             var (isAllowed, errorMessage) = await _stageValidationService.ValidateOperationInStageAsync(
@@ -77,7 +79,7 @@ public sealed class DistributeStudentsToCommissionsCommandHandler
 
             // Get all PreDefense commissions for this round
             var commissions = await _commissionRepository.GetByTypeAsync(
-                request.OrgUnitId, request.SemesterId, 1, cancellationToken);
+                request.OrgUnitId, request.SemesterId, (int)CommissionTypes.PreDefense, cancellationToken);
             var targetCommissions = commissions
                 .Where(c => c.PreDefenseNumber == request.PreDefenseNumber)
                 .ToList();

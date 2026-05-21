@@ -1,3 +1,4 @@
+using AWM.Service.Domain.Common;
 using AWM.Service.Domain.Thesis.Service;
 using AWM.Service.Domain.Repositories;
 using AWM.Service.Domain.Auth.Repositories;
@@ -139,9 +140,23 @@ public static class DependencyInjection
         services.AddScoped<ISemesterReadOnlyRepository, SemesterReadOnlyRepository>();
         services.AddScoped<ISpecialityReadOnlyRepository, SpecialityReadOnlyRepository>();
 
-        // Register File Storage Service
-        // Switch to S3FileStorageService for production (add AWSSDK.S3 NuGet + configure "FileStorage:S3" section)
-        services.AddScoped<IAttachmentService, LocalFileStorageService>();
+        // Configure StorageSettings
+        services.Configure<StorageSettings>(
+            configuration.GetSection(StorageSettings.SectionName));
+
+        // Register File Storage Service conditionally based on Provider
+        var storageSettings = configuration.GetSection(StorageSettings.SectionName)
+            .Get<StorageSettings>() 
+            ?? new StorageSettings();
+
+        if (string.Equals(storageSettings.Provider, "S3", StringComparison.OrdinalIgnoreCase))
+        {
+            services.AddScoped<IAttachmentService, S3FileStorageService>();
+        }
+        else
+        {
+            services.AddScoped<IAttachmentService, LocalFileStorageService>();
+        }
 
         return services;
     }

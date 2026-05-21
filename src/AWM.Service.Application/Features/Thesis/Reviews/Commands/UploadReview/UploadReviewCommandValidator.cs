@@ -1,14 +1,16 @@
 namespace AWM.Service.Application.Features.Thesis.Reviews.Commands.UploadReview;
 
 using FluentValidation;
+using AWM.Service.Domain.Common;
 
 public sealed class UploadReviewCommandValidator : AbstractValidator<UploadReviewCommand>
 {
     private static readonly string[] AllowedExtensions = [".pdf", ".doc", ".docx", ".jpg", ".jpeg", ".png"];
-    private const long MaxFileSizeBytes = 10 * 1024 * 1024; // 10 MB
-
-    public UploadReviewCommandValidator()
+    public UploadReviewCommandValidator(Microsoft.Extensions.Options.IOptions<StorageSettings> storageOptions)
     {
+        var settings = storageOptions.Value;
+        var maxFileSizeBytes = settings.MaxReviewSizeMb * 1024L * 1024L;
+
         RuleFor(x => x.ReviewId)
             .GreaterThan(0).WithMessage("Review ID must be greater than 0.");
 
@@ -20,8 +22,8 @@ public sealed class UploadReviewCommandValidator : AbstractValidator<UploadRevie
         {
             RuleFor(x => x.File!.Length)
                 .GreaterThan(0).WithMessage("The uploaded file is empty.")
-                .LessThanOrEqualTo(MaxFileSizeBytes)
-                .WithMessage($"File size must not exceed {MaxFileSizeBytes / 1024 / 1024} MB.");
+                .LessThanOrEqualTo(maxFileSizeBytes)
+                .WithMessage($"File size must not exceed {settings.MaxReviewSizeMb} MB.");
 
             RuleFor(x => x.File!.FileName)
                 .NotEmpty().WithMessage("File name is required.")

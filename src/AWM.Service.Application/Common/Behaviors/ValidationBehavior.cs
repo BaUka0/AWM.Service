@@ -1,8 +1,56 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 using FluentValidation;
 using KDS.Primitives.FluentResult;
 using MediatR;
 
 namespace AWM.Service.Application.Common.Behaviors;
+
+/// <summary>
+/// Caches compiled delegates for creating failure results to avoid reflection overhead.
+/// </summary>
+internal static class ValidationResponseCache<TResponse>
+{
+    public static readonly Func<Error, TResponse>? CreateFailure;
+
+    static ValidationResponseCache()
+    {
+        var responseType = typeof(TResponse);
+
+        if (responseType == typeof(Result))
+        {
+            var failureMethod = typeof(Result)
+                .GetMethods(BindingFlags.Public | BindingFlags.Static)
+                .FirstOrDefault(m => m.Name == "Failure" && 
+                                     !m.IsGenericMethod && 
+                                     m.GetParameters().Length == 1 && 
+                                     m.GetParameters()[0].ParameterType == typeof(Error));
+
+            if (failureMethod != null)
+            {
+                CreateFailure = (Func<Error, TResponse>)Delegate.CreateDelegate(typeof(Func<Error, TResponse>), failureMethod);
+            }
+        }
+        else if (responseType.IsGenericType && responseType.GetGenericTypeDefinition() == typeof(Result<>))
+        {
+            var innerType = responseType.GetGenericArguments()[0];
+            var failureMethod = typeof(Result)
+                .GetMethods(BindingFlags.Public | BindingFlags.Static)
+                .FirstOrDefault(m => m.Name == "Failure" && 
+                                     m.IsGenericMethod && 
+                                     m.GetParameters().Length == 1 && 
+                                     m.GetParameters()[0].ParameterType == typeof(Error));
+
+            if (failureMethod != null)
+            {
+                var genericFailureMethod = failureMethod.MakeGenericMethod(innerType);
+                CreateFailure = (Func<Error, TResponse>)Delegate.CreateDelegate(typeof(Func<Error, TResponse>), genericFailureMethod);
+            }
+        }
+    }
+}
 
 /// <summary>
 /// MediatR pipeline behavior that validates requests using FluentValidation.
@@ -41,22 +89,11 @@ public class ValidationBehavior<TRequest, TResponse> : IPipelineBehavior<TReques
 
         if (failures.Count != 0)
         {
-            // Check if TResponse is Result<T> to return validation error properly
-            var responseType = typeof(TResponse);
-
-            if (responseType.IsGenericType && responseType.GetGenericTypeDefinition() == typeof(Result<>))
+            if (ValidationResponseCache<TResponse>.CreateFailure is not null)
             {
                 var errorMessage = string.Join("; ", failures.Select(f => f.ErrorMessage));
                 var error = new Error("400", errorMessage);
-
-                // Create Result.Failure<T> using reflection
-                var innerType = responseType.GetGenericArguments()[0];
-                var failureMethod = typeof(Result)
-                    .GetMethods()
-                    .First(m => m.Name == "Failure" && m.IsGenericMethod && m.GetParameters().Length == 1)
-                    .MakeGenericMethod(innerType);
-
-                return (TResponse)failureMethod.Invoke(null, new object[] { error })!;
+                return ValidationResponseCache<TResponse>.CreateFailure(error);
             }
 
             // Fallback: throw ValidationException for non-Result types

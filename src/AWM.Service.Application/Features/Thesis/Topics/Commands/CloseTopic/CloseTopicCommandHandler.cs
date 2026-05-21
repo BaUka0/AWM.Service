@@ -1,5 +1,6 @@
 namespace AWM.Service.Application.Features.Thesis.Topics.Commands.CloseTopic;
 
+using AWM.Service.Domain.Thesis.Enums;
 using AWM.Service.Domain.Common;
 using AWM.Service.Domain.Repositories;
 using KDS.Primitives.FluentResult;
@@ -66,7 +67,7 @@ public sealed class CloseTopicCommandHandler : IRequestHandler<CloseTopicCommand
 
             // 4. Business rule (optional): Check if all spots are filled
             // This is just a warning - supervisor can still close even if spots are available
-            var acceptedCount = topic.Applications.Count(a => a.StatusId == 2);
+            var acceptedCount = topic.Applications.Count(a => a.StatusId == (int)ApplicationStatusType.Accepted);
             var isFull = acceptedCount >= topic.MaxParticipants;
 
             // Note: We could add a warning log here or return additional info

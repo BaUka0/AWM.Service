@@ -6,6 +6,7 @@ using AWM.Service.Domain.Common;
 using AWM.Service.Domain.Repositories;
 using KDS.Primitives.FluentResult;
 using MediatR;
+using Microsoft.Extensions.Logging;
 
 public sealed class DeleteAttachmentCommandHandler : IRequestHandler<DeleteAttachmentCommand, Result>
 {
@@ -15,6 +16,7 @@ public sealed class DeleteAttachmentCommandHandler : IRequestHandler<DeleteAttac
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICheckTypeRepository _checkTypeRepository;
     private readonly IAttachmentTypeRepository _attachmentTypeRepository;
+    private readonly ILogger<DeleteAttachmentCommandHandler> _logger;
 
     public DeleteAttachmentCommandHandler(
         IStudentWorkRepository workRepository,
@@ -22,7 +24,8 @@ public sealed class DeleteAttachmentCommandHandler : IRequestHandler<DeleteAttac
         ICurrentUserProvider currentUserProvider,
         IUnitOfWork unitOfWork,
         ICheckTypeRepository checkTypeRepository,
-        IAttachmentTypeRepository attachmentTypeRepository)
+        IAttachmentTypeRepository attachmentTypeRepository,
+        ILogger<DeleteAttachmentCommandHandler> logger)
     {
         _workRepository = workRepository ?? throw new ArgumentNullException(nameof(workRepository));
         _attachmentService = attachmentService ?? throw new ArgumentNullException(nameof(attachmentService));
@@ -30,6 +33,7 @@ public sealed class DeleteAttachmentCommandHandler : IRequestHandler<DeleteAttac
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
         _checkTypeRepository = checkTypeRepository ?? throw new ArgumentNullException(nameof(checkTypeRepository));
         _attachmentTypeRepository = attachmentTypeRepository ?? throw new ArgumentNullException(nameof(attachmentTypeRepository));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     public async Task<Result> Handle(DeleteAttachmentCommand request, CancellationToken cancellationToken)
@@ -72,7 +76,14 @@ public sealed class DeleteAttachmentCommandHandler : IRequestHandler<DeleteAttac
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             // Remove record from the physical store *after* DB success
-            await _attachmentService.DeleteAsync(storagePath, cancellationToken);
+            try
+            {
+                await _attachmentService.DeleteAsync(storagePath, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to delete physical file at path '{StoragePath}' after DB record was removed.", storagePath);
+            }
 
             return Result.Success();
         }

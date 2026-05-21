@@ -111,14 +111,18 @@ public class ApplicationDbContextInitialiser
         if (!await _context.WorkflowStages.AnyAsync())
         {
             _logger.LogInformation("Seeding WorkflowStages...");
-            _context.WorkflowStages.AddRange(
-                new WorkflowStage("TopicProposal", 1),
-                new WorkflowStage("Preparation", 2),
-                new WorkflowStage("PreDefense", 3),
-                new WorkflowStage("Review", 4),
-                new WorkflowStage("Defense", 5)
+            await SeedWithIdentityInsertAsync(
+                _context.WorkflowStages,
+                "Common",
+                "WorkflowStages",
+                new WorkflowStage(1, "TopicProposal", 1),
+                new WorkflowStage(2, "TopicPreparation", 2),
+                new WorkflowStage(3, "Preparation", 3),
+                new WorkflowStage(4, "PreDefense1", 4),
+                new WorkflowStage(5, "PreDefense2", 5),
+                new WorkflowStage(6, "PreDefense3", 6),
+                new WorkflowStage(7, "FinalDefense", 7)
             );
-            await _context.SaveChangesAsync();
         }
 
         // 13. Notification Templates (Common)

@@ -21,4 +21,13 @@ public class WorkflowStage : Entity<int>
         Name = name;
         OrderBy = orderBy;
     }
+
+    public WorkflowStage(int id, string name, int orderBy) : base(id)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            throw new DomainException("WorkflowStage.NameRequired", "Name is required.");
+
+        Name = name;
+        OrderBy = orderBy;
+    }
 }

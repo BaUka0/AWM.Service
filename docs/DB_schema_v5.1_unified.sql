@@ -5,7 +5,7 @@ DESCRIPTION: Academic Work Management System integrated with University Portal D
 FOUNDATION: 12 Edu_* tables (university schema) — read-only
 ADDON: AWM Auth, Thesis, Defense, Common, Wf tables — read-write
 DBMS: Microsoft SQL Server 2016+
-UPDATED: 2026-05-19
+UPDATED: 2026-05-21
 NOTES:
   - All user FKs point to Edu_Users.ID (university master)
   - All student FKs point to Edu_Students.StudentID
@@ -32,32 +32,10 @@ GO
 CREATE SCHEMA [Defense];
 GO
 
-/*
-============================================================================
-FOUNDATION TABLES (from university schema — 12 tables)
-These MUST exist before running this script.
-Refer to DB_scheam_university.sql for full definitions.
-============================================================================
-  - Edu_Users              (PK: ID int)
-  - Edu_Students           (PK: StudentID int, FK->Edu_Users.ID)
-  - Edu_Employees          (PK: ID int, FK->Edu_Users.ID)
-  - Edu_EmployeePositions  (PK: ID int, FK->Edu_Employees.ID, Edu_OrgUnits.ID)
-  - Edu_OrgUnits           (PK: ID int, ParentID self-FK, TypeID->Edu_OrgUnitTypes)
-  - Edu_OrgUnitTypes       (PK: ID int)  -- TypeID 1 = Kafedra, 2 = Institute
-  - Edu_Semesters          (PK: ID int, FK->Edu_SemesterTypes)
-  - Edu_SemesterTypes      (PK: ID int)
-  - Edu_Specialities       (PK: ID int, FK->Edu_SpecialityLevels)
-  - Edu_SpecialityLevels   (PK: ID int)
-  - Edu_StudentStatuses    (PK: ID int)
-  - Edu_Positions          (PK: ID int)
-============================================================================
-*/
-
 -- =============================================
 -- [Auth] HYBRID AUTH + RBAC+
 -- =============================================
 
--- Isolated local accounts for non-SSO admins / external experts
 CREATE TABLE [Auth].[LocalAccounts] (
     [Id] INT IDENTITY(1,1) PRIMARY KEY,
     [Login] NVARCHAR(100) NOT NULL,
@@ -68,7 +46,6 @@ CREATE TABLE [Auth].[LocalAccounts] (
     CONSTRAINT [UQ_LocalAccount_Login] UNIQUE ([Login])
 );
 
--- Bridge: Edu user <-> external identity (SSO AD / Local)
 CREATE TABLE [Auth].[UserIdentities] (
     [EduUserId] INT NOT NULL PRIMARY KEY,
     [ExternalId] NVARCHAR(255),
@@ -80,7 +57,6 @@ CREATE TABLE [Auth].[UserIdentities] (
     CONSTRAINT [FK_UI_Local] FOREIGN KEY ([LocalAccountId]) REFERENCES [Auth].[LocalAccounts]([Id])
 );
 
--- RBAC+ : Roles
 CREATE TABLE [Auth].[RoleAccess] (
     [Id] INT IDENTITY(1,1) PRIMARY KEY,
     [Code] NVARCHAR(50) NOT NULL,
@@ -91,7 +67,6 @@ CREATE TABLE [Auth].[RoleAccess] (
     CONSTRAINT [UQ_RoleAccess_Code] UNIQUE ([Code])
 );
 
--- RBAC+ : Operations (tree)
 CREATE TABLE [Auth].[RoleOperation] (
     [Id] INT IDENTITY(1,1) PRIMARY KEY,
     [ParentId] INT NULL,
@@ -103,14 +78,12 @@ CREATE TABLE [Auth].[RoleOperation] (
     CONSTRAINT [FK_RoleOperation_Parent] FOREIGN KEY ([ParentId]) REFERENCES [Auth].[RoleOperation]([Id])
 );
 
--- RBAC+ : Actions
 CREATE TABLE [Auth].[RoleActionType] (
     [Id] INT IDENTITY(1,1) PRIMARY KEY,
     [Name] NVARCHAR(50) NOT NULL,
     CONSTRAINT [UQ_RoleActionType_Name] UNIQUE ([Name])
 );
 
--- RBAC+ Matrix: Role x Operation x Action
 CREATE TABLE [Auth].[RoleOperationAction] (
     [Id] BIGINT IDENTITY(1,1) PRIMARY KEY,
     [RoleAccessId] INT NOT NULL,
@@ -122,7 +95,6 @@ CREATE TABLE [Auth].[RoleOperationAction] (
     CONSTRAINT [UQ_ROA] UNIQUE ([RoleAccessId], [RoleOperationId], [RoleActionTypeId])
 );
 
--- User role assignments
 CREATE TABLE [Auth].[UserAccess] (
     [Id] BIGINT IDENTITY(1,1) PRIMARY KEY,
     [UserId] INT NOT NULL,
@@ -135,7 +107,6 @@ CREATE TABLE [Auth].[UserAccess] (
     CONSTRAINT [FK_UA_Assigner] FOREIGN KEY ([AssignedBy]) REFERENCES [Edu_Users]([ID])
 );
 
--- Audit history of permission changes
 CREATE TABLE [Auth].[UserAccessHistory] (
     [Id] BIGINT IDENTITY(1,1) PRIMARY KEY,
     [UserId] INT NOT NULL,
@@ -242,6 +213,26 @@ CREATE TABLE [Common].[Stages] (
     CONSTRAINT [FK_Stages_WfStage] FOREIGN KEY ([WorkflowStageId]) REFERENCES [Common].[WorkflowStages]([Id]),
     CONSTRAINT [FK_Stages_Creator] FOREIGN KEY ([CreatedBy]) REFERENCES [Edu_Users]([ID]),
     CONSTRAINT [Check_Stage_Dates] CHECK ([EndDate] > [StartDate])
+);
+
+CREATE TABLE [Common].[StaffAssignments] (
+    [Id] BIGINT IDENTITY(1,1) PRIMARY KEY,
+    [UserId] INT NOT NULL,
+    [RoleType] INT NOT NULL,
+    [TargetEntityType] NVARCHAR(50) NOT NULL,
+    [TargetEntityId] BIGINT NOT NULL,
+    [MetadataJson] NVARCHAR(MAX),
+    [ValidFrom] DATETIME2 DEFAULT SYSDATETIME(),
+    [ValidTo] DATETIME2,
+    [IsActive] BIT DEFAULT 1,
+    [IsDeleted] BIT DEFAULT 0,
+    [CreatedAt] DATETIME2 DEFAULT SYSDATETIME(),
+    [CreatedBy] INT NOT NULL,
+    [LastModifiedAt] DATETIME2,
+    [LastModifiedBy] INT,
+    [DeletedAt] DATETIME2,
+    [DeletedBy] INT,
+    CONSTRAINT [FK_StaffAssign_User] FOREIGN KEY ([UserId]) REFERENCES [Edu_Users]([ID])
 );
 
 CREATE TABLE [Common].[NotificationTemplates] (
@@ -461,22 +452,11 @@ CREATE TABLE [Thesis].[Attachments] (
     CONSTRAINT [FK_Attach_Uploader] FOREIGN KEY ([UploadedBy]) REFERENCES [Edu_Users]([ID])
 );
 
-CREATE TABLE [Thesis].[Experts] (
-    [Id] INT IDENTITY(1,1) PRIMARY KEY,
-    [UserId] INT NOT NULL,
-    [OrgUnitId] INT NOT NULL,
-    [ExpertiseTypeId] INT NOT NULL,
-    [IsActive] BIT DEFAULT 1,
-    CONSTRAINT [FK_Expert_User] FOREIGN KEY ([UserId]) REFERENCES [Edu_Users]([ID]),
-    CONSTRAINT [FK_Expert_Dept] FOREIGN KEY ([OrgUnitId]) REFERENCES [Edu_OrgUnits]([ID]),
-    CONSTRAINT [FK_Expert_Type] FOREIGN KEY ([ExpertiseTypeId]) REFERENCES [Thesis].[CheckTypes]([Id])
-);
-
 CREATE TABLE [Thesis].[QualityChecks] (
     [Id] BIGINT IDENTITY(1,1) PRIMARY KEY,
     [WorkId] BIGINT NOT NULL,
     [CheckTypeId] INT NOT NULL,
-    [AssignedExpertId] INT NULL,
+    [AssignedExpertId] BIGINT NULL,
     [AttemptNumber] INT DEFAULT 1,
     [IsPassed] BIT NOT NULL,
     [ResultValue] DECIMAL(5,2),
@@ -485,7 +465,7 @@ CREATE TABLE [Thesis].[QualityChecks] (
     [CheckedAt] DATETIME2 DEFAULT SYSDATETIME(),
     CONSTRAINT [FK_Check_Work] FOREIGN KEY ([WorkId]) REFERENCES [Thesis].[StudentWorks]([Id]),
     CONSTRAINT [FK_Check_Type] FOREIGN KEY ([CheckTypeId]) REFERENCES [Thesis].[CheckTypes]([Id]),
-    CONSTRAINT [FK_Check_Expert] FOREIGN KEY ([AssignedExpertId]) REFERENCES [Thesis].[Experts]([Id])
+    CONSTRAINT [FK_Check_Expert] FOREIGN KEY ([AssignedExpertId]) REFERENCES [Common].[StaffAssignments]([Id])
 );
 
 -- =============================================
@@ -544,16 +524,6 @@ CREATE TABLE [Defense].[Commissions] (
     CONSTRAINT [Check_CommPreDef] CHECK ([PreDefenseNumber] IS NULL OR [PreDefenseNumber] BETWEEN 1 AND 3)
 );
 
-CREATE TABLE [Defense].[CommissionMembers] (
-    [Id] INT IDENTITY(1,1) PRIMARY KEY,
-    [CommissionId] INT NOT NULL,
-    [UserId] INT NOT NULL,
-    [RoleId] INT NOT NULL,
-    CONSTRAINT [FK_CommMem_Comm] FOREIGN KEY ([CommissionId]) REFERENCES [Defense].[Commissions]([Id]),
-    CONSTRAINT [FK_CommMem_User] FOREIGN KEY ([UserId]) REFERENCES [Edu_Users]([ID]),
-    CONSTRAINT [FK_CommMem_Role] FOREIGN KEY ([RoleId]) REFERENCES [Defense].[CommissionRoles]([Id])
-);
-
 CREATE TABLE [Defense].[Schedules] (
     [Id] BIGINT IDENTITY(1,1) PRIMARY KEY,
     [CommissionId] INT NOT NULL,
@@ -597,14 +567,14 @@ CREATE TABLE [Defense].[EvaluationCriteria] (
 CREATE TABLE [Defense].[Grades] (
     [Id] BIGINT IDENTITY(1,1) PRIMARY KEY,
     [ScheduleId] BIGINT NOT NULL,
-    [MemberId] INT NOT NULL,
+    [AssignmentId] BIGINT NOT NULL,
     [CriteriaId] INT NOT NULL,
     [Score] INT NOT NULL,
     [Comment] NVARCHAR(MAX),
     [CreatedAt] DATETIME2 DEFAULT SYSDATETIME(),
     [UpdatedAt] DATETIME2 DEFAULT SYSDATETIME(),
     CONSTRAINT [FK_Grades_Sched] FOREIGN KEY ([ScheduleId]) REFERENCES [Defense].[Schedules]([Id]),
-    CONSTRAINT [FK_Grades_Mem] FOREIGN KEY ([MemberId]) REFERENCES [Defense].[CommissionMembers]([Id]),
+    CONSTRAINT [FK_Grades_Assignment] FOREIGN KEY ([AssignmentId]) REFERENCES [Common].[StaffAssignments]([Id]),
     CONSTRAINT [FK_Grades_Crit] FOREIGN KEY ([CriteriaId]) REFERENCES [Defense].[EvaluationCriteria]([Id]),
     CONSTRAINT [Check_Score_Positive] CHECK ([Score] >= 0)
 );
@@ -663,10 +633,6 @@ CREATE INDEX [IX_WfHist_Work] ON [Thesis].[WorkflowHistory] ([WorkId], [Transiti
 CREATE INDEX [IX_QualityChecks_Work] ON [Thesis].[QualityChecks] 
     ([WorkId], [CheckTypeId], [AttemptNumber]);
 
-CREATE INDEX [IX_Experts_Type] ON [Thesis].[Experts] 
-    ([OrgUnitId], [ExpertiseTypeId]) 
-    WHERE [IsActive] = 1;
-
 CREATE INDEX [IX_Stages_Active] ON [Common].[Stages] 
     ([OrgUnitId], [SemesterId], [WorkflowStageId]) 
     WHERE [IsActive] = 1;
@@ -682,6 +648,6 @@ CREATE INDEX [IX_Notif_Entity] ON [Common].[Notifications]
 
 GO
 
-PRINT 'AWM v5.1 Unified Schema created successfully.';
+PRINT 'AWM v5.1 Unified Schema updated successfully.';
 PRINT 'Foundation: 12 Edu_* tables (university schema) must already exist.';
 PRINT 'Addon: Auth, Common, Wf, Thesis, Defense schemas created.';

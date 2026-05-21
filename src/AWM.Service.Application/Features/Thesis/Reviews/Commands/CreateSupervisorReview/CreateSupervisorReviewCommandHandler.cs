@@ -8,6 +8,7 @@ using AWM.Service.Domain.Thesis.Entities;
 using KDS.Primitives.FluentResult;
 using MediatR;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using System.IO;
 
 public sealed class CreateSupervisorReviewCommandHandler : IRequestHandler<CreateSupervisorReviewCommand, Result<long>>
@@ -19,6 +20,7 @@ public sealed class CreateSupervisorReviewCommandHandler : IRequestHandler<Creat
     private readonly ICurrentUserProvider _currentUserProvider;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICheckTypeRepository _checkTypeRepository;
+    private readonly ILogger<CreateSupervisorReviewCommandHandler> _logger;
 
     public CreateSupervisorReviewCommandHandler(
         IStudentWorkRepository workRepository,
@@ -27,7 +29,8 @@ public sealed class CreateSupervisorReviewCommandHandler : IRequestHandler<Creat
         IEmployeeRepository EmployeeRepository,
         ICurrentUserProvider currentUserProvider,
         IUnitOfWork unitOfWork,
-        ICheckTypeRepository checkTypeRepository)
+        ICheckTypeRepository checkTypeRepository,
+        ILogger<CreateSupervisorReviewCommandHandler> logger)
     {
         _workRepository = workRepository ?? throw new ArgumentNullException(nameof(workRepository));
         _reviewRepository = reviewRepository ?? throw new ArgumentNullException(nameof(reviewRepository));
@@ -36,6 +39,7 @@ public sealed class CreateSupervisorReviewCommandHandler : IRequestHandler<Creat
         _currentUserProvider = currentUserProvider ?? throw new ArgumentNullException(nameof(currentUserProvider));
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
         _checkTypeRepository = checkTypeRepository ?? throw new ArgumentNullException(nameof(checkTypeRepository));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     public async Task<Result<long>> Handle(CreateSupervisorReviewCommand request, CancellationToken cancellationToken)
@@ -84,9 +88,9 @@ public sealed class CreateSupervisorReviewCommandHandler : IRequestHandler<Creat
                 {
                     await _attachmentService.DeleteAsync(existingReview.FileStoragePath, cancellationToken);
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // Ignore deletion error (e.g. file missing)
+                    _logger.LogWarning(ex, "Failed to delete old supervisor review physical file at path '{StoragePath}'.", existingReview.FileStoragePath);
                 }
             }
             else if (request.File is null && existingReview.FileStoragePath is not null)

@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using AWM.Service.Domain.CommonDomain.Constants;
 using AWM.Service.Domain.Common;
 using AWM.Service.Domain.CommonDomain.Entities;
 using AWM.Service.Domain.CommonDomain.Services;
@@ -46,10 +47,10 @@ public sealed class ApproveDefenseStagesCommandHandler : IRequestHandler<Approve
 
     private static readonly HashSet<int> DefenseStages = new()
     {
-        4, // PreDefense1
-        5, // PreDefense2
-        6, // PreDefense3
-        7  // FinalDefense
+        WorkflowStageIds.PreDefense1,
+        WorkflowStageIds.PreDefense2,
+        WorkflowStageIds.PreDefense3,
+        WorkflowStageIds.FinalDefense
     };
 
     public async Task<Result> Handle(ApproveDefenseStagesCommand request, CancellationToken cancellationToken)
@@ -104,7 +105,7 @@ public sealed class ApproveDefenseStagesCommandHandler : IRequestHandler<Approve
             }
 
             // Notify students about pre-defense schedule
-            var preDefenseStage = request.Stages.FirstOrDefault(p => p.WorkflowStageId == 4);
+            var preDefenseStage = request.Stages.FirstOrDefault(p => p.WorkflowStageId == WorkflowStageIds.PreDefense1);
             if (preDefenseStage != null)
             {
                 var works = await _studentWorkRepository.GetByDepartmentAsync(

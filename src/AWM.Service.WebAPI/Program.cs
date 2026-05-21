@@ -1,3 +1,4 @@
+#region Using Statements
 using System.Text;
 using AWM.Service.Infrastructure;
 using AWM.Service.WebAPI.Common.Services;
@@ -12,16 +13,15 @@ using FluentValidation;
 using AWM.Service.Application.Common.Services;
 using AWM.Service.Application;
 using Mapster;
+using Microsoft.AspNetCore.RateLimiting;
+#endregion
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+#region Service Configuration
 builder.Services.AddControllers();
-
-// Add Mapster configuration
 builder.Services.AddSingleton(TypeAdapterConfig.GlobalSettings);
 
-// Add CORS Policy for Frontend Integration
 var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
 
 builder.Services.AddCors(options =>
@@ -44,14 +44,26 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Add Global Exception Handling
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
 
-// Add Application Layer
+builder.Services.AddHealthChecks()
+    .AddDbContextCheck<AWM.Service.Infrastructure.Persistence.ApplicationDbContext>();
+
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = Microsoft.AspNetCore.Http.StatusCodes.Status429TooManyRequests;
+    options.AddFixedWindowLimiter("AuthLimiter", opt =>
+    {
+        opt.Window = TimeSpan.FromMinutes(1);
+        opt.PermitLimit = 10;
+        opt.QueueLimit = 2;
+        opt.QueueProcessingOrder = System.Threading.RateLimiting.QueueProcessingOrder.OldestFirst;
+    });
+});
+
 builder.Services.AddApplication();
 
-// Add API Versioning
 builder.Services.AddApiVersioning(options =>
 {
     options.AssumeDefaultVersionWhenUnspecified = true;
@@ -65,10 +77,8 @@ builder.Services.AddVersionedApiExplorer(options =>
     options.SubstituteApiVersionInUrl = true;
 });
 
-// Configure JWT Settings
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection(JwtSettings.SectionName));
 
-// Add JWT Authentication
 var jwtSettings = builder.Configuration.GetSection(JwtSettings.SectionName).Get<JwtSettings>()!;
 builder.Services.AddAuthentication(options =>
 {
@@ -89,13 +99,11 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "AWM.Service API", Version = "v1" });
 
-    // Add JWT Authentication support to Swagger
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
@@ -124,30 +132,30 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// Add Infrastructure Layer
 builder.Services.AddInfrastructure(builder.Configuration);
 
-// Add HttpContextAccessor and CurrentUserProvider for audit
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<AWM.Service.Domain.Common.ICurrentUserProvider, AWM.Service.WebAPI.Common.Services.CurrentUserProvider>();
 
-// Add Authentication Services
 builder.Services.AddScoped<AWM.Service.Domain.Auth.Interfaces.IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<AWM.Service.Domain.Auth.Interfaces.IJwtTokenService, JwtTokenService>();
 
-// RBAC+ authorization is handled by RequireAccessAttribute via MediatR (registered in AddApplication).
-
+#endregion
 
 var app = builder.Build();
 
-// Apply migrations in all environments
-using (var scope = app.Services.CreateScope())
+#region Database Initialization
+
+var migrateAtStartup = builder.Configuration.GetValue<bool>("DatabaseSettings:MigrateAtStartup", true);
+if (migrateAtStartup)
 {
-    var initialiser = scope.ServiceProvider.GetRequiredService<AWM.Service.Infrastructure.Persistence.ApplicationDbContextInitialiser>();
-    await initialiser.InitialiseAsync();
+    using (var scope = app.Services.CreateScope())
+    {
+        var initialiser = scope.ServiceProvider.GetRequiredService<AWM.Service.Infrastructure.Persistence.ApplicationDbContextInitialiser>();
+        await initialiser.InitialiseAsync();
+    }
 }
 
-// Seed demo data only in Development and Staging
 if (app.Environment.IsDevelopment() || app.Environment.IsStaging())
 {
     using (var scope = app.Services.CreateScope())
@@ -156,14 +164,14 @@ if (app.Environment.IsDevelopment() || app.Environment.IsStaging())
         await initialiser.SeedAsync();
     }
 }
+#endregion
+
+#region Middleware Configuration
 
 app.UseExceptionHandler();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    // Seed data will be added later after University integration
-
     app.UseSwagger();
     app.UseSwaggerUI(options =>
     {
@@ -173,12 +181,18 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-// Enable CORS before Authentication & Authorization
 app.UseCors("AllowFrontend");
+
+app.UseRateLimiter();
 
 app.UseAuthentication();
 app.UseAuthorization();
+#endregion
+
+#region Endpoints
 
 app.MapControllers();
+app.MapHealthChecks("/health");
 
 app.Run();
+#endregion

@@ -1,5 +1,6 @@
 namespace AWM.Service.Application.Features.Thesis.Topics.Queries.GetTopicCoordinationSummary;
 
+using AWM.Service.Domain.Thesis.Enums;
 using AWM.Service.Domain.Common;
 using AWM.Service.Domain.Repositories;
 using KDS.Primitives.FluentResult;
@@ -70,9 +71,9 @@ public sealed class GetTopicCoordinationSummaryQueryHandler
         foreach (var topic in topics)
         {
             var applications = applicationsByTopicId.GetValueOrDefault(topic.Id, []);
-            var accepted = applications.Count(a => a.StatusId == 2);
-            var pending = applications.Count(a => a.StatusId == 1);
-            var rejected = applications.Count(a => a.StatusId == 3);
+            var accepted = applications.Count(a => a.StatusId == (int)ApplicationStatusType.Accepted);
+            var pending = applications.Count(a => a.StatusId == (int)ApplicationStatusType.Submitted);
+            var rejected = applications.Count(a => a.StatusId == (int)ApplicationStatusType.Rejected);
             var available = Math.Max(0, topic.MaxParticipants - accepted);
             var supervisor = supervisorsById.GetValueOrDefault(topic.EmployeeId);
             var supervisorUser = supervisor is null
@@ -94,7 +95,7 @@ public sealed class GetTopicCoordinationSummaryQueryHandler
                 RejectedCount = rejected,
                 AvailableSpots = available,
                 LastRejectionReason = applications
-                    .Where(a => a.StatusId == 3 && !string.IsNullOrWhiteSpace(a.ReviewComment))
+                    .Where(a => a.StatusId == (int)ApplicationStatusType.Rejected && !string.IsNullOrWhiteSpace(a.ReviewComment))
                     .OrderByDescending(a => a.ReviewedAt ?? a.AppliedAt)
                     .Select(a => a.ReviewComment)
                     .FirstOrDefault(),

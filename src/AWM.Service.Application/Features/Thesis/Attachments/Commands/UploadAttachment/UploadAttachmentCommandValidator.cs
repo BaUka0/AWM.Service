@@ -1,6 +1,7 @@
 namespace AWM.Service.Application.Features.Thesis.Attachments.Commands.UploadAttachment;
 
 using FluentValidation;
+using AWM.Service.Domain.Common;
 
 public sealed class UploadAttachmentCommandValidator : AbstractValidator<UploadAttachmentCommand>
 {
@@ -12,10 +13,11 @@ public sealed class UploadAttachmentCommandValidator : AbstractValidator<UploadA
         ".png", ".jpg", ".jpeg"
     ];
 
-    private const long MaxFileSizeBytes = 50 * 1024 * 1024; // 50 MB
-
-    public UploadAttachmentCommandValidator()
+    public UploadAttachmentCommandValidator(Microsoft.Extensions.Options.IOptions<StorageSettings> storageOptions)
     {
+        var settings = storageOptions.Value;
+        var maxFileSizeBytes = settings.MaxAttachmentSizeMb * 1024L * 1024L;
+
         RuleFor(x => x.WorkId)
             .GreaterThan(0).WithMessage("Work ID must be greater than 0.");
 
@@ -29,8 +31,8 @@ public sealed class UploadAttachmentCommandValidator : AbstractValidator<UploadA
         {
             RuleFor(x => x.File.Length)
                 .GreaterThan(0).WithMessage("The uploaded file is empty.")
-                .LessThanOrEqualTo(MaxFileSizeBytes)
-                .WithMessage($"File size must not exceed {MaxFileSizeBytes / 1024 / 1024} MB.");
+                .LessThanOrEqualTo(maxFileSizeBytes)
+                .WithMessage($"File size must not exceed {settings.MaxAttachmentSizeMb} MB.");
 
             RuleFor(x => x.File.FileName)
                 .NotEmpty().WithMessage("File name is required.")
