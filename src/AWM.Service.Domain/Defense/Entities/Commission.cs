@@ -2,6 +2,8 @@ namespace AWM.Service.Domain.Defense.Entities;
 
 using AWM.Service.Domain.Common;
 using AWM.Service.Domain.Defense.Enums;
+using AWM.Service.Domain.CommonDomain.Entities;
+using AWM.Service.Domain.CommonDomain.Enums;
 
 /// <summary>
 /// Commission entity - defense commission (PreDefense or GAK).
@@ -23,8 +25,8 @@ public class Commission : AggregateRoot<int>, IAuditable, ISoftDeletable
     public DateTime? DeletedAt { get; private set; }
     public int? DeletedBy { get; private set; }
 
-    private readonly List<CommissionMember> _members = new();
-    public IReadOnlyCollection<CommissionMember> Members => _members.AsReadOnly();
+    private readonly List<StaffAssignment> _assignments = new();
+    public IReadOnlyCollection<StaffAssignment> Assignments => _assignments.AsReadOnly();
 
     private Commission() { }
 
@@ -64,38 +66,53 @@ public class Commission : AggregateRoot<int>, IAuditable, ISoftDeletable
     }
 
     /// <summary>
-    /// Adds a member to the commission.
+    /// Adds a member to the commission using unified staff assignments.
     /// </summary>
-    public CommissionMember AddMember(int userId, int commissionRoleId)
+    public StaffAssignment AddMember(int userId, StaffRoleType roleType, int createdBy)
     {
-        // Ensure only one chairman and one secretary
-        if (commissionRoleId == (int)CommissionRoles.Chairman && _members.Any(m => m.CommissionRoleId == (int)CommissionRoles.Chairman))
-            throw new DomainException("Commission.ChairmanAlreadyExists", "Commission already has a chairman.");
+        // Enforce role-specific limits
+        if (roleType == StaffRoleType.CommissionChairman && _assignments.Any(a => a.RoleType == StaffRoleType.CommissionChairman && a.IsActive))
+            throw new DomainException("Commission.ChairmanAlreadyExists", "Commission already has an active chairman.");
 
-        if (commissionRoleId == (int)CommissionRoles.Secretary && _members.Any(m => m.CommissionRoleId == (int)CommissionRoles.Secretary))
-            throw new DomainException("Commission.SecretaryAlreadyExists", "Commission already has a secretary.");
+        if (roleType == StaffRoleType.CommissionSecretary && _assignments.Any(a => a.RoleType == StaffRoleType.CommissionSecretary && a.IsActive))
+            throw new DomainException("Commission.SecretaryAlreadyExists", "Commission already has an active secretary.");
 
-        var member = new CommissionMember(Id, userId, commissionRoleId);
-        _members.Add(member);
+        // For GAK, limit members to 4
+        if (CommissionTypeId == (int)CommissionTypes.GAK && roleType == StaffRoleType.CommissionMember)
+        {
+            var currentMemberCount = _assignments.Count(a => a.RoleType == StaffRoleType.CommissionMember && a.IsActive);
+            if (currentMemberCount >= 4)
+                throw new DomainException("Commission.TooManyMembers", "GAK commission can have a maximum of 4 members.");
+        }
+
+        var assignment = new StaffAssignment(
+            userId, 
+            roleType, 
+            "Commission", 
+            Id, 
+            createdBy);
+            
+        _assignments.Add(assignment);
 
         LastModifiedAt = DateTime.UtcNow;
-        return member;
+        LastModifiedBy = createdBy;
+        return assignment;
     }
 
     /// <summary>
     /// Gets the chairman of the commission.
     /// </summary>
-    public CommissionMember? GetChairman()
+    public StaffAssignment? GetChairman()
     {
-        return _members.FirstOrDefault(m => m.CommissionRoleId == (int)CommissionRoles.Chairman);
+        return _assignments.FirstOrDefault(a => a.RoleType == StaffRoleType.CommissionChairman && a.IsActive);
     }
 
     /// <summary>
     /// Gets the secretary of the commission.
     /// </summary>
-    public CommissionMember? GetSecretary()
+    public StaffAssignment? GetSecretary()
     {
-        return _members.FirstOrDefault(m => m.CommissionRoleId == (int)CommissionRoles.Secretary);
+        return _assignments.FirstOrDefault(a => a.RoleType == StaffRoleType.CommissionSecretary && a.IsActive);
     }
 
     /// <summary>
@@ -109,19 +126,49 @@ public class Commission : AggregateRoot<int>, IAuditable, ISoftDeletable
     }
 
     /// <summary>
-    /// Removes a member from the commission by member ID.
+    /// Removes a member from the commission (deactivates assignment).
     /// </summary>
-    /// <returns>True if the member was found and removed; otherwise, false.</returns>
-    public bool RemoveMember(int memberId, int modifiedBy)
+    public bool RemoveMember(long assignmentId, int modifiedBy)
     {
-        var member = _members.FirstOrDefault(m => m.Id == memberId);
-        if (member is null)
+        var assignment = _assignments.FirstOrDefault(a => a.Id == assignmentId);
+        if (assignment is null)
             return false;
 
-        _members.Remove(member);
+        assignment.Deactivate(modifiedBy);
         LastModifiedAt = DateTime.UtcNow;
         LastModifiedBy = modifiedBy;
         return true;
+    }
+
+    /// <summary>
+    /// Validates that the commission has a valid composition:
+    /// - Exactly 1 Chairman
+    /// - Exactly 1 Secretary
+    /// - At least 1 Member
+    /// - For GAK, between 1 and 4 Members.
+    /// </summary>
+    public void ValidateIntegrity()
+    {
+        var activeAssignments = _assignments.Where(a => a.IsActive && !a.IsDeleted).ToList();
+
+        if (!activeAssignments.Any(a => a.RoleType == StaffRoleType.CommissionChairman))
+            throw new DomainException("Commission.MissingChairman", "Commission must have an active chairman.");
+
+        if (!activeAssignments.Any(a => a.RoleType == StaffRoleType.CommissionSecretary))
+            throw new DomainException("Commission.MissingSecretary", "Commission must have an active secretary.");
+
+        var memberCount = activeAssignments.Count(a => a.RoleType == StaffRoleType.CommissionMember);
+        
+        if (CommissionTypeId == (int)CommissionTypes.GAK)
+        {
+            if (memberCount < 1 || memberCount > 4)
+                throw new DomainException("Commission.InvalidGakMembersCount", "GAK commission must have between 1 and 4 active members.");
+        }
+        else
+        {
+            if (memberCount < 1)
+                throw new DomainException("Commission.MissingMembers", "Pre-defense commission must have at least one active member.");
+        }
     }
 
     /// <summary>
@@ -132,5 +179,10 @@ public class Commission : AggregateRoot<int>, IAuditable, ISoftDeletable
         IsDeleted = true;
         DeletedAt = DateTime.UtcNow;
         DeletedBy = deletedBy;
+        
+        foreach (var assignment in _assignments)
+        {
+            assignment.Delete(deletedBy);
+        }
     }
 }

@@ -1,6 +1,7 @@
 namespace AWM.Service.Application.Features.Defense.Commissions.Queries.GetCommissionsByDepartment;
 
 using AWM.Service.Application.Features.Defense.Commissions.DTOs;
+using AWM.Service.Domain.CommonDomain.Enums;
 using AWM.Service.Domain.Repositories;
 using KDS.Primitives.FluentResult;
 using MediatR;
@@ -34,8 +35,8 @@ public sealed class GetCommissionsByDepartmentQueryHandler
                 cancellationToken);
 
             var allUserIds = commissions
-                .SelectMany(c => c.Members)
-                .Select(m => m.UserId)
+                .SelectMany(c => c.Assignments)
+                .Select(a => a.UserId)
                 .Distinct()
                 .ToList();
 
@@ -45,8 +46,8 @@ public sealed class GetCommissionsByDepartmentQueryHandler
             var dtos = commissions
                 .Select(c =>
                 {
-                    var chairman = c.Members.FirstOrDefault(m => m.CommissionRoleId == 1);
-                    var secretary = c.Members.FirstOrDefault(m => m.CommissionRoleId == 2);
+                    var chairman = c.Assignments.FirstOrDefault(a => a.RoleType == StaffRoleType.CommissionChairman && a.IsActive);
+                    var secretary = c.Assignments.FirstOrDefault(a => a.RoleType == StaffRoleType.CommissionSecretary && a.IsActive);
 
                     return new CommissionDto
                     {
@@ -56,7 +57,7 @@ public sealed class GetCommissionsByDepartmentQueryHandler
                         CommissionType = c.CommissionTypeId.ToString(),
                         Name = c.Name,
                         PreDefenseNumber = c.PreDefenseNumber,
-                        MemberCount = c.Members.Count,
+                        MemberCount = c.Assignments.Count(a => a.IsActive),
                         ChairmanName = chairman != null && usersDict.TryGetValue(chairman.UserId, out var cName) ? cName : null,
                         SecretaryName = secretary != null && usersDict.TryGetValue(secretary.UserId, out var sName) ? sName : null,
                         CreatedAt = c.CreatedAt

@@ -85,6 +85,7 @@ public static class DependencyInjection
         services.AddScoped<ISemesterRepository, SemesterRepository>();
         services.AddScoped<IWorkflowStageRepository, WorkflowStageRepository>();
         services.AddScoped<IStageRepository, StageRepository>();
+        services.AddScoped<IStaffAssignmentRepository, StaffAssignmentRepository>();
         services.AddScoped<INotificationRepository, NotificationRepository>();
         services.AddScoped<INotificationTemplateRepository, NotificationTemplateRepository>();
 
@@ -112,7 +113,6 @@ public static class DependencyInjection
         services.AddScoped<IAttachmentTypeRepository, AttachmentTypeRepository>();
         services.AddScoped<ICheckTypeRepository, CheckTypeRepository>();
         services.AddScoped<IReviewerRepository, ReviewerRepository>();
-        services.AddScoped<IExpertRepository, ExpertRepository>();
         services.AddScoped<ISupervisorReviewRepository, SupervisorReviewRepository>();
         services.AddScoped<IReviewRepository, ReviewRepository>();
 

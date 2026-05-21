@@ -24,7 +24,7 @@ public sealed class GetCommissionByIdQueryHandler
     {
         try
         {
-            var commission = await _commissionRepository.GetByIdWithMembersAsync(
+            var commission = await _commissionRepository.GetByIdWithAssignmentsAsync(
                 request.CommissionId, cancellationToken);
 
             if (commission is null)
@@ -46,14 +46,14 @@ public sealed class GetCommissionByIdQueryHandler
                 CreatedBy = commission.CreatedBy,
                 LastModifiedAt = commission.LastModifiedAt,
                 LastModifiedBy = commission.LastModifiedBy,
-                Members = commission.Members
-                    .Select(m => new CommissionMemberDto
+                Members = commission.Assignments
+                    .Select(a => new CommissionMemberDto
                     {
-                        Id = m.Id,
-                        CommissionId = m.CommissionId,
-                        UserId = m.UserId,
-                        RoleInCommission = m.CommissionRoleId.ToString(),
-                        CreatedAt = m.CreatedAt
+                        Id = a.Id,
+                        CommissionId = commission.Id,
+                        UserId = a.UserId,
+                        RoleInCommission = a.RoleType.ToString(),
+                        CreatedAt = a.CreatedAt
                     })
                     .ToList()
             };

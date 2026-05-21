@@ -13,8 +13,8 @@ public sealed class RemoveCommissionMemberCommandValidator : AbstractValidator<R
             .GreaterThan(0)
             .WithMessage("Commission ID must be greater than 0.");
 
-        RuleFor(x => x.MemberId)
+        RuleFor(x => x.AssignmentId)
             .GreaterThan(0)
-            .WithMessage("Member ID must be greater than 0.");
+            .WithMessage("Assignment ID must be greater than 0.");
     }
 }

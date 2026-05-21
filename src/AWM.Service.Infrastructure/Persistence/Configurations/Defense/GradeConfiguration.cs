@@ -3,6 +3,7 @@ namespace AWM.Service.Infrastructure.Persistence.Configurations.Defense;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using AWM.Service.Domain.Defense.Entities;
+using AWM.Service.Domain.CommonDomain.Entities;
 using AWM.Service.Infrastructure.Persistence.Configurations.Base;
 
 /// <summary>
@@ -34,7 +35,7 @@ public class GradeConfiguration : AuditableEntityConfiguration<Grade, long>
         builder.Property(e => e.ScheduleId)
             .IsRequired();
 
-        builder.Property(e => e.MemberId)
+        builder.Property(e => e.AssignmentId)
             .IsRequired();
 
         builder.Property(e => e.CriteriaId)
@@ -56,10 +57,10 @@ public class GradeConfiguration : AuditableEntityConfiguration<Grade, long>
             .HasConstraintName("FK_Grades_Schedule")
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasOne<CommissionMember>()
+        builder.HasOne<StaffAssignment>()
             .WithMany()
-            .HasForeignKey(e => e.MemberId)
-            .HasConstraintName("FK_Grades_Member")
+            .HasForeignKey(e => e.AssignmentId)
+            .HasConstraintName("FK_Grades_Assignment")
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne<EvaluationCriteria>()
@@ -69,8 +70,8 @@ public class GradeConfiguration : AuditableEntityConfiguration<Grade, long>
             .OnDelete(DeleteBehavior.Restrict);
 
         // Unique constraint - one grade per member per criteria per schedule
-        builder.HasIndex(e => new { e.ScheduleId, e.MemberId, e.CriteriaId })
+        builder.HasIndex(e => new { e.ScheduleId, e.AssignmentId, e.CriteriaId })
             .IsUnique()
-            .HasDatabaseName("UQ_Grade_Schedule_Member_Criteria");
+            .HasDatabaseName("UQ_Grade_Schedule_Assignment_Criteria");
     }
 }

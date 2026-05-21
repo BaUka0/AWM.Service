@@ -142,10 +142,10 @@ public sealed class CommissionsController : BaseController
     /// <param name="id">Commission ID</param>
     /// <param name="request">Add member request</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>Created member ID</returns>
+    /// <returns>Created assignment ID</returns>
     [HttpPost("{id:int}/members")]
     [RequireAccess("Commissions", "Create")]
-    [ProducesResponseType(typeof(int), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(long), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
@@ -166,20 +166,20 @@ public sealed class CommissionsController : BaseController
     /// Remove a member from a commission.
     /// </summary>
     /// <param name="id">Commission ID</param>
-    /// <param name="memberId">Member record ID to remove</param>
+    /// <param name="assignmentId">Assignment record ID to remove</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>No content on success</returns>
-    [HttpDelete("{id:int}/members/{memberId:int}")]
+    [HttpDelete("{id:int}/members/{assignmentId:long}")]
     [RequireAccess("Commissions", "Delete")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> RemoveMember(int id, int memberId, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> RemoveMember(int id, long assignmentId, CancellationToken cancellationToken = default)
     {
         var command = new RemoveCommissionMemberCommand
         {
             CommissionId = id,
-            MemberId = memberId
+            AssignmentId = assignmentId
         };
 
         var result = await _sender.Send(command, cancellationToken);

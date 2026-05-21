@@ -45,6 +45,7 @@ public class ApplicationDbContext : DbContext
     #region Common Schema
     public DbSet<WorkflowStage> WorkflowStages => Set<WorkflowStage>();
     public DbSet<Stage> Stages => Set<Stage>();
+    public DbSet<StaffAssignment> StaffAssignments => Set<StaffAssignment>();
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<NotificationTemplate> NotificationTemplates => Set<NotificationTemplate>();
     #endregion
@@ -66,7 +67,6 @@ public class ApplicationDbContext : DbContext
     public DbSet<Review> Reviews => Set<Review>();
     public DbSet<Reviewer> Reviewers => Set<Reviewer>();
     public DbSet<SupervisorReview> SupervisorReviews => Set<SupervisorReview>();
-    public DbSet<Expert> Experts => Set<Expert>();
     public DbSet<Direction> Directions => Set<Direction>();
 
     // Reference tables
@@ -77,7 +77,6 @@ public class ApplicationDbContext : DbContext
 
     #region Defense Schema
     public DbSet<Commission> Commissions => Set<Commission>();
-    public DbSet<CommissionMember> CommissionMembers => Set<CommissionMember>();
     public DbSet<Schedule> Schedules => Set<Schedule>();
     public DbSet<PreDefenseAttempt> PreDefenseAttempts => Set<PreDefenseAttempt>();
     public DbSet<EvaluationCriteria> EvaluationCriteria => Set<EvaluationCriteria>();

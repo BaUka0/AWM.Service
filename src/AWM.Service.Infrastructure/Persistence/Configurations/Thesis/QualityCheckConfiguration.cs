@@ -55,12 +55,6 @@ public class QualityCheckConfiguration : AuditableEntityConfiguration<QualityChe
             .HasConstraintName("FK_QChecks_Work")
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasOne<Expert>()
-            .WithMany()
-            .HasForeignKey(e => e.AssignedExpertId)
-            .HasConstraintName("FK_QChecks_Expert")
-            .OnDelete(DeleteBehavior.Restrict);
-
         builder.HasOne(e => e.CheckType)
             .WithMany()
             .HasForeignKey(e => e.CheckTypeId)

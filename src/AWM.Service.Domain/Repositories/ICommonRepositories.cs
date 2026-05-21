@@ -64,3 +64,16 @@ public interface IStageRepository
     Task AddAsync(Stage stage, CancellationToken cancellationToken = default);
     Task UpdateAsync(Stage stage, CancellationToken cancellationToken = default);
 }
+
+/// <summary>
+/// Repository for unified StaffAssignments.
+/// </summary>
+public interface IStaffAssignmentRepository
+{
+    Task<StaffAssignment?> GetByIdAsync(long id, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<StaffAssignment>> GetByTargetAsync(string targetEntityType, long targetEntityId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<StaffAssignment>> GetByUserAsync(int userId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<StaffAssignment>> GetByRoleAsync(string targetEntityType, long targetEntityId, CommonDomain.Enums.StaffRoleType roleType, CancellationToken cancellationToken = default);
+    Task AddAsync(StaffAssignment assignment, CancellationToken cancellationToken = default);
+    Task UpdateAsync(StaffAssignment assignment, CancellationToken cancellationToken = default);
+}

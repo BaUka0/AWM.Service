@@ -2,6 +2,8 @@ namespace AWM.Service.Application.Features.Defense.Commissions.Commands.CreateCo
 
 using AWM.Service.Domain.Common;
 using AWM.Service.Domain.Defense.Entities;
+using AWM.Service.Domain.Defense.Enums;
+using AWM.Service.Domain.CommonDomain.Enums;
 using AWM.Service.Domain.Repositories;
 using KDS.Primitives.FluentResult;
 using MediatR;
@@ -45,13 +47,28 @@ public sealed class CreateCommissionCommandHandler : IRequestHandler<CreateCommi
 
             foreach (var member in request.Members)
             {
-                commission.AddMember(member.UserId, member.CommissionRoleId);
+                // Map old CommissionRoles to new unified StaffRoleType
+                var roleType = member.CommissionRoleId switch
+                {
+                    (int)CommissionRoles.Chairman => StaffRoleType.CommissionChairman,
+                    (int)CommissionRoles.Secretary => StaffRoleType.CommissionSecretary,
+                    (int)CommissionRoles.Member => StaffRoleType.CommissionMember,
+                    _ => throw new InvalidOperationException($"Unknown commission role ID: {member.CommissionRoleId}")
+                };
+
+                commission.AddMember(member.UserId, roleType, userId.Value);
             }
+
+            commission.ValidateIntegrity();
 
             await _commissionRepository.AddAsync(commission, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             return Result.Success(commission.Id);
+        }
+        catch (DomainException domEx)
+        {
+            return Result.Failure<int>(new Error(domEx.ErrorCode, domEx.Message));
         }
         catch (ArgumentException argEx)
         {

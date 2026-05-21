@@ -13,19 +13,26 @@ public sealed class SubmitPreDefenseGradeCommandHandler : IRequestHandler<Submit
 {
     private readonly IScheduleRepository _scheduleRepository;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ICurrentUserProvider _currentUserProvider;
 
     public SubmitPreDefenseGradeCommandHandler(
         IScheduleRepository scheduleRepository,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        ICurrentUserProvider currentUserProvider)
     {
         _scheduleRepository = scheduleRepository ?? throw new ArgumentNullException(nameof(scheduleRepository));
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
+        _currentUserProvider = currentUserProvider ?? throw new ArgumentNullException(nameof(currentUserProvider));
     }
 
     public async Task<Result<long>> Handle(SubmitPreDefenseGradeCommand request, CancellationToken cancellationToken)
     {
         try
         {
+            var userId = _currentUserProvider.UserId;
+            if (!userId.HasValue)
+                return Result.Failure<long>(new Error("401", "User ID is not available."));
+
             var schedule = await _scheduleRepository.GetByIdAsync(request.ScheduleId, cancellationToken);
             if (schedule is null)
                 return Result.Failure<long>(new Error("NotFound.Schedule",
@@ -36,9 +43,10 @@ public sealed class SubmitPreDefenseGradeCommandHandler : IRequestHandler<Submit
                     "Cannot submit a grade for a deleted schedule."));
 
             var grade = schedule.AddGrade(
-                request.MemberId,
+                request.AssignmentId,
                 request.CriteriaId,
                 request.Score,
+                userId.Value,
                 request.Comment);
 
             await _scheduleRepository.UpdateAsync(schedule, cancellationToken);

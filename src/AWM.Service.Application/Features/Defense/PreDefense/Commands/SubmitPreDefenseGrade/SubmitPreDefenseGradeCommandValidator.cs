@@ -13,9 +13,9 @@ public sealed class SubmitPreDefenseGradeCommandValidator : AbstractValidator<Su
             .GreaterThan(0)
             .WithMessage("Schedule ID must be greater than 0.");
 
-        RuleFor(x => x.MemberId)
+        RuleFor(x => x.AssignmentId)
             .GreaterThan(0)
-            .WithMessage("Member ID must be greater than 0.");
+            .WithMessage("Assignment ID must be greater than 0.");
 
         RuleFor(x => x.CriteriaId)
             .GreaterThan(0)

@@ -11,20 +11,24 @@ using KDS.Primitives.FluentResult;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
+using System.Text.Json;
+using AWM.Service.Domain.CommonDomain.Entities;
+using AWM.Service.Domain.CommonDomain.Enums;
+
 public sealed class AssignExpertsCommandHandler : IRequestHandler<AssignExpertsCommand, Result<int>>
 {
-    private readonly IExpertRepository _expertRepository;
+    private readonly IStaffAssignmentRepository _assignmentRepository;
     private readonly ICurrentUserProvider _currentUserProvider;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<AssignExpertsCommandHandler> _logger;
 
     public AssignExpertsCommandHandler(
-        IExpertRepository expertRepository,
+        IStaffAssignmentRepository assignmentRepository,
         ICurrentUserProvider currentUserProvider,
         IUnitOfWork unitOfWork,
         ILogger<AssignExpertsCommandHandler> logger)
     {
-        _expertRepository = expertRepository ?? throw new ArgumentNullException(nameof(expertRepository));
+        _assignmentRepository = assignmentRepository ?? throw new ArgumentNullException(nameof(assignmentRepository));
         _currentUserProvider = currentUserProvider ?? throw new ArgumentNullException(nameof(currentUserProvider));
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -41,35 +45,41 @@ public sealed class AssignExpertsCommandHandler : IRequestHandler<AssignExpertsC
             if (!request.Assignments.Any())
                 return Result.Failure<int>(new Error("400", "At least one expert assignment is required."));
 
-            var existingExperts = await _expertRepository.GetByDepartmentAsync(
-                request.DepartmentId, cancellationToken);
+            // Get existing active expert assignments for this department
+            var existingAssignments = await _assignmentRepository.GetByTargetAsync(
+                "Department", request.DepartmentId, cancellationToken);
 
             var created = 0;
-            foreach (var assignment in request.Assignments)
+            foreach (var req in request.Assignments)
             {
-                // Check for existing active expert with same user + type
-                var existing = existingExperts.FirstOrDefault(
-                    e => e.UserId == assignment.UserId
-                         && e.CheckTypeId == assignment.CheckTypeId
-                         && !e.IsDeleted);
+                var metadata = JsonSerializer.Serialize(new { CheckTypeId = req.CheckTypeId });
+
+                // Check for existing active assignment with same user + role + metadata CheckTypeId
+                var existing = existingAssignments.FirstOrDefault(
+                    a => a.UserId == req.UserId
+                         && a.RoleType == StaffRoleType.QualityExpert
+                         && ParseCheckTypeIdFromMetadata(a.MetadataJson) == req.CheckTypeId
+                         && !a.IsDeleted);
 
                 if (existing != null)
                 {
                     if (!existing.IsActive)
                     {
-                        existing.Activate();
-                        await _expertRepository.UpdateAsync(existing, cancellationToken);
+                        existing.Activate(userId.Value);
+                        await _assignmentRepository.UpdateAsync(existing, cancellationToken);
                     }
                     continue;
                 }
 
-                var expert = new Expert(
-                    assignment.UserId,
+                var assignment = new StaffAssignment(
+                    req.UserId,
+                    StaffRoleType.QualityExpert,
+                    "Department",
                     request.DepartmentId,
-                    assignment.CheckTypeId,
-                    userId.Value);
+                    userId.Value,
+                    metadata);
 
-                await _expertRepository.AddAsync(expert, cancellationToken);
+                await _assignmentRepository.AddAsync(assignment, cancellationToken);
                 created++;
             }
 
@@ -83,5 +93,23 @@ public sealed class AssignExpertsCommandHandler : IRequestHandler<AssignExpertsC
             _logger.LogError(ex, "AssignExperts failed for Dept={DeptId}", request.DepartmentId);
             return Result.Failure<int>(new Error("500", ex.Message));
         }
+    }
+
+    private static int? ParseCheckTypeIdFromMetadata(string? metadataJson)
+    {
+        if (string.IsNullOrWhiteSpace(metadataJson)) return null;
+        try
+        {
+            using var doc = JsonDocument.Parse(metadataJson);
+            if (doc.RootElement.TryGetProperty("CheckTypeId", out var prop) && prop.ValueKind == JsonValueKind.Number)
+            {
+                return prop.GetInt32();
+            }
+        }
+        catch
+        {
+            // Ignore parsing errors
+        }
+        return null;
     }
 }

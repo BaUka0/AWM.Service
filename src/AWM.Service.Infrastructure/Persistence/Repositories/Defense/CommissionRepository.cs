@@ -13,10 +13,10 @@ public sealed class CommissionRepository : RepositoryBase<Commission, int>, ICom
     public CommissionRepository(ApplicationDbContext context) : base(context) { }
 
     /// <inheritdoc />
-    public async Task<Commission?> GetByIdWithMembersAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<Commission?> GetByIdWithAssignmentsAsync(int id, CancellationToken cancellationToken = default)
     {
         return await Context.Commissions
-            .Include(c => c.Members)
+            .Include(c => c.Assignments.Where(a => a.TargetEntityType == "Commission"))
             .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
     }
 
@@ -28,7 +28,7 @@ public sealed class CommissionRepository : RepositoryBase<Commission, int>, ICom
     {
         return await Context.Commissions
             .AsNoTracking()
-            .Include(c => c.Members)
+            .Include(c => c.Assignments.Where(a => a.TargetEntityType == "Commission"))
             .Where(c => c.OrgUnitId == orgUnitId &&
                         c.SemesterId == semesterId)
             .OrderBy(c => c.CommissionTypeId)
@@ -45,7 +45,7 @@ public sealed class CommissionRepository : RepositoryBase<Commission, int>, ICom
     {
         return await Context.Commissions
             .AsNoTracking()
-            .Include(c => c.Members)
+            .Include(c => c.Assignments.Where(a => a.TargetEntityType == "Commission"))
             .Where(c => c.OrgUnitId == orgUnitId &&
                         c.SemesterId == semesterId &&
                         c.CommissionTypeId == commissionTypeId)

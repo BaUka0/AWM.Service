@@ -101,22 +101,23 @@ public sealed class GetStudentDefenseStepQueryHandler
                 Location = schedule.Location
             };
 
-            var commission = await _commissionRepository.GetByIdWithMembersAsync(schedule.CommissionId, cancellationToken);
+            var commission = await _commissionRepository.GetByIdWithAssignmentsAsync(
+                schedule.CommissionId, cancellationToken);
             if (commission is not null)
             {
                 var commissionUsers = await _userRepository.GetByIdsAsync(
-                    commission.Members.Select(m => m.UserId).Distinct(),
+                    commission.Assignments.Select(m => m.UserId).Distinct(),
                     cancellationToken);
                 var commissionUsersById = commissionUsers.ToDictionary(u => u.Id);
                 var members = new List<DefenseStepMemberDto>();
-                foreach (var member in commission.Members)
+                foreach (var member in commission.Assignments)
                 {
                     var memberUser = commissionUsersById.GetValueOrDefault(member.UserId);
 
                     members.Add(new DefenseStepMemberDto
                     {
                         Name = memberUser?.Email ?? memberUser?.FirstName ?? $"User {member.UserId}",
-                        Role = member.CommissionRoleId.ToString()
+                        Role = member.RoleType.ToString()
                     });
                 }
                 commissionMembers = members;

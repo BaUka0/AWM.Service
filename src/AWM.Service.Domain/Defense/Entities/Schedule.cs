@@ -78,16 +78,17 @@ public class Schedule : Entity<long>, IAuditable, ISoftDeletable
     /// <summary>
     /// Adds a grade from a commission member.
     /// </summary>
-    public Grade AddGrade(int memberId, int criteriaId, int score, string? comment = null)
+    public Grade AddGrade(long assignmentId, int criteriaId, int score, int createdBy, string? comment = null)
     {
         // Check if this member already graded this criteria
-        if (_grades.Any(g => g.MemberId == memberId && g.CriteriaId == criteriaId))
+        if (_grades.Any(g => g.AssignmentId == assignmentId && g.CriteriaId == criteriaId))
             throw new DomainException("Schedule.MemberAlreadyGraded", "Member has already graded this criteria.");
 
-        var grade = new Grade(Id, memberId, criteriaId, score, comment);
+        var grade = new Grade(Id, assignmentId, criteriaId, score, createdBy, comment);
         _grades.Add(grade);
 
         LastModifiedAt = DateTime.UtcNow;
+        LastModifiedBy = createdBy;
         return grade;
     }
 

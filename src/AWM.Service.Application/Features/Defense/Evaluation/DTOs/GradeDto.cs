@@ -11,8 +11,8 @@ public sealed record GradeDto
     /// <summary>Schedule ID this grade belongs to.</summary>
     public long ScheduleId { get; init; }
 
-    /// <summary>Commission member ID who submitted the grade.</summary>
-    public int MemberId { get; init; }
+    /// <summary>Assignment ID (Unified Staff Assignment) of the member who submitted the grade.</summary>
+    public long AssignmentId { get; init; }
 
     /// <summary>Evaluation criteria ID that was graded.</summary>
     public int CriteriaId { get; init; }

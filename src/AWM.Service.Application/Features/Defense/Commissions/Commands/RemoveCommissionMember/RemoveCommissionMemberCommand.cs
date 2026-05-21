@@ -14,7 +14,7 @@ public sealed record RemoveCommissionMemberCommand : IRequest<Result>
     public int CommissionId { get; init; }
 
     /// <summary>
-    /// Member record ID to remove.
+    /// Assignment record ID to remove.
     /// </summary>
-    public int MemberId { get; init; }
+    public long AssignmentId { get; init; }
 }

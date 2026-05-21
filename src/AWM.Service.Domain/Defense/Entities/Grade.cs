@@ -8,7 +8,7 @@ using AWM.Service.Domain.Common;
 public class Grade : Entity<long>, IAuditable
 {
     public long ScheduleId { get; private set; }
-    public int MemberId { get; private set; }
+    public long AssignmentId { get; private set; }
     public int CriteriaId { get; private set; }
     public int Score { get; private set; }
     public string? Comment { get; private set; }
@@ -23,19 +23,19 @@ public class Grade : Entity<long>, IAuditable
 
     private Grade() { }
 
-    internal Grade(long scheduleId, int memberId, int criteriaId, int score, string? comment = null)
+    internal Grade(long scheduleId, long assignmentId, int criteriaId, int score, int createdBy, string? comment = null)
     {
         if (score < 0)
             throw new DomainException("Grade.InvalidScore", "Score cannot be negative.");
 
         ScheduleId = scheduleId;
-        MemberId = memberId;
+        AssignmentId = assignmentId;
         CriteriaId = criteriaId;
         Score = score;
         Comment = comment;
         
         CreatedAt = DateTime.UtcNow;
-        CreatedBy = memberId; // Graded by member
+        CreatedBy = createdBy;
     }
 
     /// <summary>

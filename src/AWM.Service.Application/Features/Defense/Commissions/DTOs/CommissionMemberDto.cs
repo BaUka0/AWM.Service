@@ -6,9 +6,9 @@ namespace AWM.Service.Application.Features.Defense.Commissions.DTOs;
 public sealed record CommissionMemberDto
 {
     /// <summary>
-    /// Member record ID.
+    /// Assignment record ID.
     /// </summary>
-    public int Id { get; init; }
+    public long Id { get; init; }
 
     /// <summary>
     /// Commission ID this member belongs to.
@@ -21,7 +21,7 @@ public sealed record CommissionMemberDto
     public int UserId { get; init; }
 
     /// <summary>
-    /// Role in commission (Chairman, Secretary, Member).
+    /// Role in commission.
     /// </summary>
     public string RoleInCommission { get; init; } = null!;
 

@@ -16,5 +16,6 @@ public enum CommissionTypes
 public enum CommissionRoles
 {
     Chairman = 1,
-    Secretary = 2
+    Secretary = 2,
+    Member = 3
 }

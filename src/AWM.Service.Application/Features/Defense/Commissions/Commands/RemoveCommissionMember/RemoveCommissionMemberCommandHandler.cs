@@ -32,7 +32,7 @@ public sealed class RemoveCommissionMemberCommandHandler : IRequestHandler<Remov
             if (!userId.HasValue)
                 return Result.Failure(new Error("401", "User ID is not available."));
 
-            var commission = await _commissionRepository.GetByIdWithMembersAsync(
+            var commission = await _commissionRepository.GetByIdWithAssignmentsAsync(
                 request.CommissionId, cancellationToken);
 
             if (commission is null)
@@ -41,17 +41,23 @@ public sealed class RemoveCommissionMemberCommandHandler : IRequestHandler<Remov
                     $"Commission with ID {request.CommissionId} not found."));
             }
 
-            var removed = commission.RemoveMember(request.MemberId, userId.Value);
+            var removed = commission.RemoveMember(request.AssignmentId, userId.Value);
             if (!removed)
             {
                 return Result.Failure(new Error("NotFound.CommissionMember",
-                    $"Member with ID {request.MemberId} not found in commission {request.CommissionId}."));
+                    $"Assignment with ID {request.AssignmentId} not found in commission {request.CommissionId}."));
             }
+
+            commission.ValidateIntegrity();
 
             await _commissionRepository.UpdateAsync(commission, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             return Result.Success();
+        }
+        catch (DomainException domEx)
+        {
+            return Result.Failure(new Error(domEx.ErrorCode, domEx.Message));
         }
         catch (Exception ex)
         {

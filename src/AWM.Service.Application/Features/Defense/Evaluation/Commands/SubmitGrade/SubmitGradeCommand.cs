@@ -14,9 +14,9 @@ public sealed record SubmitGradeCommand : IRequest<Result<long>>
     public long ScheduleId { get; init; }
 
     /// <summary>
-    /// Commission member ID submitting the grade.
+    /// Assignment ID (Unified Staff Assignment) of the member submitting the grade.
     /// </summary>
-    public int MemberId { get; init; }
+    public long AssignmentId { get; init; }
 
     /// <summary>
     /// Evaluation criteria ID being graded.

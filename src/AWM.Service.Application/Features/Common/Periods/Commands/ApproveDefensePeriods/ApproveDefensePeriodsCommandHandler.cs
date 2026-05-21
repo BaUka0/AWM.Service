@@ -134,7 +134,7 @@ public sealed class ApproveDefenseStagesCommandHandler : IRequestHandler<Approve
             var commissions = await _commissionRepository.GetByDepartmentAsync(
                 request.DepartmentId, request.SemesterId, cancellationToken);
             var memberUserIds = commissions
-                .SelectMany(c => c.Members.Select(m => m.UserId))
+                .SelectMany(c => c.Assignments.Select(m => m.UserId))
                 .Distinct()
                 .ToList();
 

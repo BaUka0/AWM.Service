@@ -38,7 +38,7 @@ public sealed class GetGradesByWorkQueryHandler
                 {
                     Id = g.Id,
                     ScheduleId = g.ScheduleId,
-                    MemberId = g.MemberId,
+                    AssignmentId = g.AssignmentId,
                     CriteriaId = g.CriteriaId,
                     Score = g.Score,
                     Comment = g.Comment,

@@ -34,30 +34,3 @@ public interface IReviewerRepository
     Task AddAsync(Reviewer reviewer, CancellationToken cancellationToken = default);
     Task UpdateAsync(Reviewer reviewer, CancellationToken cancellationToken = default);
 }
-
-/// <summary>
-/// Repository for department experts (Norm Control, Software Check, Anti-Plagiarism).
-/// </summary>
-public interface IExpertRepository
-{
-    /// <summary>
-    /// Gets an expert by ID.
-    /// </summary>
-    Task<Expert?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Gets active experts by department and expertise type.
-    /// </summary>
-    Task<IReadOnlyList<Expert>> GetByDepartmentAndTypeAsync(
-        int departmentId,
-        int checkTypeId,
-        CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Gets all active experts for a department.
-    /// </summary>
-    Task<IReadOnlyList<Expert>> GetByDepartmentAsync(int departmentId, CancellationToken cancellationToken = default);
-
-    Task AddAsync(Expert expert, CancellationToken cancellationToken = default);
-    Task UpdateAsync(Expert expert, CancellationToken cancellationToken = default);
-}

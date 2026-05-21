@@ -6,7 +6,7 @@ using MediatR;
 /// <summary>
 /// Command to add a member to a commission.
 /// </summary>
-public sealed record AddCommissionMemberCommand : IRequest<Result<int>>
+public sealed record AddCommissionMemberCommand : IRequest<Result<long>>
 {
     /// <summary>
     /// Commission ID to add the member to.
