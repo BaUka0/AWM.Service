@@ -11,7 +11,7 @@ public sealed record SupervisedWorkDto
     public bool IsDefended { get; init; }
     public string? FinalGrade { get; init; }
     public DateTime CreatedAt { get; init; }
-    public string? RepositoryUrl { get; init; }
+    public string? MetadataJson { get; init; }
 
     public IReadOnlyList<SupervisedStudentDto> Students { get; init; } = [];
     public IReadOnlyList<WorkProgressAttachmentDto> Attachments { get; init; } = [];

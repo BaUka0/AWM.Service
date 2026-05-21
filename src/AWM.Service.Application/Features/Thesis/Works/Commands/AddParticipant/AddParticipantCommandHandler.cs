@@ -32,7 +32,7 @@ public sealed class AddParticipantCommandHandler : IRequestHandler<AddParticipan
         if (work.IsDeleted)
             return Result.Failure<long>(new Error("BusinessRule.WorkDeleted", "Cannot add participants to a deleted work."));
 
-        // 2. Add participant (domain entity handles validation: max 5, no duplicates, single leader)
+        // 2. Add participant (domain entity handles validation: max 3, no duplicates)
         try
         {
             var participant = work.AddParticipant(request.StudentId);

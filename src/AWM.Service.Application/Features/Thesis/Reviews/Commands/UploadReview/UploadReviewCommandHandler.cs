@@ -14,17 +14,20 @@ public sealed class UploadReviewCommandHandler : IRequestHandler<UploadReviewCom
     private readonly IAttachmentService _attachmentService;
     private readonly ICurrentUserProvider _currentUserProvider;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ISupervisorReviewRepository _supervisorReviewRepository;
 
     public UploadReviewCommandHandler(
         IReviewRepository reviewRepository,
         IAttachmentService attachmentService,
         ICurrentUserProvider currentUserProvider,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        ISupervisorReviewRepository supervisorReviewRepository)
     {
         _reviewRepository = reviewRepository ?? throw new ArgumentNullException(nameof(reviewRepository));
         _attachmentService = attachmentService ?? throw new ArgumentNullException(nameof(attachmentService));
         _currentUserProvider = currentUserProvider ?? throw new ArgumentNullException(nameof(currentUserProvider));
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
+        _supervisorReviewRepository = supervisorReviewRepository ?? throw new ArgumentNullException(nameof(supervisorReviewRepository));
     }
 
     public async Task<Result> Handle(UploadReviewCommand request, CancellationToken cancellationToken)
@@ -39,6 +42,13 @@ public sealed class UploadReviewCommandHandler : IRequestHandler<UploadReviewCom
 
         if (existingReview.WorkId != request.WorkId)
             return Result.Failure(new Error("400", "Review does not belong to the specified student work."));
+
+        var supervisorReview = await _supervisorReviewRepository.GetByWorkIdAsync(request.WorkId, cancellationToken);
+        if (supervisorReview is null)
+        {
+            return Result.Failure(new Error("BusinessRule.Review", 
+                "Cannot upload review until a supervisor review is provided."));
+        }
 
         // Verify that the current user is the assigned reviewer (in a real system)
         // or has admin rights. For now we assume implicitly trusted by endpoint permission.

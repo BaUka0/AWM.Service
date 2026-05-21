@@ -1,5 +1,6 @@
 namespace AWM.Service.Application.Features.Thesis.Attachments.Commands.DeleteAttachment;
 
+using AWM.Service.Domain.Thesis.Constants;
 using AWM.Service.Domain.Thesis.Service;
 using AWM.Service.Domain.Common;
 using AWM.Service.Domain.Repositories;
@@ -12,17 +13,23 @@ public sealed class DeleteAttachmentCommandHandler : IRequestHandler<DeleteAttac
     private readonly IAttachmentService _attachmentService;
     private readonly ICurrentUserProvider _currentUserProvider;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ICheckTypeRepository _checkTypeRepository;
+    private readonly IAttachmentTypeRepository _attachmentTypeRepository;
 
     public DeleteAttachmentCommandHandler(
         IStudentWorkRepository workRepository,
         IAttachmentService attachmentService,
         ICurrentUserProvider currentUserProvider,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        ICheckTypeRepository checkTypeRepository,
+        IAttachmentTypeRepository attachmentTypeRepository)
     {
         _workRepository = workRepository ?? throw new ArgumentNullException(nameof(workRepository));
         _attachmentService = attachmentService ?? throw new ArgumentNullException(nameof(attachmentService));
         _currentUserProvider = currentUserProvider ?? throw new ArgumentNullException(nameof(currentUserProvider));
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
+        _checkTypeRepository = checkTypeRepository ?? throw new ArgumentNullException(nameof(checkTypeRepository));
+        _attachmentTypeRepository = attachmentTypeRepository ?? throw new ArgumentNullException(nameof(attachmentTypeRepository));
     }
 
     public async Task<Result> Handle(DeleteAttachmentCommand request, CancellationToken cancellationToken)
@@ -40,6 +47,21 @@ public sealed class DeleteAttachmentCommandHandler : IRequestHandler<DeleteAttac
             var attachment = work.Attachments.FirstOrDefault(a => a.Id == request.AttachmentId);
             if (attachment is null)
                 return Result.Failure(new Error("404", $"Attachment with ID {request.AttachmentId} not found on this work."));
+
+            var attachmentType = await _attachmentTypeRepository.GetByIdAsync(attachment.AttachmentTypeId, cancellationToken);
+            if (attachmentType is null)
+                return Result.Failure(new Error("404", $"AttachmentType with ID {attachment.AttachmentTypeId} not found."));
+
+            // Block deleting work versions (Draft/Final) after NormControl is passed
+            var normControlCheckType = await _checkTypeRepository.GetByCodeAsync(CheckTypeCodes.NormControl, cancellationToken);
+            
+            if (normControlCheckType is not null && 
+                work.HasPassedCheck(normControlCheckType.Id) && 
+                (attachmentType.Code == "DRAFT" || attachmentType.Code == "FINAL"))
+            {
+                return Result.Failure(new Error("BusinessRule.Attachment",
+                    "Cannot delete work versions after NormControl has been passed."));
+            }
 
             var storagePath = attachment.FileStoragePath;
 

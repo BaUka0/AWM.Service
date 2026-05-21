@@ -109,6 +109,8 @@ public static class DependencyInjection
         services.AddScoped<ITopicApplicationRepository, TopicApplicationRepository>();
         services.AddScoped<IStudentWorkRepository, StudentWorkRepository>();
         services.AddScoped<ISpecialityCheckTypeRepository, SpecialityCheckTypeRepository>();
+        services.AddScoped<IAttachmentTypeRepository, AttachmentTypeRepository>();
+        services.AddScoped<ICheckTypeRepository, CheckTypeRepository>();
         services.AddScoped<IReviewerRepository, ReviewerRepository>();
         services.AddScoped<IExpertRepository, ExpertRepository>();
         services.AddScoped<ISupervisorReviewRepository, SupervisorReviewRepository>();

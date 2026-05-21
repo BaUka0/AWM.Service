@@ -12,8 +12,9 @@ public sealed record StudentWorkProgressResponse
     public string? CurrentStateName { get; init; }
     public bool IsDefended { get; init; }
     public string? FinalGrade { get; init; }
+    public bool IsEligibleForDefense { get; init; }
     public DateTime CreatedAt { get; init; }
-    public string? RepositoryUrl { get; init; }
+    public string? MetadataJson { get; init; }
 
     public LocalizedTextResponse? TopicTitle { get; init; }
     public string? SupervisorName { get; init; }
@@ -26,6 +27,14 @@ public sealed record StudentWorkProgressResponse
     public IReadOnlyList<WorkProgressQualityCheckResponse> QualityChecks { get; init; } = [];
     public IReadOnlyList<WorkProgressTimelineItemResponse> Timeline { get; init; } = [];
     public IReadOnlyList<WorkProgressNextActionResponse> NextActions { get; init; } = [];
+    public IReadOnlyList<PendingCheckResponse> PendingChecks { get; init; } = [];
+}
+
+public sealed record PendingCheckResponse
+{
+    public int CheckTypeId { get; init; }
+    public string Title { get; init; } = null!;
+    public string? Code { get; init; }
 }
 
 public sealed record WorkProgressParticipantResponse
@@ -33,8 +42,6 @@ public sealed record WorkProgressParticipantResponse
     public long Id { get; init; }
     public int StudentId { get; init; }
     public string? Name { get; init; }
-    public string Role { get; init; } = null!;
-    public bool IsLeader { get; init; }
     public DateTime JoinedAt { get; init; }
 }
 

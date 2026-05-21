@@ -18,7 +18,7 @@ public class StudentWork : AggregateRoot<long>, IAuditable, ISoftDeletable
 
     public string? FinalGrade { get; private set; }
     public bool IsDefended { get; private set; }
-    public string? RepositoryUrl { get; private set; }
+    public string? MetadataJson { get; private set; }
     public DateTime CreatedAt { get; private set; }
     public int CreatedBy { get; private set; }
     public DateTime? LastModifiedAt { get; private set; }
@@ -79,7 +79,7 @@ public class StudentWork : AggregateRoot<long>, IAuditable, ISoftDeletable
         var participant = new WorkParticipant(Id, studentId);
         _participants.Add(participant);
 
-        RaiseDomainEvent(new ParticipantJoinedEvent(Id, studentId, string.Empty));
+        RaiseDomainEvent(new ParticipantJoinedEvent(Id, studentId));
         return participant;
     }
 
@@ -187,12 +187,8 @@ public class StudentWork : AggregateRoot<long>, IAuditable, ISoftDeletable
     /// and raises the QualityCheckCompletedEvent domain event.
     /// </summary>
     public QualityCheck CompleteQualityCheck(
-        long checkId,
-        int expertId,
-        bool isPassed,
-        decimal? resultValue = null,
-        string? comment = null,
-        string? documentPath = null)
+        long checkId, int expertId, bool isPassed,
+        decimal? resultValue = null, string? comment = null, string? documentPath = null)
     {
         var check = _qualityChecks.FirstOrDefault(c => c.Id == checkId)
             ?? throw new DomainException("StudentWork.QualityCheckNotFound",
@@ -249,12 +245,13 @@ public class StudentWork : AggregateRoot<long>, IAuditable, ISoftDeletable
             .OrderByDescending(c => c.AttemptNumber)
             .FirstOrDefault();
     }
+
     /// <summary>
-    /// Sets the repository URL for software check (e.g. GitHub link).
+    /// Updates the metadata JSON string for dynamic properties (e.g. GitHub link).
     /// </summary>
-    public void SetRepositoryUrl(string repositoryUrl, int modifiedBy)
+    public void UpdateMetadata(string? metadataJson, int modifiedBy)
     {
-        RepositoryUrl = repositoryUrl ?? throw new DomainException("StudentWork.RepositoryUrlRequired", "Repository URL is required.");
+        MetadataJson = metadataJson;
         LastModifiedBy = modifiedBy;
         LastModifiedAt = DateTime.UtcNow;
     }

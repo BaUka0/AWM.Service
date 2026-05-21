@@ -45,17 +45,25 @@ public sealed class UpdateStageCommandHandler : IRequestHandler<UpdateStageComma
                 return Result.Failure(new Error("401", "User ID is not available."));
             }
 
-            if (request.StartDate.HasValue && request.EndDate.HasValue)
+            // Check for overlaps if dates are being changed
+            if (request.StartDate.HasValue || request.EndDate.HasValue)
             {
-                stage.UpdateDates(request.StartDate.Value, request.EndDate.Value, userId.Value);
-            }
-            else if (request.StartDate.HasValue)
-            {
-                stage.UpdateDates(request.StartDate.Value, stage.EndDate, userId.Value);
-            }
-            else if (request.EndDate.HasValue)
-            {
-                stage.UpdateDates(stage.StartDate, request.EndDate.Value, userId.Value);
+                var newStartDate = request.StartDate ?? stage.StartDate;
+                var newEndDate = request.EndDate ?? stage.EndDate;
+
+                var existingStages = await _stageRepository.GetByDepartmentAsync(stage.OrgUnitId, stage.SemesterId, cancellationToken);
+                var overlapping = existingStages
+                    .Where(p => !p.IsDeleted && p.WorkflowStageId == stage.WorkflowStageId && p.Id != stage.Id)
+                    .Any(p => newStartDate < p.EndDate && newEndDate > p.StartDate);
+
+                if (overlapping)
+                {
+                    _logger.LogWarning("UpdateStage failed: Overlapping stage for Stage={Stage} in Dept={DeptId}, Year={YearId}",
+                        stage.WorkflowStageId, stage.OrgUnitId, stage.SemesterId);
+                    return Result.Failure(new Error("409", "An overlapping stage for this workflow stage already exists."));
+                }
+
+                stage.UpdateDates(newStartDate, newEndDate, userId.Value);
             }
 
             if (request.IsActive.HasValue)

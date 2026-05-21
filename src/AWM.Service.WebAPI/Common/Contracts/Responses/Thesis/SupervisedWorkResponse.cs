@@ -13,7 +13,7 @@ public sealed record SupervisedWorkResponse
     public bool IsDefended { get; init; }
     public string? FinalGrade { get; init; }
     public DateTime CreatedAt { get; init; }
-    public string? RepositoryUrl { get; init; }
+    public string? MetadataJson { get; init; }
 
     public IReadOnlyList<SupervisedStudentResponse> Students { get; init; } = [];
     public IReadOnlyList<WorkProgressAttachmentResponse> Attachments { get; init; } = [];
@@ -23,7 +23,5 @@ public sealed record SupervisedStudentResponse
 {
     public int StudentId { get; init; }
     public string? Name { get; init; }
-    public string Role { get; init; } = null!;
-    public bool IsLeader { get; init; }
     public decimal? Score { get; init; }
 }

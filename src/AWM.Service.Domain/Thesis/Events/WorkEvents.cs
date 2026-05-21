@@ -15,7 +15,7 @@ public sealed record WorkStateChangedEvent(long WorkId, int FromStateId, int ToS
 /// <summary>
 /// Event raised when a participant joins a work.
 /// </summary>
-public sealed record ParticipantJoinedEvent(long WorkId, int StudentId, string Role) : DomainEventBase;
+public sealed record ParticipantJoinedEvent(long WorkId, int StudentId) : DomainEventBase;
 
 /// <summary>
 /// Event raised when a quality check is completed.

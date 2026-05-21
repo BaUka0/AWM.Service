@@ -4,7 +4,7 @@ using AWM.Service.Application.Features.Common.Notifications.Commands.SendReadine
 using AWM.Service.Application.Features.Thesis.Works.Commands.AddParticipant;
 using AWM.Service.Application.Features.Thesis.Works.Commands.AssignReviewerToWork;
 using AWM.Service.Application.Features.Thesis.Works.Commands.CreateStudentWork;
-using AWM.Service.Application.Features.Thesis.Works.Commands.SetRepositoryUrl;
+using AWM.Service.Application.Features.Thesis.Works.Commands.UpdateWorkMetadata;
 using AWM.Service.Application.Features.Thesis.Works.Commands.RemoveParticipant;
 using AWM.Service.Application.Features.Thesis.Works.DTOs;
 using AWM.Service.Application.Features.Thesis.Works.Queries.GetAssignedReviewer;
@@ -428,36 +428,26 @@ public sealed class StudentWorksController : BaseController
     }
 
     /// <summary>
-    /// Set the repository URL for a student work (for software check).
+    /// Updates the metadata JSON string for a work (e.g. GitHub link).
     /// </summary>
-    /// <param name="workId">Student work ID</param>
-    /// <param name="request">Repository URL</param>
-    /// <param name="cancellationToken">Cancellation token</param>
-    /// <returns>No content on success</returns>
-    [HttpPut("{workId:long}/repository-url")]
+    [HttpPut("{id:long}/metadata")]
     [RequireAccess("StudentWorks", "Update")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> SetRepositoryUrl(
-        long workId,
-        [FromBody] SetRepositoryUrlRequest request,
-        CancellationToken cancellationToken = default)
+    public async Task<IActionResult> UpdateMetadata(
+        [FromRoute] long id,
+        [FromBody] UpdateWorkMetadataRequest request,
+        CancellationToken cancellationToken)
     {
-        var command = new SetRepositoryUrlCommand
+        var command = new UpdateWorkMetadataCommand
         {
-            WorkId = workId,
-            RepositoryUrl = request.RepositoryUrl
+            WorkId = id,
+            MetadataJson = request.MetadataJson
         };
 
         var result = await _sender.Send(command, cancellationToken);
-
-        if (result.IsFailed)
-            return HandleResultError(result.Error);
-
-        return NoContent();
+        return result.IsSuccess ? Ok() : HandleResultError(result.Error);
     }
 
     /// <summary>

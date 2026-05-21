@@ -155,7 +155,7 @@ public sealed class GetMySupervisedWorksQueryHandler
                 IsDefended = detailedWork.IsDefended,
                 FinalGrade = detailedWork.FinalGrade,
                 CreatedAt = detailedWork.CreatedAt,
-                RepositoryUrl = detailedWork.RepositoryUrl,
+                MetadataJson = detailedWork.MetadataJson,
                 Students = students,
                 Attachments = attachments
             });

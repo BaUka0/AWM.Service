@@ -82,8 +82,7 @@ public class ApplicationDbContextInitialiser
                 "Thesis",
                 "CheckTypes",
                 new CheckType(1, "NormControl", false, "NORMCONTROL"),
-                new CheckType(2, "AntiPlagiarism", true, "ANTIPLAGIARISM"),
-                new CheckType(3, "SoftwareCheck", false, "SOFTWARE")
+                new CheckType(2, "AntiPlagiarism", true, "ANTIPLAGIARISM")
             );
         }
 

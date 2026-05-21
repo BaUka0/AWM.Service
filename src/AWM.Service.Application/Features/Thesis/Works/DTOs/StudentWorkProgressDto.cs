@@ -14,20 +14,26 @@ public sealed record StudentWorkProgressDto
     public string? FinalGrade { get; init; }
     public bool IsEligibleForDefense { get; init; }
     public DateTime CreatedAt { get; init; }
-    public string? RepositoryUrl { get; init; }
-
+    public string? MetadataJson { get; init; }
     public LocalizedTextDto? TopicTitle { get; init; }
     public string? SupervisorName { get; init; }
     public string? SupervisorContacts { get; init; }
     public string? WorkTypeName { get; init; }
     public LocalizedTextDto? DirectionTitle { get; init; }
-
     public IReadOnlyList<WorkProgressParticipantDto> Participants { get; init; } = [];
     public IReadOnlyList<WorkProgressAttachmentDto> Attachments { get; init; } = [];
     public IReadOnlyList<WorkProgressQualityCheckDto> QualityChecks { get; init; } = [];
     public IReadOnlyList<WorkProgressTimelineItemDto> Timeline { get; init; } = [];
     public IReadOnlyList<WorkProgressNextActionDto> NextActions { get; init; } = [];
-}
+    public IReadOnlyList<PendingCheckDto> PendingChecks { get; init; } = [];
+    }
+
+    public sealed record PendingCheckDto
+    {
+    public int CheckTypeId { get; init; }
+    public string Title { get; init; } = null!;
+    public string? Code { get; init; }
+    }
 
 public sealed record LocalizedTextDto
 {

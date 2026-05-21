@@ -1,6 +1,8 @@
 namespace AWM.Service.Application.Features.Thesis.Attachments.Commands.UploadAttachment;
 
+using AWM.Service.Domain.Thesis.Enums;
 using AWM.Service.Domain.Thesis.Service;
+using AWM.Service.Domain.Thesis.Constants;
 using AWM.Service.Domain.Common;
 using AWM.Service.Domain.Repositories;
 using KDS.Primitives.FluentResult;
@@ -12,17 +14,23 @@ public sealed class UploadAttachmentCommandHandler : IRequestHandler<UploadAttac
     private readonly IAttachmentService _attachmentService;
     private readonly ICurrentUserProvider _currentUserProvider;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ICheckTypeRepository _checkTypeRepository;
+    private readonly IAttachmentTypeRepository _attachmentTypeRepository;
 
     public UploadAttachmentCommandHandler(
         IStudentWorkRepository workRepository,
         IAttachmentService attachmentService,
         ICurrentUserProvider currentUserProvider,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        ICheckTypeRepository checkTypeRepository,
+        IAttachmentTypeRepository attachmentTypeRepository)
     {
         _workRepository = workRepository ?? throw new ArgumentNullException(nameof(workRepository));
         _attachmentService = attachmentService ?? throw new ArgumentNullException(nameof(attachmentService));
         _currentUserProvider = currentUserProvider ?? throw new ArgumentNullException(nameof(currentUserProvider));
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
+        _checkTypeRepository = checkTypeRepository ?? throw new ArgumentNullException(nameof(checkTypeRepository));
+        _attachmentTypeRepository = attachmentTypeRepository ?? throw new ArgumentNullException(nameof(attachmentTypeRepository));
     }
 
     public async Task<Result<long>> Handle(UploadAttachmentCommand request, CancellationToken cancellationToken)
@@ -37,10 +45,16 @@ public sealed class UploadAttachmentCommandHandler : IRequestHandler<UploadAttac
             if (work is null)
                 return Result.Failure<long>(new Error("404", $"StudentWork with ID {request.WorkId} not found."));
 
+            var attachmentType = await _attachmentTypeRepository.GetByIdAsync(request.AttachmentTypeId, cancellationToken);
+            if (attachmentType is null)
+                return Result.Failure<long>(new Error("404", $"AttachmentType with ID {request.AttachmentTypeId} not found."));
+
             // Block uploading new work versions (Draft/Final) after NormControl is passed
-            // For now ID 1 = NormControl, 2 = WorkDraft, 3 = FinalWork
-            if (work.HasPassedCheck(1)
-                && (request.AttachmentTypeId == 2 || request.AttachmentTypeId == 3))
+            var normControlCheckType = await _checkTypeRepository.GetByCodeAsync(CheckTypeCodes.NormControl, cancellationToken);
+            
+            if (normControlCheckType is not null && 
+                work.HasPassedCheck(normControlCheckType.Id) && 
+                (attachmentType.Code == "DRAFT" || attachmentType.Code == "FINAL"))
             {
                 return Result.Failure<long>(new Error("BusinessRule.Attachment",
                     "Cannot upload new work versions after NormControl has been passed."));

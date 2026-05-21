@@ -88,6 +88,20 @@ public interface ISpecialityCheckTypeRepository
     Task DeleteAsync(SpecialityCheckType specialityCheckType, CancellationToken cancellationToken = default);
 }
 
+public interface IAttachmentTypeRepository
+{
+    Task<AttachmentType?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
+    Task<AttachmentType?> GetByCodeAsync(string code, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<AttachmentType>> GetAllAsync(CancellationToken cancellationToken = default);
+}
+
+public interface ICheckTypeRepository
+{
+    Task<CheckType?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
+    Task<CheckType?> GetByCodeAsync(string code, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<CheckType>> GetAllAsync(CancellationToken cancellationToken = default);
+}
+
 public interface ITopicApplicationRepository
 {
     /// <summary>

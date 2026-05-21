@@ -1,5 +1,6 @@
 namespace AWM.Service.Application.Features.Thesis.Reviews.Commands.CreateSupervisorReview;
 
+using AWM.Service.Domain.Thesis.Constants;
 using AWM.Service.Domain.Thesis.Service;
 using AWM.Service.Domain.Common;
 using AWM.Service.Domain.Repositories;
@@ -17,6 +18,7 @@ public sealed class CreateSupervisorReviewCommandHandler : IRequestHandler<Creat
     private readonly IEmployeeRepository _EmployeeRepository;
     private readonly ICurrentUserProvider _currentUserProvider;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ICheckTypeRepository _checkTypeRepository;
 
     public CreateSupervisorReviewCommandHandler(
         IStudentWorkRepository workRepository,
@@ -24,7 +26,8 @@ public sealed class CreateSupervisorReviewCommandHandler : IRequestHandler<Creat
         IAttachmentService attachmentService,
         IEmployeeRepository EmployeeRepository,
         ICurrentUserProvider currentUserProvider,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        ICheckTypeRepository checkTypeRepository)
     {
         _workRepository = workRepository ?? throw new ArgumentNullException(nameof(workRepository));
         _reviewRepository = reviewRepository ?? throw new ArgumentNullException(nameof(reviewRepository));
@@ -32,6 +35,7 @@ public sealed class CreateSupervisorReviewCommandHandler : IRequestHandler<Creat
         _EmployeeRepository = EmployeeRepository ?? throw new ArgumentNullException(nameof(EmployeeRepository));
         _currentUserProvider = currentUserProvider ?? throw new ArgumentNullException(nameof(currentUserProvider));
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
+        _checkTypeRepository = checkTypeRepository ?? throw new ArgumentNullException(nameof(checkTypeRepository));
     }
 
     public async Task<Result<long>> Handle(CreateSupervisorReviewCommand request, CancellationToken cancellationToken)
@@ -45,9 +49,16 @@ public sealed class CreateSupervisorReviewCommandHandler : IRequestHandler<Creat
         if (currentStaff is null)
             return Result.Failure<long>(new Error("403", "User does not have a staff profile."));
 
-        var work = await _workRepository.GetByIdAsync(request.WorkId, cancellationToken);
+        var work = await _workRepository.GetByIdWithDetailsAsync(request.WorkId, cancellationToken);
         if (work is null)
             return Result.Failure<long>(new Error("404", $"StudentWork with ID {request.WorkId} not found."));
+
+        var antiPlagCheckType = await _checkTypeRepository.GetByCodeAsync(CheckTypeCodes.AntiPlagiarism, cancellationToken);
+        if (antiPlagCheckType is not null && !work.HasPassedCheck(antiPlagCheckType.Id))
+        {
+            return Result.Failure<long>(new Error("BusinessRule.SupervisorReview", 
+                "Cannot create or update a supervisor review until AntiPlagiarism check is passed."));
+        }
 
         string? storagePath = null;
 

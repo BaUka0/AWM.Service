@@ -4,6 +4,7 @@ using AWM.Service.Domain.Common;
 using AWM.Service.Domain.CommonDomain.Services;
 using AWM.Service.Domain.Repositories;
 using AWM.Service.Domain.Thesis.Entities;
+using AWM.Service.Domain.Wf.Entities;
 using KDS.Primitives.FluentResult;
 using MediatR;
 using Microsoft.Extensions.Logging;
@@ -15,6 +16,7 @@ public sealed class CreateTopicCommandHandler : IRequestHandler<CreateTopicComma
 {
     private readonly ITopicRepository _topicRepository;
     private readonly IDirectionRepository _directionRepository;
+    private readonly IWorkflowRepository _workflowRepository;
     private readonly IEmployeeRepository _EmployeeRepository;
     private readonly IStageValidationService _stageValidationService;
     private readonly IUnitOfWork _unitOfWork;
@@ -24,6 +26,7 @@ public sealed class CreateTopicCommandHandler : IRequestHandler<CreateTopicComma
     public CreateTopicCommandHandler(
         ITopicRepository topicRepository,
         IDirectionRepository directionRepository,
+        IWorkflowRepository workflowRepository,
         IEmployeeRepository EmployeeRepository,
         IStageValidationService stageValidationService,
         IUnitOfWork unitOfWork,
@@ -32,6 +35,7 @@ public sealed class CreateTopicCommandHandler : IRequestHandler<CreateTopicComma
     {
         _topicRepository = topicRepository ?? throw new ArgumentNullException(nameof(topicRepository));
         _directionRepository = directionRepository ?? throw new ArgumentNullException(nameof(directionRepository));
+        _workflowRepository = workflowRepository ?? throw new ArgumentNullException(nameof(workflowRepository));
         _EmployeeRepository = EmployeeRepository ?? throw new ArgumentNullException(nameof(EmployeeRepository));
         _stageValidationService = stageValidationService ?? throw new ArgumentNullException(nameof(stageValidationService));
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
@@ -76,8 +80,12 @@ public sealed class CreateTopicCommandHandler : IRequestHandler<CreateTopicComma
                 }
 
                 // Business rule: Topics can only be created for approved directions
-                // Assuming CurrentStateId represents workflow state (we'd need to check if it's "Approved" state)
-                // For now, we'll skip this checkor you can add state validation if you have state IDs
+                var approvedState = await _workflowRepository.GetStateBySystemNameAsync(direction.WorkTypeId, DirectionStates.Approved, cancellationToken);
+                if (approvedState == null || direction.CurrentStateId != approvedState.Id)
+                {
+                    _logger.LogWarning("CreateTopic failed: Direction {DirectionId} is not approved.", request.DirectionId.Value);
+                    return Result.Failure<long>(new Error("BusinessRule.Direction", "Topics can only be created for approved research directions."));
+                }
             }
 
             var supervisorId = request.SupervisorId;

@@ -219,11 +219,23 @@ public sealed class GetMyWorkProgressQueryHandler
         }
 
         // Check eligibility for defense by fetching mandatory checks for the student's speciality
-        var mandatoryCheckTypeIds = (await _specialityCheckTypeRepository
-            .GetBySpecialityAsync(student.SpecialityId, cancellationToken))
-            .Select(s => s.CheckTypeId)
-            .ToList();
+        var mandatoryChecks = await _specialityCheckTypeRepository.GetBySpecialityAsync(student.SpecialityId, cancellationToken);
+        var mandatoryCheckTypeIds = mandatoryChecks.Select(s => s.CheckTypeId).ToList();
         var isEligible = detailedWork.IsEligibleForDefense(mandatoryCheckTypeIds);
+
+        var pendingChecks = new List<PendingCheckDto>();
+        foreach (var mc in mandatoryChecks)
+        {
+            if (!detailedWork.HasPassedCheck(mc.CheckTypeId) && mc.CheckType is not null)
+            {
+                pendingChecks.Add(new PendingCheckDto
+                {
+                    CheckTypeId = mc.CheckTypeId,
+                    Title = mc.CheckType.Title,
+                    Code = mc.CheckType.Code
+                });
+            }
+        }
 
         var dto = new StudentWorkProgressDto
         {
@@ -237,7 +249,7 @@ public sealed class GetMyWorkProgressQueryHandler
             FinalGrade = detailedWork.FinalGrade,
             IsEligibleForDefense = isEligible,
             CreatedAt = detailedWork.CreatedAt,
-            RepositoryUrl = detailedWork.RepositoryUrl,
+            MetadataJson = detailedWork.MetadataJson,
             TopicTitle = topic is not null
                 ? new LocalizedTextDto { Ru = topic.TitleRu, Kk = topic.TitleKz, En = topic.TitleEn }
                 : null,
@@ -249,7 +261,8 @@ public sealed class GetMyWorkProgressQueryHandler
             Attachments = attachments,
             QualityChecks = qualityChecks,
             Timeline = timeline.OrderBy(t => t.Date).ToList(),
-            NextActions = nextActions
+            NextActions = nextActions,
+            PendingChecks = pendingChecks
         };
 
         return Result.Success<StudentWorkProgressDto?>(dto);

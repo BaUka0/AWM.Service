@@ -18,18 +18,6 @@ public sealed record WorkParticipantResponse
     public int StudentId { get; init; }
 
     /// <summary>
-    /// Participant role.
-    /// </summary>
-    /// <example>Leader</example>
-    public string Role { get; init; } = null!;
-
-    /// <summary>
-    /// Whether this participant is the team leader.
-    /// </summary>
-    /// <example>true</example>
-    public bool IsLeader { get; init; }
-
-    /// <summary>
     /// Date when the participant joined.
     /// </summary>
     /// <example>2024-09-01T10:00:00Z</example>

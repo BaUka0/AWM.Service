@@ -1,17 +1,17 @@
-namespace AWM.Service.Application.Features.Thesis.Works.Commands.SetRepositoryUrl;
+namespace AWM.Service.Application.Features.Thesis.Works.Commands.UpdateWorkMetadata;
 
 using AWM.Service.Domain.Common;
 using AWM.Service.Domain.Repositories;
 using KDS.Primitives.FluentResult;
 using MediatR;
 
-public sealed class SetRepositoryUrlCommandHandler : IRequestHandler<SetRepositoryUrlCommand, Result>
+public sealed class UpdateWorkMetadataCommandHandler : IRequestHandler<UpdateWorkMetadataCommand, Result>
 {
     private readonly IStudentWorkRepository _workRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICurrentUserProvider _currentUserProvider;
 
-    public SetRepositoryUrlCommandHandler(
+    public UpdateWorkMetadataCommandHandler(
         IStudentWorkRepository workRepository,
         IUnitOfWork unitOfWork,
         ICurrentUserProvider currentUserProvider)
@@ -21,7 +21,7 @@ public sealed class SetRepositoryUrlCommandHandler : IRequestHandler<SetReposito
         _currentUserProvider = currentUserProvider ?? throw new ArgumentNullException(nameof(currentUserProvider));
     }
 
-    public async Task<Result> Handle(SetRepositoryUrlCommand request, CancellationToken cancellationToken)
+    public async Task<Result> Handle(UpdateWorkMetadataCommand request, CancellationToken cancellationToken)
     {
         try
         {
@@ -34,7 +34,7 @@ public sealed class SetRepositoryUrlCommandHandler : IRequestHandler<SetReposito
                 return Result.Failure(new Error("NotFound.Work",
                     $"StudentWork with ID {request.WorkId} not found."));
 
-            work.SetRepositoryUrl(request.RepositoryUrl, userId.Value);
+            work.UpdateMetadata(request.MetadataJson, userId.Value);
 
             await _workRepository.UpdateAsync(work, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
