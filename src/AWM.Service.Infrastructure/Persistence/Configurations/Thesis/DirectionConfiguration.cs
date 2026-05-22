@@ -109,7 +109,3 @@ public class DirectionConfiguration : SoftDeletableEntityConfiguration<Direction
             .HasDatabaseName("IX_Directions_Dept_Year");
     }
 }
-.HasIndex(e => new { e.OrgUnitId, e.SemesterId, e.CurrentStateId })
-            .HasDatabaseName("IX_Directions_Dept_Year");
-    }
-}

@@ -68,7 +68,7 @@ public sealed class TopicRepository : RepositoryBase<Topic, long>, ITopicReposit
         return await Context.StaffAssignments
             .AsNoTracking()
             .Where(a => a.UserId == userId &&
-                        a.RoleType == (int)StaffRoleType.Supervisor &&
+                        a.RoleType == StaffRoleType.Supervisor &&
                         a.TargetEntityType == "Topic" &&
                         a.IsActive && !a.IsDeleted)
             .Join(Context.Topics.Where(t => !t.IsDeleted && t.SemesterId == academicYearId),

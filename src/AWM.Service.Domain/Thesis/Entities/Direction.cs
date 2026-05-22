@@ -170,6 +170,3 @@ public class Direction : AggregateRoot<long>, IAuditable, ISoftDeletable
         DeletedBy = deletedBy;
     }
 }
- DeletedBy = deletedBy;
-    }
-}

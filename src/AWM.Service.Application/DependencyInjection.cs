@@ -3,11 +3,6 @@ using FluentValidation;
 using System.Reflection;
 using MediatR;
 using AWM.Service.Application.Common.Behaviors;
-using AWM.Service.Domain.Wf.Services;
-using AWM.Service.Application.Features.Workflow.Services;
-using AWM.Service.Domain.CommonDomain.Services;
-using AWM.Service.Application.Common.Services;
-using AWM.Service.Application.Features.Common.Notifications.Services;
 
 namespace AWM.Service.Application;
 
@@ -26,10 +21,6 @@ public static class DependencyInjection
         });
 
         services.AddValidatorsFromAssembly(applicationAssembly);
-
-        services.AddScoped<IStateMachine, WorkflowService>();
-        services.AddScoped<IStageValidationService, StageValidationService>();
-        services.AddScoped<INotificationService, NotificationService>();
 
         return services;
     }

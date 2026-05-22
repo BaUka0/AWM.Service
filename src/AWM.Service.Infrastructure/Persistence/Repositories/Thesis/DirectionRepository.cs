@@ -60,7 +60,7 @@ public sealed class DirectionRepository : IDirectionRepository
         return await _context.StaffAssignments
             .AsNoTracking()
             .Where(a => a.UserId == userId &&
-                        a.RoleType == (int)StaffRoleType.Supervisor &&
+                        a.RoleType == StaffRoleType.Supervisor &&
                         a.TargetEntityType == "Direction" &&
                         a.IsActive && !a.IsDeleted)
             .Join(_context.Directions.Where(d => !d.IsDeleted && d.SemesterId == academicYearId),

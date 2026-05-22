@@ -126,7 +126,7 @@ public sealed class StudentWorkRepository : RepositoryBase<StudentWork, long>, I
         return await Context.StaffAssignments
             .AsNoTracking()
             .Where(a => a.UserId == userId &&
-                        a.RoleType == (int)StaffRoleType.Supervisor &&
+                        a.RoleType == StaffRoleType.Supervisor &&
                         a.TargetEntityType == "Topic" &&
                         a.IsActive && !a.IsDeleted)
             .Join(Context.StudentWorks.Where(w => !w.IsDeleted && w.SemesterId == academicYearId),
