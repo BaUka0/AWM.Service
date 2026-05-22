@@ -28,6 +28,7 @@ public class ProtocolConfiguration : SoftDeletableEntityConfiguration<Protocol, 
             .IsRequired();
 
         builder.Property(e => e.SessionDate)
+            .HasColumnName("ProtocolDate")
             .IsRequired()
             .HasColumnType("datetime2");
 
@@ -35,6 +36,7 @@ public class ProtocolConfiguration : SoftDeletableEntityConfiguration<Protocol, 
             .HasMaxLength(500);
 
         builder.Property(e => e.IsFinalized)
+            .HasColumnName("IsSigned")
             .IsRequired()
             .HasDefaultValue(false);
 
@@ -42,6 +44,18 @@ public class ProtocolConfiguration : SoftDeletableEntityConfiguration<Protocol, 
 
         builder.Property(e => e.FinalizedAt)
             .HasColumnType("datetime2");
+
+        builder.Property(e => e.FinalScoreNumeric)
+            .HasColumnType("decimal(5,2)");
+
+        builder.Property(e => e.FinalGradeLetter)
+            .HasMaxLength(5);
+
+        builder.Property(e => e.Decision)
+            .HasColumnType("nvarchar(max)");
+
+        builder.Property(e => e.ProtocolNumber)
+            .HasMaxLength(50);
 
         // Foreign keys
         builder.HasOne<Schedule>()

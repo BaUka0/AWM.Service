@@ -2,6 +2,7 @@ namespace AWM.Service.Infrastructure.Persistence.Repositories.Thesis;
 
 using AWM.Service.Domain.Repositories;
 using AWM.Service.Domain.Thesis.Entities;
+using AWM.Service.Domain.CommonDomain.Enums;
 using AWM.Service.Infrastructure.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
 
@@ -52,6 +53,7 @@ public sealed class StudentWorkRepository : RepositoryBase<StudentWork, long>, I
             .Include(w => w.Attachments)
             .Include(w => w.QualityChecks)
             .Include(w => w.WorkflowHistory)
+            .Include(w => w.WorkReviews)
             .Where(w => workIds.Contains(w.Id))
             .AsSplitQuery()
             .ToListAsync(cancellationToken);
@@ -65,6 +67,7 @@ public sealed class StudentWorkRepository : RepositoryBase<StudentWork, long>, I
             .Include(w => w.Attachments)
             .Include(w => w.QualityChecks)
             .Include(w => w.WorkflowHistory)
+            .Include(w => w.WorkReviews)
             .AsSplitQuery() // Split for performance with multiple collections
             .FirstOrDefaultAsync(w => w.Id == id, cancellationToken);
     }
@@ -116,16 +119,21 @@ public sealed class StudentWorkRepository : RepositoryBase<StudentWork, long>, I
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<StudentWork>> GetBySupervisorAsync(
-        int supervisorId,
+        int userId,
         int academicYearId,
         CancellationToken cancellationToken = default)
     {
-        return await Context.StudentWorks
+        return await Context.StaffAssignments
             .AsNoTracking()
+            .Where(a => a.UserId == userId &&
+                        a.RoleType == (int)StaffRoleType.Supervisor &&
+                        a.TargetEntityType == "Topic" &&
+                        a.IsActive && !a.IsDeleted)
+            .Join(Context.StudentWorks.Where(w => !w.IsDeleted && w.SemesterId == academicYearId),
+                a => a.TargetEntityId,
+                w => w.TopicId,
+                (a, w) => w)
             .Include(w => w.Participants)
-            .Where(w => w.SemesterId == academicYearId &&
-                        Context.Topics.Any(t => t.Id == w.TopicId &&
-                                                 t.EmployeeId == supervisorId))
             .OrderByDescending(w => w.CreatedAt)
             .ToListAsync(cancellationToken);
     }

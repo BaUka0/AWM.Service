@@ -16,6 +16,11 @@ public sealed record CommissionDto
     public int OrgUnitId { get; init; }
 
     /// <summary>
+    /// Speciality ID. Null for department-wide commissions.
+    /// </summary>
+    public int? SpecialityId { get; init; }
+
+    /// <summary>
     /// Semester ID.
     /// </summary>
     public int SemesterId { get; init; }

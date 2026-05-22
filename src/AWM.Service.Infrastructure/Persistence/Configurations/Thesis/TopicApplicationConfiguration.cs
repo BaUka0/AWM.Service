@@ -27,6 +27,9 @@ public class TopicApplicationConfiguration : SoftDeletableEntityConfiguration<To
         builder.Property(e => e.StudentId)
             .IsRequired();
 
+        builder.Property(e => e.SpecialityId)
+            .HasColumnName("SpecialityId");
+
         builder.Property(e => e.MotivationLetter)
             .HasColumnType("nvarchar(max)");
 
@@ -57,6 +60,12 @@ public class TopicApplicationConfiguration : SoftDeletableEntityConfiguration<To
             .WithMany()
             .HasForeignKey(e => e.StudentId)
             .HasConstraintName("FK_Applications_Student")
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne<User>()
+            .WithMany()
+            .HasForeignKey(e => e.ReviewedBy)
+            .HasConstraintName("FK_Applications_Reviewer")
             .OnDelete(DeleteBehavior.Restrict);
 
         // Indexes

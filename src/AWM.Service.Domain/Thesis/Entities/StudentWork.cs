@@ -14,6 +14,7 @@ public class StudentWork : AggregateRoot<long>, IAuditable, ISoftDeletable
     public long? TopicId { get; private set; }
     public int SemesterId { get; private set; }
     public int OrgUnitId { get; private set; }
+    public int? SpecialityId { get; private set; }
     public int CurrentStateId { get; private set; }
 
     public string? FinalGrade { get; private set; }
@@ -40,6 +41,9 @@ public class StudentWork : AggregateRoot<long>, IAuditable, ISoftDeletable
     private readonly List<WorkflowHistory> _workflowHistory = new();
     public IReadOnlyCollection<WorkflowHistory> WorkflowHistory => _workflowHistory.AsReadOnly();
 
+    private readonly List<WorkReview> _workReviews = new();
+    public IReadOnlyCollection<WorkReview> WorkReviews => _workReviews.AsReadOnly();
+
     private StudentWork() { }
 
     public StudentWork(
@@ -47,11 +51,13 @@ public class StudentWork : AggregateRoot<long>, IAuditable, ISoftDeletable
         int orgUnitId,
         int draftStateId,
         int createdBy,
-        long? topicId = null)
+        long? topicId = null,
+        int? specialityId = null)
     {
         TopicId = topicId;
         SemesterId = semesterId;
         OrgUnitId = orgUnitId;
+        SpecialityId = specialityId;
         CurrentStateId = draftStateId;
         IsDefended = false;
         CreatedAt = DateTime.UtcNow;
@@ -276,5 +282,30 @@ public class StudentWork : AggregateRoot<long>, IAuditable, ISoftDeletable
         IsDeleted = false;
         DeletedAt = null;
         DeletedBy = null;
+    }
+
+    /// <summary>
+    /// Adds a work review (Supervisor, External, etc.).
+    /// </summary>
+    public WorkReview AddReview(int authorUserId, ReviewType type, string reviewText, int createdBy, string? metadataJson = null)
+    {
+        var review = new WorkReview(Id, authorUserId, type, reviewText, createdBy, metadataJson);
+        _workReviews.Add(review);
+        LastModifiedBy = createdBy;
+        LastModifiedAt = DateTime.UtcNow;
+        return review;
+    }
+
+    /// <summary>
+    /// Removes a work review.
+    /// </summary>
+    public void RemoveReview(long reviewId, int removedBy)
+    {
+        var review = _workReviews.FirstOrDefault(r => r.Id == reviewId)
+            ?? throw new DomainException("StudentWork.ReviewNotFound", $"Review with ID {reviewId} was not found on this work.");
+
+        _workReviews.Remove(review);
+        LastModifiedAt = DateTime.UtcNow;
+        LastModifiedBy = removedBy;
     }
 }

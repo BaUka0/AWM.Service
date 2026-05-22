@@ -114,8 +114,7 @@ public static class DependencyInjection
         services.AddScoped<IAttachmentTypeRepository, AttachmentTypeRepository>();
         services.AddScoped<ICheckTypeRepository, CheckTypeRepository>();
         services.AddScoped<IReviewerRepository, ReviewerRepository>();
-        services.AddScoped<ISupervisorReviewRepository, SupervisorReviewRepository>();
-        services.AddScoped<IReviewRepository, ReviewRepository>();
+        services.AddScoped<IWorkReviewRepository, WorkReviewRepository>();
 
         // Register Dictionary/Lookup Repositories
         services.AddScoped<ISpecialityRepository, SpecialityRepository>();
@@ -139,6 +138,9 @@ public static class DependencyInjection
         services.AddScoped<IOrgUnitReadOnlyRepository, OrgUnitReadOnlyRepository>();
         services.AddScoped<ISemesterReadOnlyRepository, SemesterReadOnlyRepository>();
         services.AddScoped<ISpecialityReadOnlyRepository, SpecialityReadOnlyRepository>();
+        services.AddScoped<ISpecializationReadOnlyRepository, SpecializationReadOnlyRepository>();
+        services.AddScoped<ISpecialitySpecializationReadOnlyRepository, SpecialitySpecializationReadOnlyRepository>();
+        services.AddScoped<ISpecializationsOrgUnitReadOnlyRepository, SpecializationsOrgUnitReadOnlyRepository>();
 
         // Configure StorageSettings
         services.Configure<StorageSettings>(

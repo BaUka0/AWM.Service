@@ -1,5 +1,6 @@
 namespace AWM.Service.Application.Features.Org.OrgUnits.Queries.GetAllOrgUnits;
 
+using AWM.Service.Application.Features.Org.OrgUnits.DTOs;
 using KDS.Primitives.FluentResult;
 using MediatR;
 

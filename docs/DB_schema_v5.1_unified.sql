@@ -2,10 +2,8 @@
 ============================================================================
 PROJECT: AWM v5.1 Unified Schema
 DESCRIPTION: Academic Work Management System integrated with University Portal DB
-FOUNDATION: 12 Edu_* tables (university schema) — read-only
-ADDON: AWM Auth, Thesis, Defense, Common, Wf tables — read-write
 DBMS: Microsoft SQL Server 2016+
-UPDATED: 2026-05-21
+UPDATED: 2026-05-22
 NOTES:
   - All user FKs point to Edu_Users.ID (university master)
   - All student FKs point to Edu_Students.StudentID
@@ -14,6 +12,7 @@ NOTES:
   - Semesters = Edu_Semesters (foundation)
   - Column names use C# property names (OrgUnitId, EmployeeId, SemesterId, SpecialityLevelId, RoleAccessId)
   - Local accounts isolated (Auth.LocalAccounts), no business FKs
+  - 15 Edu_* foundation tables (read-only from university portal)
 ============================================================================
 */
 
@@ -30,6 +29,169 @@ GO
 CREATE SCHEMA [Thesis];
 GO
 CREATE SCHEMA [Defense];
+GO
+
+-- =============================================
+-- [Edu_*] FOUNDATION TABLES (University Portal)
+-- Read-only. Excluded from EF Core migrations.
+-- =============================================
+
+CREATE TABLE [Edu_OrgUnitTypes] (
+    [ID]    INT NOT NULL PRIMARY KEY,
+    [Title] NVARCHAR(MAX)
+);
+
+CREATE TABLE [Edu_OrgUnits] (
+    [ID]         INT NOT NULL PRIMARY KEY,
+    [ParentID]   INT NULL REFERENCES [Edu_OrgUnits]([ID]),
+    [Title]      NVARCHAR(MAX) NOT NULL,
+    [Deleted]    BIT NOT NULL,
+    [ShortTitle] NVARCHAR(MAX),
+    [TypeID]     INT NOT NULL REFERENCES [Edu_OrgUnitTypes]([ID]) ON DELETE CASCADE
+);
+
+CREATE TABLE [Edu_SpecialityLevels] (
+    [ID]     INT NOT NULL PRIMARY KEY,
+    [Title]  NVARCHAR(MAX) NOT NULL,
+    [NoBDID] NVARCHAR(MAX)
+);
+
+CREATE TABLE [Edu_Specialities] (
+    [ID]           INT NOT NULL PRIMARY KEY,
+    [Code]         NVARCHAR(MAX) NOT NULL,
+    [Title]        NVARCHAR(MAX) NOT NULL,
+    [YearsOfStudy] INT,
+    [Deleted]      BIT NOT NULL,
+    [ShortTitle]   NVARCHAR(MAX),
+    [LevelID]      INT NOT NULL REFERENCES [Edu_SpecialityLevels]([ID])
+);
+
+CREATE TABLE [Edu_Specializations] (
+    [Id]      INT NOT NULL PRIMARY KEY,
+    [TitleRu] NVARCHAR(MAX),
+    [TitleKz] NVARCHAR(MAX),
+    [TitleEn] NVARCHAR(MAX),
+    [Code]    NVARCHAR(MAX)
+);
+
+CREATE TABLE [Edu_SpecialitySpecializations] (
+    [ID]               INT NOT NULL PRIMARY KEY,
+    [SpecialityId]     INT NULL REFERENCES [Edu_Specialities]([ID]),
+    [SpecializationId] INT NULL REFERENCES [Edu_Specializations]([Id])
+);
+
+CREATE TABLE [Edu_Specializations_OrgUnits] (
+    [ID]               INT NOT NULL PRIMARY KEY,
+    [SpecializationID] INT NULL REFERENCES [Edu_Specializations]([Id]),
+    [OrgUnitID]        INT NULL REFERENCES [Edu_OrgUnits]([ID])
+);
+
+CREATE TABLE [Edu_StudentStatuses] (
+    [ID]     INT NOT NULL PRIMARY KEY,
+    [Title]  NVARCHAR(MAX),
+    [NOBDID] NVARCHAR(MAX)
+);
+
+CREATE TABLE [Edu_Users] (
+    [ID]            INT NOT NULL PRIMARY KEY,
+    [LastName]      NVARCHAR(MAX) NOT NULL,
+    [FirstName]     NVARCHAR(MAX),
+    [MiddleName]    NVARCHAR(MAX),
+    [Email]         NVARCHAR(MAX),
+    [DOB]           DATE,
+    [Male]          BIT,
+    [MobilePhone]   NVARCHAR(MAX),
+    [IIN]           NVARCHAR(MAX),
+    [PhotoFileName] NVARCHAR(255),
+    [PhotoFileData] VARBINARY(MAX)
+);
+
+CREATE TABLE [Edu_Employees] (
+    [ID]          INT NOT NULL PRIMARY KEY REFERENCES [Edu_Users]([ID]) ON DELETE CASCADE,
+    [IsAdvisor]   BIT NOT NULL,
+    [RoleGroupId] INT
+);
+
+CREATE TABLE [Edu_Positions] (
+    [ID]          INT NOT NULL PRIMARY KEY,
+    [Title]       NVARCHAR(MAX),
+    [Deleted]     BIT NOT NULL,
+    [Description] NVARCHAR(MAX),
+    [Lectures]    INT NOT NULL,
+    [Practices]   INT NOT NULL,
+    [Labs]        INT NOT NULL,
+    [CategoryID]  INT
+);
+
+CREATE TABLE [Edu_EmployeePositions] (
+    [ID]             INT NOT NULL PRIMARY KEY,
+    [StartedOn]      DATE NOT NULL,
+    [EndedOn]        DATE,
+    [LastUpdatedBy]  NVARCHAR(MAX) NOT NULL,
+    [LastUpdatedOn]  DATETIME2(6) NOT NULL,
+    [Rate]           FLOAT,
+    [IsMainPosition] BIT,
+    [HrOrderId]      INT,
+    [OrgUnitID]      INT NOT NULL REFERENCES [Edu_OrgUnits]([ID]) ON DELETE CASCADE,
+    [PositionID]     INT NOT NULL REFERENCES [Edu_Positions]([ID]) ON DELETE CASCADE,
+    [EmployeeID]     INT NOT NULL REFERENCES [Edu_Employees]([ID]) ON DELETE CASCADE
+);
+
+CREATE TABLE [Edu_SemesterTypes] (
+    [ID]      INT NOT NULL PRIMARY KEY,
+    [Title]   NVARCHAR(MAX) NOT NULL,
+    [OrderBy] INT NOT NULL
+);
+
+CREATE TABLE [Edu_Semesters] (
+    [ID]             INT NOT NULL PRIMARY KEY,
+    [Title]          NVARCHAR(MAX) NOT NULL,
+    [StartsOn]       DATETIME2(6) NOT NULL,
+    [EndsOn]         DATETIME2(6) NOT NULL,
+    [StudyYear]      INT NOT NULL,
+    [SemesterTypeID] INT NOT NULL REFERENCES [Edu_SemesterTypes]([ID]) ON DELETE CASCADE
+);
+
+CREATE TABLE [Edu_Students] (
+    [StudentID]              INT NOT NULL PRIMARY KEY REFERENCES [Edu_Users]([ID]) ON DELETE CASCADE,
+    [SpecialityID]           INT REFERENCES [Edu_Specialities]([ID]) ON DELETE SET NULL,
+    [StatusID]               INT REFERENCES [Edu_StudentStatuses]([ID]) ON DELETE SET NULL,
+    [CategoryID]             INT,
+    [NeedsDorm]              BIT NOT NULL,
+    [AltynBelgi]             BIT NOT NULL,
+    [Year]                   INT NOT NULL,
+    [RupID]                  INT,
+    [EntryDate]              DATE,
+    [GPA]                    FLOAT,
+    [LastUpdatedBy]          NVARCHAR(MAX) NOT NULL,
+    [LastUpdatedOn]          DATETIME2(6) NOT NULL,
+    [GraduatedOn]            DATETIME2(6),
+    [AcademicStatusEndsOn]   DATE,
+    [AcademicStatusStartsOn] DATE,
+    [GPA_Y]                  FLOAT,
+    [IsPersonalDataComplete] BIT,
+    [HosterPrivelegeID]      INT,
+    [MinorSpecialityID]      INT,
+    [EnrollmentTypeId]       INT,
+    [EctsGPA]                FLOAT,
+    [EctsGPA_Y]              FLOAT,
+    [IsScholarship]          BIT,
+    [ScholarshipTypeID]      INT,
+    [ScholarshipOrderNumber] NVARCHAR(MAX),
+    [ScholarshipOrderDate]   DATE,
+    [ScholarshipDateStart]   DATE,
+    [ScholarshipDateEnd]     DATE,
+    [FundingID]              INT,
+    [IsKNB]                  BIT,
+    [EducationTypeID]        INT,
+    [EducationPaymentTypeID] INT,
+    [GrantTypeID]            INT,
+    [EducationDurationID]    INT,
+    [StudyLanguageID]        INT,
+    [AcademicStatusID]       INT,
+    [AdvisorID]              INT REFERENCES [Edu_Employees]([ID])
+);
+
 GO
 
 -- =============================================
@@ -164,6 +326,14 @@ CREATE TABLE [Wf].[WorkTypes] (
     [Id] INT IDENTITY(1,1) PRIMARY KEY,
     [Name] NVARCHAR(100) NOT NULL,
     [SpecialityLevelId] INT NULL,
+    -- Audit & Soft-delete
+    [CreatedAt] DATETIME2 DEFAULT SYSDATETIME(),
+    [CreatedBy] INT NOT NULL DEFAULT 1,
+    [LastModifiedAt] DATETIME2,
+    [LastModifiedBy] INT,
+    [IsDeleted] BIT DEFAULT 0,
+    [DeletedAt] DATETIME2,
+    [DeletedBy] INT,
     CONSTRAINT [FK_WorkTypes_Level] FOREIGN KEY ([SpecialityLevelId]) REFERENCES [Edu_SpecialityLevels]([ID])
 );
 
@@ -173,6 +343,14 @@ CREATE TABLE [Wf].[States] (
     [SystemName] NVARCHAR(100) NOT NULL,
     [DisplayName] NVARCHAR(100),
     [IsFinal] BIT DEFAULT 0,
+    -- Audit & Soft-delete
+    [CreatedAt] DATETIME2 DEFAULT SYSDATETIME(),
+    [CreatedBy] INT NOT NULL DEFAULT 1,
+    [LastModifiedAt] DATETIME2,
+    [LastModifiedBy] INT,
+    [IsDeleted] BIT DEFAULT 0,
+    [DeletedAt] DATETIME2,
+    [DeletedBy] INT,
     CONSTRAINT [FK_States_WorkType] FOREIGN KEY ([WorkTypeId]) REFERENCES [Wf].[WorkTypes]([Id])
 );
 
@@ -182,6 +360,14 @@ CREATE TABLE [Wf].[Transitions] (
     [ToStateId] INT NOT NULL,
     [RoleAccessId] INT NULL,
     [IsAutomatic] BIT DEFAULT 0,
+    -- Audit & Soft-delete
+    [CreatedAt] DATETIME2 DEFAULT SYSDATETIME(),
+    [CreatedBy] INT NOT NULL DEFAULT 1,
+    [LastModifiedAt] DATETIME2,
+    [LastModifiedBy] INT,
+    [IsDeleted] BIT DEFAULT 0,
+    [DeletedAt] DATETIME2,
+    [DeletedBy] INT,
     CONSTRAINT [FK_Trans_From] FOREIGN KEY ([FromStateId]) REFERENCES [Wf].[States]([Id]),
     CONSTRAINT [FK_Trans_To] FOREIGN KEY ([ToStateId]) REFERENCES [Wf].[States]([Id]),
     CONSTRAINT [FK_Trans_Role] FOREIGN KEY ([RoleAccessId]) REFERENCES [Auth].[RoleAccess]([Id])
@@ -201,6 +387,7 @@ CREATE TABLE [Common].[WorkflowStages] (
 CREATE TABLE [Common].[Stages] (
     [Id] INT IDENTITY(1,1) PRIMARY KEY,
     [OrgUnitId] INT NOT NULL,
+    [SpecialityId] INT NULL,
     [SemesterId] INT NOT NULL,
     [WorkflowStageId] INT NOT NULL,
     [StartDate] DATETIME2 NOT NULL,
@@ -208,7 +395,13 @@ CREATE TABLE [Common].[Stages] (
     [IsActive] BIT DEFAULT 1,
     [CreatedAt] DATETIME2 DEFAULT SYSDATETIME(),
     [CreatedBy] INT NOT NULL,
+    [LastModifiedAt] DATETIME2,
+    [LastModifiedBy] INT,
+    [IsDeleted] BIT DEFAULT 0,
+    [DeletedAt] DATETIME2,
+    [DeletedBy] INT,
     CONSTRAINT [FK_Stages_Dept] FOREIGN KEY ([OrgUnitId]) REFERENCES [Edu_OrgUnits]([ID]),
+    CONSTRAINT [FK_Stages_Speciality] FOREIGN KEY ([SpecialityId]) REFERENCES [Edu_Specialities]([ID]),
     CONSTRAINT [FK_Stages_Semester] FOREIGN KEY ([SemesterId]) REFERENCES [Edu_Semesters]([ID]),
     CONSTRAINT [FK_Stages_WfStage] FOREIGN KEY ([WorkflowStageId]) REFERENCES [Common].[WorkflowStages]([Id]),
     CONSTRAINT [FK_Stages_Creator] FOREIGN KEY ([CreatedBy]) REFERENCES [Edu_Users]([ID]),
@@ -244,6 +437,14 @@ CREATE TABLE [Common].[NotificationTemplates] (
     [BodyTemplateRu] NVARCHAR(MAX),
     [BodyTemplateKz] NVARCHAR(MAX),
     [BodyTemplateEn] NVARCHAR(MAX),
+    -- Audit & Soft-delete
+    [CreatedAt] DATETIME2 DEFAULT SYSDATETIME(),
+    [CreatedBy] INT NOT NULL DEFAULT 1,
+    [LastModifiedAt] DATETIME2,
+    [LastModifiedBy] INT,
+    [IsDeleted] BIT DEFAULT 0,
+    [DeletedAt] DATETIME2,
+    [DeletedBy] INT,
     CONSTRAINT [UQ_Template_Event] UNIQUE ([EventType])
 );
 
@@ -285,6 +486,13 @@ CREATE TABLE [Thesis].[CheckTypes] (
     [Name] NVARCHAR(50) NOT NULL
 );
 
+CREATE TABLE [Thesis].[SpecialityCheckTypes] (
+    [Id] INT IDENTITY(1,1) PRIMARY KEY,
+    [SpecialityId] INT NOT NULL REFERENCES [Edu_Specialities]([ID]),
+    [CheckTypeId] INT NOT NULL REFERENCES [Thesis].[CheckTypes]([Id]),
+    CONSTRAINT [UQ_Speciality_CheckType] UNIQUE ([SpecialityId], [CheckTypeId])
+);
+
 -- =============================================
 -- [Defense] REFERENCE TABLES (enum replacement)
 -- =============================================
@@ -311,7 +519,6 @@ CREATE TABLE [Defense].[AttendanceStatuses] (
 CREATE TABLE [Thesis].[Directions] (
     [Id] BIGINT IDENTITY(1,1) PRIMARY KEY,
     [OrgUnitId] INT NOT NULL,
-    [EmployeeId] INT NOT NULL,
     [SemesterId] INT NOT NULL,
     [WorkTypeId] INT NOT NULL,
     [SpecialityId] INT NULL,
@@ -328,8 +535,11 @@ CREATE TABLE [Thesis].[Directions] (
     [ReviewComment] NVARCHAR(MAX),
     [CreatedAt] DATETIME2 DEFAULT SYSDATETIME(),
     [UpdatedAt] DATETIME2 DEFAULT SYSDATETIME(),
+    -- Soft-delete
+    [IsDeleted] BIT DEFAULT 0,
+    [DeletedAt] DATETIME2,
+    [DeletedBy] INT,
     CONSTRAINT [FK_Directions_Dept] FOREIGN KEY ([OrgUnitId]) REFERENCES [Edu_OrgUnits]([ID]),
-    CONSTRAINT [FK_Directions_Sup] FOREIGN KEY ([EmployeeId]) REFERENCES [Edu_Employees]([ID]),
     CONSTRAINT [FK_Directions_Semester] FOREIGN KEY ([SemesterId]) REFERENCES [Edu_Semesters]([ID]),
     CONSTRAINT [FK_Directions_Type] FOREIGN KEY ([WorkTypeId]) REFERENCES [Wf].[WorkTypes]([Id]),
     CONSTRAINT [FK_Directions_Spec] FOREIGN KEY ([SpecialityId]) REFERENCES [Edu_Specialities]([ID]),
@@ -342,7 +552,6 @@ CREATE TABLE [Thesis].[Topics] (
     [DirectionId] BIGINT NULL,
     [SemesterId] INT NOT NULL,
     [OrgUnitId] INT NOT NULL,
-    [EmployeeId] INT NOT NULL,
     [WorkTypeId] INT NOT NULL,
     [SpecialityId] INT NULL,
     [TitleRu] NVARCHAR(500) NOT NULL,
@@ -353,13 +562,18 @@ CREATE TABLE [Thesis].[Topics] (
     [DescriptionEn] NVARCHAR(MAX),
     [MaxParticipants] INT DEFAULT 1,
     [IsApproved] BIT DEFAULT 0,
+    [IsSubmittedForApproval] BIT DEFAULT 0,
+    [IsClosed] BIT DEFAULT 0,
     [CreatedAt] DATETIME2 DEFAULT SYSDATETIME(),
     [UpdatedAt] DATETIME2 DEFAULT SYSDATETIME(),
     [CreatedBy] INT NOT NULL,
+    -- Soft-delete
+    [IsDeleted] BIT DEFAULT 0,
+    [DeletedAt] DATETIME2,
+    [DeletedBy] INT,
     CONSTRAINT [FK_Topics_Direction] FOREIGN KEY ([DirectionId]) REFERENCES [Thesis].[Directions]([Id]),
     CONSTRAINT [FK_Topics_Semester] FOREIGN KEY ([SemesterId]) REFERENCES [Edu_Semesters]([ID]),
     CONSTRAINT [FK_Topics_Dept] FOREIGN KEY ([OrgUnitId]) REFERENCES [Edu_OrgUnits]([ID]),
-    CONSTRAINT [FK_Topics_Sup] FOREIGN KEY ([EmployeeId]) REFERENCES [Edu_Employees]([ID]),
     CONSTRAINT [FK_Topics_Type] FOREIGN KEY ([WorkTypeId]) REFERENCES [Wf].[WorkTypes]([Id]),
     CONSTRAINT [FK_Topics_Spec] FOREIGN KEY ([SpecialityId]) REFERENCES [Edu_Specialities]([ID]),
     CONSTRAINT [FK_Topics_Creator] FOREIGN KEY ([CreatedBy]) REFERENCES [Edu_Users]([ID]),
@@ -370,12 +584,17 @@ CREATE TABLE [Thesis].[TopicApplications] (
     [Id] BIGINT IDENTITY(1,1) PRIMARY KEY,
     [TopicId] BIGINT NOT NULL,
     [StudentId] INT NOT NULL,
+    [SpecialityId] INT NULL,
     [MotivationLetter] NVARCHAR(MAX),
     [AppliedAt] DATETIME2 DEFAULT SYSDATETIME(),
     [StatusId] INT NOT NULL DEFAULT 1,
     [ReviewedAt] DATETIME2,
     [ReviewedBy] INT NULL,
     [ReviewComment] NVARCHAR(MAX),
+    -- Soft-delete
+    [IsDeleted] BIT DEFAULT 0,
+    [DeletedAt] DATETIME2,
+    [DeletedBy] INT,
     CONSTRAINT [FK_Applications_Topic] FOREIGN KEY ([TopicId]) REFERENCES [Thesis].[Topics]([Id]),
     CONSTRAINT [FK_Applications_Student] FOREIGN KEY ([StudentId]) REFERENCES [Edu_Students]([StudentID]),
     CONSTRAINT [FK_Applications_Status] FOREIGN KEY ([StatusId]) REFERENCES [Thesis].[ApplicationStatuses]([Id]),
@@ -391,16 +610,23 @@ CREATE TABLE [Thesis].[StudentWorks] (
     [TopicId] BIGINT NULL,
     [SemesterId] INT NOT NULL,
     [OrgUnitId] INT NOT NULL,
+    [SpecialityId] INT NULL,
     [CurrentStateId] INT NOT NULL,
     [FinalGrade] NVARCHAR(10),
     [IsDefended] BIT DEFAULT 0,
+    [MetadataJson] NVARCHAR(MAX),
     [CreatedBy] INT NOT NULL,
     [LastModifiedBy] INT NOT NULL,
     [CreatedAt] DATETIME2 DEFAULT SYSDATETIME(),
     [UpdatedAt] DATETIME2 DEFAULT SYSDATETIME(),
+    -- Soft-delete
+    [IsDeleted] BIT DEFAULT 0,
+    [DeletedAt] DATETIME2,
+    [DeletedBy] INT,
     CONSTRAINT [FK_Works_Topic] FOREIGN KEY ([TopicId]) REFERENCES [Thesis].[Topics]([Id]),
     CONSTRAINT [FK_Works_Semester] FOREIGN KEY ([SemesterId]) REFERENCES [Edu_Semesters]([ID]),
     CONSTRAINT [FK_Works_Dept] FOREIGN KEY ([OrgUnitId]) REFERENCES [Edu_OrgUnits]([ID]),
+    CONSTRAINT [FK_Works_Speciality] FOREIGN KEY ([SpecialityId]) REFERENCES [Edu_Specialities]([ID]),
     CONSTRAINT [FK_Works_State] FOREIGN KEY ([CurrentStateId]) REFERENCES [Wf].[States]([Id]),
     CONSTRAINT [FK_Works_Creator] FOREIGN KEY ([CreatedBy]) REFERENCES [Edu_Users]([ID]),
     CONSTRAINT [FK_Works_Updater] FOREIGN KEY ([LastModifiedBy]) REFERENCES [Edu_Users]([ID])
@@ -463,6 +689,10 @@ CREATE TABLE [Thesis].[QualityChecks] (
     [Comment] NVARCHAR(MAX),
     [DocumentPath] NVARCHAR(1000),
     [CheckedAt] DATETIME2 DEFAULT SYSDATETIME(),
+    -- Audit
+    [CreatedBy] INT NOT NULL DEFAULT 1,
+    [LastModifiedAt] DATETIME2,
+    [LastModifiedBy] INT,
     CONSTRAINT [FK_Check_Work] FOREIGN KEY ([WorkId]) REFERENCES [Thesis].[StudentWorks]([Id]),
     CONSTRAINT [FK_Check_Type] FOREIGN KEY ([CheckTypeId]) REFERENCES [Thesis].[CheckTypes]([Id]),
     CONSTRAINT [FK_Check_Expert] FOREIGN KEY ([AssignedExpertId]) REFERENCES [Common].[StaffAssignments]([Id])
@@ -472,39 +702,24 @@ CREATE TABLE [Thesis].[QualityChecks] (
 -- [Thesis] REVIEWS
 -- =============================================
 
-CREATE TABLE [Thesis].[Reviewers] (
-    [Id] INT IDENTITY(1,1) PRIMARY KEY,
-    [FullName] NVARCHAR(255) NOT NULL,
-    [Position] NVARCHAR(255),
-    [AcademicDegree] NVARCHAR(100),
-    [Organization] NVARCHAR(255),
-    [Email] NVARCHAR(255),
-    [Phone] NVARCHAR(50),
-    [IsActive] BIT DEFAULT 1
-);
-
-CREATE TABLE [Thesis].[Reviews] (
+CREATE TABLE [Thesis].[WorkReviews] (
     [Id] BIGINT IDENTITY(1,1) PRIMARY KEY,
     [WorkId] BIGINT NOT NULL,
-    [ReviewerId] INT NOT NULL,
-    [ReviewText] NVARCHAR(MAX),
-    [FileStoragePath] NVARCHAR(1000),
-    [UploadedBy] INT NOT NULL,
-    [UploadedAt] DATETIME2 DEFAULT SYSDATETIME(),
-    CONSTRAINT [FK_Review_Work] FOREIGN KEY ([WorkId]) REFERENCES [Thesis].[StudentWorks]([Id]),
-    CONSTRAINT [FK_Review_Reviewer] FOREIGN KEY ([ReviewerId]) REFERENCES [Thesis].[Reviewers]([Id]),
-    CONSTRAINT [FK_Review_Uploader] FOREIGN KEY ([UploadedBy]) REFERENCES [Edu_Users]([ID])
-);
-
-CREATE TABLE [Thesis].[SupervisorReviews] (
-    [Id] BIGINT IDENTITY(1,1) PRIMARY KEY,
-    [WorkId] BIGINT NOT NULL,
-    [EmployeeId] INT NOT NULL,
+    [AuthorUserId] INT NOT NULL,
+    [Type] INT NOT NULL, -- Enum: 1=Supervisor, 2=External, 3=Expert
     [ReviewText] NVARCHAR(MAX) NOT NULL,
-    [FileStoragePath] NVARCHAR(1000),
+    [MetadataJson] NVARCHAR(MAX),
+    [IsFinal] BIT DEFAULT 0,
+    -- Audit & Soft-delete
     [CreatedAt] DATETIME2 DEFAULT SYSDATETIME(),
-    CONSTRAINT [FK_SupReview_Work] FOREIGN KEY ([WorkId]) REFERENCES [Thesis].[StudentWorks]([Id]),
-    CONSTRAINT [FK_SupReview_Sup] FOREIGN KEY ([EmployeeId]) REFERENCES [Edu_Employees]([ID])
+    [CreatedBy] INT NOT NULL DEFAULT 1,
+    [LastModifiedAt] DATETIME2,
+    [LastModifiedBy] INT,
+    [IsDeleted] BIT DEFAULT 0,
+    [DeletedAt] DATETIME2,
+    [DeletedBy] INT,
+    CONSTRAINT [FK_WorkReview_Work] FOREIGN KEY ([WorkId]) REFERENCES [Thesis].[StudentWorks]([Id]),
+    CONSTRAINT [FK_WorkReview_Author] FOREIGN KEY ([AuthorUserId]) REFERENCES [Edu_Users]([ID])
 );
 
 -- =============================================
@@ -514,11 +729,21 @@ CREATE TABLE [Thesis].[SupervisorReviews] (
 CREATE TABLE [Defense].[Commissions] (
     [Id] INT IDENTITY(1,1) PRIMARY KEY,
     [OrgUnitId] INT NOT NULL,
+    [SpecialityId] INT NULL,
     [SemesterId] INT NOT NULL,
     [Name] NVARCHAR(255),
     [CommissionTypeId] INT NOT NULL,
     [PreDefenseNumber] INT NULL,
+    -- Audit & Soft-delete
+    [CreatedAt] DATETIME2 DEFAULT SYSDATETIME(),
+    [CreatedBy] INT NOT NULL DEFAULT 1,
+    [LastModifiedAt] DATETIME2,
+    [LastModifiedBy] INT,
+    [IsDeleted] BIT DEFAULT 0,
+    [DeletedAt] DATETIME2,
+    [DeletedBy] INT,
     CONSTRAINT [FK_Comm_Dept] FOREIGN KEY ([OrgUnitId]) REFERENCES [Edu_OrgUnits]([ID]),
+    CONSTRAINT [FK_Comm_Speciality] FOREIGN KEY ([SpecialityId]) REFERENCES [Edu_Specialities]([ID]),
     CONSTRAINT [FK_Comm_Semester] FOREIGN KEY ([SemesterId]) REFERENCES [Edu_Semesters]([ID]),
     CONSTRAINT [FK_Comm_Type] FOREIGN KEY ([CommissionTypeId]) REFERENCES [Defense].[CommissionTypes]([Id]),
     CONSTRAINT [Check_CommPreDef] CHECK ([PreDefenseNumber] IS NULL OR [PreDefenseNumber] BETWEEN 1 AND 3)
@@ -530,6 +755,15 @@ CREATE TABLE [Defense].[Schedules] (
     [WorkId] BIGINT NOT NULL,
     [DefenseDate] DATETIME2 NOT NULL,
     [Location] NVARCHAR(255),
+    [IsReconciliationStarted] BIT DEFAULT 0,
+    -- Audit & Soft-delete
+    [CreatedAt] DATETIME2 DEFAULT SYSDATETIME(),
+    [CreatedBy] INT NOT NULL DEFAULT 1,
+    [LastModifiedAt] DATETIME2,
+    [LastModifiedBy] INT,
+    [IsDeleted] BIT DEFAULT 0,
+    [DeletedAt] DATETIME2,
+    [DeletedBy] INT,
     CONSTRAINT [FK_Sched_Comm] FOREIGN KEY ([CommissionId]) REFERENCES [Defense].[Commissions]([Id]),
     CONSTRAINT [FK_Sched_Work] FOREIGN KEY ([WorkId]) REFERENCES [Thesis].[StudentWorks]([Id])
 );
@@ -543,6 +777,10 @@ CREATE TABLE [Defense].[PreDefenseAttempts] (
     [AverageScore] DECIMAL(5,2),
     [IsPassed] BIT DEFAULT 0,
     [AttemptDate] DATETIME2 DEFAULT SYSDATETIME(),
+    -- Audit
+    [CreatedBy] INT NOT NULL DEFAULT 1,
+    [LastModifiedAt] DATETIME2,
+    [LastModifiedBy] INT,
     CONSTRAINT [FK_PreDef_Work] FOREIGN KEY ([WorkId]) REFERENCES [Thesis].[StudentWorks]([Id]),
     CONSTRAINT [FK_PreDef_Schedule] FOREIGN KEY ([ScheduleId]) REFERENCES [Defense].[Schedules]([Id]),
     CONSTRAINT [FK_PreDef_Status] FOREIGN KEY ([AttendanceStatusId]) REFERENCES [Defense].[AttendanceStatuses]([Id]),
@@ -557,11 +795,21 @@ CREATE TABLE [Defense].[EvaluationCriteria] (
     [Id] INT IDENTITY(1,1) PRIMARY KEY,
     [WorkTypeId] INT NOT NULL,
     [OrgUnitId] INT NULL,
+    [SpecialityId] INT NULL,
     [CriteriaName] NVARCHAR(255) NOT NULL,
     [MaxScore] INT NOT NULL,
-    [Weight] DECIMAL(3,2) DEFAULT 1.0,
+    [Weight] DECIMAL(5,2) DEFAULT 1.0,
+    -- Audit
+    [CreatedAt] DATETIME2 DEFAULT SYSDATETIME(),
+    [CreatedBy] INT NOT NULL DEFAULT 1,
+    [LastModifiedAt] DATETIME2,
+    [LastModifiedBy] INT,
+    [IsDeleted] BIT DEFAULT 0,
+    [DeletedAt] DATETIME2,
+    [DeletedBy] INT,
     CONSTRAINT [FK_Crit_Type] FOREIGN KEY ([WorkTypeId]) REFERENCES [Wf].[WorkTypes]([Id]),
-    CONSTRAINT [FK_Crit_Dept] FOREIGN KEY ([OrgUnitId]) REFERENCES [Edu_OrgUnits]([ID])
+    CONSTRAINT [FK_Crit_Dept] FOREIGN KEY ([OrgUnitId]) REFERENCES [Edu_OrgUnits]([ID]),
+    CONSTRAINT [FK_Crit_Speciality] FOREIGN KEY ([SpecialityId]) REFERENCES [Edu_Specialities]([ID])
 );
 
 CREATE TABLE [Defense].[Grades] (
@@ -573,6 +821,8 @@ CREATE TABLE [Defense].[Grades] (
     [Comment] NVARCHAR(MAX),
     [CreatedAt] DATETIME2 DEFAULT SYSDATETIME(),
     [UpdatedAt] DATETIME2 DEFAULT SYSDATETIME(),
+    [CreatedBy] INT NOT NULL DEFAULT 1,
+    [LastModifiedBy] INT,
     CONSTRAINT [FK_Grades_Sched] FOREIGN KEY ([ScheduleId]) REFERENCES [Defense].[Schedules]([Id]),
     CONSTRAINT [FK_Grades_Assignment] FOREIGN KEY ([AssignmentId]) REFERENCES [Common].[StaffAssignments]([Id]),
     CONSTRAINT [FK_Grades_Crit] FOREIGN KEY ([CriteriaId]) REFERENCES [Defense].[EvaluationCriteria]([Id]),
@@ -582,13 +832,23 @@ CREATE TABLE [Defense].[Grades] (
 CREATE TABLE [Defense].[Protocols] (
     [Id] BIGINT IDENTITY(1,1) PRIMARY KEY,
     [ScheduleId] BIGINT NOT NULL,
+    [CommissionId] INT NOT NULL,
     [FinalScoreNumeric] DECIMAL(5,2),
     [FinalGradeLetter] NVARCHAR(5),
     [Decision] NVARCHAR(MAX),
     [IsSigned] BIT DEFAULT 0,
     [ProtocolNumber] NVARCHAR(50),
-    [ProtocolDate] DATETIME2,
-    CONSTRAINT [FK_Proto_Sched] FOREIGN KEY ([ScheduleId]) REFERENCES [Defense].[Schedules]([Id])
+    [ProtocolDate] DATETIME2 NOT NULL,
+    -- Audit & Soft-delete
+    [CreatedAt] DATETIME2 DEFAULT SYSDATETIME(),
+    [CreatedBy] INT NOT NULL DEFAULT 1,
+    [LastModifiedAt] DATETIME2,
+    [LastModifiedBy] INT,
+    [IsDeleted] BIT DEFAULT 0,
+    [DeletedAt] DATETIME2,
+    [DeletedBy] INT,
+    CONSTRAINT [FK_Protocols_Schedule] FOREIGN KEY ([ScheduleId]) REFERENCES [Defense].[Schedules]([Id]),
+    CONSTRAINT [FK_Protocols_Commission] FOREIGN KEY ([CommissionId]) REFERENCES [Defense].[Commissions]([Id])
 );
 
 GO
@@ -634,7 +894,7 @@ CREATE INDEX [IX_QualityChecks_Work] ON [Thesis].[QualityChecks]
     ([WorkId], [CheckTypeId], [AttemptNumber]);
 
 CREATE INDEX [IX_Stages_Active] ON [Common].[Stages] 
-    ([OrgUnitId], [SemesterId], [WorkflowStageId]) 
+    ([OrgUnitId], [SpecialityId], [SemesterId], [WorkflowStageId]) 
     WHERE [IsActive] = 1;
 
 CREATE INDEX [IX_PreDefAttempts_Work] ON [Defense].[PreDefenseAttempts] 
@@ -646,8 +906,13 @@ CREATE INDEX [IX_Notif_User_Unread] ON [Common].[Notifications]
 CREATE INDEX [IX_Notif_Entity] ON [Common].[Notifications] 
     ([RelatedEntityType], [RelatedEntityId]);
 
+CREATE INDEX [IX_Edu_SpecialitySpecializations_Spec] ON [Edu_SpecialitySpecializations] ([SpecializationId]);
+CREATE INDEX [IX_Edu_SpecialitySpecializations_SpecId] ON [Edu_SpecialitySpecializations] ([SpecialityId]);
+CREATE INDEX [IX_Edu_SpecOrgUnits_OrgUnit] ON [Edu_Specializations_OrgUnits] ([OrgUnitID]);
+CREATE INDEX [IX_Edu_SpecOrgUnits_Spec] ON [Edu_Specializations_OrgUnits] ([SpecializationID]);
+
 GO
 
 PRINT 'AWM v5.1 Unified Schema updated successfully.';
-PRINT 'Foundation: 12 Edu_* tables (university schema) must already exist.';
+PRINT 'Foundation: 15 Edu_* tables (university schema).';
 PRINT 'Addon: Auth, Common, Wf, Thesis, Defense schemas created.';

@@ -76,4 +76,10 @@ public sealed record CreateTopicRequest
     /// </summary>
     /// <example>1</example>
     public int MaxParticipants { get; init; } = 1;
+
+    /// <summary>
+    /// Speciality ID.
+    /// </summary>
+    /// <example>15</example>
+    public int? SpecialityId { get; init; }
 }

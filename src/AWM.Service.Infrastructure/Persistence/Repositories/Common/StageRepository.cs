@@ -16,12 +16,34 @@ public sealed class StageRepository : RepositoryBase<Stage, int>, IStageReposito
         int orgUnitId,
         int semesterId,
         int workflowStageId,
+        int? specialityId = null,
         CancellationToken cancellationToken = default)
     {
         var now = DateTime.UtcNow;
+
+        // If speciality is specified, try speciality-specific stage first
+        if (specialityId.HasValue)
+        {
+            var specialized = await Context.Stages
+                .AsNoTracking()
+                .Where(s => s.OrgUnitId == orgUnitId &&
+                            s.SpecialityId == specialityId.Value &&
+                            s.SemesterId == semesterId &&
+                            s.WorkflowStageId == workflowStageId &&
+                            s.IsActive &&
+                            s.StartDate <= now &&
+                            s.EndDate >= now)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (specialized != null)
+                return specialized;
+        }
+
+        // Fallback to department-level stage
         return await Context.Stages
             .AsNoTracking()
             .Where(s => s.OrgUnitId == orgUnitId &&
+                        s.SpecialityId == null &&
                         s.SemesterId == semesterId &&
                         s.WorkflowStageId == workflowStageId &&
                         s.IsActive &&
@@ -34,12 +56,32 @@ public sealed class StageRepository : RepositoryBase<Stage, int>, IStageReposito
     public async Task<Stage?> GetActiveStageAsync(
         int orgUnitId,
         int semesterId,
+        int? specialityId = null,
         CancellationToken cancellationToken = default)
     {
         var now = DateTime.UtcNow;
+
+        if (specialityId.HasValue)
+        {
+            var specialized = await Context.Stages
+                .AsNoTracking()
+                .Where(s => s.OrgUnitId == orgUnitId &&
+                            s.SpecialityId == specialityId.Value &&
+                            s.SemesterId == semesterId &&
+                            s.IsActive &&
+                            s.StartDate <= now &&
+                            s.EndDate >= now)
+                .OrderByDescending(s => s.StartDate)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (specialized != null)
+                return specialized;
+        }
+
         return await Context.Stages
             .AsNoTracking()
             .Where(s => s.OrgUnitId == orgUnitId &&
+                        s.SpecialityId == null &&
                         s.SemesterId == semesterId &&
                         s.IsActive &&
                         s.StartDate <= now &&
@@ -80,9 +122,10 @@ public sealed class StageRepository : RepositoryBase<Stage, int>, IStageReposito
         int orgUnitId,
         int semesterId,
         int workflowStageId,
+        int? specialityId = null,
         CancellationToken cancellationToken = default)
     {
-        var stage = await GetActiveByStageAsync(orgUnitId, semesterId, workflowStageId, cancellationToken);
+        var stage = await GetActiveByStageAsync(orgUnitId, semesterId, workflowStageId, specialityId, cancellationToken);
         return stage != null;
     }
 }

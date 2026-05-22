@@ -13,12 +13,13 @@ public interface IEvaluationCriteriaRepository
     Task<EvaluationCriteria?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Gets criteria for a specific work type and department.
-    /// Returns department-specific criteria if exists, otherwise falls back to university-wide.
+    /// Gets criteria for a specific work type, department and speciality.
+    /// Returns speciality-specific criteria if exists, otherwise department-specific, otherwise university-wide.
     /// </summary>
     Task<IReadOnlyList<EvaluationCriteria>> GetByWorkTypeAsync(
-        int workTypeId, 
-        int? orgUnitId = null, 
+        int workTypeId,
+        int? orgUnitId = null,
+        int? specialityId = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>

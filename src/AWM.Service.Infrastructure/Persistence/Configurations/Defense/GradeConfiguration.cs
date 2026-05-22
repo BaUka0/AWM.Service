@@ -47,6 +47,9 @@ public class GradeConfiguration : AuditableEntityConfiguration<Grade, long>
         builder.Property(e => e.Comment)
             .HasColumnType("nvarchar(max)");
 
+        builder.Property(e => e.LastModifiedAt)
+            .HasColumnName("UpdatedAt");
+
         // Ignore computed property
         builder.Ignore(e => e.GradedAt);
 
@@ -54,7 +57,7 @@ public class GradeConfiguration : AuditableEntityConfiguration<Grade, long>
         builder.HasOne<Schedule>()
             .WithMany(s => s.Grades)
             .HasForeignKey(e => e.ScheduleId)
-            .HasConstraintName("FK_Grades_Schedule")
+            .HasConstraintName("FK_Grades_Sched")
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasOne<StaffAssignment>()
@@ -66,7 +69,7 @@ public class GradeConfiguration : AuditableEntityConfiguration<Grade, long>
         builder.HasOne<EvaluationCriteria>()
             .WithMany()
             .HasForeignKey(e => e.CriteriaId)
-            .HasConstraintName("FK_Grades_Criteria")
+            .HasConstraintName("FK_Grades_Crit")
             .OnDelete(DeleteBehavior.Restrict);
 
         // Unique constraint - one grade per member per criteria per schedule

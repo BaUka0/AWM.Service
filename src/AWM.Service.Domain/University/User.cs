@@ -9,7 +9,7 @@ using AWM.Service.Domain.Common;
 public class User : Entity<int>
 {
     public string LastName { get; private set; } = null!;
-    public string FirstName { get; private set; } = null!;
+    public string? FirstName { get; private set; }
     public string? MiddleName { get; private set; }
     public string? IIN { get; private set; }
     public string? Email { get; private set; }

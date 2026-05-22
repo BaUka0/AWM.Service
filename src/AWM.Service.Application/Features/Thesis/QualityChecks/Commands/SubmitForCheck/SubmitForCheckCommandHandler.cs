@@ -3,6 +3,7 @@ namespace AWM.Service.Application.Features.Thesis.QualityChecks.Commands.SubmitF
 using AWM.Service.Domain.Thesis.Constants;
 using AWM.Service.Domain.Common;
 using AWM.Service.Domain.Repositories;
+using AWM.Service.Domain.Thesis.Entities;
 using KDS.Primitives.FluentResult;
 using MediatR;
 
@@ -88,7 +89,9 @@ public sealed class SubmitForCheckCommandHandler : IRequestHandler<SubmitForChec
                     var student = await _studentRepository.GetByIdAsync(firstParticipant.StudentId, cancellationToken);
                     if (student != null)
                     {
-                        var mandatoryChecks = await _specialityCheckTypeRepository.GetBySpecialityAsync(student.SpecialityId, cancellationToken);
+                        var mandatoryChecks = student.SpecialityId.HasValue
+                            ? await _specialityCheckTypeRepository.GetBySpecialityAsync(student.SpecialityId.Value, cancellationToken)
+                            : Array.Empty<SpecialityCheckType>();
                         foreach (var mc in mandatoryChecks)
                         {
                             if (!work.HasPassedCheck(mc.CheckTypeId))

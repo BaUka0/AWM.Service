@@ -14,6 +14,9 @@ public sealed record EvaluationCriteriaDto
     /// <summary>Org unit ID. Null for university-wide criteria.</summary>
     public int? OrgUnitId { get; init; }
 
+    /// <summary>Speciality ID. Null for department-level or university-wide criteria.</summary>
+    public int? SpecialityId { get; init; }
+
     /// <summary>Name of the criteria.</summary>
     public string CriteriaName { get; init; } = null!;
 

@@ -34,12 +34,12 @@ public class StudentWorkConfiguration : SoftDeletableEntityConfiguration<Student
         builder.Property(e => e.TopicId);
 
         builder.Property(e => e.SemesterId)
-            .HasColumnName("AcademicYearId")
             .IsRequired();
 
         builder.Property(e => e.OrgUnitId)
-            .HasColumnName("DepartmentId")
             .IsRequired();
+
+        builder.Property(e => e.SpecialityId);
 
         builder.Property(e => e.CurrentStateId)
             .IsRequired();
@@ -66,10 +66,22 @@ public class StudentWorkConfiguration : SoftDeletableEntityConfiguration<Student
             .HasConstraintName("FK_Works_Dept")
             .OnDelete(DeleteBehavior.Restrict);
 
+        builder.HasOne<Speciality>()
+            .WithMany()
+            .HasForeignKey(e => e.SpecialityId)
+            .HasConstraintName("FK_Works_Speciality")
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.HasOne<State>()
             .WithMany()
             .HasForeignKey(e => e.CurrentStateId)
             .HasConstraintName("FK_Works_State")
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne<Semester>()
+            .WithMany()
+            .HasForeignKey(e => e.SemesterId)
+            .HasConstraintName("FK_Works_Semester")
             .OnDelete(DeleteBehavior.Restrict);
 
         // Navigation collections
@@ -92,6 +104,32 @@ public class StudentWorkConfiguration : SoftDeletableEntityConfiguration<Student
             .WithOne()
             .HasForeignKey(e => e.WorkId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasMany(e => e.WorkReviews)
+            .WithOne()
+            .HasForeignKey(e => e.WorkId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Configure backing fields for collections
+        builder.Navigation(e => e.WorkReviews)
+            .HasField("_workReviews")
+            .UsePropertyAccessMode(PropertyAccessMode.Field);
+
+        builder.Navigation(e => e.Participants)
+            .HasField("_participants")
+            .UsePropertyAccessMode(PropertyAccessMode.Field);
+
+        builder.Navigation(e => e.Attachments)
+            .HasField("_attachments")
+            .UsePropertyAccessMode(PropertyAccessMode.Field);
+
+        builder.Navigation(e => e.QualityChecks)
+            .HasField("_qualityChecks")
+            .UsePropertyAccessMode(PropertyAccessMode.Field);
+
+        builder.Navigation(e => e.WorkflowHistory)
+            .HasField("_workflowHistory")
+            .UsePropertyAccessMode(PropertyAccessMode.Field);
 
         // Index for filtering
         builder.HasIndex(e => new { e.OrgUnitId, e.SemesterId, e.CurrentStateId })

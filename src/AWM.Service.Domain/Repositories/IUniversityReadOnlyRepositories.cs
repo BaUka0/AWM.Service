@@ -64,3 +64,24 @@ public interface ISpecialityReadOnlyRepository
     Task<IReadOnlyList<Speciality>> GetByLevelAsync(int levelId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Speciality>> GetAllAsync(CancellationToken cancellationToken = default);
 }
+
+public interface ISpecializationReadOnlyRepository
+{
+    Task<Specialization?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<Specialization>> GetByOrgUnitAsync(int orgUnitId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<Specialization>> GetAllAsync(CancellationToken cancellationToken = default);
+}
+
+public interface ISpecialitySpecializationReadOnlyRepository
+{
+    Task<IReadOnlyList<SpecialitySpecialization>> GetBySpecialityAsync(int specialityId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<SpecialitySpecialization>> GetBySpecializationAsync(int specializationId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<SpecialitySpecialization>> GetAllAsync(CancellationToken cancellationToken = default);
+}
+
+public interface ISpecializationsOrgUnitReadOnlyRepository
+{
+    Task<IReadOnlyList<SpecializationsOrgUnit>> GetBySpecializationAsync(int specializationId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<SpecializationsOrgUnit>> GetByOrgUnitAsync(int orgUnitId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<SpecializationsOrgUnit>> GetAllAsync(CancellationToken cancellationToken = default);
+}

@@ -20,6 +20,7 @@ public sealed record TopicApplicationDto
     /// Student ID.
     /// </summary>
     public int StudentId { get; init; }
+    public int? SpecialityId { get; init; }
     public string? StudentName { get; init; }
     public string? StudentGroupCode { get; init; }
 
@@ -97,6 +98,7 @@ public sealed record TopicApplicationDto
             Id = entity.Id,
             TopicId = entity.TopicId,
             StudentId = entity.StudentId,
+            SpecialityId = entity.SpecialityId,
             MotivationLetter = entity.MotivationLetter,
             AppliedAt = entity.AppliedAt,
             StatusId = entity.StatusId,

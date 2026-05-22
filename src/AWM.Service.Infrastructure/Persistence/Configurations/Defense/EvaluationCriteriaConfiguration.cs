@@ -26,7 +26,10 @@ public class EvaluationCriteriaConfiguration : SoftDeletableEntityConfiguration<
             .IsRequired();
 
         builder.Property(e => e.OrgUnitId)
-            .HasColumnName("DepartmentId");
+            .HasColumnName("OrgUnitId");
+
+        builder.Property(e => e.SpecialityId)
+            .HasColumnName("SpecialityId");
 
         builder.Property(e => e.CriteriaName)
             .IsRequired()
@@ -44,13 +47,19 @@ public class EvaluationCriteriaConfiguration : SoftDeletableEntityConfiguration<
         builder.HasOne<WorkType>()
             .WithMany()
             .HasForeignKey(e => e.WorkTypeId)
-            .HasConstraintName("FK_Criteria_WorkType")
+            .HasConstraintName("FK_Crit_Type")
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne<OrgUnit>()
             .WithMany()
             .HasForeignKey(e => e.OrgUnitId)
-            .HasConstraintName("FK_Criteria_Dept")
+            .HasConstraintName("FK_Crit_Dept")
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne<Speciality>()
+            .WithMany()
+            .HasForeignKey(e => e.SpecialityId)
+            .HasConstraintName("FK_Crit_Speciality")
             .OnDelete(DeleteBehavior.Restrict);
     }
 }

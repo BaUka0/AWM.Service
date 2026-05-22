@@ -13,6 +13,11 @@ public sealed record CreateCommissionCommand : IRequest<Result<int>>
     public int OrgUnitId { get; init; }
 
     /// <summary>
+    /// Speciality ID. Null for department-wide commissions.
+    /// </summary>
+    public int? SpecialityId { get; init; }
+
+    /// <summary>
     /// Semester ID for the commission.
     /// </summary>
     public int SemesterId { get; init; }

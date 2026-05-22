@@ -1,7 +1,6 @@
 namespace AWM.Service.Application.Features.Thesis.Reviews.DTOs;
 
-public sealed record WorkReviewsDto
+public class WorkReviewsDto
 {
-    public SupervisorReviewDto? SupervisorReview { get; init; }
-    public IReadOnlyList<ReviewDto> Reviews { get; init; } = Array.Empty<ReviewDto>();
+    public IReadOnlyList<WorkReviewDto> Reviews { get; set; } = Array.Empty<WorkReviewDto>();
 }

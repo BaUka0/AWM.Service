@@ -64,9 +64,8 @@ public class ApplicationDbContext : DbContext
     public DbSet<WorkflowHistory> WorkflowHistory => Set<WorkflowHistory>();
     public DbSet<Attachment> Attachments => Set<Attachment>();
     public DbSet<QualityCheck> QualityChecks => Set<QualityCheck>();
-    public DbSet<Review> Reviews => Set<Review>();
+    public DbSet<WorkReview> WorkReviews => Set<WorkReview>();
     public DbSet<Reviewer> Reviewers => Set<Reviewer>();
-    public DbSet<SupervisorReview> SupervisorReviews => Set<SupervisorReview>();
     public DbSet<Direction> Directions => Set<Direction>();
 
     // Reference tables

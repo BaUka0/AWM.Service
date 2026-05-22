@@ -43,7 +43,8 @@ public sealed class CreateCommissionCommandHandler : IRequestHandler<CreateCommi
                 commissionTypeId: request.CommissionTypeId,
                 createdBy: userId.Value,
                 name: request.Name,
-                preDefenseNumber: request.PreDefenseNumber);
+                preDefenseNumber: request.PreDefenseNumber,
+                specialityId: request.SpecialityId);
 
             foreach (var member in request.Members)
             {

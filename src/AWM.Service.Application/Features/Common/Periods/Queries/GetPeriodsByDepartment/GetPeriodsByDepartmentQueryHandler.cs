@@ -26,6 +26,7 @@ public sealed class GetStagesByDepartmentQueryHandler : IRequestHandler<GetStage
                 {
                     Id = p.Id,
                     OrgUnitId = p.OrgUnitId,
+                    SpecialityId = p.SpecialityId,
                     SemesterId = p.SemesterId,
                     WorkflowStageId = p.WorkflowStageId,
                     StartDate = p.StartDate,

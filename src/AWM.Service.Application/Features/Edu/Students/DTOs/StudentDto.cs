@@ -7,7 +7,7 @@ public sealed record StudentDto
     public string? FullName { get; init; }
     public string? Email { get; init; }
     public string? GroupCode { get; init; }
-    public int ProgramId { get; init; }
+    public int? ProgramId { get; init; }
     public string? ProgramName { get; init; }
     public int AdmissionYear { get; init; }
     public int CurrentCourse { get; init; }

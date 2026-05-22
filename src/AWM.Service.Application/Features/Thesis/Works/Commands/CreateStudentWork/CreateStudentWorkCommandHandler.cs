@@ -68,7 +68,8 @@ public sealed class CreateStudentWorkCommandHandler : IRequestHandler<CreateStud
             orgUnitId: request.DepartmentId,
             draftStateId: draftState.Id,
             createdBy: _currentUserProvider.UserId.Value,
-            topicId: request.TopicId);
+            topicId: request.TopicId,
+            specialityId: topic.SpecialityId);
 
         // 4. Add the student as Leader.
         // request.StudentId must be a Student.Id (FK to Edu.Students), not Auth.Users.Id.

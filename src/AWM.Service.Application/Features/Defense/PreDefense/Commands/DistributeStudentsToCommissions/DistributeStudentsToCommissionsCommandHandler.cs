@@ -73,7 +73,7 @@ public sealed class DistributeStudentsToCommissionsCommandHandler
             };
 
             var (isAllowed, errorMessage) = await _stageValidationService.ValidateOperationInStageAsync(
-                request.OrgUnitId, request.SemesterId, workflowStageId, cancellationToken);
+                request.OrgUnitId, request.SemesterId, workflowStageId, null, cancellationToken);
             if (!isAllowed)
                 return Result.Failure<int>(new Error("400", errorMessage!));
 

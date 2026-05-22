@@ -66,7 +66,7 @@ public sealed class SchedulePreDefenseCommandHandler : IRequestHandler<ScheduleP
             };
 
             var (isAllowed, errorMessage) = await _stageValidationService.ValidateOperationInStageAsync(
-                commission.OrgUnitId, commission.SemesterId, workflowStageId, cancellationToken);
+                commission.OrgUnitId, commission.SemesterId, workflowStageId, null, cancellationToken);
             if (!isAllowed)
                 return Result.Failure<long>(new Error("400", errorMessage!));
 

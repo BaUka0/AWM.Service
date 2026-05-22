@@ -2,6 +2,7 @@ namespace AWM.Service.Infrastructure.Persistence.Repositories.Thesis;
 
 using AWM.Service.Domain.Repositories;
 using AWM.Service.Domain.Thesis.Entities;
+using AWM.Service.Domain.CommonDomain.Enums;
 using Microsoft.EntityFrameworkCore;
 
 /// <summary>
@@ -52,15 +53,20 @@ public sealed class DirectionRepository : IDirectionRepository
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<Direction>> GetBySupervisorAsync(
-        int supervisorId, 
+        int userId, 
         int academicYearId, 
         CancellationToken cancellationToken = default)
     {
-        return await _context.Directions
+        return await _context.StaffAssignments
             .AsNoTracking()
-            .Where(d => !d.IsDeleted && 
-                        d.EmployeeId == supervisorId && 
-                        d.SemesterId == academicYearId)
+            .Where(a => a.UserId == userId &&
+                        a.RoleType == (int)StaffRoleType.Supervisor &&
+                        a.TargetEntityType == "Direction" &&
+                        a.IsActive && !a.IsDeleted)
+            .Join(_context.Directions.Where(d => !d.IsDeleted && d.SemesterId == academicYearId),
+                a => a.TargetEntityId,
+                d => d.Id,
+                (a, d) => d)
             .OrderByDescending(d => d.CreatedAt)
             .ToListAsync(cancellationToken);
     }

@@ -3,6 +3,7 @@ namespace AWM.Service.Application.Features.Thesis.Works.Queries.GetMyWorkProgres
 using AWM.Service.Application.Features.Thesis.Works.DTOs;
 using AWM.Service.Domain.Common;
 using AWM.Service.Domain.Repositories;
+using AWM.Service.Domain.Thesis.Entities;
 using KDS.Primitives.FluentResult;
 using MediatR;
 
@@ -219,7 +220,9 @@ public sealed class GetMyWorkProgressQueryHandler
         }
 
         // Check eligibility for defense by fetching mandatory checks for the student's speciality
-        var mandatoryChecks = await _specialityCheckTypeRepository.GetBySpecialityAsync(student.SpecialityId, cancellationToken);
+        var mandatoryChecks = student.SpecialityId.HasValue
+            ? await _specialityCheckTypeRepository.GetBySpecialityAsync(student.SpecialityId.Value, cancellationToken)
+            : Array.Empty<SpecialityCheckType>();
         var mandatoryCheckTypeIds = mandatoryChecks.Select(s => s.CheckTypeId).ToList();
         var isEligible = detailedWork.IsEligibleForDefense(mandatoryCheckTypeIds);
 

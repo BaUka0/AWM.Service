@@ -71,6 +71,11 @@ public sealed record CreateTopicCommand : IRequest<Result<long>>
     public int MaxParticipants { get; init; } = 1;
 
     /// <summary>
+    /// Speciality ID.
+    /// </summary>
+    public int? SpecialityId { get; init; }
+
+    /// <summary>
     /// ID of the user creating the topic (for audit).
     /// </summary>
     public int CreatedBy { get; init; }

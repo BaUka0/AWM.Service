@@ -52,13 +52,13 @@ public class QualityCheckConfiguration : AuditableEntityConfiguration<QualityChe
         builder.HasOne<StudentWork>()
             .WithMany(w => w.QualityChecks)
             .HasForeignKey(e => e.WorkId)
-            .HasConstraintName("FK_QChecks_Work")
+            .HasConstraintName("FK_Check_Work")
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasOne(e => e.CheckType)
             .WithMany()
             .HasForeignKey(e => e.CheckTypeId)
-            .HasConstraintName("FK_QChecks_Type")
+            .HasConstraintName("FK_Check_Type")
             .OnDelete(DeleteBehavior.Restrict);
 
         // Index for check queries

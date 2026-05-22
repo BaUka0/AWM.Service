@@ -38,7 +38,7 @@ public sealed class GetStudentByIdQueryHandler : IRequestHandler<GetStudentByIdQ
                 ProgramId = student.SpecialityId,
                 AdmissionYear = student.Year,
                 CurrentCourse = 0,
-                Status = student.StatusId.ToString(),
+                Status = student.StatusId?.ToString() ?? "Unknown",
                 CreatedAt = default,
                 CreatedBy = 0,
                 LastModifiedAt = null,

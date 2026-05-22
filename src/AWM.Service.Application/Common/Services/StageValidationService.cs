@@ -20,22 +20,24 @@ public sealed class StageValidationService : IStageValidationService
         int orgUnitId,
         int semesterId,
         int workflowStageId,
+        int? specialityId = null,
         CancellationToken cancellationToken = default)
     {
-        return await _stageRepository.IsStageOpenAsync(orgUnitId, semesterId, workflowStageId, cancellationToken);
+        return await _stageRepository.IsStageOpenAsync(orgUnitId, semesterId, workflowStageId, specialityId, cancellationToken);
     }
 
     public async Task<(bool IsAllowed, string? ErrorMessage)> ValidateOperationInStageAsync(
         int orgUnitId,
         int semesterId,
         int workflowStageId,
+        int? specialityId = null,
         CancellationToken cancellationToken = default)
     {
-        var isOpen = await IsStageOpenAsync(orgUnitId, semesterId, workflowStageId, cancellationToken);
+        var isOpen = await IsStageOpenAsync(orgUnitId, semesterId, workflowStageId, specialityId, cancellationToken);
 
         if (!isOpen)
         {
-            return (false, "The workflow stage is not currently open for this department.");
+            return (false, "The workflow stage is not currently open for this department/speciality.");
         }
 
         return (true, null);

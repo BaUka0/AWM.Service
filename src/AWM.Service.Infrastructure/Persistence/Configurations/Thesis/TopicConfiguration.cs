@@ -36,19 +36,15 @@ public class TopicConfiguration : SoftDeletableEntityConfiguration<Topic, long>
         builder.Property(e => e.DirectionId);
 
         builder.Property(e => e.SemesterId)
-            .HasColumnName("AcademicYearId")
             .IsRequired();
 
         builder.Property(e => e.OrgUnitId)
-            .HasColumnName("DepartmentId")
-            .IsRequired();
-
-        builder.Property(e => e.EmployeeId)
-            .HasColumnName("SupervisorId")
             .IsRequired();
 
         builder.Property(e => e.WorkTypeId)
             .IsRequired();
+
+        builder.Property(e => e.SpecialityId);
 
         builder.Property(e => e.TitleRu)
             .IsRequired()
@@ -98,16 +94,22 @@ public class TopicConfiguration : SoftDeletableEntityConfiguration<Topic, long>
             .HasConstraintName("FK_Topics_Dept")
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne<Employee>()
-            .WithMany()
-            .HasForeignKey(e => e.EmployeeId)
-            .HasConstraintName("FK_Topics_Supervisor")
-            .OnDelete(DeleteBehavior.Restrict);
-
         builder.HasOne<WorkType>()
             .WithMany()
             .HasForeignKey(e => e.WorkTypeId)
-            .HasConstraintName("FK_Topics_WorkType")
+            .HasConstraintName("FK_Topics_Type")
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(e => e.Speciality)
+            .WithMany()
+            .HasForeignKey(e => e.SpecialityId)
+            .HasConstraintName("FK_Topics_Spec")
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne<Semester>()
+            .WithMany()
+            .HasForeignKey(e => e.SemesterId)
+            .HasConstraintName("FK_Topics_Semester")
             .OnDelete(DeleteBehavior.Restrict);
 
         // Navigation to applications

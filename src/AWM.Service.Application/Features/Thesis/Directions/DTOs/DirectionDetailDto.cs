@@ -7,7 +7,7 @@ public sealed class DirectionDetailDto
 {
     public long Id { get; init; }
     public int OrgUnitId { get; init; }
-    public int EmployeeId { get; init; }
+    public int SupervisorUserId { get; init; }
     public int SemesterId { get; init; }
     public int WorkTypeId { get; init; }
 

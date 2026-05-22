@@ -10,6 +10,7 @@ using AWM.Service.Domain.Primitives;
 public class Stage : Entity<int>, IAuditable, ISoftDeletable
 {
     public int OrgUnitId { get; private set; }
+    public int? SpecialityId { get; private set; }
     public int SemesterId { get; private set; }
     public int WorkflowStageId { get; private set; }
     public DateTime StartDate { get; private set; }
@@ -27,12 +28,13 @@ public class Stage : Entity<int>, IAuditable, ISoftDeletable
 
     private Stage() { }
 
-    public Stage(int orgUnitId, int semesterId, int workflowStageId, DateTime startDate, DateTime endDate, int createdBy)
+    public Stage(int orgUnitId, int semesterId, int workflowStageId, DateTime startDate, DateTime endDate, int createdBy, int? specialityId = null)
     {
         if (endDate <= startDate)
             throw new DomainException("Stage.InvalidDateRange", "End date must be after start date.");
 
         OrgUnitId = orgUnitId;
+        SpecialityId = specialityId;
         SemesterId = semesterId;
         WorkflowStageId = workflowStageId;
         StartDate = startDate;

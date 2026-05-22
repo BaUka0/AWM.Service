@@ -6,9 +6,14 @@ namespace AWM.Service.Domain.CommonDomain.Services;
 public interface IStageValidationService
 {
     /// <summary>
-    /// Checks if a specific workflow stage is currently open for a department.
+    /// Checks if a specific workflow stage is currently open for a department/speciality.
     /// </summary>
-    Task<bool> IsStageOpenAsync(int orgUnitId, int semesterId, int workflowStageId, CancellationToken cancellationToken = default);
+    Task<bool> IsStageOpenAsync(
+        int orgUnitId,
+        int semesterId,
+        int workflowStageId,
+        int? specialityId = null,
+        CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Validates that an operation is allowed in the current stage.
@@ -18,5 +23,6 @@ public interface IStageValidationService
         int orgUnitId,
         int semesterId,
         int workflowStageId,
+        int? specialityId = null,
         CancellationToken cancellationToken = default);
 }

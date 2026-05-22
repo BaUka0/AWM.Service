@@ -23,10 +23,12 @@ public sealed class GetActiveStageQueryHandler : IRequestHandler<GetActiveStageQ
                     request.OrgUnitId,
                     request.SemesterId,
                     request.WorkflowStageId.Value,
+                    null,
                     cancellationToken)
                 : await _stageRepository.GetActiveStageAsync(
                     request.OrgUnitId,
                     request.SemesterId,
+                    null,
                     cancellationToken);
 
             if (stage is null || stage.IsDeleted)
@@ -36,6 +38,7 @@ public sealed class GetActiveStageQueryHandler : IRequestHandler<GetActiveStageQ
             {
                 Id = stage.Id,
                 OrgUnitId = stage.OrgUnitId,
+                SpecialityId = stage.SpecialityId,
                 SemesterId = stage.SemesterId,
                 WorkflowStageId = stage.WorkflowStageId,
                 StartDate = stage.StartDate,

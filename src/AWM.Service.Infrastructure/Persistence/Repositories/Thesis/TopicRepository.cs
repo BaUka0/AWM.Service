@@ -2,6 +2,7 @@ namespace AWM.Service.Infrastructure.Persistence.Repositories.Thesis;
 
 using AWM.Service.Domain.Repositories;
 using AWM.Service.Domain.Thesis.Entities;
+using AWM.Service.Domain.CommonDomain.Enums;
 using AWM.Service.Infrastructure.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
 
@@ -60,14 +61,20 @@ public sealed class TopicRepository : RepositoryBase<Topic, long>, ITopicReposit
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<Topic>> GetBySupervisorAsync(
-        int supervisorId,
+        int userId,
         int academicYearId,
         CancellationToken cancellationToken = default)
     {
-        return await Context.Topics
+        return await Context.StaffAssignments
             .AsNoTracking()
-            .Where(t => t.EmployeeId == supervisorId &&
-                        t.SemesterId == academicYearId)
+            .Where(a => a.UserId == userId &&
+                        a.RoleType == (int)StaffRoleType.Supervisor &&
+                        a.TargetEntityType == "Topic" &&
+                        a.IsActive && !a.IsDeleted)
+            .Join(Context.Topics.Where(t => !t.IsDeleted && t.SemesterId == academicYearId),
+                a => a.TargetEntityId,
+                t => t.Id,
+                (a, t) => t)
             .OrderByDescending(t => t.CreatedAt)
             .ToListAsync(cancellationToken);
     }

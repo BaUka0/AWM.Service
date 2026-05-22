@@ -15,11 +15,9 @@ public class StudentConfiguration : IEntityTypeConfiguration<Student>
             .HasColumnName("StudentID")
             .ValueGeneratedNever();
 
-        builder.Property(e => e.SpecialityId)
-            .IsRequired();
+        builder.Property(e => e.SpecialityId);
 
-        builder.Property(e => e.StatusId)
-            .IsRequired();
+        builder.Property(e => e.StatusId);
 
         builder.Property(e => e.Year)
             .IsRequired();

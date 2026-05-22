@@ -25,6 +25,9 @@ public sealed class UniversityDbContext : DbContext
     public DbSet<SemesterType> SemesterTypes => Set<SemesterType>();
     public DbSet<Speciality> Specialities => Set<Speciality>();
     public DbSet<SpecialityLevel> SpecialityLevels => Set<SpecialityLevel>();
+    public DbSet<Specialization> Specializations => Set<Specialization>();
+    public DbSet<SpecialitySpecialization> SpecialitySpecializations => Set<SpecialitySpecialization>();
+    public DbSet<SpecializationsOrgUnit> SpecializationsOrgUnits => Set<SpecializationsOrgUnit>();
     public DbSet<StudentStatus> StudentStatuses => Set<StudentStatus>();
     public DbSet<Position> Positions => Set<Position>();
 

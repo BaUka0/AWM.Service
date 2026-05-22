@@ -9,6 +9,7 @@ public class EvaluationCriteria : Entity<int>, IAuditable, ISoftDeletable
 {
     public int WorkTypeId { get; private set; }
     public int? OrgUnitId { get; private set; }
+    public int? SpecialityId { get; private set; }
     public string CriteriaName { get; private set; } = null!;
     public int MaxScore { get; private set; }
     public decimal Weight { get; private set; }
@@ -30,7 +31,8 @@ public class EvaluationCriteria : Entity<int>, IAuditable, ISoftDeletable
         int maxScore,
         int createdBy,
         decimal weight = 1.0m,
-        int? orgUnitId = null)
+        int? orgUnitId = null,
+        int? specialityId = null)
     {
         if (string.IsNullOrWhiteSpace(criteriaName))
             throw new DomainException("EvaluationCriteria.NameRequired", "Criteria name is required.");
@@ -41,6 +43,7 @@ public class EvaluationCriteria : Entity<int>, IAuditable, ISoftDeletable
 
         WorkTypeId = workTypeId;
         OrgUnitId = orgUnitId;
+        SpecialityId = specialityId;
         CriteriaName = criteriaName;
         MaxScore = maxScore;
         Weight = weight;

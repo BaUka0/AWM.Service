@@ -1,6 +1,7 @@
 namespace AWM.Service.Application.Features.Thesis.Directions.Queries.GetDirectionById;
 
 using AWM.Service.Application.Features.Thesis.Directions.DTOs;
+using AWM.Service.Domain.CommonDomain.Enums;
 using AWM.Service.Domain.Repositories;
 using KDS.Primitives.FluentResult;
 using MediatR;
@@ -13,13 +14,16 @@ public sealed class GetDirectionByIdQueryHandler
 {
     private readonly IDirectionRepository _directionRepository;
     private readonly IWorkflowRepository _workflowRepository;
+    private readonly IStaffAssignmentRepository _staffAssignmentRepository;
 
     public GetDirectionByIdQueryHandler(
         IDirectionRepository directionRepository,
-        IWorkflowRepository workflowRepository)
+        IWorkflowRepository workflowRepository,
+        IStaffAssignmentRepository staffAssignmentRepository)
     {
         _directionRepository = directionRepository;
         _workflowRepository = workflowRepository;
+        _staffAssignmentRepository = staffAssignmentRepository;
     }
 
     public async Task<Result<DirectionDetailDto>> Handle(
@@ -47,13 +51,18 @@ public sealed class GetDirectionByIdQueryHandler
                     $"Direction with ID {request.Id} has been deleted."));
             }
 
+            // Get supervisor from StaffAssignments
+            var supervisorAssignment = (await _staffAssignmentRepository.GetByTargetAsync(
+                "Direction", direction.Id, cancellationToken))
+                .FirstOrDefault(a => a.RoleType == (int)StaffRoleType.Supervisor && a.IsActive && !a.IsDeleted);
+
             // Map to detailed DTO
             var currentState = await _workflowRepository.GetStateByIdAsync(direction.CurrentStateId, cancellationToken);
             var result = new DirectionDetailDto
             {
                 Id = direction.Id,
                 OrgUnitId = direction.OrgUnitId,
-                EmployeeId = direction.EmployeeId,
+                SupervisorUserId = supervisorAssignment?.UserId ?? 0,
                 SemesterId = direction.SemesterId,
                 WorkTypeId = direction.WorkTypeId,
                 TitleRu = direction.TitleRu,

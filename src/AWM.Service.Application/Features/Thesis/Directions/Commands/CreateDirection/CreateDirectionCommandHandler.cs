@@ -1,7 +1,7 @@
 namespace AWM.Service.Application.Features.Thesis.Directions.Commands.CreateDirection;
 
-using AWM.Service.Domain.Common;
-using AWM.Service.Domain.CommonDomain.Services;
+using AWM.Service.Domain.CommonDomain.Entities;
+using AWM.Service.Domain.CommonDomain.Enums;
 using AWM.Service.Domain.Repositories;
 using AWM.Service.Domain.Thesis.Entities;
 using AWM.Service.Domain.Wf.Entities;
@@ -18,7 +18,7 @@ public sealed class CreateDirectionCommandHandler
     private readonly IDirectionRepository _directionRepository;
     private readonly IWorkflowRepository _workflowRepository;
     private readonly IOrganizationLookupRepository _organizationLookupRepository;
-    private readonly IEmployeeRepository _EmployeeRepository;
+    private readonly IStaffAssignmentRepository _staffAssignmentRepository;
     private readonly ICurrentUserProvider _currentUserProvider;
     private readonly IStageValidationService _stageValidationService;
     private readonly IUnitOfWork _unitOfWork;
@@ -28,7 +28,7 @@ public sealed class CreateDirectionCommandHandler
         IDirectionRepository directionRepository,
         IWorkflowRepository workflowRepository,
         IOrganizationLookupRepository organizationLookupRepository,
-        IEmployeeRepository EmployeeRepository,
+        IStaffAssignmentRepository staffAssignmentRepository,
         ICurrentUserProvider currentUserProvider,
         IStageValidationService stageValidationService,
         IUnitOfWork unitOfWork,
@@ -37,7 +37,7 @@ public sealed class CreateDirectionCommandHandler
         _directionRepository = directionRepository;
         _workflowRepository = workflowRepository;
         _organizationLookupRepository = organizationLookupRepository;
-        _EmployeeRepository = EmployeeRepository;
+        _staffAssignmentRepository = staffAssignmentRepository;
         _currentUserProvider = currentUserProvider;
         _stageValidationService = stageValidationService;
         _unitOfWork = unitOfWork;
@@ -49,14 +49,13 @@ public sealed class CreateDirectionCommandHandler
         CancellationToken cancellationToken)
     {
         var currentUserId = _currentUserProvider.UserId;
-        _logger.LogInformation("Attempting to create Direction in Dept={DeptId} by CurrentUserId={CurrentUserId}",
-            request.DepartmentId, currentUserId);
-
         if (!currentUserId.HasValue)
         {
-            _logger.LogWarning("CreateDirection failed: Current user ID is not available.");
             return Result.Failure<long>(new Error("401", "User ID is not available."));
         }
+
+        // Supervisor ID is now UserId. If not provided, use current user.
+        var targetSupervisorUserId = request.SupervisorId > 0 ? request.SupervisorId : currentUserId.Value;
 
         // Validate department exists
         var department = await _organizationLookupRepository
@@ -64,67 +63,38 @@ public sealed class CreateDirectionCommandHandler
 
         if (department is null)
         {
-            _logger.LogWarning("CreateDirection failed: Department {DeptId} not found.", request.DepartmentId);
-            return Result.Failure<long>(new Error(
-                "404",
-                $"Department with ID {request.DepartmentId} not found."));
+            return Result.Failure<long>(new Error("404", $"Department with ID {request.DepartmentId} not found."));
         }
 
         // Validate that DirectionSubmission stage is open
         var (isAllowed, errorMessage) = await _stageValidationService
-            .ValidateOperationInStageAsync(request.DepartmentId, request.AcademicYearId,
-                1, cancellationToken);
+            .ValidateOperationInStageAsync(request.DepartmentId, request.AcademicYearId, 1, null, cancellationToken);
 
         if (!isAllowed)
         {
-            _logger.LogWarning("CreateDirection failed: Period closed - {Error}", errorMessage);
             return Result.Failure<long>(new Error("409", errorMessage!));
         }
 
         // Validate work type exists
-        var workType = await _workflowRepository
-            .GetWorkTypeByIdAsync(request.WorkTypeId, cancellationToken);
-
+        var workType = await _workflowRepository.GetWorkTypeByIdAsync(request.WorkTypeId, cancellationToken);
         if (workType is null)
         {
-            _logger.LogWarning("CreateDirection failed: WorkType {WorkTypeId} not found.", request.WorkTypeId);
-            return Result.Failure<long>(new Error(
-                "404",
-                $"Work type with ID {request.WorkTypeId} not found."));
+            return Result.Failure<long>(new Error("404", $"Work type with ID {request.WorkTypeId} not found."));
         }
 
-        // Get initial "Draft" state for this work type
-        var draftState = await _workflowRepository
-            .GetStateBySystemNameAsync(request.WorkTypeId, DirectionStates.Draft, cancellationToken);
-
+        // Get initial "Draft" state
+        var draftState = await _workflowRepository.GetStateBySystemNameAsync(request.WorkTypeId, DirectionStates.Draft, cancellationToken);
         if (draftState is null)
         {
-            _logger.LogError("CreateDirection failed: Draft state not found for work type {WorkTypeId}.", request.WorkTypeId);
-            return Result.Failure<long>(new Error(
-                "404",
-                $"Draft state not found for work type {request.WorkTypeId}."));
+            return Result.Failure<long>(new Error("404", $"Draft state not found for work type {request.WorkTypeId}."));
         }
 
         try
         {
-            var supervisorId = request.SupervisorId;
-            if (supervisorId <= 0)
-            {
-                var staff = await _EmployeeRepository.GetByUserIdAsync(currentUserId.Value, cancellationToken);
-                if (staff is null)
-                {
-                    return Result.Failure<long>(new Error("403", "User does not have an associated staff profile to act as a supervisor."));
-                }
-                supervisorId = staff.Id;
-            }
-
-            _logger.LogDebug("Determined SupervisorId: {SupervisorId} (Requested: {RequestedId}, CurrentUser: {CurrentUserId})",
-                supervisorId, request.SupervisorId, currentUserId.Value);
-
-            // Create direction entity using domain constructor
+            // Create direction entity
             var direction = new Direction(
                 orgUnitId: request.DepartmentId,
-                employeeId: supervisorId,
+                createdByUserId: currentUserId.Value,
                 semesterId: request.AcademicYearId,
                 workTypeId: request.WorkTypeId,
                 titleRu: request.TitleRu,
@@ -135,24 +105,29 @@ public sealed class CreateDirectionCommandHandler
                 descriptionKz: request.DescriptionKz,
                 descriptionEn: request.DescriptionEn);
 
-            // Save to repository
             await _directionRepository.AddAsync(direction, cancellationToken);
-
+            
+            // Critical: Save changes first to get the direction.Id if it's identity
+            // However, Direction uses long and might be identity. 
+            // In AWM, we usually use SaveChanges to get ID.
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-            _logger.LogInformation("Successfully created Direction {DirectionId} by user {CurrentUserId}", direction.Id, currentUserId.Value);
+            // Create StaffAssignment for the supervisor
+            var assignment = new StaffAssignment(
+                userId: targetSupervisorUserId,
+                roleType: StaffRoleType.Supervisor,
+                targetEntityType: "Direction",
+                targetEntityId: direction.Id,
+                createdBy: currentUserId.Value);
+
+            await _staffAssignmentRepository.AddAsync(assignment, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
             return Result.Success(direction.Id);
-        }
-        catch (ArgumentException ex)
-        {
-            // Domain validation errors (from entity constructor)
-            _logger.LogWarning(ex, "CreateDirection failed: Domain validation error - {Message}", ex.Message);
-            return Result.Failure<long>(new Error("400", ex.Message));
         }
         catch (Exception ex)
         {
-            // Unexpected errors
-            _logger.LogError(ex, "CreateDirection failed: Unexpected error");
+            _logger.LogError(ex, "CreateDirection failed");
             return Result.Failure<long>(new Error("500", ex.Message));
         }
     }

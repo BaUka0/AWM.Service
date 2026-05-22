@@ -14,8 +14,8 @@ public class Topic : AggregateRoot<long>, IAuditable, ISoftDeletable
     public long? DirectionId { get; private set; }
     public int SemesterId { get; private set; }
     public int OrgUnitId { get; private set; }
-    public int EmployeeId { get; private set; }
     public int WorkTypeId { get; private set; }
+    public int? SpecialityId { get; private set; }
 
     public string TitleRu { get; private set; } = null!;
     public string? TitleEn { get; private set; }
@@ -38,6 +38,9 @@ public class Topic : AggregateRoot<long>, IAuditable, ISoftDeletable
     public DateTime? DeletedAt { get; private set; }
     public int? DeletedBy { get; private set; }
 
+    // Navigation properties
+    public University.Speciality? Speciality { get; private set; }
+
     private readonly List<TopicApplication> _applications = new();
     public IReadOnlyCollection<TopicApplication> Applications => _applications.AsReadOnly();
 
@@ -45,7 +48,7 @@ public class Topic : AggregateRoot<long>, IAuditable, ISoftDeletable
 
     public Topic(
         int orgUnitId,
-        int employeeId,
+        int createdByUserId,
         int semesterId,
         int workTypeId,
         string titleRu,
@@ -55,7 +58,8 @@ public class Topic : AggregateRoot<long>, IAuditable, ISoftDeletable
         string? descriptionRu = null,
         string? descriptionKz = null,
         string? descriptionEn = null,
-        int maxParticipants = 1)
+        int maxParticipants = 1,
+        int? specialityId = null)
     {
         if (string.IsNullOrWhiteSpace(titleRu))
             throw new DomainException("Topic.TitleRuRequired", "Russian title is required.");
@@ -64,7 +68,6 @@ public class Topic : AggregateRoot<long>, IAuditable, ISoftDeletable
 
         DirectionId = directionId;
         OrgUnitId = orgUnitId;
-        EmployeeId = employeeId;
         SemesterId = semesterId;
         WorkTypeId = workTypeId;
         TitleRu = titleRu;
@@ -74,16 +77,17 @@ public class Topic : AggregateRoot<long>, IAuditable, ISoftDeletable
         DescriptionKz = descriptionKz;
         DescriptionEn = descriptionEn;
         MaxParticipants = maxParticipants;
+        SpecialityId = specialityId;
         IsSubmittedForApproval = false;
         IsApproved = false;
         IsClosed = false;
         CreatedAt = DateTime.UtcNow;
-        CreatedBy = employeeId; // Topic creator is supervisor
+        CreatedBy = createdByUserId; // Topic creator is supervisor
         LastModifiedAt = CreatedAt;
-        LastModifiedBy = employeeId;
+        LastModifiedBy = createdByUserId;
         IsDeleted = false;
 
-        RaiseDomainEvent(new TopicCreatedEvent(Id, directionId, employeeId));
+        RaiseDomainEvent(new TopicCreatedEvent(Id, directionId, createdByUserId));
     }
 
     /// <summary>

@@ -20,7 +20,6 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .HasMaxLength(200);
 
         builder.Property(e => e.FirstName)
-            .IsRequired()
             .HasMaxLength(200);
 
         builder.Property(e => e.MiddleName)

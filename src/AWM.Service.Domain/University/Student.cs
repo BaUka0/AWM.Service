@@ -8,8 +8,8 @@ using AWM.Service.Domain.Common;
 /// </summary>
 public class Student : Entity<int>
 {
-    public int SpecialityId { get; private set; }
-    public int StatusId { get; private set; }
+    public int? SpecialityId { get; private set; }
+    public int? StatusId { get; private set; }
     public int? CategoryId { get; private set; }
     public int Year { get; private set; }
     public decimal? GPA { get; private set; }

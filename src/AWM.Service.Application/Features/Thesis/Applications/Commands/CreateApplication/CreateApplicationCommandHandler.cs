@@ -92,7 +92,7 @@ public sealed class CreateApplicationCommandHandler : IRequestHandler<CreateAppl
         // 3a. Validate that TopicSelection stage is open
         var (isAllowed, errorMessage) = await _stageValidationService
             .ValidateOperationInStageAsync(topic.OrgUnitId, topic.SemesterId,
-                3, cancellationToken);
+                3, null, cancellationToken);
 
         if (!isAllowed)
         {

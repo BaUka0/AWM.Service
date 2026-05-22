@@ -43,6 +43,7 @@ public interface IStageRepository
         int orgUnitId,
         int semesterId,
         int workflowStageId,
+        int? specialityId = null,
         CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Stage>> GetByDepartmentAsync(
         int orgUnitId,
@@ -55,11 +56,13 @@ public interface IStageRepository
     Task<Stage?> GetActiveStageAsync(
         int orgUnitId,
         int semesterId,
+        int? specialityId = null,
         CancellationToken cancellationToken = default);
     Task<bool> IsStageOpenAsync(
         int orgUnitId,
         int semesterId,
         int workflowStageId,
+        int? specialityId = null,
         CancellationToken cancellationToken = default);
     Task AddAsync(Stage stage, CancellationToken cancellationToken = default);
     Task UpdateAsync(Stage stage, CancellationToken cancellationToken = default);

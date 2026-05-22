@@ -11,6 +11,7 @@ public sealed record StudentWorkDto
     public long? TopicId { get; init; }
     public int SemesterId { get; init; }
     public int OrgUnitId { get; init; }
+    public int? SpecialityId { get; init; }
     public int CurrentStateId { get; init; }
     public bool IsDefended { get; init; }
     public string? FinalGrade { get; init; }
@@ -24,6 +25,7 @@ public sealed record StudentWorkDto
             TopicId = entity.TopicId,
             SemesterId = entity.SemesterId,
             OrgUnitId = entity.OrgUnitId,
+            SpecialityId = entity.SpecialityId,
             CurrentStateId = entity.CurrentStateId,
             IsDefended = entity.IsDefended,
             FinalGrade = entity.FinalGrade,

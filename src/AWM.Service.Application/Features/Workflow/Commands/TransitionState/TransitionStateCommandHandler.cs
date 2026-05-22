@@ -4,6 +4,7 @@ using AWM.Service.Domain.Common;
 using AWM.Service.Domain.CommonDomain.Services;
 using AWM.Service.Domain.Repositories;
 using AWM.Service.Domain.Wf;
+using AWM.Service.Domain.Thesis.Entities;
 using AWM.Service.Domain.Wf.Services;
 using KDS.Primitives.FluentResult;
 using MediatR;
@@ -87,7 +88,7 @@ public sealed class TransitionStateCommandHandler : IRequestHandler<TransitionSt
 
             // Check if submission stage is open
             var (isAllowed, errorMessage) = await _stageValidationService
-                .ValidateOperationInStageAsync(direction.OrgUnitId, direction.SemesterId, 1, cancellationToken);
+                .ValidateOperationInStageAsync(direction.OrgUnitId, direction.SemesterId, 1, null, cancellationToken);
             if (!isAllowed)
                 return Result.Failure(new Error("409", errorMessage!));
         }
@@ -186,7 +187,9 @@ public sealed class TransitionStateCommandHandler : IRequestHandler<TransitionSt
             if (student is null)
                 return Result.Failure(new Error("404", "Student not found."));
 
-            var mandatoryChecks = await _specialityCheckTypeRepository.GetBySpecialityAsync(student.SpecialityId, cancellationToken);
+            var mandatoryChecks = student.SpecialityId.HasValue
+                ? await _specialityCheckTypeRepository.GetBySpecialityAsync(student.SpecialityId.Value, cancellationToken)
+                : Array.Empty<SpecialityCheckType>();
             
             // Initial checks are all mandatory checks except Anti-plagiarism
             var initialCheckTypeIds = mandatoryChecks
@@ -217,7 +220,9 @@ public sealed class TransitionStateCommandHandler : IRequestHandler<TransitionSt
             if (student is null)
                 return Result.Failure(new Error("404", "Student not found."));
 
-            var mandatoryChecks = await _specialityCheckTypeRepository.GetBySpecialityAsync(student.SpecialityId, cancellationToken);
+            var mandatoryChecks = student.SpecialityId.HasValue
+                ? await _specialityCheckTypeRepository.GetBySpecialityAsync(student.SpecialityId.Value, cancellationToken)
+                : Array.Empty<SpecialityCheckType>();
             var mandatoryCheckTypeIds = mandatoryChecks.Select(c => c.CheckTypeId).ToList();
 
             if (!work.IsEligibleForDefense(mandatoryCheckTypeIds))

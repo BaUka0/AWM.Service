@@ -10,6 +10,7 @@ public class TopicApplication : Entity<long>, IAuditable, ISoftDeletable
 {
     public long TopicId { get; private set; }
     public int StudentId { get; private set; }
+    public int? SpecialityId { get; private set; }
     public string? MotivationLetter { get; private set; }
     public DateTime AppliedAt { get; private set; }
     public int StatusId { get; private set; }
@@ -28,10 +29,11 @@ public class TopicApplication : Entity<long>, IAuditable, ISoftDeletable
 
     private TopicApplication() { }
 
-    public TopicApplication(long topicId, int studentId, string? motivationLetter = null)
+    public TopicApplication(long topicId, int studentId, string? motivationLetter = null, int? specialityId = null)
     {
         TopicId = topicId;
         StudentId = studentId;
+        SpecialityId = specialityId;
         MotivationLetter = motivationLetter;
         AppliedAt = DateTime.UtcNow;
         StatusId = (int)ApplicationStatusType.Submitted;

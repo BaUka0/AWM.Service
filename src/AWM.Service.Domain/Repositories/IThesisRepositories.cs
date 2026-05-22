@@ -10,7 +10,7 @@ public interface IDirectionRepository
     Task<Direction?> GetByIdAsync(long id, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Direction>> GetByIdsAsync(IEnumerable<long> ids, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Direction>> GetByDepartmentAsync(int departmentId, int academicYearId, CancellationToken cancellationToken = default);
-    Task<IReadOnlyList<Direction>> GetBySupervisorAsync(int supervisorId, int academicYearId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<Direction>> GetBySupervisorAsync(int userId, int academicYearId, CancellationToken cancellationToken = default);
     Task AddAsync(Direction direction, CancellationToken cancellationToken = default);
     Task UpdateAsync(Direction direction, CancellationToken cancellationToken = default);
     Task DeleteAsync(Direction direction, CancellationToken cancellationToken = default);
@@ -25,7 +25,7 @@ public interface ITopicRepository
     Task<IReadOnlyList<Topic>> GetByIdsAsync(IEnumerable<long> ids, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Topic>> GetByDepartmentAsync(int departmentId, int academicYearId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Topic>> GetByDepartmentWithApplicationsAsync(int departmentId, int academicYearId, CancellationToken cancellationToken = default);
-    Task<IReadOnlyList<Topic>> GetBySupervisorAsync(int supervisorId, int academicYearId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<Topic>> GetBySupervisorAsync(int userId, int academicYearId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Topic>> GetAvailableForSelectionAsync(int departmentId, int academicYearId, CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -50,7 +50,7 @@ public interface IStudentWorkRepository
     Task<IReadOnlyList<StudentWork>> GetByStudentAsync(int studentId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<StudentWork>> GetByDepartmentAsync(int departmentId, int academicYearId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<StudentWork>> GetByDepartmentWithParticipantsAndQualityChecksAsync(int departmentId, int academicYearId, CancellationToken cancellationToken = default);
-    Task<IReadOnlyList<StudentWork>> GetBySupervisorAsync(int supervisorId, int academicYearId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<StudentWork>> GetBySupervisorAsync(int userId, int academicYearId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<StudentWork>> GetByStateAsync(int stateId, int departmentId, CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -75,6 +75,40 @@ public interface IStudentWorkRepository
 
     Task AddAsync(StudentWork work, CancellationToken cancellationToken = default);
     Task UpdateAsync(StudentWork work, CancellationToken cancellationToken = default);
+}
+
+/// <summary>
+/// Repository for external reviewers (база внешних рецензентов).
+/// </summary>
+public interface IReviewerRepository
+{
+    /// <summary>
+    /// Gets a reviewer by ID.
+    /// </summary>
+    Task<Reviewer?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets all active reviewers (for dropdown selection).
+    /// </summary>
+    Task<IReadOnlyList<Reviewer>> GetActiveAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Searches reviewers by name or organization.
+    /// </summary>
+    Task<IReadOnlyList<Reviewer>> SearchAsync(string searchTerm, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets multiple reviewers by their IDs in a single query (bulk operation to avoid N+1).
+    /// </summary>
+    Task<IReadOnlyList<Reviewer>> GetByIdsAsync(IEnumerable<int> ids, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets a reviewer by linked system user ID.
+    /// </summary>
+    Task<Reviewer?> GetByUserIdAsync(int userId, CancellationToken cancellationToken = default);
+
+    Task AddAsync(Reviewer reviewer, CancellationToken cancellationToken = default);
+    Task UpdateAsync(Reviewer reviewer, CancellationToken cancellationToken = default);
 }
 
 /// <summary>

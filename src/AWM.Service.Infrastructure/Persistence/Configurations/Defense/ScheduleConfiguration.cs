@@ -42,13 +42,13 @@ public class ScheduleConfiguration : SoftDeletableEntityConfiguration<Schedule, 
         builder.HasOne<Commission>()
             .WithMany()
             .HasForeignKey(e => e.CommissionId)
-            .HasConstraintName("FK_Schedules_Commission")
+            .HasConstraintName("FK_Sched_Comm")
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne<StudentWork>()
             .WithMany()
             .HasForeignKey(e => e.WorkId)
-            .HasConstraintName("FK_Schedules_Work")
+            .HasConstraintName("FK_Sched_Work")
             .OnDelete(DeleteBehavior.Cascade);
 
         // Navigation to grades

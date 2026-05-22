@@ -15,6 +15,11 @@ public class Protocol : Entity<long>, IAuditable, ISoftDeletable
     public int? FinalizedBy { get; private set; }
     public DateTime? FinalizedAt { get; private set; }
 
+    public decimal? FinalScoreNumeric { get; private set; }
+    public string? FinalGradeLetter { get; private set; }
+    public string? Decision { get; private set; }
+    public string? ProtocolNumber { get; private set; }
+
     public DateTime CreatedAt { get; private set; }
     public int CreatedBy { get; private set; }
     public DateTime? LastModifiedAt { get; private set; }
@@ -26,11 +31,23 @@ public class Protocol : Entity<long>, IAuditable, ISoftDeletable
 
     private Protocol() { }
 
-    public Protocol(long scheduleId, int commissionId, DateTime sessionDate, int createdBy)
+    public Protocol(
+        long scheduleId, 
+        int commissionId, 
+        DateTime sessionDate, 
+        int createdBy,
+        string? protocolNumber = null,
+        decimal? finalScoreNumeric = null,
+        string? finalGradeLetter = null,
+        string? decision = null)
     {
         ScheduleId = scheduleId;
         CommissionId = commissionId;
         SessionDate = sessionDate;
+        ProtocolNumber = protocolNumber;
+        FinalScoreNumeric = finalScoreNumeric;
+        FinalGradeLetter = finalGradeLetter;
+        Decision = decision;
         IsFinalized = false;
 
         CreatedAt = DateTime.UtcNow;
@@ -68,6 +85,27 @@ public class Protocol : Entity<long>, IAuditable, ISoftDeletable
 
         LastModifiedAt = FinalizedAt;
         LastModifiedBy = finalizedBy;
+    }
+
+    /// <summary>
+    /// Updates final grading fields, protocol number, and decision/remarks.
+    /// </summary>
+    public void SetGradingAndDecision(
+        decimal? finalScoreNumeric,
+        string? finalGradeLetter,
+        string? decision,
+        string? protocolNumber,
+        int modifiedBy)
+    {
+        if (IsFinalized)
+            throw new DomainException("Protocol.ModifyFinalized", "Cannot modify finalized protocol.");
+
+        FinalScoreNumeric = finalScoreNumeric;
+        FinalGradeLetter = finalGradeLetter;
+        Decision = decision;
+        ProtocolNumber = protocolNumber;
+        LastModifiedAt = DateTime.UtcNow;
+        LastModifiedBy = modifiedBy;
     }
 
     /// <summary>

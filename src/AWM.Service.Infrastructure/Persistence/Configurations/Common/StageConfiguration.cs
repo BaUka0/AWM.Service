@@ -26,7 +26,10 @@ public class StageConfiguration : SoftDeletableEntityConfiguration<Stage, int>
 
         builder.Property(e => e.OrgUnitId)
             .IsRequired()
-            .HasColumnName("DepartmentId");
+            .HasColumnName("OrgUnitId");
+
+        builder.Property(e => e.SpecialityId)
+            .HasColumnName("SpecialityId");
 
         builder.Property(e => e.SemesterId)
             .IsRequired();
@@ -53,6 +56,12 @@ public class StageConfiguration : SoftDeletableEntityConfiguration<Stage, int>
             .HasConstraintName("FK_Stages_Dept")
             .OnDelete(DeleteBehavior.Restrict);
 
+        builder.HasOne<Speciality>()
+            .WithMany()
+            .HasForeignKey(e => e.SpecialityId)
+            .HasConstraintName("FK_Stages_Speciality")
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.HasOne<Semester>()
             .WithMany()
             .HasForeignKey(e => e.SemesterId)
@@ -62,11 +71,11 @@ public class StageConfiguration : SoftDeletableEntityConfiguration<Stage, int>
         builder.HasOne<WorkflowStage>()
             .WithMany()
             .HasForeignKey(e => e.WorkflowStageId)
-            .HasConstraintName("FK_Stages_WorkflowStage")
+            .HasConstraintName("FK_Stages_WfStage")
             .OnDelete(DeleteBehavior.Restrict);
 
         // Index for active stages
-        builder.HasIndex(e => new { e.OrgUnitId, e.SemesterId, e.WorkflowStageId })
+        builder.HasIndex(e => new { e.OrgUnitId, e.SpecialityId, e.SemesterId, e.WorkflowStageId })
             .HasDatabaseName("IX_Stages_Active")
             .HasFilter("[IsActive] = 1");
     }

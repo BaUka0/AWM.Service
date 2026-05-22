@@ -71,7 +71,7 @@ public sealed class SubmitDirectionCommandHandler
         // Validate that DirectionSubmission stage is open
         var (isAllowed, errorMessage) = await _stageValidationService
             .ValidateOperationInStageAsync(direction.OrgUnitId, direction.SemesterId,
-                1, cancellationToken);
+                1, null, cancellationToken);
 
         if (!isAllowed)
         {

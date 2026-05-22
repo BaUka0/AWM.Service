@@ -11,6 +11,7 @@ using AWM.Service.Domain.CommonDomain.Enums;
 public class Commission : AggregateRoot<int>, IAuditable, ISoftDeletable
 {
     public int OrgUnitId { get; private set; }
+    public int? SpecialityId { get; private set; }
     public int SemesterId { get; private set; }
     public string? Name { get; private set; }
     public int CommissionTypeId { get; private set; }
@@ -36,7 +37,8 @@ public class Commission : AggregateRoot<int>, IAuditable, ISoftDeletable
         int commissionTypeId,
         int createdBy,
         string? name = null,
-        int? preDefenseNumber = null)
+        int? preDefenseNumber = null,
+        int? specialityId = null)
     {
         if (commissionTypeId == (int)CommissionTypes.PreDefense && preDefenseNumber.HasValue)
         {
@@ -45,6 +47,7 @@ public class Commission : AggregateRoot<int>, IAuditable, ISoftDeletable
         }
 
         OrgUnitId = orgUnitId;
+        SpecialityId = specialityId;
         SemesterId = semesterId;
         CommissionTypeId = commissionTypeId;
         Name = name ?? GetDefaultName(commissionTypeId, preDefenseNumber);

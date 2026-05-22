@@ -26,12 +26,12 @@ public class CommissionConfiguration : SoftDeletableEntityConfiguration<Commissi
             .UseIdentityColumn();
 
         builder.Property(e => e.OrgUnitId)
-            .IsRequired()
-            .HasColumnName("DepartmentId");
+            .IsRequired();
+
+        builder.Property(e => e.SpecialityId);
 
         builder.Property(e => e.SemesterId)
-            .IsRequired()
-            .HasColumnName("AcademicYearId");
+            .IsRequired();
 
         builder.Property(e => e.Name)
             .HasMaxLength(255);
@@ -45,7 +45,19 @@ public class CommissionConfiguration : SoftDeletableEntityConfiguration<Commissi
         builder.HasOne<OrgUnit>()
             .WithMany()
             .HasForeignKey(e => e.OrgUnitId)
-            .HasConstraintName("FK_Commissions_Dept")
+            .HasConstraintName("FK_Comm_Dept")
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne<Speciality>()
+            .WithMany()
+            .HasForeignKey(e => e.SpecialityId)
+            .HasConstraintName("FK_Comm_Speciality")
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne<Semester>()
+            .WithMany()
+            .HasForeignKey(e => e.SemesterId)
+            .HasConstraintName("FK_Comm_Semester")
             .OnDelete(DeleteBehavior.Restrict);
 
         // Navigation to assignments (Unified Staff Assignments)

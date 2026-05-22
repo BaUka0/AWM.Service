@@ -5,7 +5,7 @@ using AWM.Service.Domain.Common;
 /// <summary>
 /// Event raised when a new topic is created.
 /// </summary>
-public sealed record TopicCreatedEvent(long TopicId, long? DirectionId, int SupervisorId) : DomainEventBase;
+public sealed record TopicCreatedEvent(long TopicId, long? DirectionId, int CreatorUserId) : DomainEventBase;
 
 /// <summary>
 /// Event raised when a topic is approved.

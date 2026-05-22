@@ -26,13 +26,13 @@ public class WorkTypeConfiguration : SoftDeletableEntityConfiguration<WorkType, 
             .HasMaxLength(100);
 
         builder.Property(e => e.SpecialityLevelId)
-            .HasColumnName("DegreeLevelId");
+            .HasColumnName("SpecialityLevelId");
 
         // Foreign key to SpecialityLevel
         builder.HasOne<SpecialityLevel>()
             .WithMany()
             .HasForeignKey(e => e.SpecialityLevelId)
-            .HasConstraintName("FK_WorkType_Degree")
+            .HasConstraintName("FK_WorkTypes_Level")
             .OnDelete(DeleteBehavior.Restrict);
 
         // Navigation to States

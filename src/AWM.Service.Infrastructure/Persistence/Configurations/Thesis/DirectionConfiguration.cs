@@ -32,15 +32,9 @@ public class DirectionConfiguration : SoftDeletableEntityConfiguration<Direction
             .UseIdentityColumn();
 
         builder.Property(e => e.OrgUnitId)
-            .HasColumnName("DepartmentId")
-            .IsRequired();
-
-        builder.Property(e => e.EmployeeId)
-            .HasColumnName("SupervisorId")
             .IsRequired();
 
         builder.Property(e => e.SemesterId)
-            .HasColumnName("AcademicYearId")
             .IsRequired();
 
         builder.Property(e => e.WorkTypeId)
@@ -86,22 +80,22 @@ public class DirectionConfiguration : SoftDeletableEntityConfiguration<Direction
             .HasConstraintName("FK_Directions_Dept")
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne<Employee>()
-            .WithMany()
-            .HasForeignKey(e => e.EmployeeId)
-            .HasConstraintName("FK_Directions_Supervisor")
-            .OnDelete(DeleteBehavior.Restrict);
-
         builder.HasOne<WorkType>()
             .WithMany()
             .HasForeignKey(e => e.WorkTypeId)
-            .HasConstraintName("FK_Directions_WorkType")
+            .HasConstraintName("FK_Directions_Type")
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne<State>()
             .WithMany()
             .HasForeignKey(e => e.CurrentStateId)
             .HasConstraintName("FK_Directions_State")
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne<Semester>()
+            .WithMany()
+            .HasForeignKey(e => e.SemesterId)
+            .HasConstraintName("FK_Directions_Semester")
             .OnDelete(DeleteBehavior.Restrict);
 
         // Navigation to Topics
@@ -112,6 +106,10 @@ public class DirectionConfiguration : SoftDeletableEntityConfiguration<Direction
 
         // Index for filtering
         builder.HasIndex(e => new { e.OrgUnitId, e.SemesterId, e.CurrentStateId })
+            .HasDatabaseName("IX_Directions_Dept_Year");
+    }
+}
+.HasIndex(e => new { e.OrgUnitId, e.SemesterId, e.CurrentStateId })
             .HasDatabaseName("IX_Directions_Dept_Year");
     }
 }
