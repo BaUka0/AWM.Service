@@ -8,6 +8,7 @@ public sealed class UserProfileResponse
     public int UserId { get; init; }
     public string Login { get; init; } = string.Empty;
     public string Email { get; init; } = string.Empty;
+    public string Name { get; init; } = string.Empty;
     public IReadOnlyList<string> Roles { get; init; } = [];
 
     /// <summary>

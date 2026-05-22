@@ -1,11 +1,7 @@
-using AWM.Service.Application.Features.Admin.Users.Commands.CreateUser;
-using AWM.Service.Application.Features.Admin.Users.Commands.ToggleUserStatus;
-using AWM.Service.Application.Features.Admin.Users.Commands.UpdateUser;
 using AWM.Service.Application.Features.Admin.Users.Queries.GetAllUsers;
 using AWM.Service.Application.Features.Admin.Users.Queries.GetUserById;
 using AWM.Service.Application.Features.Auth.Queries.GetCurrentUserProfile;
 using AWM.Service.WebAPI.Authorization;
-using AWM.Service.WebAPI.Common.Contracts.Requests.Users;
 using AWM.Service.WebAPI.Common.Contracts.Responses;
 using Mapster;
 using MediatR;
@@ -114,53 +110,5 @@ public sealed class UsersController : BaseController
 
         var response = result.Value.Adapt<AdminUserResponse>();
         return Ok(response);
-    }
-
-    /// <summary>
-    /// Create a new user.
-    /// </summary>
-    [HttpPost]
-    [RequireAccess("Users", "Create")]
-    [ProducesResponseType(typeof(int), StatusCodes.Status201Created)]
-    public async Task<IActionResult> Create([FromBody] CreateUserRequest request, CancellationToken cancellationToken = default)
-    {
-        var command = request.Adapt<CreateUserCommand>();
-        var result = await _sender.Send(command, cancellationToken);
-
-        if (result.IsFailed) return HandleResultError(result.Error);
-
-        return CreatedAtAction(nameof(GetById), new { userId = result.Value, version = "1.0" }, result.Value);
-    }
-
-    /// <summary>
-    /// Update an existing user.
-    /// </summary>
-    [HttpPut("{userId}")]
-    [RequireAccess("Users", "Update")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    public async Task<IActionResult> Update(int userId, [FromBody] UpdateUserRequest request, CancellationToken cancellationToken = default)
-    {
-        var command = request.Adapt<UpdateUserCommand>() with { UserId = userId };
-        var result = await _sender.Send(command, cancellationToken);
-
-        if (result.IsFailed) return HandleResultError(result.Error);
-
-        return NoContent();
-    }
-
-    /// <summary>
-    /// Toggle user activation status.
-    /// </summary>
-    [HttpPatch("{userId}/status")]
-    [RequireAccess("Users", "Update")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    public async Task<IActionResult> ToggleStatus(int userId, [FromBody] ToggleUserStatusRequest request, CancellationToken cancellationToken = default)
-    {
-        var command = new ToggleUserStatusCommand { UserId = userId, IsActive = request.IsActive };
-        var result = await _sender.Send(command, cancellationToken);
-
-        if (result.IsFailed) return HandleResultError(result.Error);
-
-        return NoContent();
     }
 }

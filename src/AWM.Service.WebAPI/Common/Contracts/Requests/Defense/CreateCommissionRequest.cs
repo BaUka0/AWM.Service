@@ -44,5 +44,8 @@ public sealed record CreateCommissionRequest
 public record CreateCommissionMemberRequest
 {
     public int UserId { get; init; }
+    /// <summary>
+    /// Role of the member (2 = Chairman, 3 = Secretary, 4 = Member).
+    /// </summary>
     public int Role { get; init; }
 }

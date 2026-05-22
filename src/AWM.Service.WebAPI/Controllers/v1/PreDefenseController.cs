@@ -7,7 +7,7 @@ using AWM.Service.Application.Features.Defense.PreDefense.Commands.GeneratePreDe
 using AWM.Service.Application.Features.Defense.PreDefense.Commands.RecordAttendance;
 using AWM.Service.Application.Features.Defense.PreDefense.Commands.SchedulePreDefense;
 using AWM.Service.Application.Features.Defense.PreDefense.Commands.StartReconciliation;
-using AWM.Service.Application.Features.Defense.PreDefense.Commands.SubmitPreDefenseGrade;
+using AWM.Service.Application.Features.Defense.Evaluation.Commands.SubmitGrade;
 using AWM.Service.Application.Features.Defense.PreDefense.DTOs;
 using AWM.Service.Application.Features.Defense.PreDefense.Queries.GetFailedPreDefenseStudents;
 using AWM.Service.Application.Features.Defense.PreDefense.Queries.GetPreDefenseAttempts;
@@ -189,7 +189,7 @@ public sealed class PreDefenseController : BaseController
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> SubmitGrade(long scheduleId, [FromBody] SubmitPreDefenseGradeRequest request, CancellationToken cancellationToken = default)
     {
-        var command = request.Adapt<SubmitPreDefenseGradeCommand>() with { ScheduleId = scheduleId };
+        var command = request.Adapt<SubmitGradeCommand>() with { ScheduleId = scheduleId };
 
         var result = await _sender.Send(command, cancellationToken);
 

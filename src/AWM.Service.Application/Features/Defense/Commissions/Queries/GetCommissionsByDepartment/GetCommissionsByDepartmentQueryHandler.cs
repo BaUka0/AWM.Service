@@ -54,7 +54,7 @@ public sealed class GetCommissionsByDepartmentQueryHandler
                         Id = c.Id,
                         OrgUnitId = c.OrgUnitId,
                         SemesterId = c.SemesterId,
-                        CommissionType = c.CommissionTypeId.ToString(),
+                        CommissionType = ((AWM.Service.Domain.Defense.Enums.CommissionTypes)c.CommissionTypeId).ToString(),
                         Name = c.Name,
                         PreDefenseNumber = c.PreDefenseNumber,
                         MemberCount = c.Assignments.Count(a => a.IsActive),

@@ -12,8 +12,8 @@ public sealed record AddCommissionMemberRequest
     public int UserId { get; init; }
 
     /// <summary>
-    /// Role of the member in the commission (1 = Chairman, 2 = Secretary, 3 = Member).
+    /// Role of the member in the commission (2 = Chairman, 3 = Secretary, 4 = Member).
     /// </summary>
-    /// <example>1</example>
+    /// <example>2</example>
     public int RoleInCommission { get; init; }
 }

@@ -39,7 +39,7 @@ public sealed class GetCommissionByIdQueryHandler
                 Id = commission.Id,
                 OrgUnitId = commission.OrgUnitId,
                 SemesterId = commission.SemesterId,
-                CommissionType = commission.CommissionTypeId.ToString(),
+                CommissionType = ((AWM.Service.Domain.Defense.Enums.CommissionTypes)commission.CommissionTypeId).ToString(),
                 Name = commission.Name,
                 PreDefenseNumber = commission.PreDefenseNumber,
                 CreatedAt = commission.CreatedAt,

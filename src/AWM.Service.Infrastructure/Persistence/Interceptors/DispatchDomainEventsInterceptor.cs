@@ -18,7 +18,7 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 public sealed class DispatchDomainEventsInterceptor : SaveChangesInterceptor, IDbTransactionInterceptor
 {
     private readonly IPublisher _publisher;
-    private List<IDomainEvent>? _pendingEvents;
+    private readonly List<IDomainEvent> _pendingEvents = new();
 
     public DispatchDomainEventsInterceptor(IPublisher publisher)
     {
@@ -27,7 +27,7 @@ public sealed class DispatchDomainEventsInterceptor : SaveChangesInterceptor, ID
 
     public override InterceptionResult<int> SavingChanges(DbContextEventData eventData, InterceptionResult<int> result)
     {
-        _pendingEvents = CollectDomainEvents(eventData.Context);
+        CollectAndAccumulateDomainEvents(eventData.Context);
         return base.SavingChanges(eventData, result);
     }
 
@@ -42,7 +42,7 @@ public sealed class DispatchDomainEventsInterceptor : SaveChangesInterceptor, ID
         InterceptionResult<int> result,
         CancellationToken cancellationToken = default)
     {
-        _pendingEvents = CollectDomainEvents(eventData.Context);
+        CollectAndAccumulateDomainEvents(eventData.Context);
         return await base.SavingChangesAsync(eventData, result, cancellationToken);
     }
 
@@ -57,13 +57,13 @@ public sealed class DispatchDomainEventsInterceptor : SaveChangesInterceptor, ID
 
     public override void SaveChangesFailed(DbContextErrorEventData eventData)
     {
-        _pendingEvents = null;
+        _pendingEvents.Clear();
         base.SaveChangesFailed(eventData);
     }
 
     public override Task SaveChangesFailedAsync(DbContextErrorEventData eventData, CancellationToken cancellationToken = default)
     {
-        _pendingEvents = null;
+        _pendingEvents.Clear();
         return base.SaveChangesFailedAsync(eventData, cancellationToken);
     }
 
@@ -73,13 +73,15 @@ public sealed class DispatchDomainEventsInterceptor : SaveChangesInterceptor, ID
 
     public void TransactionCommitted(DbTransaction transaction, TransactionEndEventData eventData)
     {
-        if (_pendingEvents != null)
+        if (_pendingEvents.Count > 0)
         {
-            foreach (var domainEvent in _pendingEvents)
+            var eventsToDispatch = _pendingEvents.ToList();
+            _pendingEvents.Clear();
+
+            foreach (var domainEvent in eventsToDispatch)
             {
                 _publisher.Publish(domainEvent).GetAwaiter().GetResult();
             }
-            _pendingEvents = null;
         }
     }
 
@@ -88,19 +90,21 @@ public sealed class DispatchDomainEventsInterceptor : SaveChangesInterceptor, ID
         TransactionEndEventData eventData,
         CancellationToken cancellationToken = default)
     {
-        if (_pendingEvents != null)
+        if (_pendingEvents.Count > 0)
         {
-            foreach (var domainEvent in _pendingEvents)
+            var eventsToDispatch = _pendingEvents.ToList();
+            _pendingEvents.Clear();
+
+            foreach (var domainEvent in eventsToDispatch)
             {
                 await _publisher.Publish(domainEvent, cancellationToken);
             }
-            _pendingEvents = null;
         }
     }
 
     public void TransactionRolledBack(DbTransaction transaction, TransactionEndEventData eventData)
     {
-        _pendingEvents = null;
+        _pendingEvents.Clear();
     }
 
     public Task TransactionRolledBackAsync(
@@ -108,15 +112,15 @@ public sealed class DispatchDomainEventsInterceptor : SaveChangesInterceptor, ID
         TransactionEndEventData eventData,
         CancellationToken cancellationToken = default)
     {
-        _pendingEvents = null;
+        _pendingEvents.Clear();
         return Task.CompletedTask;
     }
 
     // Helper methods
 
-    private static List<IDomainEvent>? CollectDomainEvents(DbContext? context)
+    private void CollectAndAccumulateDomainEvents(DbContext? context)
     {
-        if (context == null) return null;
+        if (context == null) return;
 
         var entitiesWithEvents = context.ChangeTracker
             .Entries<IAggregateRoot>()
@@ -130,42 +134,47 @@ public sealed class DispatchDomainEventsInterceptor : SaveChangesInterceptor, ID
 
         entitiesWithEvents.ForEach(e => e.ClearDomainEvents());
 
-        return domainEvents.Any() ? domainEvents : null;
+        if (domainEvents.Any())
+        {
+            _pendingEvents.AddRange(domainEvents);
+        }
     }
 
     private void DispatchPendingEvents(DbContext? context)
     {
-        if (_pendingEvents == null) return;
-
         // If there's an active manual transaction, defer dispatching until TransactionCommitted
         if (context?.Database.CurrentTransaction != null)
         {
             return;
         }
 
-        foreach (var domainEvent in _pendingEvents)
+        if (_pendingEvents.Count == 0) return;
+
+        var eventsToDispatch = _pendingEvents.ToList();
+        _pendingEvents.Clear();
+
+        foreach (var domainEvent in eventsToDispatch)
         {
             _publisher.Publish(domainEvent).GetAwaiter().GetResult();
         }
-
-        _pendingEvents = null;
     }
 
     private async Task DispatchPendingEventsAsync(DbContext? context, CancellationToken cancellationToken = default)
     {
-        if (_pendingEvents == null) return;
-
         // If there's an active manual transaction, defer dispatching until TransactionCommittedAsync
         if (context?.Database.CurrentTransaction != null)
         {
             return;
         }
 
-        foreach (var domainEvent in _pendingEvents)
+        if (_pendingEvents.Count == 0) return;
+
+        var eventsToDispatch = _pendingEvents.ToList();
+        _pendingEvents.Clear();
+
+        foreach (var domainEvent in eventsToDispatch)
         {
             await _publisher.Publish(domainEvent, cancellationToken);
         }
-
-        _pendingEvents = null;
     }
 }

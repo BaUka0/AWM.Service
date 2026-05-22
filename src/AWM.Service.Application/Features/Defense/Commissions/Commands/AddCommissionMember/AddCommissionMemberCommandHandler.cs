@@ -44,14 +44,12 @@ public sealed class AddCommissionMemberCommandHandler : IRequestHandler<AddCommi
                     $"Commission with ID {request.CommissionId} not found."));
             }
 
-            // Map old CommissionRoles to new unified StaffRoleType
-            var roleType = request.CommissionRoleId switch
-            {
-                (int)CommissionRoles.Chairman => StaffRoleType.CommissionChairman,
-                (int)CommissionRoles.Secretary => StaffRoleType.CommissionSecretary,
-                (int)CommissionRoles.Member => StaffRoleType.CommissionMember,
-                _ => throw new InvalidOperationException($"Unknown commission role ID: {request.CommissionRoleId}")
-            };
+            // Directly cast to StaffRoleType as the API now uses unified IDs:
+            // 2=Chairman, 3=Secretary, 4=Member
+            var roleType = (StaffRoleType)request.CommissionRoleId;
+            
+            if (!Enum.IsDefined(typeof(StaffRoleType), roleType))
+                throw new InvalidOperationException($"Unknown commission role ID: {request.CommissionRoleId}");
 
             // Domain method enforces: only one chairman, only one secretary, etc.
             var assignment = commission.AddMember(request.UserId, roleType, currentUserId.Value);

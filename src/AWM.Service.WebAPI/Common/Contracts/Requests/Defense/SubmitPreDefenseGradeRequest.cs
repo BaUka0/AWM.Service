@@ -6,10 +6,10 @@ namespace AWM.Service.WebAPI.Common.Contracts.Requests.Defense;
 public sealed record SubmitPreDefenseGradeRequest
 {
     /// <summary>
-    /// Commission member ID who is submitting the grade.
+    /// Assignment record ID (StaffAssignment) for the member submitting the grade.
     /// </summary>
     /// <example>5</example>
-    public int MemberId { get; init; }
+    public long AssignmentId { get; init; }
 
     /// <summary>
     /// Evaluation criteria ID to grade.

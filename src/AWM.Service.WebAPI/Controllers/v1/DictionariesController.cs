@@ -1,11 +1,11 @@
-namespace AWM.Service.WebAPI.Controllers.v1;
+﻿namespace AWM.Service.WebAPI.Controllers.v1;
 
 using AWM.Service.Application.Features.Admin.Roles.Queries.GetAllRoles;
 using AWM.Service.Application.Features.Common.Dictionaries.Queries.GetSemesterTypes;
 using AWM.Service.Application.Features.Common.Dictionaries.Queries.GetOrgUnitTypes;
 using AWM.Service.Application.Features.Common.Dictionaries.Queries.GetWorkflowStages;
-using AWM.Service.Application.Features.Edu.AcademicPrograms.Queries.GetAcademicPrograms;
-using AWM.Service.Application.Features.Edu.DegreeLevels.Queries.GetDegreeLevels;
+using AWM.Service.Application.Features.Edu.Specialities.Queries.GetSpecialities;
+using AWM.Service.Application.Features.Edu.SpecialityLevels.Queries.GetSpecialityLevels;
 using AWM.Service.WebAPI.Authorization;
 using AWM.Service.WebAPI.Common.Contracts.Responses.Common;
 using MediatR;
@@ -33,9 +33,9 @@ public sealed class DictionariesController : BaseController
     [HttpGet("degree-levels")]
     [RequireAccess("Specialities", "Read")]
     [ProducesResponseType(typeof(IReadOnlyList<DictionaryItemResponse>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetDegreeLevels(CancellationToken cancellationToken = default)
+    public async Task<IActionResult> GetSpecialityLevels(CancellationToken cancellationToken = default)
     {
-        var result = await _sender.Send(new GetDegreeLevelsQuery(), cancellationToken);
+        var result = await _sender.Send(new GetSpecialityLevelsQuery(), cancellationToken);
         if (result.IsFailed) return HandleResultError(result.Error);
 
         var response = result.Value.Select(d => new DictionaryItemResponse { Id = d.Id, Name = d.Name }).ToList();
@@ -48,9 +48,9 @@ public sealed class DictionariesController : BaseController
     [HttpGet("academic-programs")]
     [RequireAccess("Specialities", "Read")]
     [ProducesResponseType(typeof(IReadOnlyList<DictionaryItemResponse>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetAcademicPrograms(CancellationToken cancellationToken = default)
+    public async Task<IActionResult> GetSpecialities(CancellationToken cancellationToken = default)
     {
-        var result = await _sender.Send(new GetAcademicProgramsQuery(), cancellationToken);
+        var result = await _sender.Send(new GetSpecialitiesQuery(), cancellationToken);
         if (result.IsFailed) return HandleResultError(result.Error);
 
         var response = result.Value

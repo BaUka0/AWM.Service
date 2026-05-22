@@ -47,14 +47,12 @@ public sealed class CreateCommissionCommandHandler : IRequestHandler<CreateCommi
 
             foreach (var member in request.Members)
             {
-                // Map old CommissionRoles to new unified StaffRoleType
-                var roleType = member.CommissionRoleId switch
-                {
-                    (int)CommissionRoles.Chairman => StaffRoleType.CommissionChairman,
-                    (int)CommissionRoles.Secretary => StaffRoleType.CommissionSecretary,
-                    (int)CommissionRoles.Member => StaffRoleType.CommissionMember,
-                    _ => throw new InvalidOperationException($"Unknown commission role ID: {member.CommissionRoleId}")
-                };
+                // Directly cast to StaffRoleType as the API now uses unified IDs:
+                // 2=Chairman, 3=Secretary, 4=Member
+                var roleType = (StaffRoleType)member.CommissionRoleId;
+                
+                if (!Enum.IsDefined(typeof(StaffRoleType), roleType))
+                    throw new InvalidOperationException($"Unknown commission role ID: {member.CommissionRoleId}");
 
                 commission.AddMember(member.UserId, roleType, userId.Value);
             }

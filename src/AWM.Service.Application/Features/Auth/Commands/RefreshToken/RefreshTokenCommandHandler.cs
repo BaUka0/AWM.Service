@@ -72,13 +72,16 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, R
         await _localAccountRepository.UpdateAsync(localAccount, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
+        var fullName = $"{user.LastName} {user.FirstName} {user.MiddleName}".Trim();
+
         return Result.Success(new AuthResult(
             token,
             user.Email ?? string.Empty,
             user.Id,
             user.Email ?? string.Empty,
             roles,
-            newRefreshToken
+            newRefreshToken,
+            fullName
         ));
     }
 }

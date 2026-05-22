@@ -1,6 +1,6 @@
 namespace AWM.Service.WebAPI.Controllers.v1;
 
-using AWM.Service.Application.Features.Edu.DegreeLevels.Queries.GetDegreeLevels;
+using AWM.Service.Application.Features.Edu.SpecialityLevels.Queries.GetSpecialityLevels;
 using AWM.Service.WebAPI.Common.Contracts.Responses.Edu;
 using AWM.Service.WebAPI.Authorization;
 using MediatR;
@@ -39,7 +39,7 @@ public sealed class SpecialityLevelsController : BaseController
         [FromQuery] string? name,
         CancellationToken cancellationToken = default)
     {
-        var query = new GetDegreeLevelsQuery
+        var query = new GetSpecialityLevelsQuery
         {
             Name = name
         };
@@ -51,7 +51,7 @@ public sealed class SpecialityLevelsController : BaseController
             return HandleResultError(result.Error);
         }
 
-        var response = result.Value.Select(dto => new SpecialityLevelResponse
+        var response = result.Value.Select(dto => new SpecialityLevelResponse  
         {
             Id = dto.Id,
             Name = dto.Name

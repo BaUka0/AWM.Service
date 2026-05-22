@@ -78,14 +78,12 @@ public sealed class WithdrawApplicationCommandHandler : IRequestHandler<Withdraw
         }
 
         // 4. Check if application is still pending (optional business rule)
-        // Uncomment if students should only be able to withdraw pending applications
-        /*
+        // Students should only be able to withdraw pending applications
         if (!application.IsPending)
         {
             return Result.Failure(new Error("Application.CannotWithdraw", 
                 "Only pending applications can be withdrawn. This application has already been reviewed."));
         }
-        */
 
         // 5. Withdraw the application (soft delete)
         // deletedBy uses Auth.Users.Id (audit field, not a domain FK)

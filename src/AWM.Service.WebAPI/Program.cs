@@ -20,6 +20,20 @@ var builder = WebApplication.CreateBuilder(args);
 
 #region Service Configuration
 builder.Services.AddControllers();
+
+// Configure Mapster mappings to resolve naming mismatches in commission requests
+TypeAdapterConfig<AWM.Service.WebAPI.Common.Contracts.Requests.Defense.AddCommissionMemberRequest, AWM.Service.Application.Features.Defense.Commissions.Commands.AddCommissionMember.AddCommissionMemberCommand>
+    .NewConfig()
+    .Map(dest => dest.CommissionRoleId, src => src.RoleInCommission);
+
+TypeAdapterConfig<AWM.Service.WebAPI.Common.Contracts.Requests.Defense.CreateCommissionRequest, AWM.Service.Application.Features.Defense.Commissions.Commands.CreateCommission.CreateCommissionCommand>
+    .NewConfig()
+    .Map(dest => dest.CommissionTypeId, src => src.CommissionType);
+
+TypeAdapterConfig<AWM.Service.WebAPI.Common.Contracts.Requests.Defense.CreateCommissionMemberRequest, AWM.Service.Application.Features.Defense.Commissions.Commands.CreateCommission.CreateCommissionMemberCommand>
+    .NewConfig()
+    .Map(dest => dest.CommissionRoleId, src => src.Role);
+
 builder.Services.AddSingleton(TypeAdapterConfig.GlobalSettings);
 
 var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();

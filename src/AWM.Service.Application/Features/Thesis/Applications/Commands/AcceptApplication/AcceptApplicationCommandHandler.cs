@@ -164,6 +164,15 @@ public sealed class AcceptApplicationCommandHandler : IRequestHandler<AcceptAppl
                     $"Failed to create student work: {workResult.Error.Message}"));
             }
 
+            // Auto-close topic if all slots are filled (must be inside transaction for atomicity)
+            if (!topic.CanAcceptApplications())
+            {
+                topic.Close();
+                await _topicRepository.UpdateAsync(topic, cancellationToken);
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
+                _logger.LogInformation("Topic ID={TopicId} auto-closed inside transaction: all slots filled.", topic.Id);
+            }
+
             await _unitOfWork.CommitTransactionAsync(cancellationToken);
 
             // Notify student about acceptance.
@@ -183,15 +192,6 @@ public sealed class AcceptApplicationCommandHandler : IRequestHandler<AcceptAppl
             else
             {
                 _logger.LogWarning("AcceptApplication: Student not found for StudentId={StudentId}, student notification skipped.", application.StudentId);
-            }
-
-            // Auto-close topic if all slots are filled
-            if (!topic.CanAcceptApplications())
-            {
-                topic.Close();
-                await _topicRepository.UpdateAsync(topic, cancellationToken);
-                await _unitOfWork.SaveChangesAsync(cancellationToken);
-                _logger.LogInformation("Topic ID={TopicId} auto-closed: all slots filled.", topic.Id);
             }
 
             _logger.LogInformation("Successfully accepted application ID={ApplicationId} and created student work.", request.ApplicationId);

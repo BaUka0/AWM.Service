@@ -12,10 +12,3 @@ public enum CommissionTypes
     PreDefense = 1,
     GAK = 2
 }
-
-public enum CommissionRoles
-{
-    Chairman = 1,
-    Secretary = 2,
-    Member = 3
-}

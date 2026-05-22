@@ -76,13 +76,16 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<AuthResu
         await _localAccountRepository.UpdateAsync(localAccount, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
+        var fullName = $"{user.LastName} {user.FirstName} {user.MiddleName}".Trim();
+
         return Result.Success(new AuthResult(
             token,
             user.Email ?? string.Empty,
             user.Id,
             user.Email ?? string.Empty,
             roles,
-            refreshToken
+            refreshToken,
+            fullName
         ));
     }
 }

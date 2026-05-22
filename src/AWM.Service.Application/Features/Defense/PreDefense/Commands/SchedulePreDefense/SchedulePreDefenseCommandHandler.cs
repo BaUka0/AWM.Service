@@ -3,6 +3,8 @@ namespace AWM.Service.Application.Features.Defense.PreDefense.Commands.ScheduleP
 using AWM.Service.Domain.Common;
 using AWM.Service.Domain.CommonDomain.Services;
 using AWM.Service.Domain.Defense.Entities;
+using AWM.Service.Domain.CommonDomain.Constants;
+using AWM.Service.Domain.Defense.Enums;
 using AWM.Service.Domain.Repositories;
 using KDS.Primitives.FluentResult;
 using MediatR;
@@ -50,17 +52,17 @@ public sealed class SchedulePreDefenseCommandHandler : IRequestHandler<ScheduleP
                 return Result.Failure<long>(new Error("NotFound.Commission",
                     $"Commission with ID {request.CommissionId} not found."));
 
-            if (commission.CommissionTypeId != 1)
+            if (commission.CommissionTypeId != (int)CommissionTypes.PreDefense)
                 return Result.Failure<long>(new Error("BusinessRule.Commission",
                     "The specified commission is not a PreDefense commission."));
 
             // Validate that the appropriate pre-defense stage is open
             var workflowStageId = (commission.PreDefenseNumber ?? 1) switch
             {
-                1 => 4,
-                2 => 5,
-                3 => 6,
-                _ => 4
+                1 => WorkflowStageIds.PreDefense1,
+                2 => WorkflowStageIds.PreDefense2,
+                3 => WorkflowStageIds.PreDefense3,
+                _ => WorkflowStageIds.PreDefense1
             };
 
             var (isAllowed, errorMessage) = await _stageValidationService.ValidateOperationInStageAsync(
