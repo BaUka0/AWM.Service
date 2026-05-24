@@ -10,7 +10,7 @@ public sealed class ReviewDirectionCommandValidator : AbstractValidator<ReviewDi
         RuleFor(v => v.Decision).IsInEnum();
         RuleFor(v => v.Comment)
             .NotEmpty()
-            .When(v => v.Decision == ReviewDecision.RequireRevision || v.Decision == ReviewDecision.Reject)
-            .WithMessage("Comment is required for rejection or revision request.");
+            .When(v => v.Decision == ReviewDecision.RequireRevision)
+            .WithMessage("Comment is required for revision request.");
     }
 }

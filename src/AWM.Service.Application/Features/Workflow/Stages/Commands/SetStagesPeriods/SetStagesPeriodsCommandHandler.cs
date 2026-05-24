@@ -14,6 +14,8 @@ public sealed class SetStagesPeriodsCommandHandler : IRequestHandler<SetStagesPe
     private readonly IStaffAssignmentRepository _staffAssignmentRepository;
     private readonly IStudentReadOnlyRepository _studentRepository;
     private readonly IEmployeeReadOnlyRepository _employeeRepository;
+    private readonly ISpecializationsOrgUnitReadOnlyRepository _specializationsOrgUnitRepository;
+    private readonly ISpecialitySpecializationReadOnlyRepository _specialitySpecializationRepository;
     private readonly INotificationService _notificationService;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICurrentUserProvider _currentUserProvider;
@@ -23,6 +25,8 @@ public sealed class SetStagesPeriodsCommandHandler : IRequestHandler<SetStagesPe
         IStaffAssignmentRepository staffAssignmentRepository,
         IStudentReadOnlyRepository studentRepository,
         IEmployeeReadOnlyRepository employeeRepository,
+        ISpecializationsOrgUnitReadOnlyRepository specializationsOrgUnitRepository,
+        ISpecialitySpecializationReadOnlyRepository specialitySpecializationRepository,
         INotificationService notificationService,
         IUnitOfWork unitOfWork,
         ICurrentUserProvider currentUserProvider)
@@ -31,6 +35,8 @@ public sealed class SetStagesPeriodsCommandHandler : IRequestHandler<SetStagesPe
         _staffAssignmentRepository = staffAssignmentRepository;
         _studentRepository = studentRepository;
         _employeeRepository = employeeRepository;
+        _specializationsOrgUnitRepository = specializationsOrgUnitRepository;
+        _specialitySpecializationRepository = specialitySpecializationRepository;
         _notificationService = notificationService;
         _unitOfWork = unitOfWork;
         _currentUserProvider = currentUserProvider;
@@ -127,23 +133,54 @@ public sealed class SetStagesPeriodsCommandHandler : IRequestHandler<SetStagesPe
         }
 
         // For Students
+        var studentUserIds = new List<int>();
         if (request.SpecialityId.HasValue)
         {
             var students = await _studentRepository.GetBySpecialityAsync(request.SpecialityId.Value, cancellationToken);
-            var studentUserIds = students.Select(s => s.Id).ToList();
-            if (studentUserIds.Any())
-            {
-                await _notificationService.SendToManyAsync(
-                    studentUserIds,
-                    "Утверждены сроки выбора тем",
-                    currentUserId,
-                    "Утверждены сроки выбора тем. Вы сможете выбрать тему в установленный период.",
-                    null,
-                    "OrgUnit",
-                    orgUnitId,
-                    cancellationToken);
-            }
+            studentUserIds.AddRange(students.Select(s => s.Id));
         }
+        else
+        {
+            // Fetch all specialities for this OrgUnit (department)
+            var specializationsOrgUnits = await _specializationsOrgUnitRepository.GetByOrgUnitAsync(orgUnitId, cancellationToken);
+            var specIds = specializationsOrgUnits
+                .Where(sou => sou.SpecializationId.HasValue)
+                .Select(sou => sou.SpecializationId!.Value)
+                .Distinct()
+                .ToList();
+
+            var specialityIds = new List<int>();
+            foreach (var specId in specIds)
+            {
+                var specialitySpecs = await _specialitySpecializationRepository.GetBySpecializationAsync(specId, cancellationToken);
+                specialityIds.AddRange(specialitySpecs
+                    .Where(ss => ss.SpecialityId.HasValue)
+                    .Select(ss => ss.SpecialityId!.Value));
+            }
+            specialityIds = specialityIds.Distinct().ToList();
+
+            foreach (var specialityId in specialityIds)
+            {
+                var students = await _studentRepository.GetBySpecialityAsync(specialityId, cancellationToken);
+                studentUserIds.AddRange(students.Select(s => s.Id));
+            }
+            studentUserIds = studentUserIds.Distinct().ToList();
+        }
+
+        if (studentUserIds.Any())
+        {
+            await _notificationService.SendToManyAsync(
+                studentUserIds,
+                "Утверждены сроки выбора тем",
+                currentUserId,
+                "Утверждены сроки выбора тем. Вы сможете выбрать тему в установленный период.",
+                null,
+                "OrgUnit",
+                orgUnitId,
+                cancellationToken);
+        }
+
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Result.Success(Unit.Value);
     }

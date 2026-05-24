@@ -18,6 +18,7 @@ public class EmployeeReadOnlyRepository : IEmployeeReadOnlyRepository
     public async Task<Employee?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
         return await _context.Employees
+            .Include(e => e.User)
             .Include(e => e.Positions)
                 .ThenInclude(p => p.Position)
             .FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
@@ -26,6 +27,7 @@ public class EmployeeReadOnlyRepository : IEmployeeReadOnlyRepository
     public async Task<IReadOnlyList<Employee>> GetByIdsAsync(IEnumerable<int> ids, CancellationToken cancellationToken = default)
     {
         return await _context.Employees
+            .Include(e => e.User)
             .Include(e => e.Positions)
                 .ThenInclude(p => p.Position)
             .Where(e => ids.Contains(e.Id))
@@ -36,6 +38,7 @@ public class EmployeeReadOnlyRepository : IEmployeeReadOnlyRepository
     public async Task<Employee?> GetByUserIdAsync(int userId, CancellationToken cancellationToken = default)
     {
         return await _context.Employees
+            .Include(e => e.User)
             .Include(e => e.Positions)
                 .ThenInclude(p => p.Position)
             .FirstOrDefaultAsync(e => e.Id == userId, cancellationToken);
@@ -44,6 +47,7 @@ public class EmployeeReadOnlyRepository : IEmployeeReadOnlyRepository
     public async Task<IReadOnlyList<Employee>> GetAdvisorsAsync(CancellationToken cancellationToken = default)
     {
         return await _context.Employees
+            .Include(e => e.User)
             .Where(e => e.IsAdvisor)
             .Take(MaxQuerySize)
             .ToListAsync(cancellationToken);
@@ -51,6 +55,9 @@ public class EmployeeReadOnlyRepository : IEmployeeReadOnlyRepository
 
     public async Task<IReadOnlyList<Employee>> GetAllAsync(CancellationToken cancellationToken = default)
     {
-        return await _context.Employees.Take(MaxQuerySize).ToListAsync(cancellationToken);
+        return await _context.Employees
+            .Include(e => e.User)
+            .Take(MaxQuerySize)
+            .ToListAsync(cancellationToken);
     }
 }

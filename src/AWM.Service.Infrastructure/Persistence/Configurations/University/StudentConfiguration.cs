@@ -22,11 +22,9 @@ public class StudentConfiguration : IEntityTypeConfiguration<Student>
         builder.Property(e => e.Year)
             .IsRequired();
 
-        builder.Property(e => e.GPA)
-            .HasColumnType("decimal(5,2)");
+        builder.Property(e => e.GPA);
 
-        builder.Property(e => e.EctsGPA)
-            .HasColumnType("decimal(5,2)");
+        builder.Property(e => e.EctsGPA);
 
         builder.Property(e => e.IsScholarship);
 

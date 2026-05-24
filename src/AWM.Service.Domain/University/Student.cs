@@ -12,8 +12,8 @@ public class Student : Entity<int>
     public int? StatusId { get; private set; }
     public int? CategoryId { get; private set; }
     public int Year { get; private set; }
-    public decimal? GPA { get; private set; }
-    public decimal? EctsGPA { get; private set; }
+    public double? GPA { get; private set; }
+    public double? EctsGPA { get; private set; }
     public int? EducationTypeId { get; private set; }
     public int? GrantTypeId { get; private set; }
     public int? AdvisorId { get; private set; }
