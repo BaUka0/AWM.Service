@@ -2,9 +2,6 @@ using FluentValidation;
 
 namespace AWM.Service.Application.Features.Auth.Auth.Commands.UpdateRoleOperationAction;
 
-/// <summary>
-/// Validator for UpdateRoleOperationActionCommand.
-/// </summary>
 public class UpdateRoleOperationActionCommandValidator : AbstractValidator<UpdateRoleOperationActionCommand>
 {
     public UpdateRoleOperationActionCommandValidator()

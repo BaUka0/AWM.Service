@@ -2,9 +2,6 @@ using FluentValidation;
 
 namespace AWM.Service.Application.Features.Auth.Commands.Register;
 
-/// <summary>
-/// Validator for RegisterUserCommand.
-/// </summary>
 public class RegisterUserCommandValidator : AbstractValidator<RegisterUserCommand>
 {
     public RegisterUserCommandValidator()

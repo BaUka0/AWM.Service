@@ -14,6 +14,10 @@ using Mapster;
 using Microsoft.AspNetCore.RateLimiting;
 #endregion
 
+/// <summary>
+/// Application entry point and configuration.
+/// Configures services, middleware, and the HTTP request pipeline for the AWM Service API.
+/// </summary>
 var builder = WebApplication.CreateBuilder(args);
 
 #region Service Configuration

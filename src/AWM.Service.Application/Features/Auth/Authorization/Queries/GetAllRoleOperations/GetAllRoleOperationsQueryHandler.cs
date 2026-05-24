@@ -4,6 +4,9 @@ using AWM.Service.Domain.Auth.Entities;
 using AWM.Service.Domain.Auth.Repositories;
 using MediatR;
 
+/// <summary>
+/// Handles retrieving all role operations in tree structure.
+/// </summary>
 public sealed class GetAllRoleOperationsQueryHandler : IRequestHandler<GetAllRoleOperationsQuery, IReadOnlyList<RoleOperation>>
 {
     private readonly IRoleOperationRepository _roleOperationRepository;

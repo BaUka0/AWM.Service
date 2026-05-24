@@ -1,7 +1,7 @@
+using AWM.Service.Domain.Common;
+using FluentValidation;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
-using FluentValidation;
-using AWM.Service.Domain.Common;
 
 namespace AWM.Service.WebAPI.Common.Middleware;
 
@@ -52,14 +52,14 @@ public class GlobalExceptionHandler : IExceptionHandler
             Title = title,
             Detail = detail,
             Instance = httpContext.Request.Path,
-            Extensions = 
+            Extensions =
             {
                 ["traceId"] = httpContext.TraceIdentifier,
-                ["code"] = statusCode switch
+                ["code"] = exception switch
                 {
-                    StatusCodes.Status422UnprocessableEntity => ((DomainException)exception).ErrorCode,
-                    StatusCodes.Status400BadRequest => "ValidationError",
-                    _ => "InternalError"
+                    DomainException de => de.ErrorCode,
+                    ValidationException  => ErrorCodes.Validation,
+                    _                    => "InternalError"
                 }
             }
         };

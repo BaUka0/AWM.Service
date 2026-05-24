@@ -2,15 +2,12 @@ using AWM.Service.Application.Features.Auth.DTOs;
 using AWM.Service.Domain.Auth.Interfaces;
 using AWM.Service.Domain.Auth.Repositories;
 using AWM.Service.Domain.Repositories;
+using AWM.Service.Domain.Common;
 using KDS.Primitives.FluentResult;
 using MediatR;
 
 namespace AWM.Service.Application.Features.Auth.Commands.RefreshToken;
 
-/// <summary>
-/// Handler for RefreshTokenCommand.
-/// Validates the refresh token and generates new access and refresh tokens.
-/// </summary>
 public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, Result<AuthResult>>
 {
     private readonly IUserRepository _userRepository;
@@ -40,24 +37,24 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, R
     {
         if (string.IsNullOrWhiteSpace(request.RefreshToken))
         {
-            return Result.Failure<AuthResult>(new Error("Auth.InvalidRefreshToken", "Токен восстановления обязателен."));
+            return Result.Failure<AuthResult>(new Error(ErrorCodes.AuthInvalidRefreshToken, "Токен восстановления обязателен."));
         }
 
         var localAccount = await _localAccountRepository.GetByRefreshTokenAsync(request.RefreshToken, cancellationToken);
         if (localAccount == null || !localAccount.IsActive)
         {
-            return Result.Failure<AuthResult>(new Error("Auth.InvalidRefreshToken", "Неверный или неактивный токен восстановления."));
+            return Result.Failure<AuthResult>(new Error(ErrorCodes.AuthInvalidRefreshToken, "Неверный или неактивный токен восстановления."));
         }
 
         if (localAccount.RefreshTokenExpiryTime <= DateTime.UtcNow)
         {
-            return Result.Failure<AuthResult>(new Error("Auth.InvalidRefreshToken", "Срок действия токена восстановления истек."));
+            return Result.Failure<AuthResult>(new Error(ErrorCodes.AuthInvalidRefreshToken, "Срок действия токена восстановления истек."));
         }
 
         var user = await _userRepository.GetByIdAsync(localAccount.UserId, cancellationToken);
         if (user == null)
         {
-            return Result.Failure<AuthResult>(new Error("Auth.UserNotFound", "Пользователь не найден."));
+            return Result.Failure<AuthResult>(new Error(ErrorCodes.AuthUserNotFound, "Пользователь не найден."));
         }
 
         var userAccesses = await _userAccessRepository.GetByUserIdAsync(user.Id, cancellationToken);

@@ -2,9 +2,6 @@ using FluentValidation;
 
 namespace AWM.Service.Application.Features.Auth.Auth.Commands.RemoveUserAccess;
 
-/// <summary>
-/// Validator for RemoveUserAccessCommand.
-/// </summary>
 public class RemoveUserAccessCommandValidator : AbstractValidator<RemoveUserAccessCommand>
 {
     public RemoveUserAccessCommandValidator()

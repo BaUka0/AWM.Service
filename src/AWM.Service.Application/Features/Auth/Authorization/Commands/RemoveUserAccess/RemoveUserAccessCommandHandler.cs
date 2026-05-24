@@ -7,6 +7,9 @@ using AWM.Service.Domain.Repositories;
 using KDS.Primitives.FluentResult;
 using MediatR;
 
+/// <summary>
+/// Handles removing role access from a user with history tracking.
+/// </summary>
 public sealed class RemoveUserAccessCommandHandler : IRequestHandler<RemoveUserAccessCommand, Result>
 {
     private readonly IUserAccessRepository _userAccessRepository;
@@ -31,7 +34,7 @@ public sealed class RemoveUserAccessCommandHandler : IRequestHandler<RemoveUserA
         var userAccess = await _userAccessRepository.GetByIdAsync(request.UserAccessId, cancellationToken);
         if (userAccess == null)
         {
-            return Result.Failure(new Error("NotFound", "User access not found."));
+            return Result.Failure(new Error(ErrorCodes.NotFound, "User access not found."));
         }
 
         await _userAccessRepository.RemoveAsync(userAccess, cancellationToken);

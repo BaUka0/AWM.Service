@@ -1,6 +1,7 @@
 using AWM.Service.Application.Features.Auth.DTOs;
 using AWM.Service.Domain.Auth.Interfaces;
 using AWM.Service.Domain.Auth.Repositories;
+using AWM.Service.Domain.Common;
 using AWM.Service.Domain.Repositories;
 
 using KDS.Primitives.FluentResult;
@@ -8,10 +9,6 @@ using MediatR;
 
 namespace AWM.Service.Application.Features.Auth.Commands.Login;
 
-/// <summary>
-/// Handler for LoginCommand.
-/// Validates credentials and generates JWT token.
-/// </summary>
 public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<AuthResult>>
 {
     private readonly IUserRepository _userRepository;
@@ -44,24 +41,24 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<AuthResu
     {
         if (string.IsNullOrWhiteSpace(request.Login) || string.IsNullOrWhiteSpace(request.Password))
         {
-            return Result.Failure<AuthResult>(new Error("Auth.InvalidCredentials", "Логин и пароль обязательны для заполнения."));
+            return Result.Failure<AuthResult>(new Error(ErrorCodes.AuthInvalidCredentials, "Логин и пароль обязательны для заполнения."));
         }
 
         var user = await _userRepository.GetByLoginAsync(request.Login, cancellationToken);
         if (user == null)
         {
-            return Result.Failure<AuthResult>(new Error("Auth.InvalidCredentials", "Неверный логин или пароль."));
+            return Result.Failure<AuthResult>(new Error(ErrorCodes.AuthInvalidCredentials, "Неверный логин или пароль."));
         }
 
         var localAccount = await _localAccountRepository.GetByUserIdAsync(user.Id, cancellationToken);
         if (localAccount == null || !localAccount.IsActive)
         {
-            return Result.Failure<AuthResult>(new Error("Auth.InvalidCredentials", "Неверный логин или пароль."));
+            return Result.Failure<AuthResult>(new Error(ErrorCodes.AuthInvalidCredentials, "Неверный логин или пароль."));
         }
 
         if (!_passwordHasher.VerifyPassword(request.Password, localAccount.PasswordHash))
         {
-            return Result.Failure<AuthResult>(new Error("Auth.InvalidCredentials", "Неверный логин или пароль."));
+            return Result.Failure<AuthResult>(new Error(ErrorCodes.AuthInvalidCredentials, "Неверный логин или пароль."));
         }
 
         var userAccesses = await _userAccessRepository.GetByUserIdAsync(user.Id, cancellationToken);

@@ -17,12 +17,17 @@ public class EmployeeReadOnlyRepository : IEmployeeReadOnlyRepository
 
     public async Task<Employee?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
-        return await _context.Employees.FindAsync(new object[] { id }, cancellationToken);
+        return await _context.Employees
+            .Include(e => e.Positions)
+                .ThenInclude(p => p.Position)
+            .FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
     }
 
     public async Task<IReadOnlyList<Employee>> GetByIdsAsync(IEnumerable<int> ids, CancellationToken cancellationToken = default)
     {
         return await _context.Employees
+            .Include(e => e.Positions)
+                .ThenInclude(p => p.Position)
             .Where(e => ids.Contains(e.Id))
             .Take(MaxQuerySize)
             .ToListAsync(cancellationToken);
@@ -31,6 +36,8 @@ public class EmployeeReadOnlyRepository : IEmployeeReadOnlyRepository
     public async Task<Employee?> GetByUserIdAsync(int userId, CancellationToken cancellationToken = default)
     {
         return await _context.Employees
+            .Include(e => e.Positions)
+                .ThenInclude(p => p.Position)
             .FirstOrDefaultAsync(e => e.Id == userId, cancellationToken);
     }
 

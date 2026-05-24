@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using AWM.Service.Domain.Common;
 using FluentValidation;
 using KDS.Primitives.FluentResult;
 using MediatR;
@@ -92,7 +93,7 @@ public class ValidationBehavior<TRequest, TResponse> : IPipelineBehavior<TReques
             if (ValidationResponseCache<TResponse>.CreateFailure is not null)
             {
                 var errorMessage = string.Join("; ", failures.Select(f => f.ErrorMessage));
-                var error = new Error("400", errorMessage);
+                var error = new Error(ErrorCodes.Validation, errorMessage);
                 return ValidationResponseCache<TResponse>.CreateFailure(error);
             }
 

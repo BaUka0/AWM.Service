@@ -6,6 +6,9 @@ using AWM.Service.Domain.Repositories;
 using KDS.Primitives.FluentResult;
 using MediatR;
 
+/// <summary>
+/// Handles updating the permission matrix for a role by adding or removing RoleOperationAction entries.
+/// </summary>
 public sealed class UpdateRoleOperationActionCommandHandler : IRequestHandler<UpdateRoleOperationActionCommand, Result>
 {
     private readonly IRoleOperationActionRepository _roleOperationActionRepository;

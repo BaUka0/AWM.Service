@@ -32,7 +32,6 @@ public class JwtTokenService : IJwtTokenService
             new(ClaimTypes.Email, user.Email)
         };
 
-        // Add role claims
         foreach (var role in roles)
         {
             claims.Add(new Claim(AuthorizationConstants.RoleClaimType, role));

@@ -2,9 +2,6 @@ using FluentValidation;
 
 namespace AWM.Service.Application.Features.Auth.Auth.Commands.AddUserAccess;
 
-/// <summary>
-/// Validator for AddUserAccessCommand.
-/// </summary>
 public class AddUserAccessCommandValidator : AbstractValidator<AddUserAccessCommand>
 {
     public AddUserAccessCommandValidator()

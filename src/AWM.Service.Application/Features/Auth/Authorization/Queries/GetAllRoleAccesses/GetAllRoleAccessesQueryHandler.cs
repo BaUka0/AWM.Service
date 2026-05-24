@@ -4,6 +4,9 @@ using AWM.Service.Domain.Auth.Entities;
 using AWM.Service.Domain.Auth.Repositories;
 using MediatR;
 
+/// <summary>
+/// Handles retrieving all role access definitions.
+/// </summary>
 public sealed class GetAllRoleAccessesQueryHandler : IRequestHandler<GetAllRoleAccessesQuery, IReadOnlyList<RoleAccess>>
 {
     private readonly IRoleAccessRepository _roleAccessRepository;

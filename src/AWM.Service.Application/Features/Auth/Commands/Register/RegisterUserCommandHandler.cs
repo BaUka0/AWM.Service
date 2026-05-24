@@ -3,15 +3,12 @@ using AWM.Service.Domain.Auth.Entities;
 using AWM.Service.Domain.Auth.Interfaces;
 using AWM.Service.Domain.Auth.Repositories;
 using AWM.Service.Domain.Repositories;
+using AWM.Service.Domain.Common;
 using KDS.Primitives.FluentResult;
 using MediatR;
 
 namespace AWM.Service.Application.Features.Auth.Commands.Register;
 
-/// <summary>
-/// Handler for RegisterUserCommand.
-/// Creates a new user with hashed password.
-/// </summary>
 public class RegisterUserCommandHandler : IRequestHandler<RegisterUserCommand, Result<int>>
 {
     private readonly IUserRepository _userRepository;
@@ -35,19 +32,19 @@ public class RegisterUserCommandHandler : IRequestHandler<RegisterUserCommand, R
     {
         if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
         {
-            return Result.Failure<int>(new Error("Register.InvalidData", "Email и пароль обязательны."));
+            return Result.Failure<int>(new Error(ErrorCodes.RegisterInvalidData, "Email и пароль обязательны."));
         }
 
         var user = await _userRepository.GetByEmailAsync(request.Email, cancellationToken);
         if (user == null)
         {
-            return Result.Failure<int>(new Error("Register.UserNotFound", "Пользователь с указанным Email не найден в университетской базе данных."));
+            return Result.Failure<int>(new Error(ErrorCodes.RegisterUserNotFound, "Пользователь с указанным Email не найден в университетской базе данных."));
         }
 
         var existingAccount = await _localAccountRepository.GetByUserIdAsync(user.Id, cancellationToken);
         if (existingAccount != null)
         {
-            return Result.Failure<int>(new Error("Register.AccountAlreadyExists", "Локальная учетная запись для данного пользователя уже существует."));
+            return Result.Failure<int>(new Error(ErrorCodes.RegisterAccountExists, "Локальная учетная запись для данного пользователя уже существует."));
         }
 
         var hashedPassword = _passwordHasher.HashPassword(request.Password);

@@ -4,6 +4,9 @@ using AWM.Service.Domain.Auth.Repositories;
 using AWM.Service.Domain.Auth.ViewModels;
 using MediatR;
 
+/// <summary>
+/// Handles retrieving the full permission matrix for a user.
+/// </summary>
 public sealed class GetUserAccessMatrixQueryHandler : IRequestHandler<GetUserAccessMatrixQuery, IReadOnlyList<UserAccessMatrix>>
 {
     private readonly IUserAccessRepository _userAccessRepository;

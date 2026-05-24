@@ -2,9 +2,6 @@ using FluentValidation;
 
 namespace AWM.Service.Application.Features.Auth.Commands.Login;
 
-/// <summary>
-/// Validator for LoginCommand.
-/// </summary>
 public class LoginCommandValidator : AbstractValidator<LoginCommand>
 {
     public LoginCommandValidator()

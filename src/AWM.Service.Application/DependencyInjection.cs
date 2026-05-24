@@ -6,6 +6,10 @@ using AWM.Service.Application.Common.Behaviors;
 
 namespace AWM.Service.Application;
 
+/// <summary>
+/// Dependency injection configuration for the Application layer.
+/// Registers MediatR, pipeline behaviors, and FluentValidation validators.
+/// </summary>
 public static class DependencyInjection
 {
     public static IServiceCollection AddApplication(this IServiceCollection services)

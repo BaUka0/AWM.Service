@@ -4,6 +4,9 @@ using AWM.Service.Domain.Auth.Entities;
 using AWM.Service.Domain.Auth.Repositories;
 using MediatR;
 
+/// <summary>
+/// Handles retrieving all role action types.
+/// </summary>
 public sealed class GetAllRoleActionTypesQueryHandler : IRequestHandler<GetAllRoleActionTypesQuery, IReadOnlyList<RoleActionType>>
 {
     private readonly IRoleActionTypeRepository _roleActionTypeRepository;

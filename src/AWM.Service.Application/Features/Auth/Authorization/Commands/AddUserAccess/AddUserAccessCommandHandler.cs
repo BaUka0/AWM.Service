@@ -7,6 +7,9 @@ using AWM.Service.Domain.Repositories;
 using KDS.Primitives.FluentResult;
 using MediatR;
 
+/// <summary>
+/// Handles assigning role access to a user with history tracking.
+/// </summary>
 public sealed class AddUserAccessCommandHandler : IRequestHandler<AddUserAccessCommand, Result<int>>
 {
     private readonly IUserAccessRepository _userAccessRepository;
@@ -30,7 +33,7 @@ public sealed class AddUserAccessCommandHandler : IRequestHandler<AddUserAccessC
     {
         if (await _userAccessRepository.ExistsAsync(request.UserId, request.RoleAccessId, cancellationToken))
         {
-            return Result.Failure<int>(new Error("Conflict", "User already has this role access."));
+            return Result.Failure<int>(new Error(ErrorCodes.Conflict, "User already has this role access."));
         }
 
         var assignedBy = _currentUserProvider.UserId;
