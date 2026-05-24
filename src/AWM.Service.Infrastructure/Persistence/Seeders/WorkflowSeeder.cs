@@ -27,15 +27,16 @@ internal sealed class WorkflowSeeder
     {
         if (await _context.WorkflowStages.AnyAsync(ct)) return;
 
-        // Inserted in ID order so IDENTITY values match WorkflowStageIds constants (1–7).
+        // Inserted in ID order so IDENTITY values match WorkflowStageIds constants (1–8).
         _context.WorkflowStages.AddRange(
-            new WorkflowStage("TopicProposal",   1),  // Id = 1 = WorkflowStageIds.TopicProposal
-            new WorkflowStage("TopicPreparation", 2),  // Id = 2
-            new WorkflowStage("Preparation",      3),  // Id = 3
-            new WorkflowStage("PreDefense1",      4),  // Id = 4
-            new WorkflowStage("PreDefense2",      5),  // Id = 5
-            new WorkflowStage("PreDefense3",      6),  // Id = 6
-            new WorkflowStage("FinalDefense",     7)   // Id = 7
+            new WorkflowStage("DirectionProposal", 1), // Id = 1 = WorkflowStageIds.DirectionProposal
+            new WorkflowStage("TopicProposal",     2), // Id = 2 = WorkflowStageIds.TopicProposal
+            new WorkflowStage("TopicPreparation",  3), // Id = 3 = WorkflowStageIds.TopicPreparation (Student selection)
+            new WorkflowStage("Preparation",       4), // Id = 4 = WorkflowStageIds.Preparation (Work starts)
+            new WorkflowStage("PreDefense1",       5), // Id = 5
+            new WorkflowStage("PreDefense2",       6), // Id = 6
+            new WorkflowStage("PreDefense3",       7), // Id = 7
+            new WorkflowStage("FinalDefense",      8)  // Id = 8
         );
         await _context.SaveChangesAsync(ct);
     }

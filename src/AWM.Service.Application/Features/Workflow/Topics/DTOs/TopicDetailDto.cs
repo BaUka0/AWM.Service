@@ -1,0 +1,28 @@
+namespace AWM.Service.Application.Features.Workflow.Topics.DTOs;
+
+public record TopicDetailDto(
+    long Id,
+    long? DirectionId,
+    string DirectionTitle,
+    int SemesterId,
+    int OrgUnitId,
+    int WorkTypeId,
+    string WorkTypeName,
+    int? SpecialityId,
+    string TitleRu,
+    string? TitleKz,
+    string? TitleEn,
+    string? DescriptionRu,
+    string? DescriptionKz,
+    string? DescriptionEn,
+    int MaxParticipants,
+    bool IsSubmittedForApproval,
+    bool IsApproved,
+    bool IsRejected,
+    bool IsClosed,
+    string Status,
+    string? ReviewComment,
+    int? ReviewedBy,
+    DateTime? ReviewedAt,
+    DateTime CreatedAt,
+    int CreatedBy);

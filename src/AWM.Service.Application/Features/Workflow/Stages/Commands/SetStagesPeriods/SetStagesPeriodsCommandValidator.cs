@@ -16,8 +16,8 @@ public sealed class SetStagesPeriodsCommandValidator : AbstractValidator<SetStag
         RuleForEach(x => x.Periods).ChildRules(p =>
         {
             p.RuleFor(x => x.WorkflowStageId)
-                .InclusiveBetween(WorkflowStageIds.TopicProposal, WorkflowStageIds.Preparation)
-                .WithMessage($"WorkflowStageId must be between {WorkflowStageIds.TopicProposal} and {WorkflowStageIds.Preparation}.");
+                .InclusiveBetween(WorkflowStageIds.DirectionProposal, WorkflowStageIds.FinalDefense)
+                .WithMessage($"WorkflowStageId must be between {WorkflowStageIds.DirectionProposal} and {WorkflowStageIds.FinalDefense}.");
 
             p.RuleFor(x => x.StartDate)
                 .NotEmpty().WithMessage("StartDate is required.");

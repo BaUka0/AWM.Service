@@ -27,7 +27,12 @@ public class Topic : AggregateRoot<long>, IAuditable, ISoftDeletable
     public int MaxParticipants { get; private set; }
     public bool IsSubmittedForApproval { get; private set; }
     public bool IsApproved { get; private set; }
+    public bool IsRejected { get; private set; }
     public bool IsClosed { get; private set; }
+
+    public string? ReviewComment { get; private set; }
+    public int? ReviewedBy { get; private set; }
+    public DateTime? ReviewedAt { get; private set; }
 
     public DateTime CreatedAt { get; private set; }
     public int CreatedBy { get; private set; }
@@ -80,6 +85,7 @@ public class Topic : AggregateRoot<long>, IAuditable, ISoftDeletable
         SpecialityId = specialityId;
         IsSubmittedForApproval = false;
         IsApproved = false;
+        IsRejected = false;
         IsClosed = false;
         CreatedAt = DateTime.UtcNow;
         CreatedBy = createdByUserId; // Topic creator is supervisor
@@ -107,7 +113,8 @@ public class Topic : AggregateRoot<long>, IAuditable, ISoftDeletable
         string? titleEn,
         string? descriptionRu,
         string? descriptionKz,
-        string? descriptionEn)
+        string? descriptionEn,
+        int? maxParticipants = null)
     {
         if (string.IsNullOrWhiteSpace(titleRu))
             throw new DomainException("Topic.TitleRuRequired", "Russian title is required.");
@@ -118,6 +125,11 @@ public class Topic : AggregateRoot<long>, IAuditable, ISoftDeletable
         DescriptionRu = descriptionRu;
         DescriptionKz = descriptionKz;
         DescriptionEn = descriptionEn;
+
+        if (maxParticipants.HasValue)
+        {
+            UpdateMaxParticipants(maxParticipants.Value);
+        }
     }
 
     /// <summary>
@@ -136,21 +148,40 @@ public class Topic : AggregateRoot<long>, IAuditable, ISoftDeletable
     /// </summary>
     public void SubmitForApproval()
     {
-        if (IsSubmittedForApproval)
-            throw new DomainException("Topic.AlreadySubmitted", "Topic is already submitted for approval.");
         if (IsApproved)
             throw new DomainException("Topic.AlreadyApproved", "Topic is already approved.");
 
         IsSubmittedForApproval = true;
+        IsRejected = false;
+        ReviewComment = null;
     }
 
     /// <summary>
     /// Approves the topic for student selection.
     /// </summary>
-    public void Approve()
+    public void Approve(int reviewedBy)
     {
         IsApproved = true;
+        IsSubmittedForApproval = true;
+        IsRejected = false;
+        ReviewedBy = reviewedBy;
+        ReviewedAt = DateTime.UtcNow;
+        ReviewComment = null;
+
         RaiseDomainEvent(new TopicApprovedEvent(Id));
+    }
+
+    /// <summary>
+    /// Rejects the topic.
+    /// </summary>
+    public void Reject(int reviewedBy, string comment)
+    {
+        IsApproved = false;
+        IsSubmittedForApproval = false;
+        IsRejected = true;
+        ReviewedBy = reviewedBy;
+        ReviewedAt = DateTime.UtcNow;
+        ReviewComment = comment;
     }
 
     /// <summary>

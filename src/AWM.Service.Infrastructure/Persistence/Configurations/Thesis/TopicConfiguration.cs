@@ -73,6 +73,10 @@ public class TopicConfiguration : SoftDeletableEntityConfiguration<Topic, long>
             .IsRequired()
             .HasDefaultValue(false);
 
+        builder.Property(e => e.IsRejected)
+            .IsRequired()
+            .HasDefaultValue(false);
+
         builder.Property(e => e.IsSubmittedForApproval)
             .IsRequired()
             .HasDefaultValue(false);
@@ -80,6 +84,13 @@ public class TopicConfiguration : SoftDeletableEntityConfiguration<Topic, long>
         builder.Property(e => e.IsClosed)
             .IsRequired()
             .HasDefaultValue(false);
+
+        builder.Property(e => e.ReviewComment)
+            .HasColumnType("nvarchar(max)");
+
+        builder.Property(e => e.ReviewedBy);
+
+        builder.Property(e => e.ReviewedAt);
 
         // Foreign keys
         builder.HasOne<Direction>()
