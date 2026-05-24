@@ -5,6 +5,7 @@ using AWM.Service.Application.Features.Workflow.Topics.Commands.UpdateTopic;
 using AWM.Service.Application.Features.Workflow.Topics.Queries.GetDepartmentTopics;
 using AWM.Service.Application.Features.Workflow.Topics.Queries.GetMyTopics;
 using AWM.Service.Application.Features.Workflow.Topics.Queries.GetTopicById;
+using AWM.Service.Application.Features.Workflow.Topics.Queries.GetAvailableTopics;
 using AWM.Service.WebAPI.Authorization;
 using AWM.Service.WebAPI.Common.Contracts.Requests.Topics;
 using AWM.Service.WebAPI.Common.Contracts.Responses.Topics;
@@ -181,6 +182,29 @@ public sealed class TopicsController : BaseController
     public async Task<IActionResult> GetDepartmentTopics([FromQuery] int orgUnitId, [FromQuery] int semesterId, CancellationToken cancellationToken)
     {
         var result = await _sender.Send(new GetDepartmentTopicsQuery(orgUnitId, semesterId), cancellationToken);
+        
+        if (result.IsFailed)
+        {
+            return HandleResultError(result.Error);
+        }
+
+        var response = result.Value.Adapt<IReadOnlyList<TopicResponse>>();
+        return Ok(response);
+    }
+
+    /// <summary>
+    /// Gets available approved topics for student selection.
+    /// </summary>
+    /// <param name="orgUnitId">The department ID.</param>
+    /// <param name="semesterId">The semester ID.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A list of available topics.</returns>
+    [HttpGet("available")]
+    [RequireAccess("THESIS.TOPIC", "Read")]
+    [ProducesResponseType(typeof(IReadOnlyList<TopicResponse>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetAvailableTopics([FromQuery] int orgUnitId, [FromQuery] int semesterId, CancellationToken cancellationToken)
+    {
+        var result = await _sender.Send(new GetAvailableTopicsQuery(orgUnitId, semesterId), cancellationToken);
         
         if (result.IsFailed)
         {
