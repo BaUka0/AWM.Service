@@ -1,6 +1,6 @@
 using AWM.Service.Domain.Auth.Interfaces;
 
-namespace AWM.Service.WebAPI.Common.Services;
+namespace AWM.Service.Infrastructure.Services;
 
 /// <summary>
 /// BCrypt implementation of password hashing.

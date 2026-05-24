@@ -1,4 +1,6 @@
+using AWM.Service.Application.Features.Workflow.Supervisors.DTOs;
 using System.Text.Json;
+using AWM.Service.Domain.Auth.Repositories;
 using AWM.Service.Domain.Common;
 using AWM.Service.Domain.CommonDomain.Enums;
 using AWM.Service.Domain.Repositories;
@@ -10,15 +12,21 @@ namespace AWM.Service.Application.Features.Workflow.Supervisors.Commands.RemoveS
 public sealed class RemoveSupervisorCommandHandler : IRequestHandler<RemoveSupervisorCommand, Result<Unit>>
 {
     private readonly IStaffAssignmentRepository _staffAssignmentRepository;
+    private readonly IUserAccessRepository _userAccessRepository;
+    private readonly IRoleAccessRepository _roleAccessRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICurrentUserProvider _currentUserProvider;
 
     public RemoveSupervisorCommandHandler(
         IStaffAssignmentRepository staffAssignmentRepository,
+        IUserAccessRepository userAccessRepository,
+        IRoleAccessRepository roleAccessRepository,
         IUnitOfWork unitOfWork,
         ICurrentUserProvider currentUserProvider)
     {
         _staffAssignmentRepository = staffAssignmentRepository;
+        _userAccessRepository = userAccessRepository;
+        _roleAccessRepository = roleAccessRepository;
         _unitOfWork = unitOfWork;
         _currentUserProvider = currentUserProvider;
     }
@@ -34,7 +42,7 @@ public sealed class RemoveSupervisorCommandHandler : IRequestHandler<RemoveSuper
 
         var assignments = await _staffAssignmentRepository.GetByRoleAsync(
             "OrgUnit",
-            request.DepartmentId,
+            request.OrgUnitId,
             StaffRoleType.Supervisor,
             cancellationToken);
 
@@ -45,7 +53,7 @@ public sealed class RemoveSupervisorCommandHandler : IRequestHandler<RemoveSuper
                 if (string.IsNullOrEmpty(a.MetadataJson)) return false;
                 try
                 {
-                    var meta = JsonSerializer.Deserialize<AssignmentMetadata>(a.MetadataJson);
+                    var meta = JsonSerializer.Deserialize<SupervisorAssignmentMetadata>(a.MetadataJson);
                     return meta?.SemesterId == request.SemesterId && meta?.SpecialityId == request.SpecialityId;
                 }
                 catch { return false; }
@@ -58,14 +66,31 @@ public sealed class RemoveSupervisorCommandHandler : IRequestHandler<RemoveSuper
 
         assignment.Deactivate(currentUserId);
         await _staffAssignmentRepository.UpdateAsync(assignment, cancellationToken);
+
+        // Check if the user has any other active supervisor assignments
+        var userAssignments = await _staffAssignmentRepository.GetByUserAsync(assignment.UserId, cancellationToken);
+        var hasOtherActiveSupervisorAssignments = userAssignments.Any(a =>
+            a.IsActive &&
+            !a.IsDeleted &&
+            a.Id != assignment.Id &&
+            a.RoleType == StaffRoleType.Supervisor);
+
+        if (!hasOtherActiveSupervisorAssignments)
+        {
+            var roleAccess = await _roleAccessRepository.GetByCodeAsync("Supervisor", cancellationToken);
+            if (roleAccess != null)
+            {
+                var userAccessList = await _userAccessRepository.GetByUserIdAsync(assignment.UserId, cancellationToken);
+                var userAccess = userAccessList.FirstOrDefault(ua => ua.RoleAccessId == roleAccess.Id);
+                if (userAccess != null)
+                {
+                    await _userAccessRepository.RemoveAsync(userAccess, cancellationToken);
+                }
+            }
+        }
+
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Result.Success(Unit.Value);
-    }
-
-    private class AssignmentMetadata
-    {
-        public int SemesterId { get; set; }
-        public int? SpecialityId { get; set; }
     }
 }

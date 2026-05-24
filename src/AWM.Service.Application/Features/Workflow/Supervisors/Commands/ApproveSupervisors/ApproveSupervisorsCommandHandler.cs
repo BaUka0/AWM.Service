@@ -1,3 +1,4 @@
+using AWM.Service.Application.Features.Workflow.Supervisors.DTOs;
 using System.Text.Json;
 using AWM.Service.Domain.Auth.Entities;
 using AWM.Service.Domain.Auth.Repositories;
@@ -47,7 +48,7 @@ public sealed class ApproveSupervisorsCommandHandler : IRequestHandler<ApproveSu
         
         var existingAssignments = await _staffAssignmentRepository.GetByRoleAsync(
             "OrgUnit", 
-            request.DepartmentId, 
+            request.OrgUnitId, 
             StaffRoleType.Supervisor, 
             cancellationToken);
 
@@ -58,7 +59,7 @@ public sealed class ApproveSupervisorsCommandHandler : IRequestHandler<ApproveSu
                 if (string.IsNullOrEmpty(a.MetadataJson)) return false;
                 try 
                 {
-                    var meta = JsonSerializer.Deserialize<AssignmentMetadata>(a.MetadataJson);
+                    var meta = JsonSerializer.Deserialize<SupervisorAssignmentMetadata>(a.MetadataJson);
                     return meta?.SemesterId == request.SemesterId && meta?.SpecialityId == request.SpecialityId;
                 }
                 catch { return false; }
@@ -73,6 +74,27 @@ public sealed class ApproveSupervisorsCommandHandler : IRequestHandler<ApproveSu
         {
             assignment.Deactivate(currentUserId);
             await _staffAssignmentRepository.UpdateAsync(assignment, cancellationToken);
+
+            var userAssignments = await _staffAssignmentRepository.GetByUserAsync(assignment.UserId, cancellationToken);
+            var hasOtherActiveSupervisorAssignments = userAssignments.Any(a =>
+                a.IsActive &&
+                !a.IsDeleted &&
+                a.Id != assignment.Id &&
+                a.RoleType == StaffRoleType.Supervisor);
+
+            if (!hasOtherActiveSupervisorAssignments)
+            {
+                var roleAccess = await _roleAccessRepository.GetByCodeAsync("Supervisor", cancellationToken);
+                if (roleAccess != null)
+                {
+                    var userAccessList = await _userAccessRepository.GetByUserIdAsync(assignment.UserId, cancellationToken);
+                    var userAccess = userAccessList.FirstOrDefault(ua => ua.RoleAccessId == roleAccess.Id);
+                    if (userAccess != null)
+                    {
+                        await _userAccessRepository.RemoveAsync(userAccess, cancellationToken);
+                    }
+                }
+            }
         }
 
         if (newUserAssignments.Any())
@@ -85,7 +107,7 @@ public sealed class ApproveSupervisorsCommandHandler : IRequestHandler<ApproveSu
 
             foreach (var assignmentInfo in newUserAssignments)
             {
-                var metadata = new AssignmentMetadata 
+                var metadata = new SupervisorAssignmentMetadata 
                 { 
                     SemesterId = request.SemesterId, 
                     SpecialityId = request.SpecialityId,
@@ -97,7 +119,7 @@ public sealed class ApproveSupervisorsCommandHandler : IRequestHandler<ApproveSu
                     assignmentInfo.UserId,
                     StaffRoleType.Supervisor,
                     "OrgUnit",
-                    request.DepartmentId,
+                    request.OrgUnitId,
                     currentUserId,
                     metadataJson);
                 
@@ -117,7 +139,7 @@ public sealed class ApproveSupervisorsCommandHandler : IRequestHandler<ApproveSu
                 currentUserId,
                 "Вы были утверждены в качестве научного руководителя на текущий период.",
                 relatedEntityType: "OrgUnit",
-                relatedEntityId: request.DepartmentId,
+                relatedEntityId: request.OrgUnitId,
                 cancellationToken: cancellationToken);
         }
 
@@ -125,12 +147,5 @@ public sealed class ApproveSupervisorsCommandHandler : IRequestHandler<ApproveSu
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Result.Success(Unit.Value);
-    }
-
-    private class AssignmentMetadata
-    {
-        public int SemesterId { get; set; }
-        public int? SpecialityId { get; set; }
-        public int MaxWorkload { get; set; }
     }
 }

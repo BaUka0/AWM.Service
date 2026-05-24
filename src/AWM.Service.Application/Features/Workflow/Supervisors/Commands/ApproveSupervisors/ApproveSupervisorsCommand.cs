@@ -6,7 +6,7 @@ namespace AWM.Service.Application.Features.Workflow.Supervisors.Commands.Approve
 public record SupervisorAssignmentDto(int UserId, int MaxWorkload);
 
 public sealed record ApproveSupervisorsCommand(
-    int DepartmentId,
+    int OrgUnitId,
     int SemesterId,
     List<SupervisorAssignmentDto> Assignments,
     int? SpecialityId = null

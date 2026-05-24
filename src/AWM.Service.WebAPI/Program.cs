@@ -136,11 +136,8 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 builder.Services.AddInfrastructure(builder.Configuration);
-
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<AWM.Service.Domain.Common.ICurrentUserProvider, AWM.Service.WebAPI.Common.Services.CurrentUserProvider>();
-
-builder.Services.AddScoped<AWM.Service.Domain.Auth.Interfaces.IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<AWM.Service.Domain.Auth.Interfaces.IJwtTokenService, JwtTokenService>();
 
 #endregion
@@ -156,6 +153,7 @@ if (migrateAtStartup)
     {
         var initialiser = scope.ServiceProvider.GetRequiredService<AWM.Service.Infrastructure.Persistence.ApplicationDbContextInitialiser>();
         await initialiser.InitialiseAsync();
+        await initialiser.SeedAsync();
     }
 }
 

@@ -38,7 +38,7 @@ public interface IEmployeeRepository
     Task<Employee?> GetByUserIdAsync(int userId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Employee>> GetByIdsAsync(IEnumerable<int> ids, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Employee>> GetAdvisorsAsync(CancellationToken cancellationToken = default);
-    Task<IReadOnlyList<Employee>> GetByDepartmentAsync(int departmentId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<Employee>> GetByOrgUnitAsync(int orgUnitId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Employee>> GetAllWithPositionsAsync(CancellationToken cancellationToken = default);
     Task<Employee?> GetByIdWithPositionsAsync(int id, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Employee>> GetAllAsync(CancellationToken cancellationToken = default);

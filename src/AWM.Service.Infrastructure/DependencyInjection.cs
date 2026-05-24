@@ -5,6 +5,7 @@ using AWM.Service.Domain.Auth.Repositories;
 using AWM.Service.Infrastructure.FileStorage;
 using AWM.Service.Infrastructure.Persistence;
 using AWM.Service.Infrastructure.Persistence.Interceptors;
+using AWM.Service.Infrastructure.Persistence.Seeders;
 using AWM.Service.Infrastructure.Persistence.Repositories.Common;
 using AWM.Service.Infrastructure.Persistence.Repositories.Core;
 using AWM.Service.Infrastructure.Persistence.Repositories.Defense;
@@ -75,8 +76,9 @@ public static class DependencyInjection
                    });
         });
 
-        // Register Database Initialiser
+        // Register Database Initialiser and Seeder
         services.AddScoped<ApplicationDbContextInitialiser>();
+        services.AddScoped<DatabaseSeeder>();
 
         // Register Unit of Work
         services.AddScoped<IUnitOfWork, UnitOfWork>();
@@ -159,6 +161,11 @@ public static class DependencyInjection
         {
             services.AddScoped<IAttachmentService, LocalFileStorageService>();
         }
+
+        // Register Domain/CommonDomain Services
+        services.AddScoped<Domain.CommonDomain.Services.INotificationService, Services.NotificationService>();
+        services.AddScoped<Domain.CommonDomain.Services.IStageValidationService, Services.StageValidationService>();
+        services.AddScoped<Domain.Auth.Interfaces.IPasswordHasher, Services.PasswordHasher>();
 
         return services;
     }

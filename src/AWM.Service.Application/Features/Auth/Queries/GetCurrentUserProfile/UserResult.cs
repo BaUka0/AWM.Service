@@ -11,5 +11,6 @@ public record UserResult(
     string Email,
     string Name,
     IEnumerable<string> Roles,
-    int? OrgUnitId
+    int? OrgUnitId,
+    int? CurrentSemesterId
 );

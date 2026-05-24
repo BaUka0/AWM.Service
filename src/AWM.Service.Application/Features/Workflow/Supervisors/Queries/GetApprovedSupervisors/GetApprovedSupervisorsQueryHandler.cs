@@ -24,7 +24,7 @@ public sealed class GetApprovedSupervisorsQueryHandler : IRequestHandler<GetAppr
     {
         var existingAssignments = await _staffAssignmentRepository.GetByRoleAsync(
             "OrgUnit",
-            request.DepartmentId,
+            request.OrgUnitId,
             StaffRoleType.Supervisor,
             cancellationToken);
 
@@ -35,7 +35,7 @@ public sealed class GetApprovedSupervisorsQueryHandler : IRequestHandler<GetAppr
                 if (string.IsNullOrEmpty(a.MetadataJson)) return null;
                 try
                 {
-                    var meta = JsonSerializer.Deserialize<AssignmentMetadata>(a.MetadataJson);
+                    var meta = JsonSerializer.Deserialize<SupervisorAssignmentMetadata>(a.MetadataJson);
                     if (meta != null && meta.SemesterId == request.SemesterId && meta.SpecialityId == request.SpecialityId)
                     {
                         return new { a.UserId, meta.MaxWorkload };
@@ -52,7 +52,7 @@ public sealed class GetApprovedSupervisorsQueryHandler : IRequestHandler<GetAppr
             return Result.Success<IReadOnlyList<TeacherDto>>(new List<TeacherDto>());
         }
 
-        var allDepartmentEmployees = await _employeeRepository.GetByDepartmentAsync(request.DepartmentId, cancellationToken);
+        var allDepartmentEmployees = await _employeeRepository.GetByOrgUnitAsync(request.OrgUnitId, cancellationToken);
         
         var teachers = allDepartmentEmployees
             .Where(e => e.User != null && assignmentData.ContainsKey(e.User.Id))
@@ -68,12 +68,5 @@ public sealed class GetApprovedSupervisorsQueryHandler : IRequestHandler<GetAppr
             .ToList();
 
         return Result.Success<IReadOnlyList<TeacherDto>>(teachers);
-    }
-
-    private class AssignmentMetadata
-    {
-        public int SemesterId { get; set; }
-        public int? SpecialityId { get; set; }
-        public int MaxWorkload { get; set; }
     }
 }

@@ -21,19 +21,22 @@ public class GetCurrentUserQueryHandler : IRequestHandler<GetCurrentUserQuery, R
     private readonly IUserAccessRepository _userAccessRepository;
     private readonly IRoleAccessRepository _roleAccessRepository;
     private readonly IEmployeeReadOnlyRepository _employeeReadOnlyRepository;
+    private readonly ISemesterReadOnlyRepository _semesterReadOnlyRepository;
 
     public GetCurrentUserQueryHandler(
         ICurrentUserProvider currentUserProvider,
         IUserRepository userRepository,
         IUserAccessRepository userAccessRepository,
         IRoleAccessRepository roleAccessRepository,
-        IEmployeeReadOnlyRepository employeeReadOnlyRepository)
+        IEmployeeReadOnlyRepository employeeReadOnlyRepository,
+        ISemesterReadOnlyRepository semesterReadOnlyRepository)
     {
         _currentUserProvider = currentUserProvider;
         _userRepository = userRepository;
         _userAccessRepository = userAccessRepository;
         _roleAccessRepository = roleAccessRepository;
         _employeeReadOnlyRepository = employeeReadOnlyRepository;
+        _semesterReadOnlyRepository = semesterReadOnlyRepository;
     }
 
     public async Task<Result<UserResult>> Handle(GetCurrentUserQuery request, CancellationToken cancellationToken)
@@ -59,6 +62,14 @@ public class GetCurrentUserQueryHandler : IRequestHandler<GetCurrentUserQuery, R
         var orgUnitId = employee?.Positions?.FirstOrDefault(p => p.IsMainPosition)?.OrgUnitId 
                            ?? employee?.Positions?.FirstOrDefault()?.OrgUnitId;
 
+        var currentSemester = await _semesterReadOnlyRepository.GetCurrentAsync(cancellationToken);
+        var currentSemesterId = currentSemester?.Id;
+        if (currentSemesterId == null)
+        {
+            var semesters = await _semesterReadOnlyRepository.GetAllAsync(cancellationToken);
+            currentSemesterId = semesters.FirstOrDefault()?.Id;
+        }
+
         var fullName = $"{user.LastName} {user.FirstName} {user.MiddleName}".Trim();
 
         return Result.Success(new UserResult(
@@ -67,7 +78,8 @@ public class GetCurrentUserQueryHandler : IRequestHandler<GetCurrentUserQuery, R
             user.Email ?? string.Empty,
             fullName,
             roles,
-            orgUnitId
+            orgUnitId,
+            currentSemesterId
         ));
     }
 }

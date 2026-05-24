@@ -1,0 +1,108 @@
+using AWM.Service.Application.Features.Workflow.Directions.DTOs;
+using AWM.Service.Domain.Repositories;
+using KDS.Primitives.FluentResult;
+using MediatR;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace AWM.Service.Application.Features.Workflow.Directions.Queries.GetDepartmentDirections;
+
+/// <summary>
+/// Query handler for getting directions associated with a department.
+/// </summary>
+public sealed class GetDepartmentDirectionsQueryHandler : IRequestHandler<GetDepartmentDirectionsQuery, Result<IReadOnlyList<DirectionSummaryDto>>>
+{
+    private readonly IDirectionRepository _directionRepository;
+    private readonly IEmployeeReadOnlyRepository _employeeRepository;
+    private readonly IUserReadOnlyRepository _userReadOnlyRepository;
+    private readonly ISemesterReadOnlyRepository _semesterReadOnlyRepository;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="GetDepartmentDirectionsQueryHandler"/> class.
+    /// </summary>
+    public GetDepartmentDirectionsQueryHandler(
+        IDirectionRepository directionRepository,
+        IEmployeeReadOnlyRepository employeeRepository,
+        IUserReadOnlyRepository userReadOnlyRepository,
+        ISemesterReadOnlyRepository semesterReadOnlyRepository)
+    {
+        _directionRepository = directionRepository;
+        _employeeRepository = employeeRepository;
+        _userReadOnlyRepository = userReadOnlyRepository;
+        _semesterReadOnlyRepository = semesterReadOnlyRepository;
+    }
+
+    /// <summary>
+    /// Handles the request to get department-wide directions.
+    /// </summary>
+    public async Task<Result<IReadOnlyList<DirectionSummaryDto>>> Handle(GetDepartmentDirectionsQuery request, CancellationToken cancellationToken)
+    {
+        // Resolve semesterId fallback if null
+        int semesterId;
+        if (request.SemesterId.HasValue)
+        {
+            semesterId = request.SemesterId.Value;
+        }
+        else
+        {
+            var currentSemester = await _semesterReadOnlyRepository.GetCurrentAsync(cancellationToken);
+            if (currentSemester == null)
+            {
+                return Result.Failure<IReadOnlyList<DirectionSummaryDto>>(new Error("Directions.SemesterNotFound", "Active semester not found in system."));
+            }
+            semesterId = currentSemester.Id;
+        }
+
+        var directions = await _directionRepository.GetByDepartmentAsync(request.OrgUnitId, semesterId, cancellationToken);
+        
+        if (request.StateId.HasValue)
+        {
+            directions = directions.Where(d => d.CurrentStateId == request.StateId.Value).ToList();
+        }
+        
+        var creatorIds = directions.Select(d => d.CreatedBy).Distinct().ToList();
+        var creators = new Dictionary<int, (string FullName, string PositionTitle)>();
+        
+        if (creatorIds.Any())
+        {
+            var employees = await _employeeRepository.GetByIdsAsync(creatorIds, cancellationToken);
+            var users = await _userReadOnlyRepository.GetByIdsAsync(creatorIds, cancellationToken);
+            
+            foreach (var creatorId in creatorIds)
+            {
+                var user = users.FirstOrDefault(u => u.Id == creatorId);
+                var employee = employees.FirstOrDefault(e => e.Id == creatorId);
+                
+                if (user != null)
+                {
+                    var fullName = $"{user.LastName} {user.FirstName} {user.MiddleName}".Trim();
+                    var mainPosition = employee?.Positions?.FirstOrDefault(p => p.IsMainPosition) 
+                                       ?? employee?.Positions?.FirstOrDefault();
+                    creators[creatorId] = (fullName, mainPosition?.Position?.Title ?? "");
+                }
+                else
+                {
+                    creators[creatorId] = ("Unknown", "");
+                }
+            }
+        }
+
+        var resultList = directions.Select(d => new DirectionSummaryDto(
+            d.Id,
+            d.OrgUnitId,
+            d.SemesterId,
+            d.TitleRu,
+            d.TitleKz,
+            d.TitleEn,
+            d.CurrentStateId,
+            d.CreatedAt,
+            d.CreatedBy,
+            creators.TryGetValue(d.CreatedBy, out var info) ? info.FullName : "Unknown",
+            creators.TryGetValue(d.CreatedBy, out var info2) ? info2.PositionTitle : ""
+        )).ToList();
+
+        return Result.Success<IReadOnlyList<DirectionSummaryDto>>(resultList);
+    }
+}

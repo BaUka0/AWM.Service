@@ -9,8 +9,8 @@ public sealed class UpdateSupervisorWorkloadCommandValidator : AbstractValidator
 {
     public UpdateSupervisorWorkloadCommandValidator()
     {
-        RuleFor(x => x.DepartmentId)
-            .GreaterThan(0).WithMessage("DepartmentId must be greater than 0.");
+        RuleFor(x => x.OrgUnitId)
+            .GreaterThan(0).WithMessage("OrgUnitId must be greater than 0.");
 
         RuleFor(x => x.UserId)
             .GreaterThan(0).WithMessage("UserId must be greater than 0.");

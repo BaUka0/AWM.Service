@@ -134,7 +134,7 @@ public class Direction : AggregateRoot<long>, IAuditable, ISoftDeletable
     /// <summary>
     /// Rejects the direction.
     /// </summary>
-    public void Reject(int rejectedStateId, int reviewedBy, string? comment = null)
+    public void Reject(int rejectedStateId, int reviewedBy, string comment)
     {
         CurrentStateId = rejectedStateId;
         ReviewedAt = DateTime.UtcNow;

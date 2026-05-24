@@ -1,3 +1,4 @@
+using AWM.Service.Application.Features.Workflow.Supervisors.DTOs;
 using System.Text.Json;
 using AWM.Service.Domain.Common;
 using AWM.Service.Domain.CommonDomain.Enums;
@@ -34,7 +35,7 @@ public sealed class UpdateSupervisorWorkloadCommandHandler : IRequestHandler<Upd
 
         var assignments = await _staffAssignmentRepository.GetByRoleAsync(
             "OrgUnit",
-            request.DepartmentId,
+            request.OrgUnitId,
             StaffRoleType.Supervisor,
             cancellationToken);
 
@@ -45,7 +46,7 @@ public sealed class UpdateSupervisorWorkloadCommandHandler : IRequestHandler<Upd
                 if (string.IsNullOrEmpty(a.MetadataJson)) return false;
                 try
                 {
-                    var meta = JsonSerializer.Deserialize<AssignmentMetadata>(a.MetadataJson);
+                    var meta = JsonSerializer.Deserialize<SupervisorAssignmentMetadata>(a.MetadataJson);
                     return meta?.SemesterId == request.SemesterId && meta?.SpecialityId == request.SpecialityId;
                 }
                 catch { return false; }
@@ -56,7 +57,7 @@ public sealed class UpdateSupervisorWorkloadCommandHandler : IRequestHandler<Upd
             return Result.Failure<Unit>(new Error(ErrorCodes.NotFound, "Supervisor assignment not found."));
         }
 
-        var metadata = JsonSerializer.Deserialize<AssignmentMetadata>(assignment.MetadataJson!);
+        var metadata = JsonSerializer.Deserialize<SupervisorAssignmentMetadata>(assignment.MetadataJson!);
         metadata!.MaxWorkload = request.MaxWorkload;
         
         assignment.UpdateMetadata(JsonSerializer.Serialize(metadata), currentUserId);
@@ -64,12 +65,5 @@ public sealed class UpdateSupervisorWorkloadCommandHandler : IRequestHandler<Upd
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Result.Success(Unit.Value);
-    }
-
-    private class AssignmentMetadata
-    {
-        public int SemesterId { get; set; }
-        public int? SpecialityId { get; set; }
-        public int MaxWorkload { get; set; }
     }
 }

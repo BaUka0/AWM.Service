@@ -3,20 +3,20 @@ using AWM.Service.Domain.Repositories;
 using KDS.Primitives.FluentResult;
 using MediatR;
 
-namespace AWM.Service.Application.Features.Workflow.Supervisors.Queries.GetDepartmentTeachers;
+namespace AWM.Service.Application.Features.Workflow.Supervisors.Queries.GetOrgUnitTeachers;
 
-public sealed class GetDepartmentTeachersQueryHandler : IRequestHandler<GetDepartmentTeachersQuery, Result<IReadOnlyList<TeacherDto>>>
+public sealed class GetOrgUnitTeachersQueryHandler : IRequestHandler<GetOrgUnitTeachersQuery, Result<IReadOnlyList<TeacherDto>>>
 {
     private readonly IEmployeeRepository _employeeRepository;
 
-    public GetDepartmentTeachersQueryHandler(IEmployeeRepository employeeRepository)
+    public GetOrgUnitTeachersQueryHandler(IEmployeeRepository employeeRepository)
     {
         _employeeRepository = employeeRepository ?? throw new ArgumentNullException(nameof(employeeRepository));
     }
 
-    public async Task<Result<IReadOnlyList<TeacherDto>>> Handle(GetDepartmentTeachersQuery request, CancellationToken cancellationToken)
+    public async Task<Result<IReadOnlyList<TeacherDto>>> Handle(GetOrgUnitTeachersQuery request, CancellationToken cancellationToken)
     {
-        var employees = await _employeeRepository.GetByDepartmentAsync(request.DepartmentId, cancellationToken);
+        var employees = await _employeeRepository.GetByOrgUnitAsync(request.OrgUnitId, cancellationToken);
 
         var teachers = employees.Select(e =>
         {

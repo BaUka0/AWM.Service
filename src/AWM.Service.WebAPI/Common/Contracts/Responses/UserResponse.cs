@@ -13,4 +13,5 @@ public record UserResponse
     public string Name { get; init; } = string.Empty;
     public IEnumerable<string> Roles { get; init; } = Array.Empty<string>();
     public int? OrgUnitId { get; init; }
+    public int? CurrentSemesterId { get; init; }
 }

@@ -4,7 +4,7 @@ using MediatR;
 namespace AWM.Service.Application.Features.Workflow.Supervisors.Commands.UpdateSupervisorWorkload;
 
 public sealed record UpdateSupervisorWorkloadCommand(
-    int DepartmentId,
+    int OrgUnitId,
     int UserId,
     int SemesterId,
     int? SpecialityId,

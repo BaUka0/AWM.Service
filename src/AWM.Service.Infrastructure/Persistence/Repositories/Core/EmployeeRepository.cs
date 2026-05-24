@@ -42,14 +42,14 @@ public class EmployeeRepository : IEmployeeRepository
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<IReadOnlyList<Employee>> GetByDepartmentAsync(int departmentId, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<Employee>> GetByOrgUnitAsync(int orgUnitId, CancellationToken cancellationToken = default)
     {
         return await _context.Employees
             .Include(e => e.Positions)
                 .ThenInclude(p => p.Position)
             .Include(e => e.Positions)
                 .ThenInclude(p => p.OrgUnit)
-            .Where(e => e.Positions.Any(ep => ep.OrgUnitId == departmentId))
+            .Where(e => e.Positions.Any(ep => ep.OrgUnitId == orgUnitId))
             .Take(MaxQuerySize)
             .ToListAsync(cancellationToken);
     }
