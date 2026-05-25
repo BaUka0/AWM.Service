@@ -80,7 +80,9 @@ public class Schedule : Entity<long>, IAuditable, ISoftDeletable
     /// </summary>
     public Grade AddGrade(long assignmentId, int criteriaId, int score, int createdBy, string? comment = null)
     {
-        // Check if this member already graded this criteria
+        if (IsReconciliationStarted)
+            throw new DomainException("Schedule.GradingClosed", "Grades cannot be added after reconciliation has started.");
+
         if (_grades.Any(g => g.AssignmentId == assignmentId && g.CriteriaId == criteriaId))
             throw new DomainException("Schedule.MemberAlreadyGraded", "Member has already graded this criteria.");
 

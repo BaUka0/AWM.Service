@@ -1,0 +1,91 @@
+using AWM.Service.Application.Features.Defense.Commissions.Commands.CreateCommission;
+using AWM.Service.Application.Features.Defense.Commissions.Commands.UpdateCommission;
+using AWM.Service.Application.Features.Defense.Commissions.Queries.GetCommissions;
+using AWM.Service.WebAPI.Authorization;
+using AWM.Service.WebAPI.Common.Contracts.Requests.Defense;
+using AWM.Service.WebAPI.Common.Contracts.Responses;
+using Mapster;
+using MediatR;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+
+namespace AWM.Service.WebAPI.Controllers.v1;
+
+/// <summary>
+/// Controller for managing commissions (Pre-defense and GAK).
+/// </summary>
+[ApiVersion("1.0")]
+[Route("api/v{version:apiVersion}/commissions")]
+[ApiController]
+[Authorize]
+public sealed class CommissionsController : BaseController
+{
+    private readonly ISender _sender;
+
+    public CommissionsController(ISender sender)
+    {
+        _sender = sender;
+    }
+
+    /// <summary>
+    /// Gets commissions based on filters.
+    /// </summary>
+    [HttpGet]
+    [RequireAccess("SYSTEM.STAGE", "Read")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetCommissions(
+        [FromQuery] int orgUnitId,
+        [FromQuery] int semesterId,
+        [FromQuery] int? specialityId,
+        CancellationToken cancellationToken)
+    {
+        var query = new GetCommissionsQuery(orgUnitId, semesterId, specialityId);
+        var result = await _sender.Send(query, cancellationToken);
+
+        if (result.IsFailed)
+            return HandleResultError(result.Error);
+
+        return Ok(result.Value);
+    }
+
+    /// <summary>
+    /// Creates a new commission.
+    /// </summary>
+    [HttpPost]
+    [RequireAccess("SYSTEM.STAGE", "Update")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> CreateCommission(
+        [FromBody] CreateCommissionRequest request,
+        CancellationToken cancellationToken)
+    {
+        var command = request.Adapt<CreateCommissionCommand>();
+        var result = await _sender.Send(command, cancellationToken);
+
+        if (result.IsFailed)
+            return HandleResultError(result.Error);
+
+        return Ok(result.Value);
+    }
+
+    /// <summary>
+    /// Updates an existing commission (e.g. name).
+    /// </summary>
+    [HttpPut("{id}")]
+    [RequireAccess("SYSTEM.STAGE", "Update")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UpdateCommission(
+        int id,
+        [FromBody] UpdateCommissionRequest request,
+        CancellationToken cancellationToken)
+    {
+        var command = new UpdateCommissionCommand(id, request.Name);
+        var result = await _sender.Send(command, cancellationToken);
+
+        if (result.IsFailed)
+            return HandleResultError(result.Error);
+
+        return Ok();
+    }
+}

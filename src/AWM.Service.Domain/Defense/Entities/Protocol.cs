@@ -19,6 +19,7 @@ public class Protocol : Entity<long>, IAuditable, ISoftDeletable
     public string? FinalGradeLetter { get; private set; }
     public string? Decision { get; private set; }
     public string? ProtocolNumber { get; private set; }
+    public string? Comments { get; private set; }
 
     public DateTime CreatedAt { get; private set; }
     public int CreatedBy { get; private set; }
@@ -39,7 +40,8 @@ public class Protocol : Entity<long>, IAuditable, ISoftDeletable
         string? protocolNumber = null,
         decimal? finalScoreNumeric = null,
         string? finalGradeLetter = null,
-        string? decision = null)
+        string? decision = null,
+        string? comments = null)
     {
         ScheduleId = scheduleId;
         CommissionId = commissionId;
@@ -48,6 +50,7 @@ public class Protocol : Entity<long>, IAuditable, ISoftDeletable
         FinalScoreNumeric = finalScoreNumeric;
         FinalGradeLetter = finalGradeLetter;
         Decision = decision;
+        Comments = comments;
         IsFinalized = false;
 
         CreatedAt = DateTime.UtcNow;
@@ -95,7 +98,8 @@ public class Protocol : Entity<long>, IAuditable, ISoftDeletable
         string? finalGradeLetter,
         string? decision,
         string? protocolNumber,
-        int modifiedBy)
+        int modifiedBy,
+        string? comments = null)
     {
         if (IsFinalized)
             throw new DomainException("Protocol.ModifyFinalized", "Cannot modify finalized protocol.");
@@ -104,6 +108,7 @@ public class Protocol : Entity<long>, IAuditable, ISoftDeletable
         FinalGradeLetter = finalGradeLetter;
         Decision = decision;
         ProtocolNumber = protocolNumber;
+        Comments = comments;
         LastModifiedAt = DateTime.UtcNow;
         LastModifiedBy = modifiedBy;
     }
