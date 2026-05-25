@@ -198,10 +198,14 @@ public class Topic : AggregateRoot<long>, IAuditable, ISoftDeletable
     }
 
     /// <summary>
-    /// Closes the topic (no more applications).
+    /// Closes the topic, preventing new applications.
+    /// Only approved topics can be closed.
     /// </summary>
     public void Close()
     {
+        if (Status != TopicStatus.Approved)
+            throw new DomainException("Topic.CannotClose", "Only approved topics can be closed.");
+
         Status = TopicStatus.Closed;
         RaiseDomainEvent(new TopicClosedEvent(Id));
     }

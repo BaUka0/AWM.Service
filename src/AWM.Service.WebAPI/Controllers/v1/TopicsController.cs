@@ -1,3 +1,4 @@
+using AWM.Service.Application.Features.Workflow.Topics.Commands.CloseTopic;
 using AWM.Service.Application.Features.Workflow.Topics.Commands.CreateTopic;
 using AWM.Service.Application.Features.Workflow.Topics.Commands.ReviewTopic;
 using AWM.Service.Application.Features.Workflow.Topics.Commands.SubmitTopics;
@@ -213,5 +214,28 @@ public sealed class TopicsController : BaseController
 
         var response = result.Value.Adapt<IReadOnlyList<TopicResponse>>();
         return Ok(response);
+    }
+
+    /// <summary>
+    /// Closes a topic, preventing new applications.
+    /// Only the topic creator can close their own approved topics.
+    /// </summary>
+    /// <param name="id">The topic ID.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>No content on success.</returns>
+    [HttpPost("{id:long}/close")]
+    [RequireAccess("THESIS.TOPIC", "Update")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> CloseTopic(long id, CancellationToken cancellationToken)
+    {
+        var result = await _sender.Send(new CloseTopicCommand(id), cancellationToken);
+        
+        if (result.IsFailed)
+        {
+            return HandleResultError(result.Error);
+        }
+
+        return NoContent();
     }
 }
