@@ -12,23 +12,23 @@ public sealed class CreateTopicCommandHandler : IRequestHandler<CreateTopicComma
 {
     private readonly ITopicRepository _topicRepository;
     private readonly IDirectionRepository _directionRepository;
-    private readonly IEmployeeReadOnlyRepository _employeeRepository;
     private readonly ICurrentUserProvider _currentUserProvider;
+    private readonly IOrgUnitResolver _orgUnitResolver;
     private readonly IStageValidationService _stageValidationService;
     private readonly IUnitOfWork _unitOfWork;
 
     public CreateTopicCommandHandler(
         ITopicRepository topicRepository,
         IDirectionRepository directionRepository,
-        IEmployeeReadOnlyRepository employeeRepository,
         ICurrentUserProvider currentUserProvider,
+        IOrgUnitResolver orgUnitResolver,
         IStageValidationService stageValidationService,
         IUnitOfWork unitOfWork)
     {
         _topicRepository = topicRepository;
         _directionRepository = directionRepository;
-        _employeeRepository = employeeRepository;
         _currentUserProvider = currentUserProvider;
+        _orgUnitResolver = orgUnitResolver;
         _stageValidationService = stageValidationService;
         _unitOfWork = unitOfWork;
     }
@@ -42,30 +42,14 @@ public sealed class CreateTopicCommandHandler : IRequestHandler<CreateTopicComma
 
         var currentUserId = _currentUserProvider.UserId.Value;
 
-        // Resolve OrgUnitId
-        int orgUnitId;
-        if (request.OrgUnitId.HasValue)
+        // Resolve OrgUnitId via universal resolver (supports Employee + Student)
+        var (resolvedOrgUnitId, orgUnitError) = await _orgUnitResolver.ResolveAsync(request.OrgUnitId, currentUserId, cancellationToken);
+        if (!resolvedOrgUnitId.HasValue)
         {
-            orgUnitId = request.OrgUnitId.Value;
+            return Result.Failure<long>(new Error("OrgUnit.CannotResolve", orgUnitError ?? "Unable to determine department."));
         }
-        else
-        {
-            var employee = await _employeeRepository.GetByUserIdAsync(currentUserId, cancellationToken);
-            if (employee == null)
-            {
-                return Result.Failure<long>(new Error("Topics.EmployeeNotFound", "Employee record not found for the current user."));
-            }
 
-            var mainPosition = employee.Positions.FirstOrDefault(p => p.IsMainPosition) 
-                                ?? employee.Positions.FirstOrDefault();
-            
-            if (mainPosition == null)
-            {
-                return Result.Failure<long>(new Error("Topics.OrgUnitNotFound", "Employee has no assigned department."));
-            }
-
-            orgUnitId = mainPosition.OrgUnitId;
-        }
+        var orgUnitId = resolvedOrgUnitId.Value;
 
         // Validate Direction if provided
         if (request.DirectionId.HasValue)
@@ -75,9 +59,6 @@ public sealed class CreateTopicCommandHandler : IRequestHandler<CreateTopicComma
             {
                 return Result.Failure<long>(new Error("Topics.DirectionNotFound", "Specified direction not found."));
             }
-            
-            // Note: In a real system, we'd check if the direction is Approved.
-            // But here we'll proceed as per domain entity constraints.
         }
 
         // Validate that the TopicProposal stage (Stage 4) is open
@@ -108,6 +89,10 @@ public sealed class CreateTopicCommandHandler : IRequestHandler<CreateTopicComma
             specialityId: request.SpecialityId);
 
         await _topicRepository.AddAsync(topic, cancellationToken);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        // Raise domain event after SaveChanges so Id is assigned by DB
+        topic.RaiseCreatedEvent();
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Result.Success(topic.Id);

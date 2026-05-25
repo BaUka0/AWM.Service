@@ -3,6 +3,7 @@ namespace AWM.Service.Infrastructure.Persistence.Configurations.Thesis;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using AWM.Service.Domain.Thesis.Entities;
+using AWM.Service.Domain.Thesis.Enums;
 using AWM.Service.Domain.University;
 using AWM.Service.Domain.Wf.Entities;
 using AWM.Service.Infrastructure.Persistence.Configurations.Base;
@@ -69,21 +70,12 @@ public class TopicConfiguration : SoftDeletableEntityConfiguration<Topic, long>
             .IsRequired()
             .HasDefaultValue(1);
 
-        builder.Property(e => e.IsApproved)
+        // TopicStatus enum stored as int column
+        builder.Property(e => e.Status)
             .IsRequired()
-            .HasDefaultValue(false);
-
-        builder.Property(e => e.IsRejected)
-            .IsRequired()
-            .HasDefaultValue(false);
-
-        builder.Property(e => e.IsSubmittedForApproval)
-            .IsRequired()
-            .HasDefaultValue(false);
-
-        builder.Property(e => e.IsClosed)
-            .IsRequired()
-            .HasDefaultValue(false);
+            .HasDefaultValue(TopicStatus.Draft)
+            .HasConversion<int>()
+            .HasColumnName("Status");
 
         builder.Property(e => e.ReviewComment)
             .HasColumnType("nvarchar(max)");
@@ -129,8 +121,8 @@ public class TopicConfiguration : SoftDeletableEntityConfiguration<Topic, long>
             .HasForeignKey(e => e.TopicId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Indexes
-        builder.HasIndex(e => new { e.OrgUnitId, e.SemesterId, e.IsApproved })
+        // Indexes — updated to use Status enum column
+        builder.HasIndex(e => new { e.OrgUnitId, e.SemesterId, e.Status })
             .HasDatabaseName("IX_Topics_Filter");
 
         builder.HasIndex(e => e.DirectionId)

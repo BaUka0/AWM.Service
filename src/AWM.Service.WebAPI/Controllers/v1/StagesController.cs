@@ -5,6 +5,7 @@ using AWM.Service.WebAPI.Common.Contracts.Requests;
 using AWM.Service.WebAPI.Common.Contracts.Responses;
 using Mapster;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AWM.Service.WebAPI.Controllers.v1;
@@ -15,6 +16,7 @@ namespace AWM.Service.WebAPI.Controllers.v1;
 [ApiVersion("1.0")]
 [Route("api/v{version:apiVersion}/stages")]
 [ApiController]
+[Authorize]
 public sealed class StagesController : BaseController
 {
     private readonly ISender _sender;

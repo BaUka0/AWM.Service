@@ -8,6 +8,7 @@ using AWM.Service.Domain.Thesis.Events;
 /// <summary>
 /// Topic entity - thesis topic proposed by supervisors.
 /// Can be linked to a direction, supports team works (1-3 participants).
+/// Uses <see cref="TopicStatus"/> enum instead of separate boolean flags.
 /// </summary>
 public class Topic : AggregateRoot<long>, IAuditable, ISoftDeletable
 {
@@ -25,10 +26,12 @@ public class Topic : AggregateRoot<long>, IAuditable, ISoftDeletable
     public string? DescriptionEn { get; private set; }
 
     public int MaxParticipants { get; private set; }
-    public bool IsSubmittedForApproval { get; private set; }
-    public bool IsApproved { get; private set; }
-    public bool IsRejected { get; private set; }
-    public bool IsClosed { get; private set; }
+
+    /// <summary>
+    /// Current topic status. Replaces the legacy boolean flags
+    /// (IsSubmittedForApproval, IsApproved, IsRejected, IsClosed).
+    /// </summary>
+    public TopicStatus Status { get; private set; }
 
     public string? ReviewComment { get; private set; }
     public int? ReviewedBy { get; private set; }
@@ -83,17 +86,24 @@ public class Topic : AggregateRoot<long>, IAuditable, ISoftDeletable
         DescriptionEn = descriptionEn;
         MaxParticipants = maxParticipants;
         SpecialityId = specialityId;
-        IsSubmittedForApproval = false;
-        IsApproved = false;
-        IsRejected = false;
-        IsClosed = false;
+        Status = TopicStatus.Draft;
         CreatedAt = DateTime.UtcNow;
         CreatedBy = createdByUserId; // Topic creator is supervisor
         LastModifiedAt = CreatedAt;
         LastModifiedBy = createdByUserId;
         IsDeleted = false;
 
-        RaiseDomainEvent(new TopicCreatedEvent(Id, directionId, createdByUserId));
+        // NOTE: Domain event is NOT raised in constructor because EF Identity
+        // has not yet assigned the Id. Call RaiseCreatedEvent() after AddAsync/SaveChanges.
+    }
+
+    /// <summary>
+    /// Raises the TopicCreatedEvent. Must be called after the entity is persisted
+    /// and has a valid Id assigned by the database.
+    /// </summary>
+    public void RaiseCreatedEvent()
+    {
+        RaiseDomainEvent(new TopicCreatedEvent(Id, DirectionId, CreatedBy));
     }
 
     /// <summary>
@@ -148,11 +158,10 @@ public class Topic : AggregateRoot<long>, IAuditable, ISoftDeletable
     /// </summary>
     public void SubmitForApproval()
     {
-        if (IsApproved)
+        if (Status == TopicStatus.Approved)
             throw new DomainException("Topic.AlreadyApproved", "Topic is already approved.");
 
-        IsSubmittedForApproval = true;
-        IsRejected = false;
+        Status = TopicStatus.Pending;
         ReviewComment = null;
     }
 
@@ -161,9 +170,7 @@ public class Topic : AggregateRoot<long>, IAuditable, ISoftDeletable
     /// </summary>
     public void Approve(int reviewedBy)
     {
-        IsApproved = true;
-        IsSubmittedForApproval = true;
-        IsRejected = false;
+        Status = TopicStatus.Approved;
         ReviewedBy = reviewedBy;
         ReviewedAt = DateTime.UtcNow;
         ReviewComment = null;
@@ -176,20 +183,18 @@ public class Topic : AggregateRoot<long>, IAuditable, ISoftDeletable
     /// </summary>
     public void Reject(int reviewedBy, string comment)
     {
-        IsApproved = false;
-        IsSubmittedForApproval = false;
-        IsRejected = true;
+        Status = TopicStatus.Rejected;
         ReviewedBy = reviewedBy;
         ReviewedAt = DateTime.UtcNow;
         ReviewComment = comment;
     }
 
     /// <summary>
-    /// Revokes approval.
+    /// Revokes approval, returning topic to Pending status.
     /// </summary>
     public void RevokeApproval()
     {
-        IsApproved = false;
+        Status = TopicStatus.Pending;
     }
 
     /// <summary>
@@ -197,7 +202,7 @@ public class Topic : AggregateRoot<long>, IAuditable, ISoftDeletable
     /// </summary>
     public void Close()
     {
-        IsClosed = true;
+        Status = TopicStatus.Closed;
         RaiseDomainEvent(new TopicClosedEvent(Id));
     }
     
@@ -206,7 +211,7 @@ public class Topic : AggregateRoot<long>, IAuditable, ISoftDeletable
     /// </summary>
     public void Reopen()
     {
-        IsClosed = false;
+        Status = TopicStatus.Approved;
     }
     
     public void AddApplication(TopicApplication application)
@@ -222,7 +227,7 @@ public class Topic : AggregateRoot<long>, IAuditable, ISoftDeletable
     /// </summary>
     public bool CanAcceptApplications()
     {
-        if (!IsApproved || IsClosed)
+        if (Status != TopicStatus.Approved)
             return false;
 
         var acceptedCount = _applications.Count(a => a.StatusId == (int)ApplicationStatusType.Accepted);

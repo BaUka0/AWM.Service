@@ -58,19 +58,11 @@ public sealed class GetMyTopicsQueryHandler : IRequestHandler<GetMyTopicsQuery, 
             t.MaxParticipants,
             t.Applications.Count(a => a.StatusId == 2), // Accepted
             t.Applications.Count(a => a.StatusId == 1), // Pending
-            GetStatus(t),
+            t.Status.ToString().ToLowerInvariant(),
             t.ReviewComment,
             t.CreatedAt
         )).ToList();
 
         return Result.Success(dtos);
-    }
-
-    private static string GetStatus(Topic topic)
-    {
-        if (topic.IsApproved) return "approved";
-        if (topic.IsRejected) return "rejected";
-        if (topic.IsSubmittedForApproval) return "pending";
-        return "draft";
     }
 }

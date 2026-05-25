@@ -94,7 +94,7 @@ public sealed class ApplicationsController : BaseController
             return HandleResultError(result.Error);
         }
 
-        return Created("", result.Value);
+        return CreatedAtAction("GetApplicationsByTopic", new { topicId = request.TopicId }, result.Value);
     }
 
     /// <summary>
@@ -105,7 +105,7 @@ public sealed class ApplicationsController : BaseController
     /// <returns>Success status.</returns>
     [HttpPost("{id:long}/accept")]
     [RequireAccess("THESIS.APPLICATION", "Update")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> AcceptApplication(long id, CancellationToken cancellationToken)
     {
         var result = await _sender.Send(new AcceptApplicationCommand(id), cancellationToken);
@@ -115,7 +115,7 @@ public sealed class ApplicationsController : BaseController
             return HandleResultError(result.Error);
         }
 
-        return Ok();
+        return NoContent();
     }
 
     /// <summary>
@@ -127,7 +127,7 @@ public sealed class ApplicationsController : BaseController
     /// <returns>Success status.</returns>
     [HttpPost("{id:long}/reject")]
     [RequireAccess("THESIS.APPLICATION", "Update")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> RejectApplication(long id, [FromBody] RejectApplicationRequest request, CancellationToken cancellationToken)
     {
         var result = await _sender.Send(new RejectApplicationCommand(id, request.Reason), cancellationToken);
@@ -137,7 +137,7 @@ public sealed class ApplicationsController : BaseController
             return HandleResultError(result.Error);
         }
 
-        return Ok();
+        return NoContent();
     }
 
     /// <summary>

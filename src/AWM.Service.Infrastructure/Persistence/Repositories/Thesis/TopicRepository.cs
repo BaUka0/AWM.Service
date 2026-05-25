@@ -2,6 +2,7 @@ namespace AWM.Service.Infrastructure.Persistence.Repositories.Thesis;
 
 using AWM.Service.Domain.Repositories;
 using AWM.Service.Domain.Thesis.Entities;
+using AWM.Service.Domain.Thesis.Enums;
 using AWM.Service.Domain.CommonDomain.Enums;
 using AWM.Service.Infrastructure.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -17,7 +18,7 @@ public sealed class TopicRepository : RepositoryBase<Topic, long>, ITopicReposit
     public override async Task<Topic?> GetByIdAsync(long id, CancellationToken cancellationToken = default)
     {
         return await Context.Topics
-            .Include(t => t.Applications.Where(a => !a.IsDeleted))
+            .Include(t => t.Applications)
             .FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
     }
 
@@ -52,7 +53,7 @@ public sealed class TopicRepository : RepositoryBase<Topic, long>, ITopicReposit
         CancellationToken cancellationToken = default)
     {
         return await Context.Topics
-            .Include(t => t.Applications.Where(a => !a.IsDeleted))
+            .Include(t => t.Applications)
             .Where(t => t.OrgUnitId == departmentId &&
                         t.SemesterId == academicYearId)
             .OrderByDescending(t => t.CreatedAt)
@@ -70,8 +71,8 @@ public sealed class TopicRepository : RepositoryBase<Topic, long>, ITopicReposit
             .Where(a => a.UserId == userId &&
                         a.RoleType == StaffRoleType.Supervisor &&
                         a.TargetEntityType == "Topic" &&
-                        a.IsActive && !a.IsDeleted)
-            .Join(Context.Topics.Where(t => !t.IsDeleted && t.SemesterId == academicYearId),
+                        a.IsActive)
+            .Join(Context.Topics.Where(t => t.SemesterId == academicYearId),
                 a => a.TargetEntityId,
                 t => t.Id,
                 (a, t) => t)
@@ -87,7 +88,7 @@ public sealed class TopicRepository : RepositoryBase<Topic, long>, ITopicReposit
     {
         var acceptedCountsQuery = Context.TopicApplications
             .AsNoTracking()
-            .Where(a => !a.IsDeleted && a.StatusId == 2)
+            .Where(a => a.StatusId == 2)
             .GroupBy(a => a.TopicId)
             .Select(group => new
             {
@@ -97,11 +98,9 @@ public sealed class TopicRepository : RepositoryBase<Topic, long>, ITopicReposit
 
         return await Context.Topics
             .AsNoTracking()
-            .Where(t => !t.IsDeleted &&
-                        t.OrgUnitId == departmentId &&
+            .Where(t => t.OrgUnitId == departmentId &&
                         t.SemesterId == academicYearId &&
-                        t.IsApproved &&
-                        !t.IsClosed)
+                        t.Status == TopicStatus.Approved)
             .GroupJoin(
                 acceptedCountsQuery,
                 topic => topic.Id,

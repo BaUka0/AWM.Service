@@ -165,6 +165,7 @@ public static class DependencyInjection
         // Register Domain/CommonDomain Services
         services.AddScoped<Domain.CommonDomain.Services.INotificationService, Services.NotificationService>();
         services.AddScoped<Domain.CommonDomain.Services.IStageValidationService, Services.StageValidationService>();
+        services.AddScoped<Domain.CommonDomain.Services.IOrgUnitResolver, Services.OrgUnitResolver>();
         services.AddScoped<Domain.Auth.Interfaces.IPasswordHasher, Services.PasswordHasher>();
 
         return services;

@@ -35,19 +35,11 @@ public sealed class GetDepartmentTopicsQueryHandler : IRequestHandler<GetDepartm
             t.MaxParticipants,
             0, // Accepted count - simplified for now
             0, // Pending count - simplified for now
-            GetStatus(t),
+            t.Status.ToString().ToLowerInvariant(),
             t.ReviewComment,
             t.CreatedAt
         )).ToList();
 
         return Result.Success(dtos);
-    }
-
-    private static string GetStatus(Topic topic)
-    {
-        if (topic.IsApproved) return "approved";
-        if (topic.IsRejected) return "rejected";
-        if (topic.IsSubmittedForApproval) return "pending";
-        return "draft";
     }
 }

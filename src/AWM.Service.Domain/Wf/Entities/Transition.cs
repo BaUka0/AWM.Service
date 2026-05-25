@@ -71,4 +71,16 @@ public class Transition : Entity<int>, IAuditable, ISoftDeletable
 
         return RoleAccessId == null || RoleAccessId == roleId;
     }
+
+    /// <summary>
+    /// Checks if a user with any of the given roles can perform this transition.
+    /// </summary>
+    /// <param name="roleIds">Collection of role IDs the user possesses.</param>
+    public bool CanBePerformedByAny(IEnumerable<int> roleIds)
+    {
+        if (IsAutomatic || IsDeleted)
+            return false;
+
+        return RoleAccessId == null || roleIds.Contains(RoleAccessId.Value);
+    }
 }

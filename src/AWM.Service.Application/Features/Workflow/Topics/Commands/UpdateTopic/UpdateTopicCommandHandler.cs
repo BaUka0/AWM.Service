@@ -34,7 +34,7 @@ public sealed class UpdateTopicCommandHandler : IRequestHandler<UpdateTopicComma
         if (topic.CreatedBy != _currentUserProvider.UserId.Value)
             return Result.Failure(new Error("Topics.Unauthorized", "You can only update your own topics."));
 
-        if (topic.IsApproved)
+        if (topic.Status == Domain.Thesis.Enums.TopicStatus.Approved)
             return Result.Failure(new Error("Topics.AlreadyApproved", "Approved topics cannot be updated."));
 
         topic.UpdateContent(

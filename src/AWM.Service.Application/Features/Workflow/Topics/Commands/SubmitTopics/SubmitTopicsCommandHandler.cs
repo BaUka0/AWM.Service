@@ -45,8 +45,8 @@ public sealed class SubmitTopicsCommandHandler : IRequestHandler<SubmitTopicsCom
             if (topic.CreatedBy != currentUserId)
                 return Result.Failure(new Error("Topics.Unauthorized", $"You are not authorized to submit topic ID {topic.Id}."));
 
-            if (topic.IsApproved)
-                continue; // Already approved topics can be skipped or throw error depending on preference
+            if (topic.Status == Domain.Thesis.Enums.TopicStatus.Approved)
+                continue; // Already approved topics can be skipped
 
             // Validate stage for each topic (though they should share the same orgUnit/semester)
             var (isAllowed, errorMessage) = await _stageValidationService.ValidateOperationInStageAsync(

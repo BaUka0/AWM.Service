@@ -66,21 +66,33 @@ public class StudentWork : AggregateRoot<long>, IAuditable, ISoftDeletable
         LastModifiedBy = createdBy;
         IsDeleted = false;
 
-        RaiseDomainEvent(new WorkCreatedEvent(Id, topicId, orgUnitId));
+        // NOTE: Domain event is NOT raised in constructor because EF Identity
+        // has not yet assigned the Id. Call RaiseCreatedEvent() after AddAsync/SaveChanges.
+    }
+
+    /// <summary>
+    /// Raises the WorkCreatedEvent. Must be called after the entity is persisted
+    /// and has a valid Id assigned by the database.
+    /// </summary>
+    public void RaiseCreatedEvent()
+    {
+        RaiseDomainEvent(new WorkCreatedEvent(Id, TopicId, OrgUnitId));
     }
 
     /// <summary>
     /// Adds a participant to the work.
     /// </summary>
-    public WorkParticipant AddParticipant(int studentId)
+    /// <param name="studentId">The student's user ID.</param>
+    /// <param name="maxParticipants">Maximum allowed participants (from related Topic).</param>
+    public WorkParticipant AddParticipant(int studentId, int maxParticipants)
     {
         // Check if already a participant
         if (_participants.Any(p => p.StudentId == studentId))
             throw new DomainException("StudentWork.AlreadyParticipant", "Student is already a participant.");
 
-        // Check max participants (3)
-        if (_participants.Count >= 3)
-            throw new DomainException("StudentWork.MaxParticipantsExceeded", "Maximum 3 participants allowed.");
+        // Check max participants from the associated topic
+        if (_participants.Count >= maxParticipants)
+            throw new DomainException("StudentWork.MaxParticipantsExceeded", $"Maximum {maxParticipants} participants allowed.");
 
         var participant = new WorkParticipant(Id, studentId);
         _participants.Add(participant);

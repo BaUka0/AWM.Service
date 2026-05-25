@@ -10,6 +10,7 @@ using AWM.Service.WebAPI.Common.Contracts.Requests.Directions;
 using AWM.Service.WebAPI.Common.Contracts.Responses.Directions;
 using Mapster;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AWM.Service.WebAPI.Controllers.v1;
@@ -20,6 +21,7 @@ namespace AWM.Service.WebAPI.Controllers.v1;
 [ApiVersion("1.0")]
 [Route("api/v{version:apiVersion}/directions")]
 [ApiController]
+[Authorize]
 public sealed class DirectionsController : BaseController
 {
     private readonly ISender _sender;
@@ -103,15 +105,7 @@ public sealed class DirectionsController : BaseController
         [FromBody] CreateDirectionRequest request,
         CancellationToken cancellationToken)
     {
-        var command = new CreateDirectionCommand(
-            request.SemesterId,
-            request.WorkTypeId,
-            request.TitleRu,
-            request.TitleKz,
-            request.TitleEn,
-            request.DescriptionRu,
-            request.DescriptionKz,
-            request.DescriptionEn);
+        var command = request.Adapt<CreateDirectionCommand>();
 
         var result = await _sender.Send(command, cancellationToken);
         
@@ -146,7 +140,7 @@ public sealed class DirectionsController : BaseController
         
         if (result.IsFailed) return HandleResultError(result.Error);
         
-        return Ok();
+        return NoContent();
     }
 
     /// <summary>
@@ -182,6 +176,11 @@ public sealed class DirectionsController : BaseController
         [FromBody] ReviewDirectionRequest request,
         CancellationToken cancellationToken)
     {
+        if (!Enum.IsDefined(typeof(ReviewDecision), request.DecisionId))
+        {
+            return BadRequest(new { error = "Invalid review decision. Valid values: 1 (Approve), 2 (Reject), 3 (RequireRevision)." });
+        }
+
         var command = new ReviewDirectionCommand(
             id,
             (ReviewDecision)request.DecisionId,
@@ -191,6 +190,6 @@ public sealed class DirectionsController : BaseController
         
         if (result.IsFailed) return HandleResultError(result.Error);
         
-        return Ok();
+        return NoContent();
     }
 }

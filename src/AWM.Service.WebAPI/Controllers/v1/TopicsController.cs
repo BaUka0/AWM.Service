@@ -128,15 +128,15 @@ public sealed class TopicsController : BaseController
     /// <summary>
     /// Submits a batch of topics for department review.
     /// </summary>
-    /// <param name="topicIds">The list of topic IDs to submit.</param>
+    /// <param name="request">The request containing list of topic IDs to submit.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Success status.</returns>
     [HttpPost("submit")]
     [RequireAccess("THESIS.TOPIC", "Update")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> SubmitTopics([FromBody] List<long> topicIds, CancellationToken cancellationToken)
+    public async Task<IActionResult> SubmitTopics([FromBody] SubmitTopicsRequest request, CancellationToken cancellationToken)
     {
-        var result = await _sender.Send(new SubmitTopicsCommand(topicIds), cancellationToken);
+        var result = await _sender.Send(new SubmitTopicsCommand(request.TopicIds), cancellationToken);
         
         if (result.IsFailed)
         {
@@ -155,10 +155,10 @@ public sealed class TopicsController : BaseController
     /// <returns>Success status.</returns>
     [HttpPost("{id:long}/review")]
     [RequireAccess("THESIS.TOPIC", "Update")] // Usually department role
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> ReviewTopic(long id, [FromBody] ReviewTopicRequest request, CancellationToken cancellationToken)
     {
-        var command = new ReviewTopicCommand(id, request.IsApproved, request.Comment);
+        var command = request.Adapt<ReviewTopicCommand>() with { TopicId = id };
         var result = await _sender.Send(command, cancellationToken);
         
         if (result.IsFailed)
@@ -166,7 +166,7 @@ public sealed class TopicsController : BaseController
             return HandleResultError(result.Error);
         }
 
-        return Ok();
+        return NoContent();
     }
 
     /// <summary>

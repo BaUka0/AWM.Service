@@ -1,7 +1,6 @@
 using AWM.Service.Application.Features.Workflow.Topics.DTOs;
 using AWM.Service.Domain.Common;
 using AWM.Service.Domain.Repositories;
-using AWM.Service.Domain.Thesis.Entities;
 using KDS.Primitives.FluentResult;
 using MediatR;
 
@@ -38,11 +37,7 @@ public sealed class GetTopicByIdQueryHandler : IRequestHandler<GetTopicByIdQuery
             topic.DescriptionKz,
             topic.DescriptionEn,
             topic.MaxParticipants,
-            topic.IsSubmittedForApproval,
-            topic.IsApproved,
-            topic.IsRejected,
-            topic.IsClosed,
-            GetStatus(topic),
+            topic.Status.ToString().ToLowerInvariant(),
             topic.ReviewComment,
             topic.ReviewedBy,
             topic.ReviewedAt,
@@ -51,13 +46,5 @@ public sealed class GetTopicByIdQueryHandler : IRequestHandler<GetTopicByIdQuery
         );
 
         return Result.Success(dto);
-    }
-
-    private static string GetStatus(Topic topic)
-    {
-        if (topic.IsApproved) return "approved";
-        if (topic.IsRejected) return "rejected";
-        if (topic.IsSubmittedForApproval) return "pending";
-        return "draft";
     }
 }

@@ -41,10 +41,10 @@ public sealed class CreateApplicationCommandHandler : IRequestHandler<CreateAppl
         if (topic == null)
             return Result.Failure<long>(new Error("Topics.NotFound", "Topic not found."));
 
-        if (!topic.IsApproved)
+        if (topic.Status != Domain.Thesis.Enums.TopicStatus.Approved && topic.Status != Domain.Thesis.Enums.TopicStatus.Closed)
             return Result.Failure<long>(new Error("Topics.NotApproved", "Topic is not approved for selection."));
 
-        if (topic.IsClosed)
+        if (topic.Status == Domain.Thesis.Enums.TopicStatus.Closed)
             return Result.Failure<long>(new Error("Topics.Closed", "Topic is closed for new applications."));
 
         // Validate Stage 5 (TopicSelection)

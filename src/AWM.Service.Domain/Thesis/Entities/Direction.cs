@@ -74,7 +74,17 @@ public class Direction : AggregateRoot<long>, IAuditable, ISoftDeletable
         LastModifiedBy = createdByUserId;
         IsDeleted = false;
 
-        RaiseDomainEvent(new DirectionCreatedEvent(Id, createdByUserId, orgUnitId));
+        // NOTE: Domain event is NOT raised in constructor because EF Identity
+        // has not yet assigned the Id. Call RaiseCreatedEvent() after AddAsync/SaveChanges.
+    }
+
+    /// <summary>
+    /// Raises the DirectionCreatedEvent. Must be called after the entity is persisted
+    /// and has a valid Id assigned by the database.
+    /// </summary>
+    public void RaiseCreatedEvent()
+    {
+        RaiseDomainEvent(new DirectionCreatedEvent(Id, CreatedBy, OrgUnitId));
     }
 
     /// <summary>
