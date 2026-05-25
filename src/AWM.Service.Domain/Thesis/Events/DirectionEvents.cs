@@ -5,7 +5,7 @@ using AWM.Service.Domain.Common;
 /// <summary>
 /// Event raised when a new direction is created.
 /// </summary>
-public sealed record DirectionCreatedEvent(long DirectionId, int CreatorUserId, int DepartmentId) : DomainEventBase;
+public sealed record DirectionCreatedEvent(long DirectionId, int CreatorUserId, int OrgUnitId) : DomainEventBase;
 
 /// <summary>
 /// Event raised when a direction is submitted for review.

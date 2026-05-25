@@ -33,29 +33,29 @@ public sealed class TopicRepository : RepositoryBase<Topic, long>, ITopicReposit
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<Topic>> GetByDepartmentAsync(
-        int departmentId,
-        int academicYearId,
+    public async Task<IReadOnlyList<Topic>> GetByOrgUnitAsync(
+        int orgUnitId,
+        int semesterId,
         CancellationToken cancellationToken = default)
     {
         return await Context.Topics
             .AsNoTracking()
-            .Where(t => t.OrgUnitId == departmentId &&
-                        t.SemesterId == academicYearId)
+            .Where(t => t.OrgUnitId == orgUnitId &&
+                        t.SemesterId == semesterId)
             .OrderByDescending(t => t.CreatedAt)
             .ToListAsync(cancellationToken);
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<Topic>> GetByDepartmentWithApplicationsAsync(
-        int departmentId,
-        int academicYearId,
+    public async Task<IReadOnlyList<Topic>> GetByOrgUnitWithApplicationsAsync(
+        int orgUnitId,
+        int semesterId,
         CancellationToken cancellationToken = default)
     {
         return await Context.Topics
             .Include(t => t.Applications)
-            .Where(t => t.OrgUnitId == departmentId &&
-                        t.SemesterId == academicYearId)
+            .Where(t => t.OrgUnitId == orgUnitId &&
+                        t.SemesterId == semesterId)
             .OrderByDescending(t => t.CreatedAt)
             .ToListAsync(cancellationToken);
     }
@@ -63,7 +63,7 @@ public sealed class TopicRepository : RepositoryBase<Topic, long>, ITopicReposit
     /// <inheritdoc />
     public async Task<IReadOnlyList<Topic>> GetBySupervisorAsync(
         int userId,
-        int academicYearId,
+        int semesterId,
         CancellationToken cancellationToken = default)
     {
         return await Context.StaffAssignments
@@ -72,7 +72,7 @@ public sealed class TopicRepository : RepositoryBase<Topic, long>, ITopicReposit
                         a.RoleType == StaffRoleType.Supervisor &&
                         a.TargetEntityType == "Topic" &&
                         a.IsActive)
-            .Join(Context.Topics.Where(t => t.SemesterId == academicYearId),
+            .Join(Context.Topics.Where(t => t.SemesterId == semesterId),
                 a => a.TargetEntityId,
                 t => t.Id,
                 (a, t) => t)
@@ -82,8 +82,8 @@ public sealed class TopicRepository : RepositoryBase<Topic, long>, ITopicReposit
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<Topic>> GetAvailableForSelectionAsync(
-        int departmentId,
-        int academicYearId,
+        int orgUnitId,
+        int semesterId,
         CancellationToken cancellationToken = default)
     {
         var acceptedCountsQuery = Context.TopicApplications
@@ -98,8 +98,8 @@ public sealed class TopicRepository : RepositoryBase<Topic, long>, ITopicReposit
 
         return await Context.Topics
             .AsNoTracking()
-            .Where(t => t.OrgUnitId == departmentId &&
-                        t.SemesterId == academicYearId &&
+            .Where(t => t.OrgUnitId == orgUnitId &&
+                        t.SemesterId == semesterId &&
                         t.Status == TopicStatus.Approved)
             .GroupJoin(
                 acceptedCountsQuery,
@@ -118,9 +118,9 @@ public sealed class TopicRepository : RepositoryBase<Topic, long>, ITopicReposit
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<Topic>> GetByDepartmentForReconciliationAsync(
-        int departmentId,
-        int academicYearId,
+    public async Task<IReadOnlyList<Topic>> GetByOrgUnitForReconciliationAsync(
+        int orgUnitId,
+        int semesterId,
         CancellationToken cancellationToken = default)
     {
         var reconciliationStatuses = new[]
@@ -134,8 +134,8 @@ public sealed class TopicRepository : RepositoryBase<Topic, long>, ITopicReposit
 
         return await Context.Topics
             .Include(t => t.Applications)
-            .Where(t => t.OrgUnitId == departmentId &&
-                        t.SemesterId == academicYearId &&
+            .Where(t => t.OrgUnitId == orgUnitId &&
+                        t.SemesterId == semesterId &&
                         reconciliationStatuses.Contains(t.Status))
             .OrderByDescending(t => t.CreatedAt)
             .ToListAsync(cancellationToken);
@@ -176,3 +176,4 @@ public sealed class TopicRepository : RepositoryBase<Topic, long>, ITopicReposit
         return Task.CompletedTask;
     }
 }
+

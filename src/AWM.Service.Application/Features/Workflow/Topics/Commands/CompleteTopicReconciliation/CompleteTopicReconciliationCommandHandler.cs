@@ -53,7 +53,7 @@ public sealed class CompleteTopicReconciliationCommandHandler
         var currentUserId = _currentUserProvider.UserId.Value;
 
         // 1. Load all topics for this department/semester with their applications
-        var topics = await _topicRepository.GetByDepartmentForReconciliationAsync(
+        var topics = await _topicRepository.GetByOrgUnitForReconciliationAsync(
             request.OrgUnitId, request.SemesterId, cancellationToken);
 
         if (topics.Count == 0)
@@ -155,3 +155,4 @@ public sealed class CompleteTopicReconciliationCommandHandler
         return Result.Success();
     }
 }
+

@@ -57,7 +57,7 @@ public sealed class GetStagesPeriodsQueryHandler : IRequestHandler<GetStagesPeri
         }
 
         // 2. Fetch all stages for the department and semester
-        var allStages = await _stageRepository.GetByDepartmentAsync(orgUnitId, request.SemesterId, cancellationToken);
+        var allStages = await _stageRepository.GetByOrgUnitAsync(orgUnitId, request.SemesterId, cancellationToken);
 
         // 3. Filter stages with fallback logic
         var activeStages = allStages.Where(s => s.IsActive && !s.IsDeleted).ToList();
@@ -88,3 +88,4 @@ public sealed class GetStagesPeriodsQueryHandler : IRequestHandler<GetStagesPeri
         return Result.Success<IReadOnlyList<StagePeriodDto>>(dtos);
     }
 }
+

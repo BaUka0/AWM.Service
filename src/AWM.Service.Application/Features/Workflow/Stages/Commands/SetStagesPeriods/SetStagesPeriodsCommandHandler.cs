@@ -77,7 +77,7 @@ public sealed class SetStagesPeriodsCommandHandler : IRequestHandler<SetStagesPe
         }
         
         // 2. Fetch existing stages for the department and semester
-        var existingStages = await _stageRepository.GetByDepartmentAsync(
+        var existingStages = await _stageRepository.GetByOrgUnitAsync(
             orgUnitId, 
             request.SemesterId, 
             cancellationToken);
@@ -185,3 +185,4 @@ public sealed class SetStagesPeriodsCommandHandler : IRequestHandler<SetStagesPe
         return Result.Success(Unit.Value);
     }
 }
+

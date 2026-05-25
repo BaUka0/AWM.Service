@@ -31,15 +31,15 @@ public sealed class ProtocolRepository : RepositoryBase<Protocol, long>, IProtoc
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<Protocol>> GetByDepartmentAsync(
-        int departmentId,
-        int academicYearId,
+    public async Task<IReadOnlyList<Protocol>> GetByOrgUnitAsync(
+        int orgUnitId,
+        int semesterId,
         CancellationToken cancellationToken = default)
     {
         return await Context.Protocols
             .AsNoTracking()
             .Join(
-                Context.Commissions.Where(c => !c.IsDeleted && c.OrgUnitId == departmentId && c.SemesterId == academicYearId),
+                Context.Commissions.Where(c => !c.IsDeleted && c.OrgUnitId == orgUnitId && c.SemesterId == semesterId),
                 p => p.CommissionId,
                 c => c.Id,
                 (p, c) => p)
@@ -47,3 +47,4 @@ public sealed class ProtocolRepository : RepositoryBase<Protocol, long>, IProtoc
             .ToListAsync(cancellationToken);
     }
 }
+

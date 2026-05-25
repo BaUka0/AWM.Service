@@ -7,7 +7,7 @@ using AWM.Service.Application.Features.Workflow.Topics.Commands.ReviewTopic;
 using AWM.Service.Application.Features.Workflow.Topics.Commands.SendTopicsBackForRevision;
 using AWM.Service.Application.Features.Workflow.Topics.Commands.SubmitTopics;
 using AWM.Service.Application.Features.Workflow.Topics.Commands.UpdateTopic;
-using AWM.Service.Application.Features.Workflow.Topics.Queries.GetDepartmentTopics;
+using AWM.Service.Application.Features.Workflow.Topics.Queries.GetOrgUnitTopics;
 using AWM.Service.Application.Features.Workflow.Topics.Queries.GetMyTopics;
 using AWM.Service.Application.Features.Workflow.Topics.Queries.GetTopicById;
 using AWM.Service.Application.Features.Workflow.Topics.Queries.GetAvailableTopics;
@@ -176,18 +176,18 @@ public sealed class TopicsController : BaseController
     }
 
     /// <summary>
-    /// Gets all topics in a department for review.
+    /// Gets all topics in an org unit for review.
     /// </summary>
-    /// <param name="orgUnitId">The department ID.</param>
+    /// <param name="orgUnitId">The org unit (department) ID.</param>
     /// <param name="semesterId">The semester ID.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>A list of topics in the department.</returns>
-    [HttpGet("department")]
+    /// <returns>A list of topics in the org unit.</returns>
+    [HttpGet("org-unit")]
     [RequireAccess("THESIS.TOPIC", "Read")]
     [ProducesResponseType(typeof(IReadOnlyList<TopicResponse>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetDepartmentTopics([FromQuery] int orgUnitId, [FromQuery] int semesterId, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetOrgUnitTopics([FromQuery] int orgUnitId, [FromQuery] int semesterId, CancellationToken cancellationToken)
     {
-        var result = await _sender.Send(new GetDepartmentTopicsQuery(orgUnitId, semesterId), cancellationToken);
+        var result = await _sender.Send(new GetOrgUnitTopicsQuery(orgUnitId, semesterId), cancellationToken);
         
         if (result.IsFailed)
         {
@@ -387,3 +387,4 @@ public sealed class TopicsController : BaseController
 
     #endregion
 }
+

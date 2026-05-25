@@ -37,16 +37,16 @@ public sealed class DirectionRepository : IDirectionRepository
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<Direction>> GetByDepartmentAsync(
-        int departmentId, 
-        int academicYearId, 
+    public async Task<IReadOnlyList<Direction>> GetByOrgUnitAsync(
+        int orgUnitId, 
+        int semesterId, 
         CancellationToken cancellationToken = default)
     {
         return await _context.Directions
             .AsNoTracking()
             .Where(d => !d.IsDeleted && 
-                        d.OrgUnitId == departmentId && 
-                        d.SemesterId == academicYearId)
+                        d.OrgUnitId == orgUnitId && 
+                        d.SemesterId == semesterId)
             .OrderByDescending(d => d.CreatedAt)
             .ToListAsync(cancellationToken);
     }
@@ -54,7 +54,7 @@ public sealed class DirectionRepository : IDirectionRepository
     /// <inheritdoc />
     public async Task<IReadOnlyList<Direction>> GetBySupervisorAsync(
         int userId, 
-        int academicYearId, 
+        int semesterId, 
         CancellationToken cancellationToken = default)
     {
         return await _context.StaffAssignments
@@ -63,7 +63,7 @@ public sealed class DirectionRepository : IDirectionRepository
                         a.RoleType == StaffRoleType.Supervisor &&
                         a.TargetEntityType == "Direction" &&
                         a.IsActive && !a.IsDeleted)
-            .Join(_context.Directions.Where(d => !d.IsDeleted && d.SemesterId == academicYearId),
+            .Join(_context.Directions.Where(d => !d.IsDeleted && d.SemesterId == semesterId),
                 a => a.TargetEntityId,
                 d => d.Id,
                 (a, d) => d)
@@ -94,3 +94,4 @@ public sealed class DirectionRepository : IDirectionRepository
         return Task.CompletedTask;
     }
 }
+

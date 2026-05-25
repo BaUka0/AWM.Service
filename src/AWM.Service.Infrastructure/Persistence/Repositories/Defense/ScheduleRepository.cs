@@ -49,7 +49,7 @@ public sealed class ScheduleRepository : IScheduleRepository
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<Schedule>> GetByDateRangeAsync(
-        int departmentId, 
+        int orgUnitId, 
         DateTime from, 
         DateTime to, 
         CancellationToken cancellationToken = default)
@@ -63,7 +63,7 @@ public sealed class ScheduleRepository : IScheduleRepository
                   (schedule, commission) => new { Schedule = schedule, Commission = commission })
             .Where(x => !x.Schedule.IsDeleted && 
                         !x.Commission.IsDeleted &&
-                        x.Commission.OrgUnitId == departmentId &&
+                        x.Commission.OrgUnitId == orgUnitId &&
                         x.Schedule.DefenseDate >= from && 
                         x.Schedule.DefenseDate <= to)
             .OrderBy(x => x.Schedule.DefenseDate)
@@ -94,3 +94,4 @@ public sealed class ScheduleRepository : IScheduleRepository
         return Task.CompletedTask;
     }
 }
+

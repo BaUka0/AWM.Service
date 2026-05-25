@@ -52,11 +52,11 @@ public interface IProtocolRepository
     Task<IReadOnlyList<Protocol>> GetByCommissionAsync(int commissionId, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Gets all protocols for a department in academic year (для печати реестра).
+    /// Gets all protocols for an org unit in a semester (для печати реестра).
     /// </summary>
-    Task<IReadOnlyList<Protocol>> GetByDepartmentAsync(
-        int departmentId, 
-        int academicYearId, 
+    Task<IReadOnlyList<Protocol>> GetByOrgUnitAsync(
+        int orgUnitId, 
+        int semesterId, 
         CancellationToken cancellationToken = default);
 
     Task AddAsync(Protocol protocol, CancellationToken cancellationToken = default);

@@ -7,12 +7,12 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace AWM.Service.Application.Features.Workflow.Directions.Queries.GetDepartmentDirections;
+namespace AWM.Service.Application.Features.Workflow.Directions.Queries.GetOrgUnitDirections;
 
 /// <summary>
 /// Query handler for getting directions associated with a department.
 /// </summary>
-public sealed class GetDepartmentDirectionsQueryHandler : IRequestHandler<GetDepartmentDirectionsQuery, Result<IReadOnlyList<DirectionSummaryDto>>>
+public sealed class GetOrgUnitDirectionsQueryHandler : IRequestHandler<GetOrgUnitDirectionsQuery, Result<IReadOnlyList<DirectionSummaryDto>>>
 {
     private readonly IDirectionRepository _directionRepository;
     private readonly IEmployeeReadOnlyRepository _employeeRepository;
@@ -20,9 +20,9 @@ public sealed class GetDepartmentDirectionsQueryHandler : IRequestHandler<GetDep
     private readonly ISemesterReadOnlyRepository _semesterReadOnlyRepository;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="GetDepartmentDirectionsQueryHandler"/> class.
+    /// Initializes a new instance of the <see cref="GetOrgUnitDirectionsQueryHandler"/> class.
     /// </summary>
-    public GetDepartmentDirectionsQueryHandler(
+    public GetOrgUnitDirectionsQueryHandler(
         IDirectionRepository directionRepository,
         IEmployeeReadOnlyRepository employeeRepository,
         IUserReadOnlyRepository userReadOnlyRepository,
@@ -37,7 +37,7 @@ public sealed class GetDepartmentDirectionsQueryHandler : IRequestHandler<GetDep
     /// <summary>
     /// Handles the request to get department-wide directions.
     /// </summary>
-    public async Task<Result<IReadOnlyList<DirectionSummaryDto>>> Handle(GetDepartmentDirectionsQuery request, CancellationToken cancellationToken)
+    public async Task<Result<IReadOnlyList<DirectionSummaryDto>>> Handle(GetOrgUnitDirectionsQuery request, CancellationToken cancellationToken)
     {
         // Resolve semesterId fallback if null
         int semesterId;
@@ -55,7 +55,7 @@ public sealed class GetDepartmentDirectionsQueryHandler : IRequestHandler<GetDep
             semesterId = currentSemester.Id;
         }
 
-        var directions = await _directionRepository.GetByDepartmentAsync(request.OrgUnitId, semesterId, cancellationToken);
+        var directions = await _directionRepository.GetByOrgUnitAsync(request.OrgUnitId, semesterId, cancellationToken);
         
         if (request.StateId.HasValue)
         {
@@ -106,3 +106,5 @@ public sealed class GetDepartmentDirectionsQueryHandler : IRequestHandler<GetDep
         return Result.Success<IReadOnlyList<DirectionSummaryDto>>(resultList);
     }
 }
+
+

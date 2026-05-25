@@ -45,11 +45,11 @@ public interface IStageRepository
         int workflowStageId,
         int? specialityId = null,
         CancellationToken cancellationToken = default);
-    Task<IReadOnlyList<Stage>> GetByDepartmentAsync(
+    Task<IReadOnlyList<Stage>> GetByOrgUnitAsync(
         int orgUnitId,
         int semesterId,
         CancellationToken cancellationToken = default);
-    Task<IReadOnlyList<Stage>> GetTrackedByDepartmentAsync(
+    Task<IReadOnlyList<Stage>> GetTrackedByOrgUnitAsync(
         int orgUnitId,
         int semesterId,
         CancellationToken cancellationToken = default);

@@ -61,9 +61,9 @@ public sealed class TopicApplicationRepository : RepositoryBase<TopicApplication
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<TopicApplication>> GetByStudentIdAndYearAsync(int studentId, int academicYearId, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<TopicApplication>> GetByStudentIdAndYearAsync(int studentId, int semesterId, CancellationToken cancellationToken = default)
     {
-        // Since TopicApplication doesn't directly have AcademicYearId, we join with Topics
+        // Since TopicApplication doesn't directly have SemesterId, we join with Topics
         return await Context.TopicApplications
             .AsNoTracking()
             .Join(Context.Topics,
@@ -73,7 +73,7 @@ public sealed class TopicApplicationRepository : RepositoryBase<TopicApplication
             .Where(x => !x.App.IsDeleted &&
                         !x.Topic.IsDeleted &&
                         x.App.StudentId == studentId &&
-                        x.Topic.SemesterId == academicYearId)
+                        x.Topic.SemesterId == semesterId)
             .Select(x => x.App)
             .OrderByDescending(a => a.AppliedAt)
             .ToListAsync(cancellationToken);
@@ -87,7 +87,7 @@ public sealed class TopicApplicationRepository : RepositoryBase<TopicApplication
     }
 
     /// <inheritdoc />
-    public async Task<bool> HasAcceptedApplicationAsync(int studentId, int academicYearId, CancellationToken cancellationToken = default)
+    public async Task<bool> HasAcceptedApplicationAsync(int studentId, int semesterId, CancellationToken cancellationToken = default)
     {
         return await Context.TopicApplications
             .Join(Context.Topics,
@@ -97,7 +97,7 @@ public sealed class TopicApplicationRepository : RepositoryBase<TopicApplication
             .AnyAsync(x => !x.App.IsDeleted &&
                            !x.Topic.IsDeleted &&
                            x.App.StudentId == studentId &&
-                           x.Topic.SemesterId == academicYearId &&
+                           x.Topic.SemesterId == semesterId &&
                             x.App.StatusId == 2,
                            cancellationToken);
     }

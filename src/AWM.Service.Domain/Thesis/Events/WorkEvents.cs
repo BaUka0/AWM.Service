@@ -5,7 +5,7 @@ using AWM.Service.Domain.Common;
 /// <summary>
 /// Event raised when a new student work is created.
 /// </summary>
-public sealed record WorkCreatedEvent(long WorkId, long? TopicId, int DepartmentId) : DomainEventBase;
+public sealed record WorkCreatedEvent(long WorkId, long? TopicId, int OrgUnitId) : DomainEventBase;
 
 /// <summary>
 /// Event raised when work state changes.

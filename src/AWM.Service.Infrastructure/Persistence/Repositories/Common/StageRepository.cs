@@ -91,7 +91,7 @@ public sealed class StageRepository : RepositoryBase<Stage, int>, IStageReposito
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<Stage>> GetByDepartmentAsync(
+    public async Task<IReadOnlyList<Stage>> GetByOrgUnitAsync(
         int orgUnitId,
         int semesterId,
         CancellationToken cancellationToken = default)
@@ -105,7 +105,7 @@ public sealed class StageRepository : RepositoryBase<Stage, int>, IStageReposito
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<Stage>> GetTrackedByDepartmentAsync(
+    public async Task<IReadOnlyList<Stage>> GetTrackedByOrgUnitAsync(
         int orgUnitId,
         int semesterId,
         CancellationToken cancellationToken = default)
@@ -129,3 +129,4 @@ public sealed class StageRepository : RepositoryBase<Stage, int>, IStageReposito
         return stage != null;
     }
 }
+

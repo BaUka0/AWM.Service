@@ -29,7 +29,7 @@ public sealed class GetReconciliationSummaryQueryHandler
         GetReconciliationSummaryQuery request,
         CancellationToken cancellationToken)
     {
-        var topics = await _topicRepository.GetByDepartmentForReconciliationAsync(
+        var topics = await _topicRepository.GetByOrgUnitForReconciliationAsync(
             request.OrgUnitId, request.SemesterId, cancellationToken);
 
         // Apply optional speciality filter
@@ -95,3 +95,4 @@ public sealed class GetReconciliationSummaryQueryHandler
         return string.Join(" ", parts);
     }
 }
+

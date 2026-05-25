@@ -21,7 +21,7 @@ public sealed class CommissionRepository : RepositoryBase<Commission, int>, ICom
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<Commission>> GetByDepartmentAsync(
+    public async Task<IReadOnlyList<Commission>> GetByOrgUnitAsync(
         int orgUnitId,
         int semesterId,
         CancellationToken cancellationToken = default)
@@ -62,3 +62,4 @@ public sealed class CommissionRepository : RepositoryBase<Commission, int>, ICom
         return Task.CompletedTask;
     }
 }
+

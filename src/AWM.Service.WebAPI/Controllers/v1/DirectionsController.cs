@@ -2,7 +2,7 @@ using AWM.Service.Application.Features.Workflow.Directions.Commands.CreateDirect
 using AWM.Service.Application.Features.Workflow.Directions.Commands.ReviewDirection;
 using AWM.Service.Application.Features.Workflow.Directions.Commands.SubmitDirection;
 using AWM.Service.Application.Features.Workflow.Directions.Commands.UpdateDirection;
-using AWM.Service.Application.Features.Workflow.Directions.Queries.GetDepartmentDirections;
+using AWM.Service.Application.Features.Workflow.Directions.Queries.GetOrgUnitDirections;
 using AWM.Service.Application.Features.Workflow.Directions.Queries.GetDirectionById;
 using AWM.Service.Application.Features.Workflow.Directions.Queries.GetMyDirections;
 using AWM.Service.WebAPI.Authorization;
@@ -76,16 +76,16 @@ public sealed class DirectionsController : BaseController
     /// <summary>
     /// Gets directions for a specific department.
     /// </summary>
-    [HttpGet("department/{orgUnitId}")]
+    [HttpGet("org-unit/{orgUnitId}")]
     [RequireAccess("THESIS.DIRECTION", "Read")]
     [ProducesResponseType(typeof(IReadOnlyList<DirectionSummaryResponse>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetDepartmentDirections(
+    public async Task<IActionResult> GetOrgUnitDirections(
         int orgUnitId,
         [FromQuery] int? semesterId,
         [FromQuery] int? stateId,
         CancellationToken cancellationToken)
     {
-        var query = new GetDepartmentDirectionsQuery(orgUnitId, semesterId, stateId);
+        var query = new GetOrgUnitDirectionsQuery(orgUnitId, semesterId, stateId);
         var result = await _sender.Send(query, cancellationToken);
         
         if (result.IsFailed) return HandleResultError(result.Error);
@@ -193,3 +193,4 @@ public sealed class DirectionsController : BaseController
         return NoContent();
     }
 }
+
