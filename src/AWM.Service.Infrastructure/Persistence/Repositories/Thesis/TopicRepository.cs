@@ -118,6 +118,30 @@ public sealed class TopicRepository : RepositoryBase<Topic, long>, ITopicReposit
     }
 
     /// <inheritdoc />
+    public async Task<IReadOnlyList<Topic>> GetByDepartmentForReconciliationAsync(
+        int departmentId,
+        int academicYearId,
+        CancellationToken cancellationToken = default)
+    {
+        var reconciliationStatuses = new[]
+        {
+            TopicStatus.Approved,
+            TopicStatus.Closed,
+            TopicStatus.Reconciled,
+            TopicStatus.Inactive,
+            TopicStatus.NeedsRevision
+        };
+
+        return await Context.Topics
+            .Include(t => t.Applications)
+            .Where(t => t.OrgUnitId == departmentId &&
+                        t.SemesterId == academicYearId &&
+                        reconciliationStatuses.Contains(t.Status))
+            .OrderByDescending(t => t.CreatedAt)
+            .ToListAsync(cancellationToken);
+    }
+
+    /// <inheritdoc />
     public async Task<IReadOnlyList<TopicApplication>> GetApplicationsByStudentIdAsync(
         int studentId,
         CancellationToken cancellationToken = default)

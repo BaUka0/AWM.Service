@@ -19,5 +19,14 @@ public enum TopicStatus
     Rejected = 3,
 
     /// <summary>Topic is closed (no more applications accepted).</summary>
-    Closed = 4
+    Closed = 4,
+
+    /// <summary>Topic marked as inactive by department (no students applied).</summary>
+    Inactive = 5,
+
+    /// <summary>Topic has been reconciled (final approval by department with assigned students).</summary>
+    Reconciled = 6,
+
+    /// <summary>Topic sent back to supervisor for revision (e.g., excess applications need resolution).</summary>
+    NeedsRevision = 7
 }

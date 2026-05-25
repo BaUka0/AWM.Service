@@ -26,3 +26,14 @@ public sealed record TopicClosedEvent(long TopicId) : DomainEventBase;
 /// Event raised when topics are submitted for department approval.
 /// </summary>
 public sealed record TopicsSubmittedForApprovalEvent(IReadOnlyList<long> TopicIds, int SupervisorId) : DomainEventBase;
+
+/// <summary>
+/// Event raised when topics are reconciled (batch final approval by department).
+/// </summary>
+public sealed record TopicsReconciledEvent(IReadOnlyList<long> TopicIds, int ReconciledBy) : DomainEventBase;
+
+/// <summary>
+/// Event raised when topic reconciliation stage is completed for a department/semester.
+/// This triggers downstream processes (e.g., StudentWork creation).
+/// </summary>
+public sealed record TopicReconciliationCompletedEvent(int OrgUnitId, int SemesterId, int CompletedBy) : DomainEventBase;

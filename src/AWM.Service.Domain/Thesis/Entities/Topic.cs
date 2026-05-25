@@ -217,7 +217,56 @@ public class Topic : AggregateRoot<long>, IAuditable, ISoftDeletable
     {
         Status = TopicStatus.Approved;
     }
-    
+
+    /// <summary>
+    /// Marks the topic as inactive (no students applied).
+    /// Can only be called on Approved or Closed topics.
+    /// </summary>
+    public void MarkInactive(int reviewedBy)
+    {
+        if (Status != TopicStatus.Approved && Status != TopicStatus.Closed)
+            throw new DomainException("Topic.CannotMarkInactive", "Only approved or closed topics can be marked as inactive.");
+
+        Status = TopicStatus.Inactive;
+        ReviewedBy = reviewedBy;
+        ReviewedAt = DateTime.UtcNow;
+    }
+
+    /// <summary>
+    /// Reconciles the topic — final approval by department with assigned students.
+    /// Can only be called on Approved or Closed topics that have at least one accepted application.
+    /// </summary>
+    public void Reconcile(int reviewedBy)
+    {
+        if (Status != TopicStatus.Approved && Status != TopicStatus.Closed)
+            throw new DomainException("Topic.CannotReconcile", "Only approved or closed topics can be reconciled.");
+
+        Status = TopicStatus.Reconciled;
+        ReviewedBy = reviewedBy;
+        ReviewedAt = DateTime.UtcNow;
+        ReviewComment = null;
+
+        RaiseDomainEvent(new TopicApprovedEvent(Id));
+    }
+
+    /// <summary>
+    /// Sends the topic back to supervisor for revision (e.g., excess applications need resolution).
+    /// Uses a dedicated NeedsRevision status so supervisors can distinguish from initial submission.
+    /// </summary>
+    public void SendBackForRevision(int reviewedBy, string comment)
+    {
+        if (string.IsNullOrWhiteSpace(comment))
+            throw new DomainException("Topic.CommentRequired", "Comment is required when sending topic back for revision.");
+
+        if (Status != TopicStatus.Approved && Status != TopicStatus.Closed)
+            throw new DomainException("Topic.CannotSendBackForRevision", "Only approved or closed topics can be sent back for revision.");
+
+        Status = TopicStatus.NeedsRevision;
+        ReviewedBy = reviewedBy;
+        ReviewedAt = DateTime.UtcNow;
+        ReviewComment = comment;
+    }
+
     public void AddApplication(TopicApplication application)
     {
         if (application is null)
