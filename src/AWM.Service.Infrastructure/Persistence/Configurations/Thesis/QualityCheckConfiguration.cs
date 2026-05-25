@@ -42,13 +42,17 @@ public class QualityCheckConfiguration : AuditableEntityConfiguration<QualityChe
         builder.Property(e => e.Comment)
             .HasColumnType("nvarchar(max)");
 
-        builder.Property(e => e.DocumentPath)
-            .HasMaxLength(500);
+        builder.Property(e => e.AttachmentId);
 
         // Ignore computed property
         builder.Ignore(e => e.CheckedAt);
 
         // Foreign keys
+        builder.HasOne(e => e.Attachment)
+            .WithMany()
+            .HasForeignKey(e => e.AttachmentId)
+            .HasConstraintName("FK_QualityCheck_Attachment")
+            .OnDelete(DeleteBehavior.Restrict);
         builder.HasOne<StudentWork>()
             .WithMany(w => w.QualityChecks)
             .HasForeignKey(e => e.WorkId)

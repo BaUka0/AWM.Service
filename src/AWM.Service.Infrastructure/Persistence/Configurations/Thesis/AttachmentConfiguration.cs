@@ -41,6 +41,13 @@ public class AttachmentConfiguration : AuditableEntityConfiguration<Attachment, 
             .IsRequired()
             .HasMaxLength(64); // SHA256
 
+        builder.Property(e => e.FileSizeBytes)
+            .IsRequired();
+
+        builder.Property(e => e.ContentType)
+            .IsRequired()
+            .HasMaxLength(100);
+
         // Ignore computed properties
         builder.Ignore(e => e.UploadedBy);
         builder.Ignore(e => e.UploadedAt);

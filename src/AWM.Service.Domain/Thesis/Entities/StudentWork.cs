@@ -139,6 +139,8 @@ public class StudentWork : AggregateRoot<long>, IAuditable, ISoftDeletable
         string fileStoragePath,
         string fileHash,
         int uploadedBy,
+        long fileSizeBytes,
+        string contentType,
         int? stateId = null)
     {
         var attachment = new Attachment(
@@ -148,7 +150,9 @@ public class StudentWork : AggregateRoot<long>, IAuditable, ISoftDeletable
             fileName,
             fileStoragePath,
             fileHash,
-            uploadedBy);
+            uploadedBy,
+            fileSizeBytes,
+            contentType);
 
         _attachments.Add(attachment);
         LastModifiedBy = uploadedBy;
@@ -178,7 +182,7 @@ public class StudentWork : AggregateRoot<long>, IAuditable, ISoftDeletable
         int? expertId = null,
         decimal? resultValue = null,
         string? comment = null,
-        string? documentPath = null)
+        long? attachmentId = null)
     {
         var attemptNumber = _qualityChecks.Count(c => c.CheckTypeId == checkTypeId) + 1;
 
@@ -190,7 +194,7 @@ public class StudentWork : AggregateRoot<long>, IAuditable, ISoftDeletable
             expertId,
             resultValue,
             comment,
-            documentPath);
+            attachmentId);
 
         _qualityChecks.Add(check);
         LastModifiedAt = DateTime.UtcNow;
@@ -206,7 +210,7 @@ public class StudentWork : AggregateRoot<long>, IAuditable, ISoftDeletable
     /// </summary>
     public QualityCheck CompleteQualityCheck(
         long checkId, int expertId, bool isPassed,
-        decimal? resultValue = null, string? comment = null, string? documentPath = null)
+        decimal? resultValue = null, string? comment = null, long? attachmentId = null)
     {
         var check = _qualityChecks.FirstOrDefault(c => c.Id == checkId)
             ?? throw new DomainException("StudentWork.QualityCheckNotFound",
@@ -216,13 +220,26 @@ public class StudentWork : AggregateRoot<long>, IAuditable, ISoftDeletable
             throw new DomainException("StudentWork.QualityCheckAlreadyRecorded",
                 "This quality check result has already been recorded by an expert.");
 
-        check.SetResult(expertId, isPassed, resultValue, comment, documentPath);
+        check.SetResult(expertId, isPassed, resultValue, comment, attachmentId);
         LastModifiedAt = DateTime.UtcNow;
         LastModifiedBy = expertId;
 
         RaiseDomainEvent(new QualityCheckCompletedEvent(Id, check.CheckTypeId.ToString(), isPassed, expertId));
 
         return check;
+    }
+
+    /// <summary>
+    /// Updates the attachment linked to a specific quality check.
+    /// </summary>
+    public void UpdateCheckAttachment(long checkId, long attachmentId, int modifiedBy)
+    {
+        var check = _qualityChecks.FirstOrDefault(c => c.Id == checkId)
+            ?? throw new DomainException("StudentWork.QualityCheckNotFound", 
+                $"QualityCheck with ID {checkId} was not found on this work.");
+        check.UpdateAttachmentId(attachmentId, modifiedBy);
+        LastModifiedAt = DateTime.UtcNow;
+        LastModifiedBy = modifiedBy;
     }
 
     /// <summary>

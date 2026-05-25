@@ -15,7 +15,7 @@ public class QualityCheck : Entity<long>, IAuditable
     public bool IsPassed { get; private set; }
     public decimal? ResultValue { get; private set; }
     public string? Comment { get; private set; }
-    public string? DocumentPath { get; private set; }
+    public long? AttachmentId { get; private set; }
 
     public DateTime CreatedAt { get; private set; }
     public int CreatedBy { get; private set; }
@@ -24,6 +24,7 @@ public class QualityCheck : Entity<long>, IAuditable
 
     // Navigation properties
     public CheckType? CheckType { get; private set; }
+    public Attachment? Attachment { get; private set; }
 
     // Legacy field
     public DateTime CheckedAt => CreatedAt;
@@ -38,7 +39,7 @@ public class QualityCheck : Entity<long>, IAuditable
         int? expertId = null,
         decimal? resultValue = null,
         string? comment = null,
-        string? documentPath = null)
+        long? attachmentId = null)
     {
         WorkId = workId;
         CheckTypeId = checkTypeId;
@@ -47,7 +48,7 @@ public class QualityCheck : Entity<long>, IAuditable
         AssignedExpertId = expertId;
         ResultValue = resultValue;
         Comment = comment;
-        DocumentPath = documentPath;
+        AttachmentId = attachmentId;
 
         CreatedAt = DateTime.UtcNow;
         CreatedBy = expertId ?? 0;
@@ -62,15 +63,25 @@ public class QualityCheck : Entity<long>, IAuditable
         bool isPassed,
         decimal? resultValue = null,
         string? comment = null,
-        string? documentPath = null)
+        long? attachmentId = null)
     {
         AssignedExpertId = expertId;
         IsPassed = isPassed;
         ResultValue = resultValue;
         Comment = comment;
-        DocumentPath = documentPath;
+        AttachmentId = attachmentId;
         LastModifiedAt = DateTime.UtcNow;
         LastModifiedBy = expertId;
+    }
+
+    /// <summary>
+    /// Updates the attachment for this quality check.
+    /// </summary>
+    internal void UpdateAttachmentId(long attachmentId, int modifiedBy)
+    {
+        AttachmentId = attachmentId;
+        LastModifiedAt = DateTime.UtcNow;
+        LastModifiedBy = modifiedBy;
     }
 
     /// <summary>

@@ -11,6 +11,7 @@ public class SpecialityCheckType : Entity<int>
 {
     public int SpecialityId { get; private set; }
     public int CheckTypeId { get; private set; }
+    public decimal? MinimumPassValue { get; private set; }
 
     // Navigation properties
     public Speciality? Speciality { get; private set; }
@@ -18,9 +19,15 @@ public class SpecialityCheckType : Entity<int>
 
     private SpecialityCheckType() { }
 
-    public SpecialityCheckType(int specialityId, int checkTypeId)
+    public SpecialityCheckType(int specialityId, int checkTypeId, decimal? minimumPassValue = null)
     {
         SpecialityId = specialityId;
         CheckTypeId = checkTypeId;
+        MinimumPassValue = minimumPassValue;
+    }
+    
+    public void UpdateMinimumPassValue(decimal? value)
+    {
+        MinimumPassValue = value;
     }
 }

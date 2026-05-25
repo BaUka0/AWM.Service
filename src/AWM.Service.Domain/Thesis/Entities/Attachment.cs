@@ -15,6 +15,8 @@ public class Attachment : Entity<long>, IAuditable
     public string FileName { get; private set; } = null!;
     public string FileStoragePath { get; private set; } = null!;
     public string FileHash { get; private set; } = null!;
+    public long FileSizeBytes { get; private set; }
+    public string ContentType { get; private set; } = null!;
     
     public DateTime CreatedAt { get; private set; }
     public int CreatedBy { get; private set; }
@@ -37,7 +39,9 @@ public class Attachment : Entity<long>, IAuditable
         string fileName,
         string fileStoragePath,
         string fileHash,
-        int uploadedBy)
+        int uploadedBy,
+        long fileSizeBytes,
+        string contentType)
     {
         if (string.IsNullOrWhiteSpace(fileName))
             throw new DomainException("Attachment.FileNameRequired", "File name is required.");
@@ -45,6 +49,8 @@ public class Attachment : Entity<long>, IAuditable
             throw new DomainException("Attachment.FileStoragePathRequired", "File storage path is required.");
         if (string.IsNullOrWhiteSpace(fileHash))
             throw new DomainException("Attachment.FileHashRequired", "File hash is required.");
+        if (string.IsNullOrWhiteSpace(contentType))
+            throw new DomainException("Attachment.ContentTypeRequired", "Content type is required.");
 
         WorkId = workId;
         StateId = stateId;
@@ -52,6 +58,8 @@ public class Attachment : Entity<long>, IAuditable
         FileName = fileName;
         FileStoragePath = fileStoragePath;
         FileHash = fileHash.ToUpperInvariant();
+        FileSizeBytes = fileSizeBytes;
+        ContentType = contentType;
         
         CreatedAt = DateTime.UtcNow;
         CreatedBy = uploadedBy;

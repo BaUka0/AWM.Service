@@ -28,13 +28,13 @@ internal sealed class ThesisSeeder
 
         // IDs are stable (ValueGeneratedNever). Do not reorder.
         _context.AttachmentTypes.AddRange(
-            new AttachmentType(1, "Черновик работы",         "DRAFT_WORK"),
-            new AttachmentType(2, "Финальная работа",        "FINAL_WORK"),
-            new AttachmentType(3, "Отчёт",                  "REPORT"),
-            new AttachmentType(4, "Презентация",             "PRESENTATION"),
-            new AttachmentType(5, "Рецензия",                "REVIEW_DOCUMENT"),
+            new AttachmentType(1, "Черновик работы", "DRAFT_WORK"),
+            new AttachmentType(2, "Финальная работа", "FINAL_WORK"),
+            new AttachmentType(3, "Отчёт", "REPORT"),
+            new AttachmentType(4, "Презентация", "PRESENTATION"),
+            new AttachmentType(5, "Рецензия", "REVIEW_DOCUMENT"),
             new AttachmentType(6, "Отзыв научного руководителя", "SUPERVISOR_REVIEW"),
-            new AttachmentType(7, "Нормоконтрольный лист",   "NORMCONTROL_SHEET")
+            new AttachmentType(7, "Нормоконтрольный лист", "NORMCONTROL_SHEET")
         );
 
         await _context.SaveChangesAsync(ct);
@@ -47,7 +47,7 @@ internal sealed class ThesisSeeder
         // IDs are stable (ValueGeneratedNever). Do not reorder.
         _context.CheckTypes.AddRange(
             new CheckType(1, "Нормоконтроль", hasNumericResult: false, CheckTypeCodes.NormControl),
-            new CheckType(2, "Антиплагиат",   hasNumericResult: true,  CheckTypeCodes.AntiPlagiarism)
+            new CheckType(2, "Антиплагиат", hasNumericResult: true, CheckTypeCodes.AntiPlagiarism)
         );
 
         await _context.SaveChangesAsync(ct);
