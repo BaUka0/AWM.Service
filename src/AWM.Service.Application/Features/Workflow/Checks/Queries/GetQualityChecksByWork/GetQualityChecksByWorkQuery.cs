@@ -96,7 +96,9 @@ public sealed class GetQualityChecksByWorkQueryHandler : IRequestHandler<GetQual
             c.ResultValue,
             c.Comment,
             c.AttachmentId,
-            c.CreatedAt
+            c.CreatedAt,
+            null,
+            null
         )).ToList();
 
         return Result.Success<IReadOnlyList<QualityCheckDto>>(dtos);

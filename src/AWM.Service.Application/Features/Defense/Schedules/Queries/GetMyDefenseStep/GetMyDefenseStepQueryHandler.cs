@@ -1,6 +1,7 @@
 using AWM.Service.Application.Features.Defense.Schedules.DTOs;
 using AWM.Service.Domain.Common;
 using AWM.Service.Domain.Repositories;
+using AWM.Service.Domain.Wf.Entities;
 using KDS.Primitives.FluentResult;
 using MediatR;
 
@@ -14,6 +15,7 @@ public sealed class GetMyDefenseStepQueryHandler : IRequestHandler<GetMyDefenseS
     private readonly IProtocolRepository _protocolRepository;
     private readonly IPreDefenseAttemptRepository _attemptRepository;
     private readonly IUserRepository _userRepository;
+    private readonly IWorkflowRepository _workflowRepository;
     private readonly ICurrentUserProvider _currentUserProvider;
 
     public GetMyDefenseStepQueryHandler(
@@ -23,6 +25,7 @@ public sealed class GetMyDefenseStepQueryHandler : IRequestHandler<GetMyDefenseS
         IProtocolRepository protocolRepository,
         IPreDefenseAttemptRepository attemptRepository,
         IUserRepository userRepository,
+        IWorkflowRepository workflowRepository,
         ICurrentUserProvider currentUserProvider)
     {
         _workRepository = workRepository;
@@ -31,6 +34,7 @@ public sealed class GetMyDefenseStepQueryHandler : IRequestHandler<GetMyDefenseS
         _protocolRepository = protocolRepository;
         _attemptRepository = attemptRepository;
         _userRepository = userRepository;
+        _workflowRepository = workflowRepository;
         _currentUserProvider = currentUserProvider;
     }
 
@@ -48,6 +52,21 @@ public sealed class GetMyDefenseStepQueryHandler : IRequestHandler<GetMyDefenseS
         if (work == null)
         {
             return Result.Failure<DefenseStepDto>(new Error("Work.NotFound", "Student work not found."));
+        }
+
+        // Determine stepType and preDefenseNumber from current workflow state
+        var currentState = await _workflowRepository.GetStateByIdAsync(work.CurrentStateId, cancellationToken);
+        var sn = currentState?.SystemName ?? "";
+        string stepType = "pre-defense";
+        int? preDefenseNumber = null;
+
+        if (sn.StartsWith("PreDefense1.")) { preDefenseNumber = 1; }
+        else if (sn.StartsWith("PreDefense2.")) { preDefenseNumber = 2; }
+        else if (sn.StartsWith("PreDefense3.")) { preDefenseNumber = 3; }
+        else if (sn.StartsWith("Defense.") || sn == WorkStates.ReadyForDefense
+                 || sn == WorkStates.Defended || sn == WorkStates.DefenseFailed)
+        {
+            stepType = "defense";
         }
 
         // 2. Find schedule
@@ -118,8 +137,8 @@ public sealed class GetMyDefenseStepQueryHandler : IRequestHandler<GetMyDefenseS
         }
 
         return Result.Success(new DefenseStepDto(
-            schedule != null ? "defense" : "pre-defense", // Match frontend expectation
-            previousAttempts.Count + 1,
+            stepType,
+            preDefenseNumber ?? previousAttempts.Count + 1,
             scheduleInfo,
             commissionMembers,
             previousAttempts,

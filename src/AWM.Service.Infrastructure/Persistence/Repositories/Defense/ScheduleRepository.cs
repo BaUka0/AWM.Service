@@ -30,8 +30,9 @@ public sealed class ScheduleRepository : IScheduleRepository
     {
         return await _context.Schedules
             .Include(s => s.Grades)
-            .Where(s => !s.IsDeleted)
-            .FirstOrDefaultAsync(s => s.WorkId == workId, cancellationToken);
+            .Where(s => !s.IsDeleted && s.WorkId == workId)
+            .OrderByDescending(s => s.DefenseDate)
+            .FirstOrDefaultAsync(cancellationToken);
     }
 
     /// <inheritdoc />

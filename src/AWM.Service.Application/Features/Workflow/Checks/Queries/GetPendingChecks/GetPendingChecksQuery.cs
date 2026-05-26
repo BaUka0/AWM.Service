@@ -21,19 +21,25 @@ public sealed class GetPendingChecksQueryHandler : IRequestHandler<GetPendingChe
     private readonly IStaffAssignmentRepository _staffAssignmentRepository;
     private readonly IEmployeeRepository _employeeRepository;
     private readonly ICheckTypeRepository _checkTypeRepository;
+    private readonly IUserRepository _userRepository;
+    private readonly ITopicRepository _topicRepository;
 
     public GetPendingChecksQueryHandler(
         IStudentWorkRepository studentWorkRepository,
         ICurrentUserProvider currentUserProvider,
         IStaffAssignmentRepository staffAssignmentRepository,
         IEmployeeRepository employeeRepository,
-        ICheckTypeRepository checkTypeRepository)
+        ICheckTypeRepository checkTypeRepository,
+        IUserRepository userRepository,
+        ITopicRepository topicRepository)
     {
         _studentWorkRepository = studentWorkRepository;
         _currentUserProvider = currentUserProvider;
         _staffAssignmentRepository = staffAssignmentRepository;
         _employeeRepository = employeeRepository;
         _checkTypeRepository = checkTypeRepository;
+        _userRepository = userRepository;
+        _topicRepository = topicRepository;
     }
 
     public async Task<Result<IReadOnlyList<QualityCheckDto>>> Handle(GetPendingChecksQuery request, CancellationToken cancellationToken)
@@ -87,10 +93,33 @@ public sealed class GetPendingChecksQueryHandler : IRequestHandler<GetPendingChe
             .Where(e => e.User != null)
             .ToDictionary(e => e.User!.Id, e => $"{e.User!.LastName} {e.User!.FirstName} {e.User!.MiddleName}".Trim());
 
+        // Load student names and topic titles for enrichment
+        var studentUserIds = works
+            .SelectMany(w => w.Participants.Select(p => p.StudentId))
+            .Distinct()
+            .ToList();
+        var studentUsers = studentUserIds.Count > 0
+            ? await _userRepository.GetByIdsAsync(studentUserIds, cancellationToken)
+            : System.Array.Empty<AWM.Service.Domain.University.User>();
+        var studentUserMap = studentUsers.ToDictionary(u => u.Id, u => $"{u.LastName} {u.FirstName} {u.MiddleName}".Trim());
+
+        var topicIds = works.Where(w => w.TopicId.HasValue).Select(w => w.TopicId!.Value).Distinct().ToList();
+        var topics = topicIds.Count > 0
+            ? await _topicRepository.GetByIdsAsync(topicIds, cancellationToken)
+            : new System.Collections.Generic.List<AWM.Service.Domain.Thesis.Entities.Topic>();
+        var topicMap = topics.ToDictionary(t => t.Id, t => t.TitleRu ?? t.TitleKz ?? t.TitleEn ?? "—");
+
         var pendingChecks = new List<QualityCheckDto>();
 
         foreach (var work in works)
         {
+            var participantNames = work.Participants
+                .Select(p => studentUserMap.TryGetValue(p.StudentId, out var name) ? name : null)
+                .Where(n => n != null)
+                .ToList();
+            var studentName = participantNames.Count > 0 ? string.Join(", ", participantNames) : null;
+            var topicTitle = work.TopicId.HasValue && topicMap.TryGetValue(work.TopicId.Value, out var t) ? t : null;
+
             foreach (var c in work.QualityChecks)
             {
                 // Must be pending: AssignedExpertId is null AND result is not passed
@@ -115,7 +144,9 @@ public sealed class GetPendingChecksQueryHandler : IRequestHandler<GetPendingChe
                     c.ResultValue,
                     c.Comment,
                     c.AttachmentId,
-                    c.CreatedAt
+                    c.CreatedAt,
+                    studentName,
+                    topicTitle
                 ));
             }
         }

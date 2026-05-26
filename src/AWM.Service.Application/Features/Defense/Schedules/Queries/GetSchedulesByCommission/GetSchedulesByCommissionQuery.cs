@@ -18,7 +18,11 @@ public record CommissionScheduleDto(
     DateTime DefenseDate,
     string StartTime,
     string Date,
-    string Location);
+    string Location,
+    bool IsReconciliationStarted,
+    decimal? AverageScore,
+    long? ProtocolId,
+    bool IsProtocolFinalized);
 
 public record GetSchedulesByCommissionQuery(int CommissionId) : IRequest<Result<IReadOnlyList<CommissionScheduleDto>>>;
 
@@ -28,17 +32,20 @@ public sealed class GetSchedulesByCommissionQueryHandler : IRequestHandler<GetSc
     private readonly IStudentWorkRepository _studentWorkRepository;
     private readonly ITopicRepository _topicRepository;
     private readonly IUserRepository _userRepository;
+    private readonly IProtocolRepository _protocolRepository;
 
     public GetSchedulesByCommissionQueryHandler(
         IScheduleRepository scheduleRepository,
         IStudentWorkRepository studentWorkRepository,
         ITopicRepository topicRepository,
-        IUserRepository userRepository)
+        IUserRepository userRepository,
+        IProtocolRepository protocolRepository)
     {
         _scheduleRepository = scheduleRepository;
         _studentWorkRepository = studentWorkRepository;
         _topicRepository = topicRepository;
         _userRepository = userRepository;
+        _protocolRepository = protocolRepository;
     }
 
     public async Task<Result<IReadOnlyList<CommissionScheduleDto>>> Handle(GetSchedulesByCommissionQuery request, CancellationToken cancellationToken)
@@ -49,11 +56,13 @@ public sealed class GetSchedulesByCommissionQueryHandler : IRequestHandler<GetSc
             return Result.Success<IReadOnlyList<CommissionScheduleDto>>(new List<CommissionScheduleDto>());
         }
 
-        var result = new List<CommissionScheduleDto>();
+        // Load protocols for this commission to map by schedule ID
+        var protocols = await _protocolRepository.GetByCommissionAsync(request.CommissionId, cancellationToken);
+        var protocolByScheduleId = protocols.ToDictionary(p => p.ScheduleId);
 
         // Load all works and topics
         var workIds = schedules.Where(s => s.WorkId > 0).Select(s => s.WorkId).Distinct().ToList();
-        var works = workIds.Count > 0 
+        var works = workIds.Count > 0
             ? await _studentWorkRepository.GetByIdsWithDetailsAsync(workIds, cancellationToken)
             : new List<AWM.Service.Domain.Thesis.Entities.StudentWork>();
         var workMap = works.ToDictionary(w => w.Id);
@@ -73,6 +82,8 @@ public sealed class GetSchedulesByCommissionQueryHandler : IRequestHandler<GetSc
             ? await _userRepository.GetByIdsAsync(studentUserIds, cancellationToken)
             : Array.Empty<AWM.Service.Domain.University.User>();
         var userMap = users.ToDictionary(u => u.Id);
+
+        var result = new List<CommissionScheduleDto>();
 
         foreach (var s in schedules)
         {
@@ -97,6 +108,8 @@ public sealed class GetSchedulesByCommissionQueryHandler : IRequestHandler<GetSc
                 }
             }
 
+            protocolByScheduleId.TryGetValue(s.Id, out var protocol);
+
             result.Add(new CommissionScheduleDto(
                 s.Id,
                 s.CommissionId,
@@ -106,7 +119,11 @@ public sealed class GetSchedulesByCommissionQueryHandler : IRequestHandler<GetSc
                 s.DefenseDate,
                 s.DefenseDate.ToLocalTime().ToString("HH:mm"),
                 s.DefenseDate.ToLocalTime().ToString("yyyy-MM-dd"),
-                s.Location ?? "—"
+                s.Location ?? "—",
+                s.IsReconciliationStarted,
+                s.GetAverageScore(),
+                protocol?.Id,
+                protocol?.IsFinalized ?? false
             ));
         }
 

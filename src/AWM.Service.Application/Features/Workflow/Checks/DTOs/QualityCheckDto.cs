@@ -14,4 +14,6 @@ public record QualityCheckDto(
     decimal? ResultValue,
     string? Comment,
     long? AttachmentId,
-    DateTime CreatedAt);
+    DateTime CreatedAt,
+    string? StudentName,
+    string? TopicTitle);
