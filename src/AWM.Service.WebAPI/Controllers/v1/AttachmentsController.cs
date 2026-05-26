@@ -159,7 +159,7 @@ public sealed class AttachmentsController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The ID of the created attachment.</returns>
     [HttpPost("quality-checks/{checkId:long}/document")]
-    [RequireAccess("THESIS.QUALITY_CHECK", "Update")]
+    [RequireAccess("THESIS.CHECK", "Update")]
     [ProducesResponseType(typeof(long), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -204,7 +204,7 @@ public sealed class AttachmentsController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The file stream.</returns>
     [HttpGet("quality-checks/{checkId:long}/document")]
-    [RequireAccess("THESIS.QUALITY_CHECK", "Read")]
+    [RequireAccess("THESIS.CHECK", "Read")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]

@@ -1,6 +1,7 @@
 using AWM.Service.Application.Features.Defense.Commissions.Commands.CreateCommission;
 using AWM.Service.Application.Features.Defense.Commissions.Commands.UpdateCommission;
 using AWM.Service.Application.Features.Defense.Commissions.Queries.GetCommissions;
+using AWM.Service.Application.Features.Defense.Commissions.Commands.AutoDistributeStudents;
 using AWM.Service.WebAPI.Authorization;
 using AWM.Service.WebAPI.Common.Contracts.Requests.Defense;
 using AWM.Service.WebAPI.Common.Contracts.Responses;
@@ -81,6 +82,26 @@ public sealed class CommissionsController : BaseController
         CancellationToken cancellationToken)
     {
         var command = new UpdateCommissionCommand(id, request.Name);
+        var result = await _sender.Send(command, cancellationToken);
+
+        if (result.IsFailed)
+            return HandleResultError(result.Error);
+
+        return Ok();
+    }
+
+    /// <summary>
+    /// Automatically distributes students to commissions.
+    /// </summary>
+    [HttpPost("auto-distribute")]
+    [RequireAccess("SYSTEM.STAGE", "Update")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> AutoDistributeStudents(
+        [FromBody] AutoDistributeStudentsRequest request,
+        CancellationToken cancellationToken)
+    {
+        var command = request.Adapt<AutoDistributeStudentsCommand>();
         var result = await _sender.Send(command, cancellationToken);
 
         if (result.IsFailed)

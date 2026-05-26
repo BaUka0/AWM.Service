@@ -3,12 +3,15 @@ using AWM.Service.Application.Features.Defense.Schedules.Commands.GenerateSchedu
 using AWM.Service.Application.Features.Defense.Schedules.Commands.StartReconciliation;
 using AWM.Service.Application.Features.Defense.Schedules.Queries.GetMyDefenseStep;
 using AWM.Service.Application.Features.Defense.Schedules.Queries.GetScheduleGrades;
+using AWM.Service.Application.Features.Defense.Schedules.Queries.GetSchedulesByCommission;
 using AWM.Service.WebAPI.Authorization;
 using AWM.Service.WebAPI.Common.Contracts.Requests.Defense;
 using Mapster;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
 
 namespace AWM.Service.WebAPI.Controllers.v1;
 
@@ -122,5 +125,23 @@ public sealed class SchedulesController : BaseController
             return HandleResultError(result.Error);
 
         return Ok();
+    }
+
+    /// <summary>
+    /// Gets defense schedule slots for a commission.
+    /// </summary>
+    [HttpGet]
+    [RequireAccess("SYSTEM.STAGE", "Read")]
+    [ProducesResponseType(typeof(IReadOnlyList<CommissionScheduleDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetSchedulesByCommission(
+        [FromQuery] int commissionId,
+        CancellationToken cancellationToken)
+    {
+        var result = await _sender.Send(new GetSchedulesByCommissionQuery(commissionId), cancellationToken);
+        if (result.IsFailed)
+        {
+            return HandleResultError(result.Error);
+        }
+        return Ok(result.Value);
     }
 }

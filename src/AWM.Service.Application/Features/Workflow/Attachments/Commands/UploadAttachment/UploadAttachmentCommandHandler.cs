@@ -1,6 +1,7 @@
 using AWM.Service.Domain.Common;
 using AWM.Service.Domain.Repositories;
 using AWM.Service.Domain.Thesis.Service;
+using AWM.Service.Domain.Wf.Entities;
 using KDS.Primitives.FluentResult;
 using MediatR;
 using Microsoft.Extensions.Options;
@@ -16,6 +17,7 @@ public sealed class UploadAttachmentCommandHandler : IRequestHandler<UploadAttac
     private readonly IStudentWorkRepository _studentWorkRepository;
     private readonly IAttachmentTypeRepository _attachmentTypeRepository;
     private readonly ITopicRepository _topicRepository;
+    private readonly IWorkflowRepository _workflowRepository;
     private readonly ICurrentUserProvider _currentUserProvider;
     private readonly IAttachmentService _attachmentService;
     private readonly StorageSettings _storageSettings;
@@ -25,6 +27,7 @@ public sealed class UploadAttachmentCommandHandler : IRequestHandler<UploadAttac
         IStudentWorkRepository studentWorkRepository,
         IAttachmentTypeRepository attachmentTypeRepository,
         ITopicRepository topicRepository,
+        IWorkflowRepository workflowRepository,
         ICurrentUserProvider currentUserProvider,
         IAttachmentService attachmentService,
         IOptions<StorageSettings> storageSettingsOptions,
@@ -33,11 +36,13 @@ public sealed class UploadAttachmentCommandHandler : IRequestHandler<UploadAttac
         _studentWorkRepository = studentWorkRepository;
         _attachmentTypeRepository = attachmentTypeRepository;
         _topicRepository = topicRepository;
+        _workflowRepository = workflowRepository;
         _currentUserProvider = currentUserProvider;
         _attachmentService = attachmentService;
         _storageSettings = storageSettingsOptions.Value;
         _unitOfWork = unitOfWork;
     }
+
 
     public async Task<Result<long>> Handle(UploadAttachmentCommand request, CancellationToken cancellationToken)
     {
@@ -104,6 +109,34 @@ public sealed class UploadAttachmentCommandHandler : IRequestHandler<UploadAttac
             request.FileSizeBytes,
             request.ContentType
         );
+
+        // Automation Hook: Transition to waiting for schedule when both draft and presentation are uploaded
+        var currentState = await _workflowRepository.GetStateByIdAsync(work.CurrentStateId, cancellationToken);
+        if (currentState != null)
+        {
+            string? targetStateName = null;
+            if (currentState.SystemName == WorkStates.PreDefense1WaitingForFiles)
+                targetStateName = WorkStates.PreDefense1WaitingForSchedule;
+            else if (currentState.SystemName == WorkStates.PreDefense2WaitingForFiles)
+                targetStateName = WorkStates.PreDefense2WaitingForSchedule;
+            else if (currentState.SystemName == WorkStates.PreDefense3WaitingForFiles)
+                targetStateName = WorkStates.PreDefense3WaitingForSchedule;
+
+            if (targetStateName != null)
+            {
+                var hasDraft = work.Attachments.Any(a => a.StateId == work.CurrentStateId && a.AttachmentTypeId == 1);
+                var hasPresentation = work.Attachments.Any(a => a.StateId == work.CurrentStateId && a.AttachmentTypeId == 4);
+
+                if (hasDraft && hasPresentation)
+                {
+                    var targetState = await _workflowRepository.GetStateBySystemNameAsync(currentState.WorkTypeId, targetStateName, cancellationToken);
+                    if (targetState != null)
+                    {
+                        work.ChangeState(targetState.Id, currentUserId, "Both draft work and presentation uploaded. Transitioning to waiting for schedule.");
+                    }
+                }
+            }
+        }
 
         await _studentWorkRepository.UpdateAsync(work, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);

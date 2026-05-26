@@ -123,6 +123,9 @@ public interface IReviewerRepository
 /// </summary>
 public interface ISpecialityCheckTypeRepository
 {
+    Task<SpecialityCheckType?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
+    Task<SpecialityCheckType?> GetByCompositeKeyAsync(int orgUnitId, int checkTypeId, int? specialityId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<SpecialityCheckType>> GetByOrgUnitAsync(int orgUnitId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<SpecialityCheckType>> GetBySpecialityAsync(int specialityId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<SpecialityCheckType>> GetBySpecialitiesAsync(IEnumerable<int> specialityIds, CancellationToken cancellationToken = default);
     Task AddAsync(SpecialityCheckType specialityCheckType, CancellationToken cancellationToken = default);

@@ -9,25 +9,31 @@ using AWM.Service.Domain.University;
 /// </summary>
 public class SpecialityCheckType : Entity<int>
 {
-    public int SpecialityId { get; private set; }
+    public int OrgUnitId { get; private set; }
+    public int? SpecialityId { get; private set; }
     public int CheckTypeId { get; private set; }
     public decimal? MinimumPassValue { get; private set; }
+    public bool IsActive { get; private set; }
 
     // Navigation properties
+    public OrgUnit? OrgUnit { get; private set; }
     public Speciality? Speciality { get; private set; }
     public CheckType? CheckType { get; private set; }
 
     private SpecialityCheckType() { }
 
-    public SpecialityCheckType(int specialityId, int checkTypeId, decimal? minimumPassValue = null)
+    public SpecialityCheckType(int orgUnitId, int checkTypeId, int? specialityId = null, decimal? minimumPassValue = null, bool isActive = true)
     {
-        SpecialityId = specialityId;
+        OrgUnitId = orgUnitId;
         CheckTypeId = checkTypeId;
+        SpecialityId = specialityId;
         MinimumPassValue = minimumPassValue;
+        IsActive = isActive;
     }
     
-    public void UpdateMinimumPassValue(decimal? value)
+    public void Update(decimal? minimumPassValue, bool isActive)
     {
-        MinimumPassValue = value;
+        MinimumPassValue = minimumPassValue;
+        IsActive = isActive;
     }
 }

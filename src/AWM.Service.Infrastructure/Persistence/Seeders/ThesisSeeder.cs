@@ -42,14 +42,21 @@ internal sealed class ThesisSeeder
 
     private async Task SeedCheckTypesAsync(CancellationToken ct)
     {
-        if (await _context.CheckTypes.AnyAsync(ct)) return;
+        var existingIds = await _context.CheckTypes.Select(c => c.Id).ToListAsync(ct);
+        
+        var toAdd = new List<CheckType>();
+        
+        if (!existingIds.Contains(1))
+            toAdd.Add(new CheckType(1, "Нормоконтроль", hasNumericResult: false, CheckTypeCodes.NormControl));
+        if (!existingIds.Contains(2))
+            toAdd.Add(new CheckType(2, "Антиплагиат", hasNumericResult: true, CheckTypeCodes.AntiPlagiarism));
+        if (!existingIds.Contains(3))
+            toAdd.Add(new CheckType(3, "Проверка ПО", hasNumericResult: false, code: null));
 
-        // IDs are stable (ValueGeneratedNever). Do not reorder.
-        _context.CheckTypes.AddRange(
-            new CheckType(1, "Нормоконтроль", hasNumericResult: false, CheckTypeCodes.NormControl),
-            new CheckType(2, "Антиплагиат", hasNumericResult: true, CheckTypeCodes.AntiPlagiarism)
-        );
-
-        await _context.SaveChangesAsync(ct);
+        if (toAdd.Count > 0)
+        {
+            _context.CheckTypes.AddRange(toAdd);
+            await _context.SaveChangesAsync(ct);
+        }
     }
 }

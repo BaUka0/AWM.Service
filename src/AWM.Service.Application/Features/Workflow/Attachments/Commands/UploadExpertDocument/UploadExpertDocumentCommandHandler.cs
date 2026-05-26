@@ -74,9 +74,9 @@ public sealed class UploadExpertDocumentCommandHandler : IRequestHandler<UploadE
                 a.TargetEntityType == "OrgUnit" && 
                 a.TargetEntityId == work.OrgUnitId &&
                 (a.RoleType == StaffRoleType.CommissionMember ||
-                 a.RoleType == StaffRoleType.QualityExpert ||
                  a.RoleType == StaffRoleType.CommissionChairman ||
-                 a.RoleType == StaffRoleType.CommissionSecretary));
+                 a.RoleType == StaffRoleType.CommissionSecretary ||
+                 (a.RoleType == StaffRoleType.QualityExpert && HasExpertCheckTypeAccess(a.MetadataJson, check.CheckTypeId))));
         }
 
         if (!isAssignedExpert && !isExpertInDepartment)
@@ -132,5 +132,23 @@ public sealed class UploadExpertDocumentCommandHandler : IRequestHandler<UploadE
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Result.Success(attachment.Id);
+    }
+
+    private static bool HasExpertCheckTypeAccess(string? metadataJson, int checkTypeId)
+    {
+        if (string.IsNullOrEmpty(metadataJson)) return false;
+        try
+        {
+            using var doc = System.Text.Json.JsonDocument.Parse(metadataJson);
+            if (doc.RootElement.TryGetProperty("CheckTypeId", out var prop))
+            {
+                if (prop.ValueKind == System.Text.Json.JsonValueKind.Number)
+                {
+                    return prop.GetInt32() == checkTypeId;
+                }
+            }
+        }
+        catch { }
+        return false;
     }
 }

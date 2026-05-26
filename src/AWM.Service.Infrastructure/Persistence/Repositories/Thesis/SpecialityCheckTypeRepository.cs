@@ -13,6 +13,29 @@ public class SpecialityCheckTypeRepository : ISpecialityCheckTypeRepository
         _context = context;
     }
 
+    public async Task<SpecialityCheckType?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+    {
+        return await _context.SpecialityCheckTypes
+            .Include(s => s.CheckType)
+            .FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
+    }
+
+    public async Task<SpecialityCheckType?> GetByCompositeKeyAsync(int orgUnitId, int checkTypeId, int? specialityId, CancellationToken cancellationToken = default)
+    {
+        return await _context.SpecialityCheckTypes
+            .Include(s => s.CheckType)
+            .FirstOrDefaultAsync(s => s.OrgUnitId == orgUnitId && s.CheckTypeId == checkTypeId && s.SpecialityId == specialityId, cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<SpecialityCheckType>> GetByOrgUnitAsync(int orgUnitId, CancellationToken cancellationToken = default)
+    {
+        return await _context.SpecialityCheckTypes
+            .Where(s => s.OrgUnitId == orgUnitId)
+            .Include(s => s.CheckType)
+            .Include(s => s.Speciality)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<IReadOnlyList<SpecialityCheckType>> GetBySpecialityAsync(int specialityId, CancellationToken cancellationToken = default)
     {
         return await _context.SpecialityCheckTypes
@@ -24,7 +47,7 @@ public class SpecialityCheckTypeRepository : ISpecialityCheckTypeRepository
     public async Task<IReadOnlyList<SpecialityCheckType>> GetBySpecialitiesAsync(IEnumerable<int> specialityIds, CancellationToken cancellationToken = default)
     {
         return await _context.SpecialityCheckTypes
-            .Where(s => specialityIds.Contains(s.SpecialityId))
+            .Where(s => s.SpecialityId != null && specialityIds.Contains(s.SpecialityId.Value))
             .Include(s => s.CheckType)
             .ToListAsync(cancellationToken);
     }

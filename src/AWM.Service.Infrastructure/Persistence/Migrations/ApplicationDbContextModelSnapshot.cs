@@ -1462,16 +1462,30 @@ namespace AWM.Service.Infrastructure.Persistence.Migrations
                     b.Property<int>("CheckTypeId")
                         .HasColumnType("int");
 
-                    b.Property<int>("SpecialityId")
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<decimal?>("MinimumPassValue")
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<int>("OrgUnitId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("SpecialityId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
                     b.HasIndex("CheckTypeId");
 
-                    b.HasIndex("SpecialityId", "CheckTypeId")
+                    b.HasIndex("SpecialityId");
+
+                    b.HasIndex("OrgUnitId", "SpecialityId", "CheckTypeId")
                         .IsUnique()
-                        .HasDatabaseName("UQ_Speciality_CheckType");
+                        .HasDatabaseName("UQ_OrgUnit_Speciality_CheckType")
+                        .HasFilter("[SpecialityId] IS NOT NULL");
 
                     b.ToTable("SpecialityCheckTypes", "Thesis");
                 });
@@ -2901,14 +2915,22 @@ namespace AWM.Service.Infrastructure.Persistence.Migrations
                         .IsRequired()
                         .HasConstraintName("FK_SpecChecks_Type");
 
+                    b.HasOne("AWM.Service.Domain.University.OrgUnit", "OrgUnit")
+                        .WithMany()
+                        .HasForeignKey("OrgUnitId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FK_SpecChecks_OrgUnit");
+
                     b.HasOne("AWM.Service.Domain.University.Speciality", "Speciality")
                         .WithMany()
                         .HasForeignKey("SpecialityId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
                         .HasConstraintName("FK_SpecChecks_Speciality");
 
                     b.Navigation("CheckType");
+
+                    b.Navigation("OrgUnit");
 
                     b.Navigation("Speciality");
                 });

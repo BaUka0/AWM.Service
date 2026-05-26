@@ -1,0 +1,125 @@
+using AWM.Service.Application.Features.Workflow.Checks.DTOs;
+using AWM.Service.Domain.Common;
+using AWM.Service.Domain.CommonDomain.Enums;
+using AWM.Service.Domain.Repositories;
+using KDS.Primitives.FluentResult;
+using MediatR;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace AWM.Service.Application.Features.Workflow.Checks.Queries.GetPendingChecks;
+
+public record GetPendingChecksQuery(int OrgUnitId, int SemesterId, int? CheckTypeId = null) : IRequest<Result<IReadOnlyList<QualityCheckDto>>>;
+
+public sealed class GetPendingChecksQueryHandler : IRequestHandler<GetPendingChecksQuery, Result<IReadOnlyList<QualityCheckDto>>>
+{
+    private readonly IStudentWorkRepository _studentWorkRepository;
+    private readonly ICurrentUserProvider _currentUserProvider;
+    private readonly IStaffAssignmentRepository _staffAssignmentRepository;
+    private readonly IEmployeeRepository _employeeRepository;
+    private readonly ICheckTypeRepository _checkTypeRepository;
+
+    public GetPendingChecksQueryHandler(
+        IStudentWorkRepository studentWorkRepository,
+        ICurrentUserProvider currentUserProvider,
+        IStaffAssignmentRepository staffAssignmentRepository,
+        IEmployeeRepository employeeRepository,
+        ICheckTypeRepository checkTypeRepository)
+    {
+        _studentWorkRepository = studentWorkRepository;
+        _currentUserProvider = currentUserProvider;
+        _staffAssignmentRepository = staffAssignmentRepository;
+        _employeeRepository = employeeRepository;
+        _checkTypeRepository = checkTypeRepository;
+    }
+
+    public async Task<Result<IReadOnlyList<QualityCheckDto>>> Handle(GetPendingChecksQuery request, CancellationToken cancellationToken)
+    {
+        if (!_currentUserProvider.UserId.HasValue)
+        {
+            return Result.Failure<IReadOnlyList<QualityCheckDto>>(new Error("Auth.Unauthorized", "User is not authenticated."));
+        }
+
+        var currentUserId = _currentUserProvider.UserId.Value;
+
+        // Load the expert's assignments to determine which CheckTypeIds they are allowed to see
+        var userAssignments = await _staffAssignmentRepository.GetByUserAsync(currentUserId, cancellationToken);
+        
+        var allowedCheckTypeIds = userAssignments
+            .Where(a => a.IsActive && !a.IsDeleted && 
+                        a.RoleType == StaffRoleType.QualityExpert && 
+                        a.TargetEntityType == "OrgUnit" && 
+                        a.TargetEntityId == request.OrgUnitId)
+            .Select(a => 
+            {
+                if (string.IsNullOrEmpty(a.MetadataJson)) return 0;
+                try
+                {
+                    using var doc = JsonDocument.Parse(a.MetadataJson);
+                    return doc.RootElement.TryGetProperty("CheckTypeId", out var prop) && prop.ValueKind == JsonValueKind.Number ? prop.GetInt32() : 0;
+                }
+                catch { return 0; }
+            })
+            .Where(id => id > 0)
+            .Distinct()
+            .ToList();
+
+        // If not assigned as an expert in this department, return empty list
+        if (!allowedCheckTypeIds.Any())
+        {
+            return Result.Success<IReadOnlyList<QualityCheckDto>>(new List<QualityCheckDto>());
+        }
+
+        // Get works with participants and quality checks
+        var works = await _studentWorkRepository.GetByOrgUnitWithParticipantsAndQualityChecksAsync(
+            request.OrgUnitId,
+            request.SemesterId,
+            cancellationToken);
+
+        var checkTypes = await _checkTypeRepository.GetAllAsync(cancellationToken);
+        var checkTypeMap = checkTypes.ToDictionary(c => c.Id, c => c.Title);
+
+        var employees = await _employeeRepository.GetByOrgUnitAsync(request.OrgUnitId, cancellationToken);
+        var employeeMap = employees
+            .Where(e => e.User != null)
+            .ToDictionary(e => e.User!.Id, e => $"{e.User!.LastName} {e.User!.FirstName} {e.User!.MiddleName}".Trim());
+
+        var pendingChecks = new List<QualityCheckDto>();
+
+        foreach (var work in works)
+        {
+            foreach (var c in work.QualityChecks)
+            {
+                // Must be pending: AssignedExpertId is null AND result is not passed
+                bool isPending = !c.AssignedExpertId.HasValue && !c.IsPassed;
+                if (!isPending) continue;
+
+                // Expert is only allowed to access checks they are assigned to
+                if (!allowedCheckTypeIds.Contains(c.CheckTypeId)) continue;
+
+                // Optional filter by CheckTypeId in query
+                if (request.CheckTypeId.HasValue && c.CheckTypeId != request.CheckTypeId.Value) continue;
+
+                pendingChecks.Add(new QualityCheckDto(
+                    c.Id,
+                    c.WorkId,
+                    c.CheckTypeId,
+                    checkTypeMap.TryGetValue(c.CheckTypeId, out var cName) ? cName : $"Проверка #{c.CheckTypeId}",
+                    c.AssignedExpertId,
+                    null,
+                    c.AttemptNumber,
+                    c.IsPassed,
+                    c.ResultValue,
+                    c.Comment,
+                    c.AttachmentId,
+                    c.CreatedAt
+                ));
+            }
+        }
+
+        return Result.Success<IReadOnlyList<QualityCheckDto>>(pendingChecks);
+    }
+}

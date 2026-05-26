@@ -3,9 +3,12 @@ using AWM.Service.Domain.Repositories;
 using AWM.Service.Domain.Thesis.Constants;
 using AWM.Service.Domain.Thesis.Enums;
 using AWM.Service.Domain.Thesis.Service;
+using AWM.Service.Domain.Wf.Entities;
 using KDS.Primitives.FluentResult;
 using MediatR;
 using Microsoft.Extensions.Options;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace AWM.Service.Application.Features.Workflow.Reviews.Commands.UploadRecension;
 
@@ -13,6 +16,7 @@ public sealed class UploadRecensionCommandHandler : IRequestHandler<UploadRecens
 {
     private readonly IStudentWorkRepository _studentWorkRepository;
     private readonly IAttachmentTypeRepository _attachmentTypeRepository;
+    private readonly IWorkflowRepository _workflowRepository;
     private readonly ICurrentUserProvider _currentUserProvider;
     private readonly IAttachmentService _attachmentService;
     private readonly StorageSettings _storageSettings;
@@ -21,6 +25,7 @@ public sealed class UploadRecensionCommandHandler : IRequestHandler<UploadRecens
     public UploadRecensionCommandHandler(
         IStudentWorkRepository studentWorkRepository,
         IAttachmentTypeRepository attachmentTypeRepository,
+        IWorkflowRepository workflowRepository,
         ICurrentUserProvider currentUserProvider,
         IAttachmentService attachmentService,
         IOptions<StorageSettings> storageSettingsOptions,
@@ -28,11 +33,13 @@ public sealed class UploadRecensionCommandHandler : IRequestHandler<UploadRecens
     {
         _studentWorkRepository = studentWorkRepository;
         _attachmentTypeRepository = attachmentTypeRepository;
+        _workflowRepository = workflowRepository;
         _currentUserProvider = currentUserProvider;
         _attachmentService = attachmentService;
         _storageSettings = storageSettingsOptions.Value;
         _unitOfWork = unitOfWork;
     }
+
 
     public async Task<Result> Handle(UploadRecensionCommand request, CancellationToken cancellationToken)
     {
@@ -78,6 +85,17 @@ public sealed class UploadRecensionCommandHandler : IRequestHandler<UploadRecens
         );
 
         work.AddReview(request.ReviewerUserId, ReviewType.ExternalReview, "Recension uploaded", currentUserId);
+
+        // Automation Hook: Transition state to ReadyForDefense if in ReviewsWaitingForReviewer
+        var currentState = await _workflowRepository.GetStateByIdAsync(work.CurrentStateId, cancellationToken);
+        if (currentState != null && currentState.SystemName == WorkStates.ReviewsWaitingForReviewer)
+        {
+            var targetState = await _workflowRepository.GetStateBySystemNameAsync(currentState.WorkTypeId, WorkStates.ReadyForDefense, cancellationToken);
+            if (targetState != null)
+            {
+                work.ChangeState(targetState.Id, currentUserId, "Reviewer recension uploaded. Transitioning to ReadyForDefense.");
+            }
+        }
 
         await _studentWorkRepository.UpdateAsync(work, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
