@@ -18,6 +18,7 @@ public sealed class GetOrgUnitDirectionsQueryHandler : IRequestHandler<GetOrgUni
     private readonly IEmployeeReadOnlyRepository _employeeRepository;
     private readonly IUserReadOnlyRepository _userReadOnlyRepository;
     private readonly ISemesterReadOnlyRepository _semesterReadOnlyRepository;
+    private readonly IWorkflowRepository _workflowRepository;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="GetOrgUnitDirectionsQueryHandler"/> class.
@@ -26,12 +27,14 @@ public sealed class GetOrgUnitDirectionsQueryHandler : IRequestHandler<GetOrgUni
         IDirectionRepository directionRepository,
         IEmployeeReadOnlyRepository employeeRepository,
         IUserReadOnlyRepository userReadOnlyRepository,
-        ISemesterReadOnlyRepository semesterReadOnlyRepository)
+        ISemesterReadOnlyRepository semesterReadOnlyRepository,
+        IWorkflowRepository workflowRepository)
     {
         _directionRepository = directionRepository;
         _employeeRepository = employeeRepository;
         _userReadOnlyRepository = userReadOnlyRepository;
         _semesterReadOnlyRepository = semesterReadOnlyRepository;
+        _workflowRepository = workflowRepository;
     }
 
     /// <summary>
@@ -89,19 +92,35 @@ public sealed class GetOrgUnitDirectionsQueryHandler : IRequestHandler<GetOrgUni
             }
         }
 
-        var resultList = directions.Select(d => new DirectionSummaryDto(
-            d.Id,
-            d.OrgUnitId,
-            d.SemesterId,
-            d.TitleRu,
-            d.TitleKz,
-            d.TitleEn,
-            d.CurrentStateId,
-            d.CreatedAt,
-            d.CreatedBy,
-            creators.TryGetValue(d.CreatedBy, out var info) ? info.FullName : "Unknown",
-            creators.TryGetValue(d.CreatedBy, out var info2) ? info2.PositionTitle : ""
-        )).ToList();
+        var stateIds = directions.Select(d => d.CurrentStateId).Distinct().ToList();
+        var statesDict = new Dictionary<int, (string SystemName, string DisplayName)>();
+        if (stateIds.Any())
+        {
+            var states = await _workflowRepository.GetStatesByIdsAsync(stateIds, cancellationToken);
+            foreach (var state in states)
+            {
+                statesDict[state.Id] = (state.SystemName, state.DisplayName ?? state.SystemName);
+            }
+        }
+
+        var resultList = directions.Select(d => {
+            statesDict.TryGetValue(d.CurrentStateId, out var stateInfo);
+            return new DirectionSummaryDto(
+                d.Id,
+                d.OrgUnitId,
+                d.SemesterId,
+                d.TitleRu,
+                d.TitleKz,
+                d.TitleEn,
+                d.CurrentStateId,
+                stateInfo.SystemName ?? "",
+                stateInfo.DisplayName ?? "",
+                d.CreatedAt,
+                d.CreatedBy,
+                creators.TryGetValue(d.CreatedBy, out var info) ? info.FullName : "Unknown",
+                creators.TryGetValue(d.CreatedBy, out var info2) ? info2.PositionTitle : ""
+            );
+        }).ToList();
 
         return Result.Success<IReadOnlyList<DirectionSummaryDto>>(resultList);
     }

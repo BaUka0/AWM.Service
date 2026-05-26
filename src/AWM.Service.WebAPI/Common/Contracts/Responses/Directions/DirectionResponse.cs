@@ -14,6 +14,8 @@ public record DirectionResponse(
     string? DescriptionKz,
     string? DescriptionEn,
     int CurrentStateId,
+    string CurrentStateName,
+    string CurrentStateDisplayName,
     DateTime? SubmittedAt,
     DateTime? ReviewedAt,
     int? ReviewedBy,

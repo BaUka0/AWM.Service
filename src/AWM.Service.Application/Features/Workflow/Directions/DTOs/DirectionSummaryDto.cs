@@ -11,6 +11,8 @@ public record DirectionSummaryDto(
     string? TitleKz,
     string? TitleEn,
     int CurrentStateId,
+    string CurrentStateName,
+    string CurrentStateDisplayName,
     DateTime CreatedAt,
     int CreatedBy,
     string CreatorFullName,

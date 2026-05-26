@@ -16,6 +16,7 @@ public sealed class GetDirectionByIdQueryHandler : IRequestHandler<GetDirectionB
     private readonly IDirectionRepository _directionRepository;
     private readonly IEmployeeReadOnlyRepository _employeeRepository;
     private readonly IUserReadOnlyRepository _userReadOnlyRepository;
+    private readonly IWorkflowRepository _workflowRepository;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="GetDirectionByIdQueryHandler"/> class.
@@ -23,11 +24,13 @@ public sealed class GetDirectionByIdQueryHandler : IRequestHandler<GetDirectionB
     public GetDirectionByIdQueryHandler(
         IDirectionRepository directionRepository,
         IEmployeeReadOnlyRepository employeeRepository,
-        IUserReadOnlyRepository userReadOnlyRepository)
+        IUserReadOnlyRepository userReadOnlyRepository,
+        IWorkflowRepository workflowRepository)
     {
         _directionRepository = directionRepository;
         _employeeRepository = employeeRepository;
         _userReadOnlyRepository = userReadOnlyRepository;
+        _workflowRepository = workflowRepository;
     }
 
     /// <summary>
@@ -56,6 +59,10 @@ public sealed class GetDirectionByIdQueryHandler : IRequestHandler<GetDirectionB
             positionTitle = mainPosition?.Position?.Title ?? "";
         }
 
+        var state = await _workflowRepository.GetStateByIdAsync(direction.CurrentStateId, cancellationToken);
+        var currentStateName = state?.SystemName ?? "";
+        var currentStateDisplayName = state?.DisplayName ?? "";
+
         var dto = new DirectionDto(
             direction.Id,
             direction.OrgUnitId,
@@ -68,6 +75,8 @@ public sealed class GetDirectionByIdQueryHandler : IRequestHandler<GetDirectionB
             direction.DescriptionKz,
             direction.DescriptionEn,
             direction.CurrentStateId,
+            currentStateName,
+            currentStateDisplayName,
             direction.SubmittedAt,
             direction.ReviewedAt,
             direction.ReviewedBy,
