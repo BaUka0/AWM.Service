@@ -32,4 +32,17 @@ public sealed class StaffAssignmentRepository : RepositoryBase<StaffAssignment, 
                         a.IsActive)
             .ToListAsync(cancellationToken);
     }
+
+    public async Task<IReadOnlyList<StaffAssignment>> GetByTargetsAndRoleAsync(string targetEntityType, IEnumerable<long> targetEntityIds, StaffRoleType roleType, CancellationToken cancellationToken = default)
+    {
+        var entityIds = targetEntityIds.Distinct().ToList();
+        if (entityIds.Count == 0) return [];
+
+        return await Context.StaffAssignments
+            .Where(a => a.TargetEntityType == targetEntityType && 
+                        entityIds.Contains(a.TargetEntityId) && 
+                        a.RoleType == roleType && 
+                        a.IsActive)
+            .ToListAsync(cancellationToken);
+    }
 }

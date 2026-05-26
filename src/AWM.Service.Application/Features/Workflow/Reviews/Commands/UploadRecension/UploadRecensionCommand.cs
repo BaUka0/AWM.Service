@@ -6,7 +6,7 @@ namespace AWM.Service.Application.Features.Workflow.Reviews.Commands.UploadRecen
 
 public record UploadRecensionCommand(
     long WorkId,
-    int ReviewerUserId,
+    int? ReviewerUserId,
     string FileName,
     string ContentType,
     long FileSizeBytes,

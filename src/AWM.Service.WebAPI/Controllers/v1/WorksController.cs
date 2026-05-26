@@ -1,7 +1,11 @@
 using AWM.Service.Application.Features.Workflow.Works.Commands.AssignReviewer;
 using AWM.Service.Application.Features.Workflow.Works.Commands.SubmitSupervisorReview;
+using AWM.Service.Application.Features.Workflow.Reviews.Commands.UploadRecension;
 using AWM.Service.Application.Features.Workflow.Works.Queries.GetMySupervisedWorks;
 using AWM.Service.Application.Features.Workflow.Works.Queries.GetMyWorkProgress;
+using AWM.Service.Application.Features.Workflow.Reviews.Queries.GetReviewsByWork;
+using AWM.Service.Application.Features.Workflow.Reviews.Queries.GetReviewStatus;
+using AWM.Service.Application.Features.Workflow.Reviews.DTOs;
 using AWM.Service.WebAPI.Authorization;
 using AWM.Service.WebAPI.Common.Contracts.Requests.Works;
 using AWM.Service.WebAPI.Common.Contracts.Responses.Works;
@@ -112,5 +116,77 @@ public sealed class WorksController : BaseController
             return HandleResultError(result.Error);
 
         return Ok();
+    }
+
+    /// <summary>
+    /// Uploads the external reviewer's feedback and review (recension).
+    /// </summary>
+    [HttpPost("{workId:long}/reviews/external")]
+    [RequireAccess("THESIS.REVIEW", "Create")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> SubmitExternalReview(
+        long workId,
+        [FromForm] SubmitExternalReviewRequest request,
+        CancellationToken ct)
+    {
+        if (request.File == null || request.File.Length == 0)
+        {
+            return BadRequest("No file was uploaded.");
+        }
+
+        using var stream = request.File.OpenReadStream();
+        var command = new UploadRecensionCommand(
+            workId,
+            null, // Auto-resolved by handler
+            request.File.FileName,
+            request.File.ContentType,
+            request.File.Length,
+            stream
+        );
+
+        var result = await _sender.Send(command, ct);
+        if (result.IsFailed)
+        {
+            return HandleResultError(result.Error);
+        }
+
+        return Ok();
+    }
+
+    /// <summary>
+    /// Gets all reviews for a specific student work.
+    /// </summary>
+    [HttpGet("{workId:long}/reviews")]
+    [RequireAccess("THESIS.WORK", "Read")]
+    [ProducesResponseType(typeof(IReadOnlyList<WorkReviewDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetReviewsByWork(long workId, CancellationToken ct)
+    {
+        var result = await _sender.Send(new GetReviewsByWorkQuery(workId), ct);
+        if (result.IsFailed)
+        {
+            return HandleResultError(result.Error);
+        }
+        return Ok(result.Value);
+    }
+
+    /// <summary>
+    /// Gets the review status of works in a department.
+    /// </summary>
+    [HttpGet("review-status")]
+    [RequireAccess("THESIS.WORK", "Read")]
+    [ProducesResponseType(typeof(IReadOnlyList<WorkReviewStatusDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetReviewStatus(
+        [FromQuery] int orgUnitId,
+        [FromQuery] int semesterId,
+        CancellationToken ct)
+    {
+        var result = await _sender.Send(new GetReviewStatusQuery(orgUnitId, semesterId), ct);
+        if (result.IsFailed)
+        {
+            return HandleResultError(result.Error);
+        }
+        return Ok(result.Value);
     }
 }

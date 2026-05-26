@@ -77,6 +77,7 @@ public interface IStaffAssignmentRepository
     Task<IReadOnlyList<StaffAssignment>> GetByTargetAsync(string targetEntityType, long targetEntityId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<StaffAssignment>> GetByUserAsync(int userId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<StaffAssignment>> GetByRoleAsync(string targetEntityType, long targetEntityId, CommonDomain.Enums.StaffRoleType roleType, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<StaffAssignment>> GetByTargetsAndRoleAsync(string targetEntityType, IEnumerable<long> targetEntityIds, CommonDomain.Enums.StaffRoleType roleType, CancellationToken cancellationToken = default);
     Task AddAsync(StaffAssignment assignment, CancellationToken cancellationToken = default);
     Task UpdateAsync(StaffAssignment assignment, CancellationToken cancellationToken = default);
 }
