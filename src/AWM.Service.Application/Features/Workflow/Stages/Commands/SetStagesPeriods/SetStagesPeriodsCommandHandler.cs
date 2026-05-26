@@ -111,6 +111,12 @@ public sealed class SetStagesPeriodsCommandHandler : IRequestHandler<SetStagesPe
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         // 3. Notifications
+        var overriddenSpecialityIds = existingStages
+            .Where(s => s.SpecialityId.HasValue && s.IsActive && !s.IsDeleted)
+            .Select(s => s.SpecialityId!.Value)
+            .Distinct()
+            .ToList();
+
         // For Supervisors (Teachers)
         var supervisors = await _staffAssignmentRepository.GetByRoleAsync(
             "OrgUnit", 
@@ -118,14 +124,44 @@ public sealed class SetStagesPeriodsCommandHandler : IRequestHandler<SetStagesPe
             Domain.CommonDomain.Enums.StaffRoleType.Supervisor, 
             cancellationToken);
 
-        var supervisorUserIds = supervisors.Select(s => s.UserId).Distinct().ToList();
+        var supervisorUserIds = supervisors
+            .Where(s => s.IsActive && !s.IsDeleted)
+            .Select(s =>
+            {
+                if (string.IsNullOrEmpty(s.MetadataJson))
+                {
+                    return request.SpecialityId.HasValue ? null : (int?)s.UserId;
+                }
+                try
+                {
+                    var meta = System.Text.Json.JsonSerializer.Deserialize<AWM.Service.Application.Features.Workflow.Supervisors.DTOs.SupervisorAssignmentMetadata>(s.MetadataJson);
+                    if (meta != null && meta.SemesterId == request.SemesterId)
+                    {
+                        if (request.SpecialityId.HasValue)
+                        {
+                            return meta.SpecialityId == request.SpecialityId.Value ? (int?)s.UserId : null;
+                        }
+                        else
+                        {
+                            return (!meta.SpecialityId.HasValue || !overriddenSpecialityIds.Contains(meta.SpecialityId.Value)) ? (int?)s.UserId : null;
+                        }
+                    }
+                }
+                catch { }
+                return null;
+            })
+            .Where(x => x.HasValue)
+            .Select(x => x!.Value)
+            .Distinct()
+            .ToList();
+
         if (supervisorUserIds.Any())
         {
             await _notificationService.SendToManyAsync(
                 supervisorUserIds,
-                "Утверждены периоды подачи направлений и тем",
+                "Утверждены сроки этапов воркфлоу",
                 currentUserId,
-                "Кафедра утвердила сроки подачи направлений и тем. Пожалуйста, ознакомьтесь с ними в системе.",
+                "Кафедра утвердила сроки этапов формирования направлений, тем и выбора тем. Пожалуйста, ознакомьтесь с ними в системе.",
                 null,
                 "OrgUnit",
                 orgUnitId,
@@ -159,7 +195,12 @@ public sealed class SetStagesPeriodsCommandHandler : IRequestHandler<SetStagesPe
             }
             specialityIds = specialityIds.Distinct().ToList();
 
-            foreach (var specialityId in specialityIds)
+            // Exclude specialities that have their own Stage override in this semester
+            var targetSpecialityIds = specialityIds
+                .Where(id => !overriddenSpecialityIds.Contains(id))
+                .ToList();
+
+            foreach (var specialityId in targetSpecialityIds)
             {
                 var students = await _studentRepository.GetBySpecialityAsync(specialityId, cancellationToken);
                 studentUserIds.AddRange(students.Select(s => s.Id));
@@ -171,9 +212,9 @@ public sealed class SetStagesPeriodsCommandHandler : IRequestHandler<SetStagesPe
         {
             await _notificationService.SendToManyAsync(
                 studentUserIds,
-                "Утверждены сроки выбора тем",
+                "Утверждены сроки этапа выбора тем",
                 currentUserId,
-                "Утверждены сроки выбора тем. Вы сможете выбрать тему в установленный период.",
+                "Утверждены сроки этапа выбора тем. Вы сможете выбрать тему в установленный период.",
                 null,
                 "OrgUnit",
                 orgUnitId,
