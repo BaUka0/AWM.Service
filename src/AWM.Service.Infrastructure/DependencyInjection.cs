@@ -167,6 +167,7 @@ public static class DependencyInjection
         services.AddScoped<Domain.CommonDomain.Services.IStageValidationService, Services.StageValidationService>();
         services.AddScoped<Domain.CommonDomain.Services.IOrgUnitResolver, Services.OrgUnitResolver>();
         services.AddScoped<Domain.Auth.Interfaces.IPasswordHasher, Services.PasswordHasher>();
+        services.AddScoped<Domain.Common.IPdfReportService, Services.Reports.PdfReportService>();
 
         return services;
     }
