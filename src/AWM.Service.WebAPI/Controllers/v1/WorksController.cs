@@ -8,6 +8,9 @@ using AWM.Service.Application.Features.Workflow.Reviews.Queries.GetReviewStatus;
 using AWM.Service.Application.Features.Workflow.Reviews.DTOs;
 using AWM.Service.WebAPI.Authorization;
 using AWM.Service.WebAPI.Common.Contracts.Requests.Works;
+using AWM.Service.Application.Features.Workflow.Works.Queries.GetDefenseReadiness;
+using AWM.Service.Application.Features.Workflow.Works.Commands.AdmitToDefense;
+using AWM.Service.Application.Features.Workflow.Works.DTOs;
 using AWM.Service.WebAPI.Common.Contracts.Responses.Works;
 using Mapster;
 using MediatR;
@@ -188,5 +191,39 @@ public sealed class WorksController : BaseController
             return HandleResultError(result.Error);
         }
         return Ok(result.Value);
+    }
+
+    /// <summary>
+    /// Gets defense readiness statuses for the department.
+    /// </summary>
+    [HttpGet("defense-readiness")]
+    [RequireAccess("THESIS.WORK", "Read")]
+    [ProducesResponseType(typeof(IReadOnlyList<DefenseReadinessDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetDefenseReadiness(
+        [FromQuery] int orgUnitId,
+        [FromQuery] int semesterId,
+        [FromQuery] int? specialityId,
+        CancellationToken ct)
+    {
+        var result = await _sender.Send(new GetDefenseReadinessQuery(orgUnitId, semesterId, specialityId), ct);
+        if (result.IsFailed)
+            return HandleResultError(result.Error);
+
+        return Ok(result.Value);
+    }
+
+    /// <summary>
+    /// Admits a student work to final defense (GAK).
+    /// </summary>
+    [HttpPost("{workId:long}/admit")]
+    [RequireAccess("SYSTEM.STAGE", "Update")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> AdmitToDefense(long workId, CancellationToken ct)
+    {
+        var result = await _sender.Send(new AdmitToDefenseCommand(workId), ct);
+        if (result.IsFailed)
+            return HandleResultError(result.Error);
+
+        return Ok();
     }
 }
