@@ -7,7 +7,7 @@ using AWM.Service.Domain.CommonDomain.Enums;
 /// Unified entity for staff role assignments (Supervisors, Commission Members, experts, etc.).
 /// Provides a single point for managing and auditing staff responsibilities.
 /// </summary>
-public class StaffAssignment : Entity<long>, IAuditable, ISoftDeletable
+public class StaffAssignment : AggregateRoot<long>, IAuditable, ISoftDeletable
 {
     public int UserId { get; private set; }
     public StaffRoleType RoleType { get; private set; }
@@ -94,5 +94,10 @@ public class StaffAssignment : Entity<long>, IAuditable, ISoftDeletable
         DeletedAt = DateTime.UtcNow;
         DeletedBy = deletedBy;
         IsActive = false;
+    }
+
+    public void RaiseSupervisorsApprovedEvent(int orgUnitId, int semesterId, int? specialityId, IReadOnlyList<int> supervisorUserIds, int confirmedBy)
+    {
+        RaiseDomainEvent(new AWM.Service.Domain.CommonDomain.Events.SupervisorsApprovedEvent(orgUnitId, semesterId, specialityId, supervisorUserIds, confirmedBy));
     }
 }

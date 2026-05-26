@@ -66,6 +66,27 @@ public sealed class ApproveSupervisorsCommandHandler : IRequestHandler<ApproveSu
             })
             .ToList();
 
+        // Check if locked/confirmed
+        var isLocked = filteredAssignments.Any(a =>
+        {
+            try
+            {
+                var meta = JsonSerializer.Deserialize<SupervisorAssignmentMetadata>(a.MetadataJson!);
+                return meta?.IsConfirmed == true;
+            }
+            catch { return false; }
+        });
+
+        if (isLocked)
+        {
+            var requestedUserIds = request.Assignments.Select(a => a.UserId).ToHashSet();
+            var existingUserIdsSet = filteredAssignments.Select(a => a.UserId).ToHashSet();
+            if (!requestedUserIds.SetEquals(existingUserIdsSet))
+            {
+                return Result.Failure<Unit>(new Error("Supervisors.LockedForCompositionChange", "Composition of scientific supervisors is locked. Unlock it first to add or remove supervisors."));
+            }
+        }
+
         var existingUserIds = filteredAssignments.Select(a => a.UserId).ToList();
         var newUserAssignments = request.Assignments.Where(a => !existingUserIds.Contains(a.UserId)).ToList();
         var userIdsToRemove = existingUserIds.Except(request.Assignments.Select(a => a.UserId)).ToList();
@@ -99,19 +120,14 @@ public sealed class ApproveSupervisorsCommandHandler : IRequestHandler<ApproveSu
 
         if (newUserAssignments.Any())
         {
-            var roleAccess = await _roleAccessRepository.GetByCodeAsync("Supervisor", cancellationToken);
-            if (roleAccess == null)
-            {
-                return Result.Failure<Unit>(new Error(ErrorCodes.RoleNotFound, "Role 'Supervisor' not found in system."));
-            }
-
             foreach (var assignmentInfo in newUserAssignments)
             {
                 var metadata = new SupervisorAssignmentMetadata 
                 { 
                     SemesterId = request.SemesterId, 
                     SpecialityId = request.SpecialityId,
-                    MaxWorkload = assignmentInfo.MaxWorkload
+                    MaxWorkload = assignmentInfo.MaxWorkload,
+                    IsConfirmed = false
                 };
                 var metadataJson = JsonSerializer.Serialize(metadata);
 
@@ -124,25 +140,8 @@ public sealed class ApproveSupervisorsCommandHandler : IRequestHandler<ApproveSu
                     metadataJson);
                 
                 await _staffAssignmentRepository.AddAsync(assignment, cancellationToken);
-
-                if (!await _userAccessRepository.ExistsAsync(assignmentInfo.UserId, roleAccess.Id, cancellationToken))
-                {
-                    var userAccess = new UserAccess(assignmentInfo.UserId, roleAccess.Id, currentUserId);
-                    await _userAccessRepository.AddAsync(userAccess, cancellationToken);
-                }
             }
-
-            var newUserIds = newUserAssignments.Select(a => a.UserId).ToList();
-            await _notificationService.SendToManyAsync(
-                newUserIds,
-                "Назначение научным руководителем",
-                currentUserId,
-                "Вы были утверждены в качестве научного руководителя на текущий период.",
-                relatedEntityType: "OrgUnit",
-                relatedEntityId: request.OrgUnitId,
-                cancellationToken: cancellationToken);
         }
-
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 

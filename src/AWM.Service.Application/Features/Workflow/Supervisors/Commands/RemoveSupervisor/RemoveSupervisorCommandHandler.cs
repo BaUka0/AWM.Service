@@ -46,9 +46,9 @@ public sealed class RemoveSupervisorCommandHandler : IRequestHandler<RemoveSuper
             StaffRoleType.Supervisor,
             cancellationToken);
 
-        var assignment = assignments
-            .Where(a => a.IsActive && !a.IsDeleted && a.UserId == request.UserId)
-            .FirstOrDefault(a =>
+        var activeAssignments = assignments
+            .Where(a => a.IsActive && !a.IsDeleted)
+            .Where(a =>
             {
                 if (string.IsNullOrEmpty(a.MetadataJson)) return false;
                 try
@@ -57,7 +57,25 @@ public sealed class RemoveSupervisorCommandHandler : IRequestHandler<RemoveSuper
                     return meta?.SemesterId == request.SemesterId && meta?.SpecialityId == request.SpecialityId;
                 }
                 catch { return false; }
-            });
+            })
+            .ToList();
+
+        var isLocked = activeAssignments.Any(a =>
+        {
+            try
+            {
+                var meta = JsonSerializer.Deserialize<SupervisorAssignmentMetadata>(a.MetadataJson!);
+                return meta?.IsConfirmed == true;
+            }
+            catch { return false; }
+        });
+
+        if (isLocked)
+        {
+            return Result.Failure<Unit>(new Error("Supervisors.LockedForCompositionChange", "Composition of scientific supervisors is locked. Unlock it first to add or remove supervisors."));
+        }
+
+        var assignment = activeAssignments.FirstOrDefault(a => a.UserId == request.UserId);
 
         if (assignment == null)
         {

@@ -1,8 +1,11 @@
 using AWM.Service.Application.Features.Workflow.Supervisors.Commands.ApproveSupervisors;
+using AWM.Service.Application.Features.Workflow.Supervisors.Commands.ConfirmSupervisors;
+using AWM.Service.Application.Features.Workflow.Supervisors.Commands.UnlockSupervisors;
 using AWM.Service.Application.Features.Workflow.Supervisors.Commands.RemoveSupervisor;
 using AWM.Service.Application.Features.Workflow.Supervisors.Commands.UpdateSupervisorWorkload;
 using AWM.Service.Application.Features.Workflow.Supervisors.Queries.GetApprovedSupervisors;
 using AWM.Service.Application.Features.Workflow.Supervisors.Queries.GetOrgUnitTeachers;
+using AWM.Service.Application.Features.Workflow.Supervisors.Queries.GetSupervisorsStatus;
 using AWM.Service.WebAPI.Authorization;
 using AWM.Service.WebAPI.Common.Contracts.Requests;
 using AWM.Service.WebAPI.Common.Contracts.Responses;
@@ -173,6 +176,90 @@ public sealed class SupervisorsController : BaseController
             semesterId,
             specialityId);
 
+        var result = await _sender.Send(command, cancellationToken);
+        
+        if (result.IsFailed)
+        {
+            return HandleResultError(result.Error);
+        }
+
+        return Ok();
+    }
+
+    /// <summary>
+    /// Gets the confirmation status of the supervisor list for an organization unit/semester/speciality.
+    /// </summary>
+    /// <param name="orgUnitId">The ID of the organization unit.</param>
+    /// <param name="semesterId">The ID of the semester.</param>
+    /// <param name="specialityId">Optional ID of the speciality.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The confirmation status.</returns>
+    [HttpGet("status")]
+    [RequireAccess("SYSTEM.STAGE", "Read")]
+    [ProducesResponseType(typeof(SupervisorsStatusResponse), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetSupervisorsStatus(
+        int orgUnitId,
+        [FromQuery] int semesterId,
+        [FromQuery] int? specialityId,
+        CancellationToken cancellationToken)
+    {
+        var result = await _sender.Send(new GetSupervisorsStatusQuery(orgUnitId, semesterId, specialityId), cancellationToken);
+        
+        if (result.IsFailed)
+        {
+            return HandleResultError(result.Error);
+        }
+
+        var response = result.Value.Adapt<SupervisorsStatusResponse>();
+        return Ok(response);
+    }
+
+    /// <summary>
+    /// Finalizes and confirms the list of supervisors for an organization unit/semester/speciality.
+    /// </summary>
+    /// <param name="orgUnitId">The ID of the organization unit.</param>
+    /// <param name="request">The confirmation request.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Success status.</returns>
+    [HttpPost("confirm")]
+    [RequireAccess("SYSTEM.STAGE", "Update")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> ConfirmSupervisors(
+        int orgUnitId,
+        [FromBody] ConfirmSupervisorsRequest request,
+        CancellationToken cancellationToken)
+    {
+        var command = new ConfirmSupervisorsCommand(orgUnitId, request.SemesterId, request.SpecialityId);
+        
+        var result = await _sender.Send(command, cancellationToken);
+        
+        if (result.IsFailed)
+        {
+            return HandleResultError(result.Error);
+        }
+
+        return Ok();
+    }
+
+    /// <summary>
+    /// Unlocks the list of supervisors for editing for an organization unit/semester/speciality.
+    /// </summary>
+    /// <param name="orgUnitId">The ID of the organization unit.</param>
+    /// <param name="request">The unlock request.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Success status.</returns>
+    [HttpPost("unlock")]
+    [RequireAccess("SYSTEM.STAGE", "Update")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> UnlockSupervisors(
+        int orgUnitId,
+        [FromBody] ConfirmSupervisorsRequest request,
+        CancellationToken cancellationToken)
+    {
+        var command = new UnlockSupervisorsCommand(orgUnitId, request.SemesterId, request.SpecialityId);
+        
         var result = await _sender.Send(command, cancellationToken);
         
         if (result.IsFailed)

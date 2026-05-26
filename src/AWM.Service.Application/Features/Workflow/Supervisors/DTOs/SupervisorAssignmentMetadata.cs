@@ -8,4 +8,6 @@ public class SupervisorAssignmentMetadata
     public int SemesterId { get; set; }
     public int? SpecialityId { get; set; }
     public int? MaxWorkload { get; set; }
+    public bool IsConfirmed { get; set; }
 }
+

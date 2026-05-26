@@ -1,5 +1,6 @@
 using AWM.Service.Domain.Common;
 using AWM.Service.Domain.CommonDomain.Services;
+using AWM.Service.Domain.CommonDomain.Events;
 using AWM.Service.Domain.Repositories;
 using AWM.Service.Domain.Thesis.Events;
 using AWM.Service.Domain.Thesis.Entities;
@@ -33,7 +34,8 @@ public sealed class WorkflowNotificationHandlers :
     INotificationHandler<WorkCreatedEvent>,
     INotificationHandler<WorkStateChangedEvent>,
     INotificationHandler<QualityCheckCompletedEvent>,
-    INotificationHandler<WorkDefendedEvent>
+    INotificationHandler<WorkDefendedEvent>,
+    INotificationHandler<SupervisorsApprovedEvent>
 {
     private readonly INotificationService _notificationService;
     private readonly ITopicRepository _topicRepository;
@@ -360,6 +362,22 @@ public sealed class WorkflowNotificationHandlers :
                 body: $"Поздравляем с завершением защиты! Ваша итоговая оценка: {notification.FinalGrade ?? "Отлично"}.",
                 relatedEntityType: "StudentWork",
                 relatedEntityId: notification.WorkId,
+                cancellationToken: cancellationToken);
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task Handle(SupervisorsApprovedEvent notification, CancellationToken cancellationToken)
+    {
+        if (notification.SupervisorUserIds.Any())
+        {
+            await _notificationService.SendToManyAsync(
+                userIds: notification.SupervisorUserIds.ToList(),
+                title: "Назначение научным руководителем",
+                createdBy: notification.ConfirmedBy,
+                body: "Вы были утверждены в качестве научного руководителя на текущий период.",
+                relatedEntityType: "OrgUnit",
+                relatedEntityId: notification.OrgUnitId,
                 cancellationToken: cancellationToken);
         }
     }
