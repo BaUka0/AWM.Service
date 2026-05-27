@@ -7,4 +7,5 @@ public record WorkReviewStatusDto(
     string SupervisorName,
     string ReviewerName,
     bool IsSupervisorReviewSubmitted,
-    bool IsReviewerReviewSubmitted);
+    bool IsReviewerReviewSubmitted,
+    int? ReviewerEntityId);

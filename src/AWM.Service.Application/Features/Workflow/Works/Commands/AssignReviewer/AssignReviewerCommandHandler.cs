@@ -15,7 +15,7 @@ namespace AWM.Service.Application.Features.Workflow.Works.Commands.AssignReviewe
 public sealed class AssignReviewerCommandHandler : IRequestHandler<AssignReviewerCommand, Result>
 {
     private readonly IStudentWorkRepository _studentWorkRepository;
-    private readonly IUserRepository _userRepository;
+    private readonly IReviewerRepository _reviewerRepository;
     private readonly IStaffAssignmentRepository _staffAssignmentRepository;
     private readonly IUserAccessRepository _userAccessRepository;
     private readonly IRoleAccessRepository _roleAccessRepository;
@@ -24,7 +24,7 @@ public sealed class AssignReviewerCommandHandler : IRequestHandler<AssignReviewe
 
     public AssignReviewerCommandHandler(
         IStudentWorkRepository studentWorkRepository,
-        IUserRepository userRepository,
+        IReviewerRepository reviewerRepository,
         IStaffAssignmentRepository staffAssignmentRepository,
         IUserAccessRepository userAccessRepository,
         IRoleAccessRepository roleAccessRepository,
@@ -32,7 +32,7 @@ public sealed class AssignReviewerCommandHandler : IRequestHandler<AssignReviewe
         ICurrentUserProvider currentUserProvider)
     {
         _studentWorkRepository = studentWorkRepository;
-        _userRepository = userRepository;
+        _reviewerRepository = reviewerRepository;
         _staffAssignmentRepository = staffAssignmentRepository;
         _userAccessRepository = userAccessRepository;
         _roleAccessRepository = roleAccessRepository;
@@ -56,12 +56,21 @@ public sealed class AssignReviewerCommandHandler : IRequestHandler<AssignReviewe
             return Result.Failure(new Error("StudentWorks.NotFound", $"Student work with ID {request.WorkId} not found."));
         }
 
-        // Verify Reviewer User exists
-        var reviewerUser = await _userRepository.GetByIdAsync(request.ReviewerId, cancellationToken);
-        if (reviewerUser == null)
+        // Verify Reviewer entity exists
+        var reviewer = await _reviewerRepository.GetByIdAsync(request.ReviewerEntityId, cancellationToken);
+        if (reviewer == null)
         {
-            return Result.Failure(new Error("Users.NotFound", $"Reviewer user with ID {request.ReviewerId} not found."));
+            return Result.Failure(new Error("Reviewers.NotFound", $"Reviewer with ID {request.ReviewerEntityId} not found."));
         }
+
+        // Reviewer must have a linked system account to be assigned
+        if (!reviewer.UserId.HasValue)
+        {
+            return Result.Failure(new Error("Reviewers.NoSystemAccount",
+                $"Reviewer '{reviewer.FullName}' does not have a linked system account and cannot be assigned."));
+        }
+
+        var reviewerUserId = reviewer.UserId.Value;
 
         // 1. Deactivate existing reviewer assignments for this work
         var existingAssignments = await _staffAssignmentRepository.GetByRoleAsync(
@@ -99,9 +108,9 @@ public sealed class AssignReviewerCommandHandler : IRequestHandler<AssignReviewe
             }
         }
 
-        // 2. Create new StaffAssignment for the reviewer
+        // 2. Create new StaffAssignment for the reviewer (using reviewer's UserId)
         var newAssignment = new StaffAssignment(
-            request.ReviewerId,
+            reviewerUserId,
             StaffRoleType.Reviewer,
             "StudentWork",
             request.WorkId,
@@ -116,9 +125,9 @@ public sealed class AssignReviewerCommandHandler : IRequestHandler<AssignReviewe
             return Result.Failure(new Error("Roles.NotFound", "Role 'REVIEWER' not found in the system."));
         }
 
-        if (!await _userAccessRepository.ExistsAsync(request.ReviewerId, reviewerRole.Id, cancellationToken))
+        if (!await _userAccessRepository.ExistsAsync(reviewerUserId, reviewerRole.Id, cancellationToken))
         {
-            var userAccess = new UserAccess(request.ReviewerId, reviewerRole.Id, currentUserId);
+            var userAccess = new UserAccess(reviewerUserId, reviewerRole.Id, currentUserId);
             await _userAccessRepository.AddAsync(userAccess, cancellationToken);
         }
 

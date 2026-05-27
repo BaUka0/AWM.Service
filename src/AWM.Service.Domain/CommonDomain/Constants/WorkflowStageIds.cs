@@ -17,4 +17,7 @@ public static class WorkflowStageIds
     public const int PreDefense2 = 6;
     public const int PreDefense3 = 7;
     public const int FinalDefense = 8;
+
+    // Checks Stage
+    public const int ChecksPeriod = 9;
 }

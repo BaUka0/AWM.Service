@@ -1,4 +1,6 @@
 using AWM.Service.Application.Features.Workflow.Works.Commands.AssignReviewer;
+using AWM.Service.Application.Features.Workflow.Reviewers.Queries.GetAssignedReviewer;
+using AWM.Service.Application.Features.Workflow.Reviewers.DTOs;
 using AWM.Service.Application.Features.Workflow.Works.Commands.SubmitSupervisorReview;
 using AWM.Service.Application.Features.Workflow.Reviews.Commands.UploadRecension;
 using AWM.Service.Application.Features.Workflow.Works.Queries.GetMySupervisedWorks;
@@ -112,7 +114,7 @@ public sealed class WorksController : BaseController
         [FromBody] AssignReviewerRequest request, 
         CancellationToken ct)
     {
-        var command = new AssignReviewerCommand(workId, request.ReviewerId);
+        var command = new AssignReviewerCommand(workId, request.ReviewerEntityId);
         var result = await _sender.Send(command, ct);
         
         if (result.IsFailed)
@@ -208,6 +210,25 @@ public sealed class WorksController : BaseController
         var result = await _sender.Send(new GetDefenseReadinessQuery(orgUnitId, semesterId, specialityId), ct);
         if (result.IsFailed)
             return HandleResultError(result.Error);
+
+        return Ok(result.Value);
+    }
+
+    /// <summary>
+    /// Gets the external reviewer assigned to a student work.
+    /// </summary>
+    [HttpGet("{workId:long}/assigned-reviewer")]
+    [RequireAccess("THESIS.WORK", "Read")]
+    [ProducesResponseType(typeof(ReviewerDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetAssignedReviewer(long workId, CancellationToken ct)
+    {
+        var result = await _sender.Send(new GetAssignedReviewerQuery(workId), ct);
+        if (result.IsFailed)
+            return HandleResultError(result.Error);
+
+        if (result.Value == null)
+            return NotFound();
 
         return Ok(result.Value);
     }

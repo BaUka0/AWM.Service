@@ -7,6 +7,6 @@ public sealed class AssignReviewerCommandValidator : AbstractValidator<AssignRev
     public AssignReviewerCommandValidator()
     {
         RuleFor(x => x.WorkId).GreaterThan(0);
-        RuleFor(x => x.ReviewerId).GreaterThan(0);
+        RuleFor(x => x.ReviewerEntityId).GreaterThan(0);
     }
 }

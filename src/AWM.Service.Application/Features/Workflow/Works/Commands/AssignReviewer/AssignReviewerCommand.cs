@@ -3,4 +3,4 @@ using MediatR;
 
 namespace AWM.Service.Application.Features.Workflow.Works.Commands.AssignReviewer;
 
-public sealed record AssignReviewerCommand(long WorkId, int ReviewerId) : IRequest<Result>;
+public sealed record AssignReviewerCommand(long WorkId, int ReviewerEntityId) : IRequest<Result>;

@@ -25,20 +25,29 @@ internal sealed class WorkflowSeeder
 
     private async Task SeedWorkflowStagesAsync(CancellationToken ct)
     {
-        if (await _context.WorkflowStages.AnyAsync(ct)) return;
+        if (!await _context.WorkflowStages.AnyAsync(ct))
+        {
+            // Fresh DB: inserted in ID order so IDENTITY values match WorkflowStageIds constants (1–8).
+            _context.WorkflowStages.AddRange(
+                new WorkflowStage("DirectionProposal", 1), // Id = 1 = WorkflowStageIds.DirectionProposal
+                new WorkflowStage("TopicProposal",     2), // Id = 2 = WorkflowStageIds.TopicProposal
+                new WorkflowStage("TopicPreparation",  3), // Id = 3 = WorkflowStageIds.TopicPreparation (Student selection)
+                new WorkflowStage("Preparation",       4), // Id = 4 = WorkflowStageIds.Preparation (Work starts)
+                new WorkflowStage("PreDefense1",       5), // Id = 5
+                new WorkflowStage("PreDefense2",       6), // Id = 6
+                new WorkflowStage("PreDefense3",       7), // Id = 7
+                new WorkflowStage("FinalDefense",      8)  // Id = 8
+            );
+            await _context.SaveChangesAsync(ct);
+        }
 
-        // Inserted in ID order so IDENTITY values match WorkflowStageIds constants (1–8).
-        _context.WorkflowStages.AddRange(
-            new WorkflowStage("DirectionProposal", 1), // Id = 1 = WorkflowStageIds.DirectionProposal
-            new WorkflowStage("TopicProposal",     2), // Id = 2 = WorkflowStageIds.TopicProposal
-            new WorkflowStage("TopicPreparation",  3), // Id = 3 = WorkflowStageIds.TopicPreparation (Student selection)
-            new WorkflowStage("Preparation",       4), // Id = 4 = WorkflowStageIds.Preparation (Work starts)
-            new WorkflowStage("PreDefense1",       5), // Id = 5
-            new WorkflowStage("PreDefense2",       6), // Id = 6
-            new WorkflowStage("PreDefense3",       7), // Id = 7
-            new WorkflowStage("FinalDefense",      8)  // Id = 8
-        );
-        await _context.SaveChangesAsync(ct);
+        // Ensure ChecksPeriod (ID=9) exists — needed for existing DBs seeded without it.
+        if (!await _context.WorkflowStages.AnyAsync(ws => ws.Id == WorkflowStageIds.ChecksPeriod, ct))
+        {
+            _context.WorkflowStages.Add(
+                new WorkflowStage(WorkflowStageIds.ChecksPeriod, "ChecksPeriod", WorkflowStageIds.ChecksPeriod));
+            await _context.SaveChangesAsync(ct);
+        }
     }
 
     private async Task SeedWorkTypesAndStatesAsync(CancellationToken ct)
