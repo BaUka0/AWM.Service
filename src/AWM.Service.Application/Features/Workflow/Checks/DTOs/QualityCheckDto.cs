@@ -16,4 +16,5 @@ public record QualityCheckDto(
     long? AttachmentId,
     DateTime CreatedAt,
     string? StudentName,
-    string? TopicTitle);
+    string? TopicTitle,
+    string? SubmissionUrl);

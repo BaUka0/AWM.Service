@@ -1,4 +1,5 @@
 using AWM.Service.Application.Features.Workflow.Works.Commands.AssignReviewer;
+using AWM.Service.Application.Features.Workflow.Works.Commands.SaveRepoUrl;
 using AWM.Service.Application.Features.Workflow.Reviewers.Queries.GetAssignedReviewer;
 using AWM.Service.Application.Features.Workflow.Reviewers.DTOs;
 using AWM.Service.Application.Features.Workflow.Works.Commands.SubmitSupervisorReview;
@@ -231,6 +232,27 @@ public sealed class WorksController : BaseController
             return NotFound();
 
         return Ok(result.Value);
+    }
+
+    /// <summary>
+    /// Saves the GitHub/GitLab repository URL for a software check submission.
+    /// </summary>
+    [HttpPut("{workId:long}/repo-url")]
+    [RequireAccess("THESIS.WORK", "Update")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> SaveRepoUrl(
+        long workId,
+        [FromBody] SaveRepoUrlRequest request,
+        CancellationToken ct)
+    {
+        var result = await _sender.Send(new SaveRepoUrlCommand(workId, request.RepoUrl), ct);
+        if (result.IsFailed)
+            return HandleResultError(result.Error);
+
+        return Ok();
     }
 
     /// <summary>

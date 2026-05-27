@@ -98,7 +98,8 @@ public sealed class GetQualityChecksByWorkQueryHandler : IRequestHandler<GetQual
             c.AttachmentId,
             c.CreatedAt,
             null,
-            null
+            null,
+            null // SubmissionUrl: not needed for work-level query (student view)
         )).ToList();
 
         return Result.Success<IReadOnlyList<QualityCheckDto>>(dtos);

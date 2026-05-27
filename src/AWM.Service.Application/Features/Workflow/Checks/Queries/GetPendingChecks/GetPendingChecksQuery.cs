@@ -132,6 +132,19 @@ public sealed class GetPendingChecksQueryHandler : IRequestHandler<GetPendingChe
                 // Optional filter by CheckTypeId in query
                 if (request.CheckTypeId.HasValue && c.CheckTypeId != request.CheckTypeId.Value) continue;
 
+                // Extract repo URL from StudentWork.MetadataJson for SoftwareCheck (checkTypeId=3)
+                string? submissionUrl = null;
+                if (c.CheckTypeId == 3 && !string.IsNullOrWhiteSpace(work.MetadataJson))
+                {
+                    try
+                    {
+                        using var metaDoc = JsonDocument.Parse(work.MetadataJson);
+                        if (metaDoc.RootElement.TryGetProperty("softwareCheckRepoUrl", out var urlProp))
+                            submissionUrl = urlProp.GetString();
+                    }
+                    catch { }
+                }
+
                 pendingChecks.Add(new QualityCheckDto(
                     c.Id,
                     c.WorkId,
@@ -146,7 +159,8 @@ public sealed class GetPendingChecksQueryHandler : IRequestHandler<GetPendingChe
                     c.AttachmentId,
                     c.CreatedAt,
                     studentName,
-                    topicTitle
+                    topicTitle,
+                    submissionUrl
                 ));
             }
         }
