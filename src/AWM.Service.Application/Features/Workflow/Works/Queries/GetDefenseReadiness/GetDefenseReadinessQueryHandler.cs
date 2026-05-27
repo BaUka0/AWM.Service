@@ -69,6 +69,13 @@ public sealed class GetDefenseReadinessQueryHandler : IRequestHandler<GetDefense
         var states = await _workflowRepository.GetStatesByIdsAsync(stateIds, cancellationToken);
         var stateMap = states.ToDictionary(s => s.Id);
 
+        // Bulk load all pre-defense attempts to avoid N+1 queries
+        var allAttempts = await _preDefenseAttemptRepository.GetByWorkIdsAsync(
+            worksList.Select(w => w.Id), cancellationToken);
+        var attemptsByWork = allAttempts
+            .GroupBy(a => a.WorkId)
+            .ToDictionary(g => g.Key, g => g.ToList());
+
         var result = new List<DefenseReadinessDto>();
 
         foreach (var w in worksList)
@@ -96,14 +103,15 @@ public sealed class GetDefenseReadinessQueryHandler : IRequestHandler<GetDefense
             // Quality Checks (1 = Normcontrol, 2 = Antiplagiarism, 3 = Software Check)
             bool normocontrolPassed = work.HasPassedCheck(1);
             bool antiplagiarismPassed = work.HasPassedCheck(2);
+            bool softwareCheckPassed = work.HasPassedCheck(3);
 
             // Review statuses (Supervisor review type = 1, External reviewer type = 2)
             bool supervisorReviewPassed = work.WorkReviews.Any(r => r.Type == ReviewType.SupervisorReview);
             bool externalReviewPassed = work.WorkReviews.Any(r => r.Type == ReviewType.ExternalReview);
 
-            // Predefense status
-            var attempts = await _preDefenseAttemptRepository.GetByWorkIdAsync(work.Id, cancellationToken);
-            bool preDefensePassed = attempts.Any(a => a.PreDefenseNumber == 2 && a.IsPassed) || 
+            // Predefense status — use bulk-loaded attempts
+            var attempts = attemptsByWork.TryGetValue(work.Id, out var list) ? list : [];
+            bool preDefensePassed = attempts.Any(a => a.PreDefenseNumber == 2 && a.IsPassed) ||
                                     attempts.Any(a => a.PreDefenseNumber == 3 && a.IsPassed);
 
             // Current state name
@@ -127,7 +135,8 @@ public sealed class GetDefenseReadinessQueryHandler : IRequestHandler<GetDefense
                 externalReviewPassed,
                 supervisorReviewPassed,
                 admitted,
-                stateName
+                stateName,
+                softwareCheckPassed
             ));
         }
 

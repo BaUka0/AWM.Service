@@ -10,5 +10,6 @@ public sealed record DefenseReadinessDto(
     bool ReviewPassed,
     bool SupervisorReviewPassed,
     bool Admitted,
-    string CurrentState
+    string CurrentState,
+    bool SoftwareCheckPassed
 );
