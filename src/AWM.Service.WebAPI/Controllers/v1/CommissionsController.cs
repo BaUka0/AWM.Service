@@ -1,4 +1,5 @@
 using AWM.Service.Application.Features.Defense.Commissions.Commands.CreateCommission;
+using AWM.Service.Application.Features.Defense.Commissions.Commands.DeleteCommission;
 using AWM.Service.Application.Features.Defense.Commissions.Commands.UpdateCommission;
 using AWM.Service.Application.Features.Defense.Commissions.Queries.GetCommissions;
 using AWM.Service.Application.Features.Defense.Commissions.Commands.AutoDistributeStudents;
@@ -82,6 +83,25 @@ public sealed class CommissionsController : BaseController
         CancellationToken cancellationToken)
     {
         var command = new UpdateCommissionCommand(id, request.Name);
+        var result = await _sender.Send(command, cancellationToken);
+
+        if (result.IsFailed)
+            return HandleResultError(result.Error);
+
+        return Ok();
+    }
+
+    /// <summary>
+    /// Deletes a commission (soft-delete). Fails if students are already assigned.
+    /// </summary>
+    [HttpDelete("{id}")]
+    [RequireAccess("SYSTEM.STAGE", "Update")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeleteCommission(int id, CancellationToken cancellationToken)
+    {
+        var command = new DeleteCommissionCommand(id);
         var result = await _sender.Send(command, cancellationToken);
 
         if (result.IsFailed)
