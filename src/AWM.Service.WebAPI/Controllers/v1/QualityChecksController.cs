@@ -5,6 +5,7 @@ using AWM.Service.Application.Features.Workflow.Checks.Commands.SaveExpertAssign
 using AWM.Service.Application.Features.Workflow.Checks.Commands.SubmitForCheck;
 using AWM.Service.Application.Features.Workflow.Checks.DTOs;
 using AWM.Service.Application.Features.Workflow.Checks.Queries.GetAssignedExperts;
+using AWM.Service.Application.Features.Workflow.Checks.Queries.GetActiveCheckConfigurations;
 using AWM.Service.Application.Features.Workflow.Checks.Queries.GetCheckConfigurations;
 using AWM.Service.Application.Features.Workflow.Checks.Queries.GetPendingChecks;
 using AWM.Service.Application.Features.Workflow.Checks.Queries.GetQualityChecksByWork;
@@ -146,6 +147,26 @@ public sealed class QualityChecksController : BaseController
         {
             return HandleResultError(result.Error);
         }
+        return Ok(result.Value);
+    }
+
+    /// <summary>
+    /// Gets active check configurations for a student's org unit and speciality.
+    /// Accessible to students and experts (THESIS.CHECK Read).
+    /// </summary>
+    [HttpGet("configurations/active")]
+    [RequireAccess("THESIS.CHECK", "Read")]
+    [ProducesResponseType(typeof(IReadOnlyList<CheckConfigurationDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> GetActiveCheckConfigurations(
+        [FromQuery] int orgUnitId,
+        [FromQuery] int? specialityId,
+        CancellationToken cancellationToken)
+    {
+        var result = await _sender.Send(
+            new GetActiveCheckConfigurationsQuery(orgUnitId, specialityId), cancellationToken);
+        if (result.IsFailed) return HandleResultError(result.Error);
         return Ok(result.Value);
     }
 

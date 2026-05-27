@@ -9,4 +9,5 @@ public static class CheckTypeCodes
 {
     public const string NormControl = "NORMCONTROL";
     public const string AntiPlagiarism = "ANTIPLAGIARISM";
+    public const string SoftwareCheck = "SOFTWARECHECK";
 }

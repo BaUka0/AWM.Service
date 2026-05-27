@@ -5,6 +5,7 @@ public record CheckConfigurationDto(
     int OrgUnitId,
     int CheckTypeId,
     string CheckTypeName,
+    string? CheckTypeCode,
     int? SpecialityId,
     string? SpecialityTitle,
     decimal? MinimumPassValue,

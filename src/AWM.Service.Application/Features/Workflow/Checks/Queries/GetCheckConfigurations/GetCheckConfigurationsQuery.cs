@@ -29,6 +29,7 @@ public sealed class GetCheckConfigurationsQueryHandler : IRequestHandler<GetChec
             c.OrgUnitId,
             c.CheckTypeId,
             c.CheckType?.Title ?? string.Empty,
+            c.CheckType?.Code,
             c.SpecialityId,
             c.Speciality?.Title,
             c.MinimumPassValue,

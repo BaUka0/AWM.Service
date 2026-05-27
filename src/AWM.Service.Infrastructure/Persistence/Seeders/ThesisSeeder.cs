@@ -51,7 +51,7 @@ internal sealed class ThesisSeeder
         if (!existingIds.Contains(2))
             toAdd.Add(new CheckType(2, "Антиплагиат", hasNumericResult: true, CheckTypeCodes.AntiPlagiarism));
         if (!existingIds.Contains(3))
-            toAdd.Add(new CheckType(3, "Проверка ПО", hasNumericResult: false, code: null));
+            toAdd.Add(new CheckType(3, "Проверка ПО", hasNumericResult: false, CheckTypeCodes.SoftwareCheck));
 
         if (toAdd.Count > 0)
         {
