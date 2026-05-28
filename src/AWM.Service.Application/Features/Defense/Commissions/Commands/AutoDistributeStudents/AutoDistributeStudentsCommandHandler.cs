@@ -231,11 +231,11 @@ public sealed class AutoDistributeStudentsCommandHandler : IRequestHandler<AutoD
                 if (targetStateName != null)
                 {
                     var targetState = await _workflowRepository.GetStateBySystemNameAsync(currentState.WorkTypeId, targetStateName, cancellationToken);
-                    if (targetState != null)
-                    {
-                        work.ChangeState(targetState.Id, currentUserId, $"Automatically distributed to commission '{commission.Name}' at {slotTime}.");
-                        await _studentWorkRepository.UpdateAsync(work, cancellationToken);
-                    }
+                    if (targetState == null)
+                        return Result.Failure(new Error("Workflow.StateNotFound", $"Target state '{targetStateName}' not found for work type {currentState.WorkTypeId}."));
+
+                    work.ChangeState(targetState.Id, currentUserId, $"Automatically distributed to commission '{commission.Name}' at {slotTime}.");
+                    await _studentWorkRepository.UpdateAsync(work, cancellationToken);
                 }
             }
 

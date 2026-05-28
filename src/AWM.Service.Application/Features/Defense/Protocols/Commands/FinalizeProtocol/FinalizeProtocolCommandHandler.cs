@@ -139,15 +139,15 @@ public sealed class FinalizeProtocolCommandHandler : IRequestHandler<FinalizePro
                 if (targetStateName != null)
                 {
                     var currentState = await _workflowRepository.GetStateByIdAsync(work.CurrentStateId, cancellationToken);
-                    if (currentState != null)
-                    {
-                        var targetState = await _workflowRepository.GetStateBySystemNameAsync(currentState.WorkTypeId, targetStateName, cancellationToken);
-                        if (targetState != null)
-                        {
-                            work.ChangeState(targetState.Id, currentUserId, $"Finalized Pre-Defense {preDefenseNum} with status: {statusDescription}.");
-                            await _studentWorkRepository.UpdateAsync(work, cancellationToken);
-                        }
-                    }
+                    if (currentState == null)
+                        return Result.Failure(new Error("Workflow.StateNotFound", $"Current state for work {work.Id} not found."));
+
+                    var targetState = await _workflowRepository.GetStateBySystemNameAsync(currentState.WorkTypeId, targetStateName, cancellationToken);
+                    if (targetState == null)
+                        return Result.Failure(new Error("Workflow.StateNotFound", $"Target state '{targetStateName}' not found for work type {currentState.WorkTypeId}."));
+
+                    work.ChangeState(targetState.Id, currentUserId, $"Finalized Pre-Defense {preDefenseNum} with status: {statusDescription}.");
+                    await _studentWorkRepository.UpdateAsync(work, cancellationToken);
                 }
             }
             else if (commission.CommissionTypeId == (int)CommissionTypes.GAK)
@@ -157,19 +157,19 @@ public sealed class FinalizeProtocolCommandHandler : IRequestHandler<FinalizePro
                 string? targetStateName = isPassed ? WorkStates.Defended : WorkStates.DefenseFailed;
 
                 var currentState = await _workflowRepository.GetStateByIdAsync(work.CurrentStateId, cancellationToken);
-                if (currentState != null && targetStateName != null)
+                if (currentState == null)
+                    return Result.Failure(new Error("Workflow.StateNotFound", $"Current state for work {work.Id} not found."));
+
+                var targetState = await _workflowRepository.GetStateBySystemNameAsync(currentState.WorkTypeId, targetStateName, cancellationToken);
+                if (targetState == null)
+                    return Result.Failure(new Error("Workflow.StateNotFound", $"Target state '{targetStateName}' not found for work type {currentState.WorkTypeId}."));
+
+                if (isPassed)
                 {
-                    var targetState = await _workflowRepository.GetStateBySystemNameAsync(currentState.WorkTypeId, targetStateName, cancellationToken);
-                    if (targetState != null)
-                    {
-                        if (isPassed)
-                        {
-                            work.MarkAsDefended(protocol.FinalGradeLetter);
-                        }
-                        work.ChangeState(targetState.Id, currentUserId, $"Finalized Defense (GAK) with status: {(isPassed ? "Defended" : "Failed")}.");
-                        await _studentWorkRepository.UpdateAsync(work, cancellationToken);
-                    }
+                    work.MarkAsDefended(protocol.FinalGradeLetter);
                 }
+                work.ChangeState(targetState.Id, currentUserId, $"Finalized Defense (GAK) with status: {(isPassed ? "Defended" : "Failed")}.");
+                await _studentWorkRepository.UpdateAsync(work, cancellationToken);
             }
 
             await _protocolRepository.UpdateAsync(protocol, cancellationToken);

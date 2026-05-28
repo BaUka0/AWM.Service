@@ -62,6 +62,8 @@ public sealed class GetSchedulesByCommissionQueryHandler : IRequestHandler<GetSc
 
         // Load commission to get PreDefenseNumber
         var commission = await _commissionRepository.GetByIdAsync(request.CommissionId, cancellationToken);
+        if (commission == null)
+            return Result.Failure<IReadOnlyList<CommissionScheduleDto>>(new Error("Commission.NotFound", $"Commission with ID {request.CommissionId} not found."));
 
         // Load protocols for this commission to map by schedule ID
         var protocols = await _protocolRepository.GetByCommissionAsync(request.CommissionId, cancellationToken);
@@ -131,7 +133,7 @@ public sealed class GetSchedulesByCommissionQueryHandler : IRequestHandler<GetSc
                 s.GetAverageScore(),
                 protocol?.Id,
                 protocol?.IsFinalized ?? false,
-                commission?.PreDefenseNumber
+                commission.PreDefenseNumber
             ));
         }
 
