@@ -1,3 +1,4 @@
+using AWM.Service.Domain.Defense.Entities;
 using AWM.Service.Domain.Repositories;
 using KDS.Primitives.FluentResult;
 using MediatR;
@@ -35,6 +36,7 @@ public sealed class GetSchedulesByCommissionQueryHandler : IRequestHandler<GetSc
     private readonly IUserRepository _userRepository;
     private readonly IProtocolRepository _protocolRepository;
     private readonly ICommissionRepository _commissionRepository;
+    private readonly IEvaluationCriteriaRepository _evaluationCriteriaRepository;
 
     public GetSchedulesByCommissionQueryHandler(
         IScheduleRepository scheduleRepository,
@@ -42,7 +44,8 @@ public sealed class GetSchedulesByCommissionQueryHandler : IRequestHandler<GetSc
         ITopicRepository topicRepository,
         IUserRepository userRepository,
         IProtocolRepository protocolRepository,
-        ICommissionRepository commissionRepository)
+        ICommissionRepository commissionRepository,
+        IEvaluationCriteriaRepository evaluationCriteriaRepository)
     {
         _scheduleRepository = scheduleRepository;
         _studentWorkRepository = studentWorkRepository;
@@ -50,6 +53,7 @@ public sealed class GetSchedulesByCommissionQueryHandler : IRequestHandler<GetSc
         _userRepository = userRepository;
         _protocolRepository = protocolRepository;
         _commissionRepository = commissionRepository;
+        _evaluationCriteriaRepository = evaluationCriteriaRepository;
     }
 
     public async Task<Result<IReadOnlyList<CommissionScheduleDto>>> Handle(GetSchedulesByCommissionQuery request, CancellationToken cancellationToken)
@@ -92,6 +96,16 @@ public sealed class GetSchedulesByCommissionQueryHandler : IRequestHandler<GetSc
             : Array.Empty<AWM.Service.Domain.University.User>();
         var userMap = users.ToDictionary(u => u.Id);
 
+        // Load evaluation criteria to compute weighted scores
+        var workTypeIds = works.Select(w => w.WorkTypeId).Distinct().ToList();
+        var criteriaWeights = new Dictionary<int, decimal>();
+        foreach (var workTypeId in workTypeIds)
+        {
+            var criteria = await _evaluationCriteriaRepository.GetByWorkTypeAsync(workTypeId, commission.OrgUnitId, cancellationToken: cancellationToken);
+            foreach (var c in criteria.Where(c => c.Weight > 0))
+                criteriaWeights[c.Id] = c.Weight;
+        }
+
         var result = new List<CommissionScheduleDto>();
 
         foreach (var s in schedules)
@@ -130,7 +144,7 @@ public sealed class GetSchedulesByCommissionQueryHandler : IRequestHandler<GetSc
                 s.DefenseDate.ToLocalTime().ToString("yyyy-MM-dd"),
                 s.Location ?? "—",
                 s.IsReconciliationStarted,
-                s.GetAverageScore(),
+                ComputeWeightedScore(s.Grades, criteriaWeights) ?? s.GetAverageScore(),
                 protocol?.Id,
                 protocol?.IsFinalized ?? false,
                 commission.PreDefenseNumber
@@ -138,5 +152,15 @@ public sealed class GetSchedulesByCommissionQueryHandler : IRequestHandler<GetSc
         }
 
         return Result.Success<IReadOnlyList<CommissionScheduleDto>>(result);
+    }
+
+    private static decimal? ComputeWeightedScore(IReadOnlyCollection<Grade> grades, Dictionary<int, decimal> weights)
+    {
+        if (weights.Count == 0) return null;
+        var graded = grades.Where(g => weights.ContainsKey(g.CriteriaId)).ToList();
+        if (!graded.Any()) return null;
+        var totalWeight = graded.Sum(g => weights[g.CriteriaId]);
+        if (totalWeight == 0) return null;
+        return graded.Sum(g => (decimal)g.Score * weights[g.CriteriaId]) / totalWeight;
     }
 }
