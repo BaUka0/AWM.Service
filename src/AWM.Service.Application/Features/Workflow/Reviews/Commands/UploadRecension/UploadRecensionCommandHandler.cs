@@ -118,10 +118,10 @@ public sealed class UploadRecensionCommandHandler : IRequestHandler<UploadRecens
         if (currentState != null && currentState.SystemName == WorkStates.ReviewsWaitingForReviewer)
         {
             var targetState = await _workflowRepository.GetStateBySystemNameAsync(currentState.WorkTypeId, WorkStates.ReadyForDefense, cancellationToken);
-            if (targetState != null)
-            {
-                work.ChangeState(targetState.Id, currentUserId, "Reviewer recension uploaded. Transitioning to ReadyForDefense.");
-            }
+            if (targetState == null)
+                return Result.Failure(new Error("Workflow.StateNotFound", $"Target state '{WorkStates.ReadyForDefense}' not found for work type {currentState.WorkTypeId}."));
+
+            work.ChangeState(targetState.Id, currentUserId, "Reviewer recension uploaded. Transitioning to ReadyForDefense.");
         }
 
         await _studentWorkRepository.UpdateAsync(work, cancellationToken);

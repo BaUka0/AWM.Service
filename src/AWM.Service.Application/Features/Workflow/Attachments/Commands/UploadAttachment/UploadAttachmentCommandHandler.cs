@@ -130,10 +130,10 @@ public sealed class UploadAttachmentCommandHandler : IRequestHandler<UploadAttac
                 if (hasDraft && hasPresentation)
                 {
                     var targetState = await _workflowRepository.GetStateBySystemNameAsync(currentState.WorkTypeId, targetStateName, cancellationToken);
-                    if (targetState != null)
-                    {
-                        work.ChangeState(targetState.Id, currentUserId, "Both draft work and presentation uploaded. Transitioning to waiting for schedule.");
-                    }
+                    if (targetState == null)
+                        return Result.Failure<long>(new Error("Workflow.StateNotFound", $"Target state '{targetStateName}' not found for work type {currentState.WorkTypeId}."));
+
+                    work.ChangeState(targetState.Id, currentUserId, "Both draft work and presentation uploaded. Transitioning to waiting for schedule.");
                 }
             }
         }

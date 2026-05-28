@@ -101,10 +101,10 @@ public sealed class SubmitSupervisorReviewCommandHandler : IRequestHandler<Submi
         if (currentState != null && currentState.SystemName == WorkStates.ReviewsWaitingForSupervisor)
         {
             var targetState = await _workflowRepository.GetStateBySystemNameAsync(currentState.WorkTypeId, WorkStates.ReviewsWaitingForReviewer, cancellationToken);
-            if (targetState != null)
-            {
-                work.ChangeState(targetState.Id, currentUserId, "Supervisor review uploaded. Transitioning to waiting for external review.");
-            }
+            if (targetState == null)
+                return Result.Failure(new Error("Workflow.StateNotFound", $"Target state '{WorkStates.ReviewsWaitingForReviewer}' not found for work type {currentState.WorkTypeId}."));
+
+            work.ChangeState(targetState.Id, currentUserId, "Supervisor review uploaded. Transitioning to waiting for external review.");
         }
 
         await _studentWorkRepository.UpdateAsync(work, cancellationToken);

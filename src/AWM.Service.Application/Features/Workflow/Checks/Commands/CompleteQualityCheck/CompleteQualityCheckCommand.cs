@@ -127,10 +127,10 @@ public sealed class CompleteQualityCheckCommandHandler : IRequestHandler<Complet
                 {
                     // Transition to ReviewsWaitingForSupervisor
                     var waitingForSupervisorState = await _workflowRepository.GetStateBySystemNameAsync(workTypeId, WorkStates.ReviewsWaitingForSupervisor, cancellationToken);
-                    if (waitingForSupervisorState != null)
-                    {
-                        work.ChangeState(waitingForSupervisorState.Id, currentUserId, "Антиплагиат успешно пройден. Ожидание отзыва руководителя.");
-                    }
+                    if (waitingForSupervisorState == null)
+                        return Result.Failure<Unit>(new Error("Workflow.StateNotFound", $"Target state '{WorkStates.ReviewsWaitingForSupervisor}' not found for work type {workTypeId}."));
+
+                    work.ChangeState(waitingForSupervisorState.Id, currentUserId, "Антиплагиат успешно пройден. Ожидание отзыва руководителя.");
                 }
                 else // NormControl or SoftwareCheck, etc. (Initial checks)
                 {
@@ -151,10 +151,10 @@ public sealed class CompleteQualityCheckCommandHandler : IRequestHandler<Complet
                     if (allInitialPassed)
                     {
                         var antiPlagiarismState = await _workflowRepository.GetStateBySystemNameAsync(workTypeId, WorkStates.ChecksWaitingForAntiPlagiarism, cancellationToken);
-                        if (antiPlagiarismState != null)
-                        {
-                            work.ChangeState(antiPlagiarismState.Id, currentUserId, "Начальные проверки успешно пройдены. Ожидание антиплагиата.");
-                        }
+                        if (antiPlagiarismState == null)
+                            return Result.Failure<Unit>(new Error("Workflow.StateNotFound", $"Target state '{WorkStates.ChecksWaitingForAntiPlagiarism}' not found for work type {workTypeId}."));
+
+                        work.ChangeState(antiPlagiarismState.Id, currentUserId, "Начальные проверки успешно пройдены. Ожидание антиплагиата.");
                     }
                 }
             }
