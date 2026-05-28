@@ -99,31 +99,42 @@ public sealed class FinalizeProtocolCommandHandler : IRequestHandler<FinalizePro
                     await _preDefenseAttemptRepository.AddAsync(attempt, cancellationToken);
                 }
 
-                // Any pre-defense finalized protocol is considered passing in terms of score check,
-                // and passing is determined by decision not being 'Не допущен' (except PreDefense 1 which always passes)
-                bool isPassed = true;
-                if (preDefenseNum > 1)
-                {
-                    isPassed = !string.Equals(protocol.Decision, "Не допущен", StringComparison.OrdinalIgnoreCase);
-                }
-
-                attempt.RecordResult(protocol.FinalScoreNumeric ?? 0, isPassed, currentUserId);
-                await _preDefenseAttemptRepository.UpdateAsync(attempt, cancellationToken);
-
-                // Transition student work state
                 string? targetStateName = null;
-                if (preDefenseNum == 1)
+                string statusDescription;
+
+                if (!request.IsStudentPresent)
                 {
-                    targetStateName = WorkStates.PreDefense2WaitingForFiles;
+                    // Absent student — mark attempt as absent and redirect to retake slot
+                    attempt.MarkAbsent(currentUserId);
+                    targetStateName = preDefenseNum < 3
+                        ? WorkStates.PreDefense3WaitingForFiles
+                        : WorkStates.Cancelled;
+                    statusDescription = "Absent";
                 }
-                else if (preDefenseNum == 2)
+                else
                 {
-                    targetStateName = isPassed ? WorkStates.ChecksWaitingForInitial : WorkStates.PreDefense3WaitingForFiles;
+                    // Present student — record result from protocol decision
+                    bool isPassed = preDefenseNum == 1 ||
+                        !string.Equals(protocol.Decision, "Не допущен", StringComparison.OrdinalIgnoreCase);
+
+                    attempt.RecordResult(protocol.FinalScoreNumeric ?? 0, isPassed, currentUserId);
+                    statusDescription = isPassed ? "Passed" : "Failed";
+
+                    if (preDefenseNum == 1)
+                    {
+                        targetStateName = WorkStates.PreDefense2WaitingForFiles;
+                    }
+                    else if (preDefenseNum == 2)
+                    {
+                        targetStateName = isPassed ? WorkStates.ChecksWaitingForInitial : WorkStates.PreDefense3WaitingForFiles;
+                    }
+                    else if (preDefenseNum == 3)
+                    {
+                        targetStateName = isPassed ? WorkStates.ChecksWaitingForInitial : WorkStates.Cancelled;
+                    }
                 }
-                else if (preDefenseNum == 3)
-                {
-                    targetStateName = isPassed ? WorkStates.ChecksWaitingForInitial : WorkStates.Cancelled;
-                }
+
+                await _preDefenseAttemptRepository.UpdateAsync(attempt, cancellationToken);
 
                 if (targetStateName != null)
                 {
@@ -133,7 +144,7 @@ public sealed class FinalizeProtocolCommandHandler : IRequestHandler<FinalizePro
                         var targetState = await _workflowRepository.GetStateBySystemNameAsync(currentState.WorkTypeId, targetStateName, cancellationToken);
                         if (targetState != null)
                         {
-                            work.ChangeState(targetState.Id, currentUserId, $"Finalized Pre-Defense {preDefenseNum} with status: {(isPassed ? "Passed" : "Failed")}.");
+                            work.ChangeState(targetState.Id, currentUserId, $"Finalized Pre-Defense {preDefenseNum} with status: {statusDescription}.");
                             await _studentWorkRepository.UpdateAsync(work, cancellationToken);
                         }
                     }

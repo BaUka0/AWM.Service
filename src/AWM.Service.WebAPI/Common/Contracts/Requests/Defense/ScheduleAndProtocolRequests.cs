@@ -14,3 +14,5 @@ public record CreateProtocolRequest(
     string? Decision = null,
     string? Comments = null
 );
+
+public record FinalizeProtocolRequest(bool IsStudentPresent = true);

@@ -54,9 +54,10 @@ public sealed class ProtocolsController : BaseController
     [RequireAccess("SYSTEM.STAGE", "Update")]
     public async Task<IActionResult> FinalizeProtocol(
         long id,
+        [FromBody] FinalizeProtocolRequest? body,
         CancellationToken cancellationToken)
     {
-        var command = new FinalizeProtocolCommand(id);
+        var command = new FinalizeProtocolCommand(id, body?.IsStudentPresent ?? true);
         var result = await _sender.Send(command, cancellationToken);
 
         if (result.IsFailed)

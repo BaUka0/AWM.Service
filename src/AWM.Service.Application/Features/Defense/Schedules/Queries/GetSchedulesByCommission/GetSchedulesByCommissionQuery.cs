@@ -22,7 +22,8 @@ public record CommissionScheduleDto(
     bool IsReconciliationStarted,
     decimal? AverageScore,
     long? ProtocolId,
-    bool IsProtocolFinalized);
+    bool IsProtocolFinalized,
+    int? PreDefenseNumber);
 
 public record GetSchedulesByCommissionQuery(int CommissionId) : IRequest<Result<IReadOnlyList<CommissionScheduleDto>>>;
 
@@ -33,19 +34,22 @@ public sealed class GetSchedulesByCommissionQueryHandler : IRequestHandler<GetSc
     private readonly ITopicRepository _topicRepository;
     private readonly IUserRepository _userRepository;
     private readonly IProtocolRepository _protocolRepository;
+    private readonly ICommissionRepository _commissionRepository;
 
     public GetSchedulesByCommissionQueryHandler(
         IScheduleRepository scheduleRepository,
         IStudentWorkRepository studentWorkRepository,
         ITopicRepository topicRepository,
         IUserRepository userRepository,
-        IProtocolRepository protocolRepository)
+        IProtocolRepository protocolRepository,
+        ICommissionRepository commissionRepository)
     {
         _scheduleRepository = scheduleRepository;
         _studentWorkRepository = studentWorkRepository;
         _topicRepository = topicRepository;
         _userRepository = userRepository;
         _protocolRepository = protocolRepository;
+        _commissionRepository = commissionRepository;
     }
 
     public async Task<Result<IReadOnlyList<CommissionScheduleDto>>> Handle(GetSchedulesByCommissionQuery request, CancellationToken cancellationToken)
@@ -55,6 +59,9 @@ public sealed class GetSchedulesByCommissionQueryHandler : IRequestHandler<GetSc
         {
             return Result.Success<IReadOnlyList<CommissionScheduleDto>>(new List<CommissionScheduleDto>());
         }
+
+        // Load commission to get PreDefenseNumber
+        var commission = await _commissionRepository.GetByIdAsync(request.CommissionId, cancellationToken);
 
         // Load protocols for this commission to map by schedule ID
         var protocols = await _protocolRepository.GetByCommissionAsync(request.CommissionId, cancellationToken);
@@ -123,7 +130,8 @@ public sealed class GetSchedulesByCommissionQueryHandler : IRequestHandler<GetSc
                 s.IsReconciliationStarted,
                 s.GetAverageScore(),
                 protocol?.Id,
-                protocol?.IsFinalized ?? false
+                protocol?.IsFinalized ?? false,
+                commission?.PreDefenseNumber
             ));
         }
 
