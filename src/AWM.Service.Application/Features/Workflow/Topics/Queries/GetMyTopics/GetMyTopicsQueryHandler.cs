@@ -13,15 +13,21 @@ public sealed class GetMyTopicsQueryHandler : IRequestHandler<GetMyTopicsQuery, 
     private readonly ITopicRepository _topicRepository;
     private readonly ICurrentUserProvider _currentUserProvider;
     private readonly IEmployeeReadOnlyRepository _employeeRepository;
+    private readonly IDirectionRepository _directionRepository;
+    private readonly IWorkflowRepository _workflowRepository;
 
     public GetMyTopicsQueryHandler(
         ITopicRepository topicRepository,
         ICurrentUserProvider currentUserProvider,
-        IEmployeeReadOnlyRepository employeeRepository)
+        IEmployeeReadOnlyRepository employeeRepository,
+        IDirectionRepository directionRepository,
+        IWorkflowRepository workflowRepository)
     {
         _topicRepository = topicRepository;
         _currentUserProvider = currentUserProvider;
         _employeeRepository = employeeRepository;
+        _directionRepository = directionRepository;
+        _workflowRepository = workflowRepository;
     }
 
     public async Task<Result<List<TopicDto>>> Handle(GetMyTopicsQuery request, CancellationToken cancellationToken)
@@ -30,23 +36,22 @@ public sealed class GetMyTopicsQueryHandler : IRequestHandler<GetMyTopicsQuery, 
             return Result.Failure<List<TopicDto>>(new Error("Auth.Unauthorized", "User is not authenticated."));
 
         var currentUserId = _currentUserProvider.UserId.Value;
-
-        // Note: The repository currently filters by StaffAssignments.
-        // If we want to support topics created by user directly, we might need a custom query
-        // or ensure StaffAssignments are created. 
-        // For now, I'll use a manual query if needed, but let's try the repository first.
-        // Actually, let's use a more direct approach since I know Topic has CreatedBy.
-        
-        // Wait, I don't have a way to write raw SQL or complex LINQ here easily without modifying Repository.
-        // I'll stick to what's available in ITopicRepository but might need to extend it.
-        // Let's assume for now that GetBySupervisorAsync is intended to work.
-        
         var topics = await _topicRepository.GetBySupervisorAsync(currentUserId, request.SemesterId, cancellationToken);
+
+        var directionIds = topics.Where(t => t.DirectionId.HasValue).Select(t => t.DirectionId!.Value).Distinct().ToList();
+        var directions = directionIds.Any()
+            ? await _directionRepository.GetByIdsAsync(directionIds, cancellationToken)
+            : new List<Direction>();
+        var directionMap = directions.ToDictionary(d => d.Id);
+
+        var workTypes = await _workflowRepository.GetAllWorkTypesAsync(cancellationToken);
+        var workTypeMap = workTypes.ToDictionary(wt => wt.Id);
 
         var dtos = topics.Select(t => new TopicDto(
             t.Id,
             t.DirectionId,
-            "", // TODO: Join with Direction
+            t.DirectionId.HasValue && directionMap.TryGetValue(t.DirectionId.Value, out var dir)
+                ? (dir.TitleRu ?? dir.TitleKz ?? dir.TitleEn ?? "") : "",
             t.TitleRu,
             t.TitleKz,
             t.TitleEn,
@@ -54,7 +59,7 @@ public sealed class GetMyTopicsQueryHandler : IRequestHandler<GetMyTopicsQuery, 
             t.DescriptionKz,
             t.DescriptionEn,
             t.WorkTypeId,
-            "", // TODO: Join with WorkType
+            workTypeMap.TryGetValue(t.WorkTypeId, out var wt) ? wt.Name : "",
             t.MaxParticipants,
             t.Applications.Count(a => a.StatusId == 2), // Accepted
             t.Applications.Count(a => a.StatusId == 1), // Pending

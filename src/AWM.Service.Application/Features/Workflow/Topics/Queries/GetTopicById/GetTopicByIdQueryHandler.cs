@@ -9,10 +9,17 @@ namespace AWM.Service.Application.Features.Workflow.Topics.Queries.GetTopicById;
 public sealed class GetTopicByIdQueryHandler : IRequestHandler<GetTopicByIdQuery, Result<TopicDetailDto>>
 {
     private readonly ITopicRepository _topicRepository;
+    private readonly IDirectionRepository _directionRepository;
+    private readonly IWorkflowRepository _workflowRepository;
 
-    public GetTopicByIdQueryHandler(ITopicRepository topicRepository)
+    public GetTopicByIdQueryHandler(
+        ITopicRepository topicRepository,
+        IDirectionRepository directionRepository,
+        IWorkflowRepository workflowRepository)
     {
         _topicRepository = topicRepository;
+        _directionRepository = directionRepository;
+        _workflowRepository = workflowRepository;
     }
 
     public async Task<Result<TopicDetailDto>> Handle(GetTopicByIdQuery request, CancellationToken cancellationToken)
@@ -21,14 +28,25 @@ public sealed class GetTopicByIdQueryHandler : IRequestHandler<GetTopicByIdQuery
         if (topic == null)
             return Result.Failure<TopicDetailDto>(new Error("Topics.NotFound", "Topic not found."));
 
+        string directionTitle = "";
+        if (topic.DirectionId.HasValue)
+        {
+            var dirs = await _directionRepository.GetByIdsAsync(new[] { topic.DirectionId.Value }, cancellationToken);
+            var dir = dirs.FirstOrDefault();
+            directionTitle = dir != null ? (dir.TitleRu ?? dir.TitleKz ?? dir.TitleEn ?? "") : "";
+        }
+
+        var workTypes = await _workflowRepository.GetAllWorkTypesAsync(cancellationToken);
+        var workTypeName = workTypes.FirstOrDefault(wt => wt.Id == topic.WorkTypeId)?.Name ?? "";
+
         var dto = new TopicDetailDto(
             topic.Id,
             topic.DirectionId,
-            "", // TODO: Fetch direction title
+            directionTitle,
             topic.SemesterId,
             topic.OrgUnitId,
             topic.WorkTypeId,
-            "", // TODO: Fetch work type name
+            workTypeName,
             topic.SpecialityId,
             topic.TitleRu,
             topic.TitleKz,

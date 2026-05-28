@@ -1,5 +1,6 @@
 using AWM.Service.Application.Features.Workflow.Topics.DTOs;
 using AWM.Service.Domain.Repositories;
+using AWM.Service.Domain.Thesis.Entities;
 using AWM.Service.Domain.Thesis.Enums;
 using KDS.Primitives.FluentResult;
 using MediatR;
@@ -16,13 +17,19 @@ public sealed class GetReconciliationSummaryQueryHandler
 {
     private readonly ITopicRepository _topicRepository;
     private readonly IUserRepository _userRepository;
+    private readonly IDirectionRepository _directionRepository;
+    private readonly IWorkflowRepository _workflowRepository;
 
     public GetReconciliationSummaryQueryHandler(
         ITopicRepository topicRepository,
-        IUserRepository userRepository)
+        IUserRepository userRepository,
+        IDirectionRepository directionRepository,
+        IWorkflowRepository workflowRepository)
     {
         _topicRepository = topicRepository;
         _userRepository = userRepository;
+        _directionRepository = directionRepository;
+        _workflowRepository = workflowRepository;
     }
 
     public async Task<Result<TopicReconciliationSummaryDto>> Handle(
@@ -42,6 +49,16 @@ public sealed class GetReconciliationSummaryQueryHandler
         var users = await _userRepository.GetByIdsAsync(supervisorIds, cancellationToken);
         var userMap = users.ToDictionary(u => u.Id, u => FormatFullName(u.LastName, u.FirstName, u.MiddleName));
 
+        // Resolve direction titles and work type names
+        var directionIds = filteredTopics.Where(t => t.DirectionId.HasValue).Select(t => t.DirectionId!.Value).Distinct().ToList();
+        var directions = directionIds.Any()
+            ? await _directionRepository.GetByIdsAsync(directionIds, cancellationToken)
+            : new List<Direction>();
+        var directionMap = directions.ToDictionary(d => d.Id);
+
+        var workTypes = await _workflowRepository.GetAllWorkTypesAsync(cancellationToken);
+        var workTypeMap = workTypes.ToDictionary(wt => wt.Id);
+
         // Map to DTOs
         var items = filteredTopics.Select(t =>
         {
@@ -52,12 +69,13 @@ public sealed class GetReconciliationSummaryQueryHandler
             return new TopicReconciliationItemDto(
                 t.Id,
                 t.DirectionId,
-                "", // DirectionTitle — TODO: resolve via Direction join if needed
+                t.DirectionId.HasValue && directionMap.TryGetValue(t.DirectionId.Value, out var dir)
+                    ? (dir.TitleRu ?? dir.TitleKz ?? dir.TitleEn ?? "") : "",
                 t.TitleRu,
                 t.TitleKz,
                 t.TitleEn,
                 t.WorkTypeId,
-                "", // WorkTypeName — TODO: resolve via WorkType lookup
+                workTypeMap.TryGetValue(t.WorkTypeId, out var wt) ? wt.Name : "",
                 t.SpecialityId,
                 t.MaxParticipants,
                 acceptedCount,
