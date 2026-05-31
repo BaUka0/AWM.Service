@@ -71,7 +71,9 @@ public sealed class CreateProtocolCommandHandler : IRequestHandler<CreateProtoco
                 request.FinalScoreNumeric,
                 request.FinalGradeLetter,
                 request.Decision,
-                request.Comments);
+                request.Comments,
+                request.DecisionType,
+                request.ReadinessPercent);
 
             await _protocolRepository.AddAsync(protocol, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);

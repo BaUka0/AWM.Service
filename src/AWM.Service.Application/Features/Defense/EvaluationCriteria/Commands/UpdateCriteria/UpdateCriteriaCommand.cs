@@ -7,4 +7,6 @@ public sealed record UpdateCriteriaCommand(
     int Id,
     string CriteriaName,
     int MaxScore,
-    decimal Weight) : IRequest<Result>;
+    decimal Weight,
+    int? DefenseStageType = null,
+    int SortOrder = 0) : IRequest<Result>;

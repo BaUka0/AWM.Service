@@ -120,6 +120,8 @@ public sealed class ApproveSupervisorsCommandHandler : IRequestHandler<ApproveSu
 
         if (newUserAssignments.Any())
         {
+            var roleAccess = await _roleAccessRepository.GetByCodeAsync("Supervisor", cancellationToken);
+            
             foreach (var assignmentInfo in newUserAssignments)
             {
                 var metadata = new SupervisorAssignmentMetadata 
@@ -140,6 +142,17 @@ public sealed class ApproveSupervisorsCommandHandler : IRequestHandler<ApproveSu
                     metadataJson);
                 
                 await _staffAssignmentRepository.AddAsync(assignment, cancellationToken);
+
+                // Add UserAccess if role exists and user doesn't have it
+                if (roleAccess != null)
+                {
+                    var userAccessList = await _userAccessRepository.GetByUserIdAsync(assignmentInfo.UserId, cancellationToken);
+                    if (!userAccessList.Any(ua => ua.RoleAccessId == roleAccess.Id))
+                    {
+                        var newUserAccess = new UserAccess(assignmentInfo.UserId, roleAccess.Id);
+                        await _userAccessRepository.AddAsync(newUserAccess, cancellationToken);
+                    }
+                }
             }
         }
 

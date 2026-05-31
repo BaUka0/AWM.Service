@@ -145,4 +145,32 @@ public sealed class StagesController : BaseController
 
         return Ok();
     }
+
+    /// <summary>
+    /// Approves periods for Quality Checks (Normocontrol and Antiplagiarism).
+    /// </summary>
+    [HttpPost("approve-checks")]
+    [RequireAccess("SYSTEM.STAGE", "Update")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> ApproveChecksPeriods(
+        [FromBody] SetStagesPeriodsRequest request,
+        CancellationToken cancellationToken)
+    {
+        var command = new AWM.Service.Application.Features.Workflow.Stages.Commands.ApproveChecksPeriods.ApproveChecksPeriodsCommand(
+            request.SemesterId,
+            request.OrgUnitId,
+            request.SpecialityId,
+            request.Periods
+        );
+
+        var result = await _sender.Send(command, cancellationToken);
+
+        if (result.IsFailed)
+        {
+            return HandleResultError(result.Error);
+        }
+
+        return Ok();
+    }
 }

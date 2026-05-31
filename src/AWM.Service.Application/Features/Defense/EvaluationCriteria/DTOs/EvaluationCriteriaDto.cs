@@ -7,5 +7,7 @@ public record EvaluationCriteriaDto(
     int MaxScore,
     decimal Weight,
     int? OrgUnitId = null,
-    int? SpecialityId = null
+    int? SpecialityId = null,
+    int? DefenseStageType = null,
+    int SortOrder = 0
 );

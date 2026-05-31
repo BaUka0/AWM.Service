@@ -36,7 +36,7 @@ public sealed class UpdateCriteriaCommandHandler : IRequestHandler<UpdateCriteri
 
         try
         {
-            criteria.Update(request.CriteriaName, request.MaxScore, request.Weight, modifiedBy);
+            criteria.Update(request.CriteriaName, request.MaxScore, request.Weight, modifiedBy, request.DefenseStageType, request.SortOrder);
             await _criteriaRepository.UpdateAsync(criteria, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 

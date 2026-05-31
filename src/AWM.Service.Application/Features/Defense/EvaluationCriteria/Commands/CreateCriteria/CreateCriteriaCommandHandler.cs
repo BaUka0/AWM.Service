@@ -38,7 +38,9 @@ public sealed class CreateCriteriaCommandHandler : IRequestHandler<CreateCriteri
                 createdBy,
                 request.Weight,
                 request.OrgUnitId,
-                request.SpecialityId);
+                request.SpecialityId,
+                request.DefenseStageType,
+                request.SortOrder);
 
             await _criteriaRepository.AddAsync(criteria, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);

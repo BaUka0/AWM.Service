@@ -43,8 +43,24 @@ public sealed record AdmittedStudentsListData(
     IReadOnlyList<AdmittedStudentData> Students
 );
 
+public sealed record ScheduleReportItem(
+    string Date,
+    string StartTime,
+    string StudentName,
+    string TopicTitle,
+    string Location
+);
+
+public sealed record ScheduleReportData(
+    string CommissionName,
+    string GeneratedDate,
+    IReadOnlyList<ScheduleReportItem> Items
+);
+
 public interface IPdfReportService
 {
     Task<byte[]> GenerateProtocolReportAsync(ProtocolReportData data);
     Task<byte[]> GenerateAdmittedStudentsListAsync(AdmittedStudentsListData data);
+    Task<byte[]> GenerateScheduleReportAsync(ScheduleReportData data);
 }
+

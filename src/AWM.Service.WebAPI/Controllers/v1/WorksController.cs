@@ -269,4 +269,22 @@ public sealed class WorksController : BaseController
 
         return Ok();
     }
+
+    /// <summary>
+    /// Marks one or multiple student works as graduated.
+    /// </summary>
+    [HttpPost("graduate")]
+    [RequireAccess("SYSTEM.STAGE", "Update")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> MarkAsGraduated(
+        [FromBody] MarkAsGraduatedRequest request,
+        CancellationToken ct)
+    {
+        var command = new AWM.Service.Application.Features.Workflow.Works.Commands.MarkAsGraduated.MarkAsGraduatedCommand(request.WorkIds);
+        var result = await _sender.Send(command, ct);
+        if (result.IsFailed)
+            return HandleResultError(result.Error);
+
+        return Ok();
+    }
 }

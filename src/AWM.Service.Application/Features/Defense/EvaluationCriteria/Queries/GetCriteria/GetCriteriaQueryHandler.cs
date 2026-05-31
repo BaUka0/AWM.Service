@@ -22,14 +22,24 @@ public sealed class GetCriteriaQueryHandler : IRequestHandler<GetCriteriaQuery, 
             request.SpecialityId,
             cancellationToken);
 
-        var response = criteria.Select(c => new EvaluationCriteriaDto(
-            c.Id,
-            c.WorkTypeId,
-            c.CriteriaName,
-            c.MaxScore,
-            c.Weight,
-            c.OrgUnitId,
-            c.SpecialityId)).ToList();
+        var filtered = criteria.AsEnumerable();
+        if (request.DefenseStageType.HasValue)
+        {
+            filtered = filtered.Where(c => c.DefenseStageType == request.DefenseStageType.Value);
+        }
+
+        var response = filtered
+            .OrderBy(c => c.SortOrder)
+            .Select(c => new EvaluationCriteriaDto(
+                c.Id,
+                c.WorkTypeId,
+                c.CriteriaName,
+                c.MaxScore,
+                c.Weight,
+                c.OrgUnitId,
+                c.SpecialityId,
+                c.DefenseStageType,
+                c.SortOrder)).ToList();
 
         return Result.Success<IReadOnlyList<EvaluationCriteriaDto>>(response);
     }

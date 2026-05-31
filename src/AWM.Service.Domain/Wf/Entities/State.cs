@@ -121,6 +121,7 @@ public static class WorkStates
     public const string DefenseWaitingForSchedule = "Defense.WaitingForSchedule";
     public const string DefenseScheduled = "Defense.Scheduled";
     public const string Defended = "Defended";
+    public const string Graduated = "Graduated";
     public const string DefenseFailed = "Defense.Failed";
 
     // Отмена / Недопуск

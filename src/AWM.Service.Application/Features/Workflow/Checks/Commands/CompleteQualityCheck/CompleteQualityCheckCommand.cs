@@ -154,6 +154,12 @@ public sealed class CompleteQualityCheckCommandHandler : IRequestHandler<Complet
                         if (antiPlagiarismState == null)
                             return Result.Failure<Unit>(new Error("Workflow.StateNotFound", $"Target state '{WorkStates.ChecksWaitingForAntiPlagiarism}' not found for work type {workTypeId}."));
 
+                        // Auto-submit for AntiPlagiarism
+                        if (!work.QualityChecks.Any(c => c.CheckTypeId == 2 && !c.IsPassed && !c.AssignedExpertId.HasValue))
+                        {
+                            work.AddQualityCheck(2, isPassed: false);
+                        }
+
                         work.ChangeState(antiPlagiarismState.Id, currentUserId, "Начальные проверки успешно пройдены. Ожидание антиплагиата.");
                     }
                 }

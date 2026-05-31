@@ -12,7 +12,16 @@ public record CreateProtocolRequest(
     decimal? FinalScoreNumeric = null,
     string? FinalGradeLetter = null,
     string? Decision = null,
-    string? Comments = null
+    string? Comments = null,
+    int? DecisionType = null,
+    int? ReadinessPercent = null
 );
 
 public record FinalizeProtocolRequest(bool IsStudentPresent = true);
+
+public record NotifyUnreadyStudentsRequest(
+    int OrgUnitId,
+    int SemesterId,
+    int? SpecialityId = null
+);
+

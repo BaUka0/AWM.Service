@@ -43,6 +43,13 @@ public class EvaluationCriteriaConfiguration : SoftDeletableEntityConfiguration<
             .HasColumnType("decimal(5,2)")
             .HasDefaultValue(1.0m);
 
+        builder.Property(e => e.DefenseStageType)
+            .HasColumnName("DefenseStageType");
+
+        builder.Property(e => e.SortOrder)
+            .IsRequired()
+            .HasDefaultValue(0);
+
         // Foreign keys
         builder.HasOne<WorkType>()
             .WithMany()

@@ -114,8 +114,22 @@ public sealed class FinalizeProtocolCommandHandler : IRequestHandler<FinalizePro
                 else
                 {
                     // Present student — record result from protocol decision
-                    bool isPassed = preDefenseNum == 1 ||
-                        !string.Equals(protocol.Decision, "Не допущен", StringComparison.OrdinalIgnoreCase);
+                    // PZ-1 is always informational (isPassed = true regardless)
+                    // PZ-2/PZ-3 use structured DecisionType if available, fallback to string comparison
+                    bool isPassed;
+                    if (preDefenseNum == 1)
+                    {
+                        isPassed = true; // PZ-1 is informational, always passes
+                    }
+                    else if (protocol.DecisionType.HasValue)
+                    {
+                        isPassed = protocol.DecisionType.Value != ProtocolDecisionTypes.NotAdmitted;
+                    }
+                    else
+                    {
+                        // Legacy fallback for protocols without DecisionType
+                        isPassed = !string.Equals(protocol.Decision, "Не допущен", StringComparison.OrdinalIgnoreCase);
+                    }
 
                     attempt.RecordResult(protocol.FinalScoreNumeric ?? 0, isPassed, currentUserId);
                     statusDescription = isPassed ? "Passed" : "Failed";
@@ -152,7 +166,17 @@ public sealed class FinalizeProtocolCommandHandler : IRequestHandler<FinalizePro
             }
             else if (commission.CommissionTypeId == (int)CommissionTypes.GAK)
             {
-                bool isPassed = !string.Equals(protocol.Decision, "Не допущен", StringComparison.OrdinalIgnoreCase);
+                // Use structured DecisionType if available, fallback to string comparison
+                bool isPassed;
+                if (protocol.DecisionType.HasValue)
+                {
+                    isPassed = protocol.DecisionType.Value != ProtocolDecisionTypes.NotAdmitted;
+                }
+                else
+                {
+                    // Legacy fallback
+                    isPassed = !string.Equals(protocol.Decision, "Не допущен", StringComparison.OrdinalIgnoreCase);
+                }
 
                 string? targetStateName = isPassed ? WorkStates.Defended : WorkStates.DefenseFailed;
 

@@ -9,4 +9,6 @@ public sealed record CreateProtocolCommand(
     decimal? FinalScoreNumeric = null,
     string? FinalGradeLetter = null,
     string? Decision = null,
-    string? Comments = null) : IRequest<Result<long>>;
+    string? Comments = null,
+    int? DecisionType = null,
+    int? ReadinessPercent = null) : IRequest<Result<long>>;

@@ -30,6 +30,7 @@ public sealed class EvaluationCriteriaController : BaseController
     /// <summary>
     /// Gets evaluation criteria based on work type and organizational context.
     /// Supports speciality override with fallback to department or university-wide criteria.
+    /// Optionally filters by defense stage type (1=PreDefense, 2=GAK).
     /// </summary>
     [HttpGet]
     [RequireAccess("SYSTEM.STAGE", "Read")]
@@ -37,9 +38,10 @@ public sealed class EvaluationCriteriaController : BaseController
         [FromQuery] int workTypeId,
         [FromQuery] int? orgUnitId,
         [FromQuery] int? specialityId,
+        [FromQuery] int? defenseStageType,
         CancellationToken cancellationToken)
     {
-        var query = new GetCriteriaQuery(workTypeId, orgUnitId, specialityId);
+        var query = new GetCriteriaQuery(workTypeId, orgUnitId, specialityId, defenseStageType);
         var result = await _sender.Send(query, cancellationToken);
 
         if (result.IsFailed)

@@ -124,7 +124,11 @@ public sealed class GetPendingChecksQueryHandler : IRequestHandler<GetPendingChe
             var studentName = participantNames.Count > 0 ? string.Join(", ", participantNames) : null;
             var topicTitle = work.TopicId.HasValue && topicMap.TryGetValue(work.TopicId.Value, out var t) ? t : null;
 
-            foreach (var c in work.QualityChecks)
+            var latestChecks = work.QualityChecks
+                .GroupBy(c => c.CheckTypeId)
+                .Select(g => g.OrderByDescending(c => c.AttemptNumber).First());
+
+            foreach (var c in latestChecks)
             {
                 bool isPending = !c.AssignedExpertId.HasValue && !c.IsPassed;
                 bool isCompleted = c.IsPassed || c.AssignedExpertId.HasValue;

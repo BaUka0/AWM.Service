@@ -254,6 +254,16 @@ public class StudentWork : AggregateRoot<long>, IAuditable, ISoftDeletable
     }
 
     /// <summary>
+    /// Marks the work as graduated (completed university).
+    /// </summary>
+    public void MarkAsGraduated(string? finalGrade)
+    {
+        IsDefended = true;
+        FinalGrade = finalGrade; // Allow updating grade
+        // Optionally add WorkGraduatedEvent if needed
+    }
+
+    /// <summary>
     /// Checks if the work is eligible for defense by verifying all mandatory checks are passed.
     /// </summary>
     /// <param name="mandatoryCheckTypeIds">List of check type IDs required for the student's speciality.</param>

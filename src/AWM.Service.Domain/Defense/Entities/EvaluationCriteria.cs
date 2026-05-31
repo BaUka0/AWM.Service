@@ -13,6 +13,8 @@ public class EvaluationCriteria : Entity<int>, IAuditable, ISoftDeletable
     public string CriteriaName { get; private set; } = null!;
     public int MaxScore { get; private set; }
     public decimal Weight { get; private set; }
+    public int? DefenseStageType { get; private set; }
+    public int SortOrder { get; private set; }
 
     public DateTime CreatedAt { get; private set; }
     public int CreatedBy { get; private set; }
@@ -32,7 +34,9 @@ public class EvaluationCriteria : Entity<int>, IAuditable, ISoftDeletable
         int createdBy,
         decimal weight = 1.0m,
         int? orgUnitId = null,
-        int? specialityId = null)
+        int? specialityId = null,
+        int? defenseStageType = null,
+        int sortOrder = 0)
     {
         if (string.IsNullOrWhiteSpace(criteriaName))
             throw new DomainException("EvaluationCriteria.NameRequired", "Criteria name is required.");
@@ -47,6 +51,8 @@ public class EvaluationCriteria : Entity<int>, IAuditable, ISoftDeletable
         CriteriaName = criteriaName;
         MaxScore = maxScore;
         Weight = weight;
+        DefenseStageType = defenseStageType;
+        SortOrder = sortOrder;
 
         CreatedAt = DateTime.UtcNow;
         CreatedBy = createdBy;
@@ -56,7 +62,7 @@ public class EvaluationCriteria : Entity<int>, IAuditable, ISoftDeletable
     /// <summary>
     /// Updates the criteria.
     /// </summary>
-    public void Update(string criteriaName, int maxScore, decimal weight, int modifiedBy)
+    public void Update(string criteriaName, int maxScore, decimal weight, int modifiedBy, int? defenseStageType = null, int sortOrder = 0)
     {
         if (string.IsNullOrWhiteSpace(criteriaName))
             throw new DomainException("EvaluationCriteria.NameRequired", "Criteria name is required.");
@@ -68,6 +74,8 @@ public class EvaluationCriteria : Entity<int>, IAuditable, ISoftDeletable
         CriteriaName = criteriaName;
         MaxScore = maxScore;
         Weight = weight;
+        DefenseStageType = defenseStageType;
+        SortOrder = sortOrder;
 
         LastModifiedAt = DateTime.UtcNow;
         LastModifiedBy = modifiedBy;

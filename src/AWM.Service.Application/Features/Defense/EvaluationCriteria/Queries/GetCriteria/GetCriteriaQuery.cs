@@ -7,4 +7,5 @@ namespace AWM.Service.Application.Features.Defense.EvaluationCriteria.Queries.Ge
 public sealed record GetCriteriaQuery(
     int WorkTypeId,
     int? OrgUnitId = null,
-    int? SpecialityId = null) : IRequest<Result<IReadOnlyList<EvaluationCriteriaDto>>>;
+    int? SpecialityId = null,
+    int? DefenseStageType = null) : IRequest<Result<IReadOnlyList<EvaluationCriteriaDto>>>;

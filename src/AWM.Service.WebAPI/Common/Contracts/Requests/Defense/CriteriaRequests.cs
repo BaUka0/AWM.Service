@@ -6,11 +6,15 @@ public record CreateCriteriaRequest(
     int MaxScore,
     decimal Weight = 1.0m,
     int? OrgUnitId = null,
-    int? SpecialityId = null
+    int? SpecialityId = null,
+    int? DefenseStageType = null,
+    int SortOrder = 0
 );
 
 public record UpdateCriteriaRequest(
     string CriteriaName,
     int MaxScore,
-    decimal Weight
+    decimal Weight,
+    int? DefenseStageType = null,
+    int SortOrder = 0
 );

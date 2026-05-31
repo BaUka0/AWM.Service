@@ -54,6 +54,12 @@ public class ProtocolConfiguration : SoftDeletableEntityConfiguration<Protocol, 
         builder.Property(e => e.Decision)
             .HasColumnType("nvarchar(max)");
 
+        builder.Property(e => e.DecisionType)
+            .HasColumnName("DecisionType");
+
+        builder.Property(e => e.ReadinessPercent)
+            .HasColumnName("ReadinessPercent");
+
         builder.Property(e => e.ProtocolNumber)
             .HasMaxLength(50);
 

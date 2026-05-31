@@ -2,6 +2,8 @@ using AWM.Service.Application.Features.Defense.Protocols.Commands.CreateProtocol
 using AWM.Service.Application.Features.Defense.Protocols.Commands.FinalizeProtocol;
 using AWM.Service.Application.Features.Defense.Protocols.Queries.GenerateAdmittedStudentsList;
 using AWM.Service.Application.Features.Defense.Protocols.Queries.GenerateReport;
+using AWM.Service.Application.Features.Defense.Schedules.Queries.GenerateScheduleReport;
+using AWM.Service.Application.Features.Workflow.Works.Commands.NotifyUnreadyStudents;
 using AWM.Service.WebAPI.Authorization;
 using AWM.Service.WebAPI.Common.Contracts.Requests.Defense;
 using Mapster;
@@ -114,5 +116,46 @@ public sealed class ProtocolsController : BaseController
             return HandleResultError(result.Error);
 
         return File(result.Value, "application/pdf", $"admitted_students_{orgUnitId}_{semesterId}.pdf");
+    }
+
+    /// <summary>
+    /// Downloads the PDF defense schedule for a commission.
+    /// </summary>
+    [HttpGet("schedule-report")]
+    [RequireAccess("SYSTEM.STAGE", "Read")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetScheduleReport(
+        [FromQuery] int commissionId,
+        CancellationToken cancellationToken)
+    {
+        var query = new GenerateScheduleReportQuery(commissionId);
+        var result = await _sender.Send(query, cancellationToken);
+
+        if (result.IsFailed)
+            return HandleResultError(result.Error);
+
+        return File(result.Value, "application/pdf", $"schedule_commission_{commissionId}.pdf");
+    }
+
+    /// <summary>
+    /// Sends notifications to all students who are not admitted to defense in a department/semester.
+    /// </summary>
+    [HttpPost("notify-unready")]
+    [RequireAccess("SYSTEM.STAGE", "Update")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> NotifyUnreadyStudents(
+        [FromBody] NotifyUnreadyStudentsRequest request,
+        CancellationToken cancellationToken)
+    {
+        var command = request.Adapt<NotifyUnreadyStudentsCommand>();
+        var result = await _sender.Send(command, cancellationToken);
+
+        if (result.IsFailed)
+            return HandleResultError(result.Error);
+
+        return Ok();
     }
 }
