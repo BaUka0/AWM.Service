@@ -1,3 +1,4 @@
+using AWM.Service.Application.Features.Defense.Commissions.Commands.ApprovePreDefensePeriods;
 using AWM.Service.Application.Features.Defense.Commissions.Commands.CreateCommission;
 using AWM.Service.Application.Features.Defense.Commissions.Commands.DeleteCommission;
 using AWM.Service.Application.Features.Defense.Commissions.Commands.UpdateCommission;
@@ -102,6 +103,27 @@ public sealed class CommissionsController : BaseController
     public async Task<IActionResult> DeleteCommission(int id, CancellationToken cancellationToken)
     {
         var command = new DeleteCommissionCommand(id);
+        var result = await _sender.Send(command, cancellationToken);
+
+        if (result.IsFailed)
+            return HandleResultError(result.Error);
+
+        return Ok();
+    }
+
+    /// <summary>
+    /// Approves pre-defense periods and commissions. Validates that all 3 pre-defense stages
+    /// have at least one commission with valid composition.
+    /// </summary>
+    [HttpPost("approve")]
+    [RequireAccess("SYSTEM.STAGE", "Update")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> ApprovePreDefensePeriods(
+        [FromBody] ApprovePreDefensePeriodsRequest request,
+        CancellationToken cancellationToken)
+    {
+        var command = new ApprovePreDefensePeriodsCommand(request.OrgUnitId, request.SemesterId);
         var result = await _sender.Send(command, cancellationToken);
 
         if (result.IsFailed)

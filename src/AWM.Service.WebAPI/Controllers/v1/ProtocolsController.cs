@@ -1,5 +1,6 @@
 using AWM.Service.Application.Features.Defense.Protocols.Commands.CreateProtocol;
 using AWM.Service.Application.Features.Defense.Protocols.Commands.FinalizeProtocol;
+using AWM.Service.Application.Features.Defense.Protocols.Queries.GenerateAdmittedStudentsList;
 using AWM.Service.Application.Features.Defense.Protocols.Queries.GenerateReport;
 using AWM.Service.WebAPI.Authorization;
 using AWM.Service.WebAPI.Common.Contracts.Requests.Defense;
@@ -92,5 +93,26 @@ public sealed class ProtocolsController : BaseController
         }
 
         return File(result.Value, "application/pdf", $"protocol_{id}.pdf");
+    }
+
+    /// <summary>
+    /// Downloads the PDF list of students admitted to final defense.
+    /// </summary>
+    [HttpGet("admitted-list")]
+    [RequireAccess("SYSTEM.STAGE", "Read")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> GetAdmittedStudentsList(
+        [FromQuery] int orgUnitId,
+        [FromQuery] int semesterId,
+        CancellationToken cancellationToken)
+    {
+        var query = new GenerateAdmittedStudentsListQuery(orgUnitId, semesterId);
+        var result = await _sender.Send(query, cancellationToken);
+
+        if (result.IsFailed)
+            return HandleResultError(result.Error);
+
+        return File(result.Value, "application/pdf", $"admitted_students_{orgUnitId}_{semesterId}.pdf");
     }
 }

@@ -12,7 +12,11 @@ using System.Threading.Tasks;
 
 namespace AWM.Service.Application.Features.Workflow.Checks.Queries.GetPendingChecks;
 
-public record GetPendingChecksQuery(int OrgUnitId, int SemesterId, int? CheckTypeId = null) : IRequest<Result<IReadOnlyList<QualityCheckDto>>>;
+public record GetPendingChecksQuery(
+    int OrgUnitId,
+    int SemesterId,
+    int? CheckTypeId = null,
+    bool IncludeCompleted = false) : IRequest<Result<IReadOnlyList<QualityCheckDto>>>;
 
 public sealed class GetPendingChecksQueryHandler : IRequestHandler<GetPendingChecksQuery, Result<IReadOnlyList<QualityCheckDto>>>
 {
@@ -122,15 +126,22 @@ public sealed class GetPendingChecksQueryHandler : IRequestHandler<GetPendingChe
 
             foreach (var c in work.QualityChecks)
             {
-                // Must be pending: AssignedExpertId is null AND result is not passed
                 bool isPending = !c.AssignedExpertId.HasValue && !c.IsPassed;
-                if (!isPending) continue;
+                bool isCompleted = c.IsPassed || c.AssignedExpertId.HasValue;
+
+                if (!isPending && !(request.IncludeCompleted && isCompleted)) continue;
 
                 // Expert is only allowed to access checks they are assigned to
                 if (!allowedCheckTypeIds.Contains(c.CheckTypeId)) continue;
 
                 // Optional filter by CheckTypeId in query
                 if (request.CheckTypeId.HasValue && c.CheckTypeId != request.CheckTypeId.Value) continue;
+
+                var status = c.IsPassed
+                    ? QualityCheckStatus.Approved
+                    : c.AssignedExpertId.HasValue
+                        ? QualityCheckStatus.SentForRevision
+                        : QualityCheckStatus.Pending;
 
                 // Extract repo URL from StudentWork.MetadataJson for SoftwareCheck (checkTypeId=3)
                 string? submissionUrl = null;
@@ -160,7 +171,8 @@ public sealed class GetPendingChecksQueryHandler : IRequestHandler<GetPendingChe
                     c.CreatedAt,
                     studentName,
                     topicTitle,
-                    submissionUrl
+                    submissionUrl,
+                    status
                 ));
             }
         }

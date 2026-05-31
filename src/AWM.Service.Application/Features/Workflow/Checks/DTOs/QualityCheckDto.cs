@@ -2,6 +2,13 @@ using System;
 
 namespace AWM.Service.Application.Features.Workflow.Checks.DTOs;
 
+public enum QualityCheckStatus
+{
+    Pending = 0,
+    Approved = 1,
+    SentForRevision = 2
+}
+
 public record QualityCheckDto(
     long Id,
     long WorkId,
@@ -17,4 +24,5 @@ public record QualityCheckDto(
     DateTime CreatedAt,
     string? StudentName,
     string? TopicTitle,
-    string? SubmissionUrl);
+    string? SubmissionUrl,
+    QualityCheckStatus Status = QualityCheckStatus.Pending);

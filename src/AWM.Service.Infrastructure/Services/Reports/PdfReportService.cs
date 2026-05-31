@@ -95,6 +95,65 @@ public sealed class PdfReportService : IPdfReportService
         return Task.FromResult(ms.ToArray());
     }
 
+    public Task<byte[]> GenerateAdmittedStudentsListAsync(AdmittedStudentsListData data)
+    {
+        using var ms = new MemoryStream();
+        using var writer = new StreamWriter(ms, Encoding.UTF8);
+
+        writer.Write("%PDF-1.4\n");
+
+        var bodyStream = new MemoryStream();
+        using (var bodyWriter = new StreamWriter(bodyStream, Encoding.UTF8))
+        {
+            bodyWriter.Write("BT\n");
+            bodyWriter.Write("/F1 14 Tf\n");
+            bodyWriter.Write("70 800 Td\n");
+
+            bodyWriter.Write($"(AWM - Admitted Students List) Tj\n");
+            bodyWriter.Write("0 -20 Td\n");
+            bodyWriter.Write($"(Department: {EscapePdfString(data.OrgUnitName)}) Tj\n");
+            bodyWriter.Write("0 -16 Td\n");
+            bodyWriter.Write($"(Semester: {EscapePdfString(data.SemesterName)}) Tj\n");
+            bodyWriter.Write("0 -16 Td\n");
+            bodyWriter.Write($"(Generated: {EscapePdfString(data.GeneratedDate)}) Tj\n");
+            bodyWriter.Write("0 -24 Td\n");
+
+            bodyWriter.Write("/F1 10 Tf\n");
+            bodyWriter.Write("(No.  Student Name                             Thesis Topic                            Supervisor) Tj\n");
+            bodyWriter.Write("0 -14 Td\n");
+            bodyWriter.Write("(------  --------------------------------------  ---------------------------------------  --------------------------) Tj\n");
+            bodyWriter.Write("0 -14 Td\n");
+
+            foreach (var s in data.Students)
+            {
+                var line = $"({s.Number,3}.  {EscapePdfString(s.StudentName),-40} {EscapePdfString(s.TopicTitle),-40} {EscapePdfString(s.SupervisorName)}) Tj";
+                bodyWriter.Write(line + "\n");
+                bodyWriter.Write("0 -13 Td\n");
+            }
+
+            bodyWriter.Write("0 -20 Td\n");
+            bodyWriter.Write($"(Total admitted: {data.Students.Count}) Tj\n");
+            bodyWriter.Write("ET\n");
+        }
+
+        var streamBytes = bodyStream.ToArray();
+        var streamLength = streamBytes.Length;
+
+        writer.Write("1 0 obj\n<</Type /Catalog /Pages 2 0 R>>\nendobj\n");
+        writer.Write("2 0 obj\n<</Type /Pages /Kids [3 0 R] /Count 1>>\nendobj\n");
+        writer.Write("3 0 obj\n<</Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources <</Font <</F1 4 0 R>> >> /Contents 5 0 R>>\nendobj\n");
+        writer.Write("4 0 obj\n<</Type /Font /Subtype /Type1 /BaseFont /Courier>>\nendobj\n");
+        writer.Write($"5 0 obj\n<</Length {streamLength}>>\nstream\n");
+        writer.Flush();
+        ms.Write(streamBytes, 0, streamBytes.Length);
+        writer.Write("\nendstream\nendobj\n");
+        writer.Write("xref\n0 6\n0000000000 65535 f \n");
+        writer.Write("trailer\n<</Size 6 /Root 1 0 R>>\nstartxref\n10\n%%EOF\n");
+        writer.Flush();
+
+        return Task.FromResult(ms.ToArray());
+    }
+
     private static string EscapePdfString(string value)
     {
         if (string.IsNullOrEmpty(value)) return string.Empty;

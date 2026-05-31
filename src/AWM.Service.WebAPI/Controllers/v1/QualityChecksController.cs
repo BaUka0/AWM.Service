@@ -91,9 +91,10 @@ public sealed class QualityChecksController : BaseController
         [FromQuery] int orgUnitId,
         [FromQuery] int semesterId,
         [FromQuery] int? checkTypeId,
-        CancellationToken cancellationToken)
+        [FromQuery] bool includeCompleted = false,
+        CancellationToken cancellationToken = default)
     {
-        var result = await _sender.Send(new GetPendingChecksQuery(orgUnitId, semesterId, checkTypeId), cancellationToken);
+        var result = await _sender.Send(new GetPendingChecksQuery(orgUnitId, semesterId, checkTypeId, includeCompleted), cancellationToken);
         if (result.IsFailed)
         {
             return HandleResultError(result.Error);

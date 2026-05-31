@@ -97,7 +97,11 @@ public sealed class GetSchedulesByCommissionQueryHandler : IRequestHandler<GetSc
         var userMap = users.ToDictionary(u => u.Id);
 
         // Load evaluation criteria to compute weighted scores
-        var workTypeIds = works.Select(w => w.WorkTypeId).Distinct().ToList();
+        var workTypeIds = works
+            .Where(w => w.TopicId.HasValue && topicMap.ContainsKey(w.TopicId.Value))
+            .Select(w => topicMap[w.TopicId.Value].WorkTypeId)
+            .Distinct()
+            .ToList();
         var criteriaWeights = new Dictionary<int, decimal>();
         foreach (var workTypeId in workTypeIds)
         {

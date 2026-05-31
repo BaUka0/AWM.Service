@@ -29,7 +29,22 @@ public sealed record ProtocolReportData(
     IReadOnlyList<MemberGradeData> Grades
 );
 
+public sealed record AdmittedStudentData(
+    int Number,
+    string StudentName,
+    string TopicTitle,
+    string SupervisorName
+);
+
+public sealed record AdmittedStudentsListData(
+    string OrgUnitName,
+    string SemesterName,
+    string GeneratedDate,
+    IReadOnlyList<AdmittedStudentData> Students
+);
+
 public interface IPdfReportService
 {
     Task<byte[]> GenerateProtocolReportAsync(ProtocolReportData data);
+    Task<byte[]> GenerateAdmittedStudentsListAsync(AdmittedStudentsListData data);
 }
