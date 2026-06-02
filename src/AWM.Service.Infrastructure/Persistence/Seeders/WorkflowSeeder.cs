@@ -45,7 +45,7 @@ internal sealed class WorkflowSeeder
         if (!await _context.WorkflowStages.AnyAsync(ws => ws.Id == WorkflowStageIds.ChecksPeriod, ct))
         {
             _context.WorkflowStages.Add(
-                new WorkflowStage(WorkflowStageIds.ChecksPeriod, "ChecksPeriod", WorkflowStageIds.ChecksPeriod));
+                new WorkflowStage("ChecksPeriod", WorkflowStageIds.ChecksPeriod));
             await _context.SaveChangesAsync(ct);
         }
     }

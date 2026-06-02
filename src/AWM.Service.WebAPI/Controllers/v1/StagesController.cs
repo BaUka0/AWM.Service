@@ -161,7 +161,7 @@ public sealed class StagesController : BaseController
             request.SemesterId,
             request.OrgUnitId,
             request.SpecialityId,
-            request.Periods
+            request.Periods.Adapt<IReadOnlyList<AWM.Service.Application.Features.Workflow.Stages.DTOs.StagePeriodDto>>()
         );
 
         var result = await _sender.Send(command, cancellationToken);

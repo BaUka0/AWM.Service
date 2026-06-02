@@ -16,7 +16,7 @@ public record ApproveChecksPeriodsCommand(
     int SemesterId,
     int? OrgUnitId,
     int? SpecialityId,
-    IReadOnlyList<PeriodDto> Periods) : IRequest<Result<Unit>>;
+    IReadOnlyList<StagePeriodDto> Periods) : IRequest<Result<Unit>>;
 
 public sealed class ApproveChecksPeriodsCommandHandler : IRequestHandler<ApproveChecksPeriodsCommand, Result<Unit>>
 {

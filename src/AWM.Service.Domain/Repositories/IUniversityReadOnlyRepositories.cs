@@ -63,6 +63,7 @@ public interface ISpecialityReadOnlyRepository
     Task<Speciality?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Speciality>> GetByLevelAsync(int levelId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Speciality>> GetAllAsync(CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<SpecialityLevel>> GetLevelsAsync(CancellationToken cancellationToken = default);
 }
 
 public interface ISpecializationReadOnlyRepository

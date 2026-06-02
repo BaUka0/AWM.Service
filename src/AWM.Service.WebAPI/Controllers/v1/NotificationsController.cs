@@ -105,4 +105,25 @@ public sealed class NotificationsController : BaseController
 
         return Ok();
     }
+
+    /// <summary>
+    /// Gets the count of unread personal notifications for the authenticated user.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A number of unread notifications.</returns>
+    [HttpGet("unread-count")]
+    [ProducesResponseType(typeof(int), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> GetUnreadCount(CancellationToken cancellationToken = default)
+    {
+        var query = new AWM.Service.Application.Features.Notifications.Queries.GetUnreadNotificationsCount.GetUnreadNotificationsCountQuery();
+        var result = await _sender.Send(query, cancellationToken);
+
+        if (result.IsFailed)
+        {
+            return HandleResultError(result.Error);
+        }
+
+        return Ok(result.Value);
+    }
 }

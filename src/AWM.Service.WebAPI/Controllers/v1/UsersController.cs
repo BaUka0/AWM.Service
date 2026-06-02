@@ -49,4 +49,13 @@ public sealed class UsersController : BaseController
         var response = result.Value.Adapt<UserResponse>();
         return Ok(response);
     }
+
+    [HttpGet]
+    [ProducesResponseType(typeof(IReadOnlyList<AWM.Service.Application.Features.University.DTOs.UserDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetAllUsers([FromQuery] int? universityId, CancellationToken ct)
+    {
+        var result = await _sender.Send(new AWM.Service.Application.Features.University.Queries.GetUsers.GetUsersQuery(universityId), ct);
+        if (result.IsFailed) return HandleResultError(result.Error);
+        return Ok(result.Value);
+    }
 }

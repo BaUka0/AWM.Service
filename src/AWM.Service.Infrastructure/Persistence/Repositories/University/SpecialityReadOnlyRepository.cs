@@ -35,4 +35,11 @@ public class SpecialityReadOnlyRepository : ISpecialityReadOnlyRepository
             .Take(MaxQuerySize)
             .ToListAsync(cancellationToken);
     }
+
+    public async Task<IReadOnlyList<SpecialityLevel>> GetLevelsAsync(CancellationToken cancellationToken = default)
+    {
+        return await _context.SpecialityLevels
+            .Take(MaxQuerySize)
+            .ToListAsync(cancellationToken);
+    }
 }
