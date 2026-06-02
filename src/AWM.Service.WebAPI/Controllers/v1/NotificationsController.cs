@@ -2,6 +2,8 @@ using AWM.Service.Application.Features.Notifications.Commands.MarkAllAsRead;
 using AWM.Service.Application.Features.Notifications.Commands.MarkAsRead;
 using AWM.Service.Application.Features.Notifications.Queries.GetNotifications;
 using AWM.Service.Application.Features.Notifications.DTOs;
+using AWM.Service.WebAPI.Common.Contracts.Responses.Notifications;
+using Mapster;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -41,7 +43,7 @@ public sealed class NotificationsController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A list of notification DTOs.</returns>
     [HttpGet]
-    [ProducesResponseType(typeof(IReadOnlyList<NotificationDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(IReadOnlyList<NotificationResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetNotifications(
         [FromQuery] int skip = 0,
@@ -57,7 +59,7 @@ public sealed class NotificationsController : BaseController
             return HandleResultError(result.Error);
         }
 
-        return Ok(result.Value);
+        return Ok(result.Value.Adapt<IReadOnlyList<NotificationResponse>>());
     }
 
     /// <summary>
@@ -124,6 +126,7 @@ public sealed class NotificationsController : BaseController
             return HandleResultError(result.Error);
         }
 
-        return Ok(result.Value);
+        return Ok(result.Value.Adapt<IReadOnlyList<NotificationResponse>>());
     }
 }
+

@@ -5,6 +5,8 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using AWM.Service.WebAPI.Common.Contracts.Responses.Auth;
+using Mapster;
 
 using System.Linq;
 
@@ -22,7 +24,8 @@ public class RolesController : BaseController
     public async Task<IActionResult> GetRoles(CancellationToken ct)
     {
         var result = await _sender.Send(new GetAllRoleAccessesQuery(), ct);
-        var dtos = result.Select(r => new { Id = r.Id, Code = r.Code, Name = r.NameRu }).Distinct().ToList();
+        var dtos = result.Adapt<IReadOnlyList<RoleAccessResponse>>();
         return Ok(dtos);
     }
 }
+

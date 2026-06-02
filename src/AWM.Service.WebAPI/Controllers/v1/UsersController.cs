@@ -1,5 +1,6 @@
 using AWM.Service.Application.Features.Auth.Queries.GetCurrentUserProfile;
 using AWM.Service.WebAPI.Common.Contracts.Responses;
+using AWM.Service.WebAPI.Common.Contracts.Responses.University;
 using Mapster;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -51,11 +52,12 @@ public sealed class UsersController : BaseController
     }
 
     [HttpGet]
-    [ProducesResponseType(typeof(IReadOnlyList<AWM.Service.Application.Features.University.DTOs.UserDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(IReadOnlyList<AdminUserResponse>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAllUsers([FromQuery] int? universityId, CancellationToken ct)
     {
         var result = await _sender.Send(new AWM.Service.Application.Features.University.Queries.GetUsers.GetUsersQuery(universityId), ct);
         if (result.IsFailed) return HandleResultError(result.Error);
-        return Ok(result.Value);
+        return Ok(result.Value.Adapt<IReadOnlyList<AdminUserResponse>>());
     }
 }
+

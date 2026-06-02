@@ -4,7 +4,9 @@ using AWM.Service.Application.Features.Workflow.WorkTypes.Commands.CreateWorkTyp
 using AWM.Service.Application.Features.Workflow.WorkTypes.Commands.UpdateWorkType;
 using AWM.Service.Application.Features.Workflow.WorkTypes.Commands.DeleteWorkType;
 using AWM.Service.Application.Features.Workflow.WorkTypes.Queries.GetWorkTypes;
-using AWM.Service.Application.Features.Workflow.WorkTypes.DTOs;
+using AWM.Service.WebAPI.Common.Contracts.Responses.Workflow;
+using AWM.Service.WebAPI.Common.Contracts.Requests.Workflow;
+using Mapster;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -20,12 +22,12 @@ public class WorkTypesController : BaseController
     public WorkTypesController(ISender sender) { _sender = sender; }
 
     [HttpGet]
-    [ProducesResponseType(typeof(IReadOnlyList<WorkTypeDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(IReadOnlyList<WorkTypeResponse>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll(CancellationToken ct)
     {
         var result = await _sender.Send(new GetWorkTypesQuery(), ct);
         if (result.IsFailed) return HandleResultError(result.Error);
-        return Ok(result.Value);
+        return Ok(result.Value.Adapt<IReadOnlyList<WorkTypeResponse>>());
     }
 
     [HttpPost]
@@ -33,7 +35,7 @@ public class WorkTypesController : BaseController
     {
         var result = await _sender.Send(cmd, ct);
         if (result.IsFailed) return HandleResultError(result.Error);
-        return Ok(result.Value);
+        return Ok(result.Value.Adapt<IReadOnlyList<WorkTypeResponse>>());
     }
 
     [HttpPut("{id}")]
@@ -53,3 +55,4 @@ public class WorkTypesController : BaseController
         return Ok();
     }
 }
+

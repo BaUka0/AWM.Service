@@ -1,7 +1,8 @@
 namespace AWM.Service.WebAPI.Controllers.v1;
 
 using AWM.Service.Application.Features.University.Queries.GetSpecialities;
-using AWM.Service.Application.Features.University.DTOs;
+using AWM.Service.WebAPI.Common.Contracts.Responses.University;
+using Mapster;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -17,11 +18,12 @@ public class AcademicProgramsController : BaseController
     public AcademicProgramsController(ISender sender) { _sender = sender; }
 
     [HttpGet]
-    [ProducesResponseType(typeof(IReadOnlyList<SpecialityDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(IReadOnlyList<AcademicProgramResponse>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetPrograms(CancellationToken ct)
     {
         var result = await _sender.Send(new GetSpecialitiesQuery(), ct);
         if (result.IsFailed) return HandleResultError(result.Error);
-        return Ok(result.Value);
+        return Ok(result.Value.Adapt<IReadOnlyList<AcademicProgramResponse>>());
     }
 }
+
