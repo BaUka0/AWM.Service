@@ -64,7 +64,7 @@ public sealed class GetReconciliationSummaryQueryHandler
         {
             var acceptedCount = t.Applications.Count(a => a.StatusId == (int)ApplicationStatusType.Accepted);
             var pendingCount = t.Applications.Count(a => a.StatusId == (int)ApplicationStatusType.Submitted);
-            var totalCount = t.Applications.Count;
+            var totalCount = t.Applications.Count(a => a.StatusId == (int)ApplicationStatusType.Submitted || a.StatusId == (int)ApplicationStatusType.Accepted);
 
             return new TopicReconciliationItemDto(
                 t.Id,

@@ -2,6 +2,7 @@ namespace AWM.Service.Infrastructure.Persistence.Repositories.Thesis;
 
 using AWM.Service.Domain.Repositories;
 using AWM.Service.Domain.Thesis.Entities;
+using AWM.Service.Domain.Thesis.Enums;
 using AWM.Service.Infrastructure.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
 
@@ -79,7 +80,7 @@ public sealed class TopicApplicationRepository : RepositoryBase<TopicApplication
     public async Task<bool> HasStudentAppliedToTopicAsync(int studentId, long topicId, CancellationToken cancellationToken = default)
     {
         return await Context.TopicApplications
-            .AnyAsync(a => a.StudentId == studentId && a.TopicId == topicId, cancellationToken);
+            .AnyAsync(a => a.StudentId == studentId && a.TopicId == topicId && a.StatusId != (int)ApplicationStatusType.Rejected, cancellationToken);
     }
 
     /// <inheritdoc />

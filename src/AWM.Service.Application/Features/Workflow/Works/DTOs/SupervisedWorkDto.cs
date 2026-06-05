@@ -33,4 +33,5 @@ public record SupervisedWorkDto(
     IReadOnlyList<SupervisedFileDto> ProjectFiles,
     IReadOnlyList<SupervisedFileDto> SupervisorFiles,
     IReadOnlyList<SupervisedNoteDto> Notes,
-    SupervisedTopicDto Topic);
+    SupervisedTopicDto Topic,
+    bool IsAwaitingDepartmentApproval = false);

@@ -55,31 +55,53 @@ public sealed class GetMySupervisedWorksQueryHandler : IRequestHandler<GetMySupe
 
         // Get works supervised by the current teacher
         var works = await _studentWorkRepository.GetBySupervisorAsync(currentUserId, currentSemester.Id, cancellationToken);
-        if (works.Count == 0)
-            return Result.Success<IReadOnlyList<SupervisedWorkDto>>(Array.Empty<SupervisedWorkDto>());
 
-        // 1. Bulk load Topics
-        var topicIds = works.Where(w => w.TopicId.HasValue).Select(w => w.TopicId!.Value).Distinct().ToList();
-        var topics = await _topicRepository.GetByIdsAsync(topicIds, cancellationToken);
-        var topicMap = topics.ToDictionary(t => t.Id);
+        // Get all topics supervised by the current teacher (including those without StudentWork yet)
+        var topics = await _topicRepository.GetBySupervisorAsync(currentUserId, currentSemester.Id, cancellationToken);
 
-        // 2. Bulk load Directions
-        var directionIds = topics.Where(t => t.DirectionId.HasValue).Select(t => t.DirectionId!.Value).Distinct().ToList();
+        // Identify topics that already have a StudentWork (to avoid duplicates)
+        var topicIdsWithWork = works.Where(w => w.TopicId.HasValue).Select(w => w.TopicId!.Value).ToHashSet();
+
+        // Find topics with approved applications but no StudentWork yet
+        var virtualTopics = topics
+            .Where(t => !topicIdsWithWork.Contains(t.Id))
+            .Where(t => t.Applications.Any(a => a.StatusId == 2)) // Approved applications
+            .ToList();
+
+        // Collect all topic IDs (real + virtual) for bulk loading
+        var allTopicIds = works.Where(w => w.TopicId.HasValue).Select(w => w.TopicId!.Value)
+            .Concat(virtualTopics.Select(t => t.Id))
+            .Distinct()
+            .ToList();
+
+        var allTopics = await _topicRepository.GetByIdsAsync(allTopicIds, cancellationToken);
+        var topicMap = allTopics.ToDictionary(t => t.Id);
+
+        // 1. Bulk load Directions
+        var directionIds = allTopics.Where(t => t.DirectionId.HasValue).Select(t => t.DirectionId!.Value).Distinct().ToList();
         var directions = await _directionRepository.GetByIdsAsync(directionIds, cancellationToken);
         var directionMap = directions.ToDictionary(d => d.Id);
 
-        // 3. Bulk load Users (students)
-        var studentIds = works.SelectMany(w => w.Participants.Select(p => p.StudentId)).Distinct().ToList();
-        var students = await _userRepository.GetByIdsAsync(studentIds, cancellationToken);
+        // 2. Bulk load Users (students) — from real works + virtual topics
+        var realStudentIds = works.SelectMany(w => w.Participants.Select(p => p.StudentId)).Distinct().ToList();
+        var virtualStudentIds = virtualTopics
+            .SelectMany(t => t.Applications
+                .Where(a => a.StatusId == 2)
+                .Select(a => a.StudentId))
+            .Distinct()
+            .ToList();
+        var allStudentIds = realStudentIds.Concat(virtualStudentIds).Distinct().ToList();
+        var students = await _userRepository.GetByIdsAsync(allStudentIds, cancellationToken);
         var studentMap = students.ToDictionary(s => s.Id);
 
-        // 4. Bulk load States
+        // 3. Bulk load States (for real works)
         var stateIds = works.Select(w => w.CurrentStateId).Distinct().ToList();
         var states = await _workflowRepository.GetStatesByIdsAsync(stateIds, cancellationToken);
         var stateMap = states.ToDictionary(s => s.Id);
 
         var result = new List<SupervisedWorkDto>();
 
+        // --- REAL WORKS ---
         foreach (var work in works)
         {
             // Resolve Topic & Direction
@@ -101,13 +123,12 @@ public sealed class GetMySupervisedWorksQueryHandler : IRequestHandler<GetMySupe
             var stageKey = MapStageKey(systemStateName);
             var stageDisplayName = state?.DisplayName ?? "Черновик";
 
-            // Resolve Students with scores (pre-defense average scores)
+            // Resolve Students with scores
             var supervisedStudents = work.Participants.Select(p =>
             {
                 studentMap.TryGetValue(p.StudentId, out var user);
                 var studentName = user != null ? $"{user.LastName} {user.FirstName} {user.MiddleName}".Trim() : "Unknown";
 
-                // Average score from latest pre-defense attempt or similar
                 decimal? score = null;
                 var latestCheck = work.QualityChecks.OrderByDescending(c => c.AttemptNumber).FirstOrDefault();
                 if (latestCheck != null && latestCheck.ResultValue.HasValue)
@@ -123,7 +144,7 @@ public sealed class GetMySupervisedWorksQueryHandler : IRequestHandler<GetMySupe
 
             // Resolve Files
             var projectFiles = work.Attachments
-                .Where(a => a.AttachmentTypeId != 6) // Non-supervisor files
+                .Where(a => a.AttachmentTypeId != 6)
                 .Select(a =>
                 {
                     studentMap.TryGetValue(a.CreatedBy, out var uploader);
@@ -136,7 +157,7 @@ public sealed class GetMySupervisedWorksQueryHandler : IRequestHandler<GetMySupe
                 }).ToList();
 
             var supervisorFiles = work.Attachments
-                .Where(a => a.AttachmentTypeId == 6) // Supervisor reviews
+                .Where(a => a.AttachmentTypeId == 6)
                 .Select(a => new SupervisedFileDto(
                     a.Id,
                     new MultilingualTextDto(a.FileName, a.FileName, a.FileName),
@@ -144,14 +165,12 @@ public sealed class GetMySupervisedWorksQueryHandler : IRequestHandler<GetMySupe
                     "Научный руководитель"))
                 .ToList();
 
-            // Resolve Notes (Reviews)
             var notes = work.WorkReviews.Select(r => new SupervisedNoteDto(
                 r.Id,
                 new MultilingualTextDto(r.ReviewText, r.ReviewText, r.ReviewText),
                 r.CreatedAt.ToString("dd.MM.yyyy HH:mm")
             )).ToList();
 
-            // Map
             var workDto = new SupervisedWorkDto(
                 work.Id,
                 stageKey,
@@ -166,6 +185,41 @@ public sealed class GetMySupervisedWorksQueryHandler : IRequestHandler<GetMySupe
             );
 
             result.Add(workDto);
+        }
+
+        // --- VIRTUAL WORKS (topics with approved applications but no StudentWork yet) ---
+        foreach (var topic in virtualTopics)
+        {
+            directionMap.TryGetValue(topic.DirectionId ?? 0, out var direction);
+
+            var approvedApplications = topic.Applications.Where(a => a.StatusId == 2).ToList();
+
+            var virtualStudents = approvedApplications.Select(a =>
+            {
+                studentMap.TryGetValue(a.StudentId, out var user);
+                var studentName = user != null ? $"{user.LastName} {user.FirstName} {user.MiddleName}".Trim() : "Unknown";
+
+                return new SupervisedStudentDto(
+                    a.StudentId,
+                    new MultilingualTextDto(studentName, studentName, studentName),
+                    null);
+            }).ToList();
+
+            var virtualWorkDto = new SupervisedWorkDto(
+                -topic.Id, // Negative ID to avoid conflicts with real works
+                "awaitingDepartmentApproval",
+                "awaitingDepartmentApproval",
+                new MultilingualTextDto(topic.TitleRu ?? "", topic.TitleKz ?? "", topic.TitleEn ?? ""),
+                new MultilingualTextDto(direction?.TitleRu ?? "", direction?.TitleKz ?? "", direction?.TitleEn ?? ""),
+                virtualStudents,
+                Array.Empty<SupervisedFileDto>(),
+                Array.Empty<SupervisedFileDto>(),
+                Array.Empty<SupervisedNoteDto>(),
+                new SupervisedTopicDto(topic.Id, new MultilingualTextDto(topic.TitleRu ?? "", topic.TitleKz ?? "", topic.TitleEn ?? "")),
+                true // IsAwaitingDepartmentApproval
+            );
+
+            result.Add(virtualWorkDto);
         }
 
         return Result.Success<IReadOnlyList<SupervisedWorkDto>>(result);

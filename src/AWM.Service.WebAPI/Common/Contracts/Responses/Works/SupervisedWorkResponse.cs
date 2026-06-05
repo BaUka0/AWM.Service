@@ -33,4 +33,5 @@ public record SupervisedWorkResponse(
     IReadOnlyList<SupervisedFileResponse> ProjectFiles,
     IReadOnlyList<SupervisedFileResponse> SupervisorFiles,
     IReadOnlyList<SupervisedNoteResponse> Notes,
-    SupervisedTopicResponse Topic);
+    SupervisedTopicResponse Topic,
+    bool IsAwaitingDepartmentApproval = false);

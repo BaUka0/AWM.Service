@@ -115,6 +115,7 @@ public sealed class TopicRepository : RepositoryBase<Topic, long>, ITopicReposit
 
         return await Context.Topics
             .AsNoTracking()
+            .Include(t => t.Applications)
             .Where(t => t.OrgUnitId == orgUnitId &&
                         t.SemesterId == semesterId &&
                         t.Status == TopicStatus.Approved)
