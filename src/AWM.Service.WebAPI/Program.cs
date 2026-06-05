@@ -39,7 +39,7 @@ TypeAdapterConfig<AWM.Service.Application.Features.University.DTOs.SpecialityDto
     .Map(dest => dest.NameEn, src => src.Name)
     .Map(dest => dest.DepartmentId, src => src.OrgUnitId);
 
-TypeAdapterConfig<AWM.Service.Application.Features.University.DTOs.SpecialityLevelDto, AWM.Service.WebAPI.Common.Contracts.Responses.University.DegreeLevelResponse>.NewConfig()
+TypeAdapterConfig<AWM.Service.Application.Features.University.DTOs.SpecialityLevelDto, AWM.Service.WebAPI.Common.Contracts.Responses.University.SpecialityLevelResponse>.NewConfig()
     .Map(dest => dest.NameRu, src => src.Name)
     .Map(dest => dest.NameKz, src => src.Name)
     .Map(dest => dest.NameEn, src => src.Name)

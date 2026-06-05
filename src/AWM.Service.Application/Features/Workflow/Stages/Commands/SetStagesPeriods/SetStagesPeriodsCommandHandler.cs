@@ -134,7 +134,7 @@ public sealed class SetStagesPeriodsCommandHandler : IRequestHandler<SetStagesPe
                 }
                 try
                 {
-                    var meta = System.Text.Json.JsonSerializer.Deserialize<AWM.Service.Application.Features.Workflow.Supervisors.DTOs.SupervisorAssignmentMetadata>(s.MetadataJson);
+                    var meta = System.Text.Json.JsonSerializer.Deserialize<AWM.Service.Application.Features.Workflow.Employees.DTOs.EmployeeAssignmentMetadata>(s.MetadataJson);
                     if (meta != null && meta.SemesterId == request.SemesterId)
                     {
                         if (request.SpecialityId.HasValue)
@@ -226,4 +226,3 @@ public sealed class SetStagesPeriodsCommandHandler : IRequestHandler<SetStagesPe
         return Result.Success(Unit.Value);
     }
 }
-

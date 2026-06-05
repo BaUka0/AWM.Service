@@ -35,7 +35,7 @@ public sealed class WorkflowNotificationHandlers :
     INotificationHandler<WorkStateChangedEvent>,
     INotificationHandler<QualityCheckCompletedEvent>,
     INotificationHandler<WorkDefendedEvent>,
-    INotificationHandler<SupervisorsApprovedEvent>
+    INotificationHandler<EmployeesApprovedEvent>
 {
     private readonly INotificationService _notificationService;
     private readonly ITopicRepository _topicRepository;
@@ -367,12 +367,12 @@ public sealed class WorkflowNotificationHandlers :
     }
 
     /// <inheritdoc />
-    public async Task Handle(SupervisorsApprovedEvent notification, CancellationToken cancellationToken)
+    public async Task Handle(EmployeesApprovedEvent notification, CancellationToken cancellationToken)
     {
-        if (notification.SupervisorUserIds.Any())
+        if (notification.EmployeeUserIds.Any())
         {
             await _notificationService.SendToManyAsync(
-                userIds: notification.SupervisorUserIds.ToList(),
+                userIds: notification.EmployeeUserIds.ToList(),
                 title: "Назначение научным руководителем",
                 createdBy: notification.ConfirmedBy,
                 body: "Вы были утверждены в качестве научного руководителя на текущий период.",

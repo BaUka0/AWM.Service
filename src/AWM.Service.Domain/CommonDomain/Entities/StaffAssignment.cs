@@ -96,8 +96,8 @@ public class StaffAssignment : AggregateRoot<long>, IAuditable, ISoftDeletable
         IsActive = false;
     }
 
-    public void RaiseSupervisorsApprovedEvent(int orgUnitId, int semesterId, int? specialityId, IReadOnlyList<int> supervisorUserIds, int confirmedBy)
+    public void RaiseEmployeesApprovedEvent(int orgUnitId, int semesterId, int? specialityId, IReadOnlyList<int> employeeUserIds, int confirmedBy)
     {
-        RaiseDomainEvent(new AWM.Service.Domain.CommonDomain.Events.SupervisorsApprovedEvent(orgUnitId, semesterId, specialityId, supervisorUserIds, confirmedBy));
+        RaiseDomainEvent(new AWM.Service.Domain.CommonDomain.Events.EmployeesApprovedEvent(orgUnitId, semesterId, specialityId, employeeUserIds, confirmedBy));
     }
 }
