@@ -45,9 +45,9 @@ public sealed class GetStagesPeriodsQueryHandler : IRequestHandler<GetStagesPeri
                 return Result.Failure<IReadOnlyList<StagePeriodDto>>(new Error("Stages.EmployeeNotFound", "Employee record not found for the current user."));
             }
 
-            var mainPosition = employee.Positions.FirstOrDefault(p => p.IsMainPosition) 
+            var mainPosition = employee.Positions.FirstOrDefault(p => p.IsMainPosition)
                                ?? employee.Positions.FirstOrDefault();
-            
+
             if (mainPosition == null)
             {
                 return Result.Failure<IReadOnlyList<StagePeriodDto>>(new Error("Stages.OrgUnitNotFound", "Employee has no assigned department."));

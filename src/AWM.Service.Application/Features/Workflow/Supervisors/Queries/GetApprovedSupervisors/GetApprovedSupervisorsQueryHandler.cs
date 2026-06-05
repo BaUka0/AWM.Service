@@ -30,7 +30,7 @@ public sealed class GetApprovedSupervisorsQueryHandler : IRequestHandler<GetAppr
 
         var assignmentData = existingAssignments
             .Where(a => a.IsActive && !a.IsDeleted)
-            .Select(a => 
+            .Select(a =>
             {
                 if (string.IsNullOrEmpty(a.MetadataJson)) return null;
                 try
@@ -53,7 +53,7 @@ public sealed class GetApprovedSupervisorsQueryHandler : IRequestHandler<GetAppr
         }
 
         var allDepartmentEmployees = await _employeeRepository.GetByOrgUnitAsync(request.OrgUnitId, cancellationToken);
-        
+
         var teachers = allDepartmentEmployees
             .Where(e => e.User != null && assignmentData.ContainsKey(e.User.Id))
             .Select(e =>

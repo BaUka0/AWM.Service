@@ -1,5 +1,6 @@
 using AWM.Service.Domain.Defense.Entities;
 using AWM.Service.Domain.Repositories;
+using AWM.Service.Domain.CommonDomain.Enums;
 using KDS.Primitives.FluentResult;
 using MediatR;
 using System;
@@ -24,7 +25,10 @@ public record CommissionScheduleDto(
     decimal? AverageScore,
     long? ProtocolId,
     bool IsProtocolFinalized,
-    int? PreDefenseNumber);
+    int? PreDefenseNumber,
+    string ChairmanName,
+    string SecretaryName,
+    IReadOnlyList<string> Members);
 
 public record GetSchedulesByCommissionQuery(int CommissionId) : IRequest<Result<IReadOnlyList<CommissionScheduleDto>>>;
 
@@ -33,7 +37,7 @@ public sealed class GetSchedulesByCommissionQueryHandler : IRequestHandler<GetSc
     private readonly IScheduleRepository _scheduleRepository;
     private readonly IStudentWorkRepository _studentWorkRepository;
     private readonly ITopicRepository _topicRepository;
-    private readonly IUserRepository _userRepository;
+    private readonly IUserReadOnlyRepository _userRepository;
     private readonly IProtocolRepository _protocolRepository;
     private readonly ICommissionRepository _commissionRepository;
     private readonly IEvaluationCriteriaRepository _evaluationCriteriaRepository;
@@ -42,7 +46,7 @@ public sealed class GetSchedulesByCommissionQueryHandler : IRequestHandler<GetSc
         IScheduleRepository scheduleRepository,
         IStudentWorkRepository studentWorkRepository,
         ITopicRepository topicRepository,
-        IUserRepository userRepository,
+        IUserReadOnlyRepository userRepository,
         IProtocolRepository protocolRepository,
         ICommissionRepository commissionRepository,
         IEvaluationCriteriaRepository evaluationCriteriaRepository)
@@ -59,15 +63,35 @@ public sealed class GetSchedulesByCommissionQueryHandler : IRequestHandler<GetSc
     public async Task<Result<IReadOnlyList<CommissionScheduleDto>>> Handle(GetSchedulesByCommissionQuery request, CancellationToken cancellationToken)
     {
         var schedules = await _scheduleRepository.GetByCommissionAsync(request.CommissionId, cancellationToken);
+
+        // Load commission to get PreDefenseNumber and assignments
+        var commission = await _commissionRepository.GetByIdAsync(request.CommissionId, cancellationToken);
+        if (commission == null)
+            return Result.Failure<IReadOnlyList<CommissionScheduleDto>>(new Error("Commission.NotFound", $"Commission with ID {request.CommissionId} not found."));
+
+        // Load commission user names from assignments
+        var commissionUserIds = commission.Assignments.Select(a => a.UserId).Distinct().ToList();
+        var commissionUsers = commissionUserIds.Count > 0
+            ? await _userRepository.GetByIdsAsync(commissionUserIds, cancellationToken)
+            : new List<AWM.Service.Domain.University.User>();
+        var commissionUserMap = commissionUsers.ToDictionary(u => u.Id);
+
+        var chairmanAss = commission.Assignments.FirstOrDefault(a => a.RoleType == StaffRoleType.CommissionChairman && a.IsActive);
+        var secretaryAss = commission.Assignments.FirstOrDefault(a => a.RoleType == StaffRoleType.CommissionSecretary && a.IsActive);
+        var memberAsses = commission.Assignments.Where(a => a.RoleType == StaffRoleType.CommissionMember && a.IsActive).ToList();
+
+        string chairmanName = chairmanAss != null && commissionUserMap.TryGetValue(chairmanAss.UserId, out var cu)
+            ? $"{cu.LastName} {cu.FirstName} {cu.MiddleName}".Trim() : "—";
+        string secretaryName = secretaryAss != null && commissionUserMap.TryGetValue(secretaryAss.UserId, out var su)
+            ? $"{su.LastName} {su.FirstName} {su.MiddleName}".Trim() : "—";
+        var memberNames = memberAsses
+            .Select(a => commissionUserMap.TryGetValue(a.UserId, out var mu) ? $"{mu.LastName} {mu.FirstName} {mu.MiddleName}".Trim() : "Unknown")
+            .ToList();
+
         if (!schedules.Any())
         {
             return Result.Success<IReadOnlyList<CommissionScheduleDto>>(new List<CommissionScheduleDto>());
         }
-
-        // Load commission to get PreDefenseNumber
-        var commission = await _commissionRepository.GetByIdAsync(request.CommissionId, cancellationToken);
-        if (commission == null)
-            return Result.Failure<IReadOnlyList<CommissionScheduleDto>>(new Error("Commission.NotFound", $"Commission with ID {request.CommissionId} not found."));
 
         // Load protocols for this commission to map by schedule ID
         var protocols = await _protocolRepository.GetByCommissionAsync(request.CommissionId, cancellationToken);
@@ -93,13 +117,13 @@ public sealed class GetSchedulesByCommissionQueryHandler : IRequestHandler<GetSc
             .ToList();
         var users = studentUserIds.Count > 0
             ? await _userRepository.GetByIdsAsync(studentUserIds, cancellationToken)
-            : Array.Empty<AWM.Service.Domain.University.User>();
+            : new List<AWM.Service.Domain.University.User>();
         var userMap = users.ToDictionary(u => u.Id);
 
         // Load evaluation criteria to compute weighted scores
         var workTypeIds = works
             .Where(w => w.TopicId.HasValue && topicMap.ContainsKey(w.TopicId.Value))
-            .Select(w => topicMap[w.TopicId.Value].WorkTypeId)
+            .Select(w => topicMap[w.TopicId!.Value].WorkTypeId)
             .Distinct()
             .ToList();
         var criteriaWeights = new Dictionary<int, decimal>();
@@ -151,7 +175,10 @@ public sealed class GetSchedulesByCommissionQueryHandler : IRequestHandler<GetSc
                 ComputeWeightedScore(s.Grades, criteriaWeights) ?? s.GetAverageScore(),
                 protocol?.Id,
                 protocol?.IsFinalized ?? false,
-                commission.PreDefenseNumber
+                commission.PreDefenseNumber,
+                chairmanName,
+                secretaryName,
+                memberNames
             ));
         }
 

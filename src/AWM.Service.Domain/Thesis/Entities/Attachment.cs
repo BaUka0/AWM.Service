@@ -17,7 +17,7 @@ public class Attachment : Entity<long>, IAuditable
     public string FileHash { get; private set; } = null!;
     public long FileSizeBytes { get; private set; }
     public string ContentType { get; private set; } = null!;
-    
+
     public DateTime CreatedAt { get; private set; }
     public int CreatedBy { get; private set; }
     public DateTime? LastModifiedAt { get; private set; }
@@ -60,7 +60,7 @@ public class Attachment : Entity<long>, IAuditable
         FileHash = fileHash.ToUpperInvariant();
         FileSizeBytes = fileSizeBytes;
         ContentType = contentType;
-        
+
         CreatedAt = DateTime.UtcNow;
         CreatedBy = uploadedBy;
     }

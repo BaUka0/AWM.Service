@@ -15,7 +15,7 @@ public class CheckTypeConfiguration : IEntityTypeConfiguration<CheckType>
         builder.ToTable("CheckTypes", "Thesis");
 
         builder.HasKey(e => e.Id);
-        
+
         builder.Property(e => e.Id)
             .ValueGeneratedNever();
 

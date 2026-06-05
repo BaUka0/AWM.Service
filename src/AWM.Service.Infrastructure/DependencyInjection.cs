@@ -150,7 +150,7 @@ public static class DependencyInjection
 
         // Register File Storage Service conditionally based on Provider
         var storageSettings = configuration.GetSection(StorageSettings.SectionName)
-            .Get<StorageSettings>() 
+            .Get<StorageSettings>()
             ?? new StorageSettings();
 
         if (string.Equals(storageSettings.Provider, "S3", StringComparison.OrdinalIgnoreCase))

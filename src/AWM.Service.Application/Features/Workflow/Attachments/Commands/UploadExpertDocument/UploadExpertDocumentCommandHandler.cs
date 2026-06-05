@@ -69,9 +69,9 @@ public sealed class UploadExpertDocumentCommandHandler : IRequestHandler<UploadE
         if (!isAssignedExpert)
         {
             var userAssignments = await _staffAssignmentRepository.GetByUserAsync(currentUserId, cancellationToken);
-            isExpertInDepartment = userAssignments.Any(a => 
+            isExpertInDepartment = userAssignments.Any(a =>
                 a.IsActive && !a.IsDeleted &&
-                a.TargetEntityType == "OrgUnit" && 
+                a.TargetEntityType == "OrgUnit" &&
                 a.TargetEntityId == work.OrgUnitId &&
                 (a.RoleType == StaffRoleType.CommissionMember ||
                  a.RoleType == StaffRoleType.CommissionChairman ||

@@ -99,7 +99,7 @@ public sealed class ConfirmSupervisorsCommandHandler : IRequestHandler<ConfirmSu
             SupervisorAssignmentMetadata metadata;
             try
             {
-                metadata = JsonSerializer.Deserialize<SupervisorAssignmentMetadata>(assignment.MetadataJson!) 
+                metadata = JsonSerializer.Deserialize<SupervisorAssignmentMetadata>(assignment.MetadataJson!)
                            ?? new SupervisorAssignmentMetadata();
             }
             catch

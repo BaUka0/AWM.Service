@@ -71,7 +71,8 @@ public sealed class GetMyWorkProgressQueryHandler : IRequestHandler<GetMyWorkPro
         Direction? direction = null;
         User? supervisor = null;
         string supervisorName = "Unknown";
-        string supervisorContacts = "";
+        string supervisorEmail = "";
+        string supervisorPhone = "";
 
         if (work.TopicId.HasValue)
         {
@@ -82,7 +83,8 @@ public sealed class GetMyWorkProgressQueryHandler : IRequestHandler<GetMyWorkPro
                 if (supervisor != null)
                 {
                     supervisorName = $"{supervisor.LastName} {supervisor.FirstName} {supervisor.MiddleName}".Trim();
-                    supervisorContacts = supervisor.Email ?? supervisor.MobilePhone ?? "";
+                    supervisorEmail = supervisor.Email ?? "";
+                    supervisorPhone = supervisor.MobilePhone ?? "";
                 }
 
                 if (topic.DirectionId.HasValue)
@@ -168,7 +170,8 @@ public sealed class GetMyWorkProgressQueryHandler : IRequestHandler<GetMyWorkPro
             new MultilingualTextDto(topic?.TitleRu ?? "", topic?.TitleKz ?? "", topic?.TitleEn ?? ""),
             new MultilingualTextDto(direction?.TitleRu ?? "", direction?.TitleKz ?? "", direction?.TitleEn ?? ""),
             supervisorName,
-            supervisorContacts,
+            supervisorEmail,
+            supervisorPhone,
             work.CreatedAt,
             workTypeName,
             work.IsDefended,

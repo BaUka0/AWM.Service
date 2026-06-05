@@ -10,5 +10,7 @@ public record NotificationResponse(
     bool IsRead,
     DateTime CreatedAt,
     string RelatedEntityType,
-    string RelatedEntityId
+    string RelatedEntityId,
+    string? ActorFullName = null,
+    string? RelatedEntityTitle = null
 );

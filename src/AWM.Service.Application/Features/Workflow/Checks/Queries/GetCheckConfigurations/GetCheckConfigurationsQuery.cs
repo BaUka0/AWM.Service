@@ -23,7 +23,7 @@ public sealed class GetCheckConfigurationsQueryHandler : IRequestHandler<GetChec
     public async Task<Result<IReadOnlyList<CheckConfigurationDto>>> Handle(GetCheckConfigurationsQuery request, CancellationToken cancellationToken)
     {
         var configs = await _specialityCheckTypeRepository.GetByOrgUnitAsync(request.OrgUnitId, cancellationToken);
-        
+
         var dtos = configs.Select(c => new CheckConfigurationDto(
             c.Id,
             c.OrgUnitId,

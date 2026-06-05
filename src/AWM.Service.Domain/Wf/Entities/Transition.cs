@@ -29,7 +29,7 @@ public class Transition : Entity<int>, IAuditable, ISoftDeletable
         ToStateId = toStateId;
         RoleAccessId = roleAccessId;
         IsAutomatic = isAutomatic;
-        
+
         CreatedAt = DateTime.UtcNow;
         CreatedBy = createdBy;
         IsDeleted = false;

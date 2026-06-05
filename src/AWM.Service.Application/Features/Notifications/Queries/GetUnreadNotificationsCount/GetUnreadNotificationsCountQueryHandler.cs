@@ -31,7 +31,7 @@ public sealed class GetUnreadNotificationsCountQueryHandler : IRequestHandler<Ge
         var currentUserId = _currentUserProvider.UserId.Value;
 
         var unreadNotifications = await _notificationRepository.GetUnreadByUserAsync(currentUserId, cancellationToken);
-        
+
         return Result.Success(unreadNotifications.Count);
     }
 }

@@ -70,24 +70,24 @@ public sealed class GetMyDirectionsQueryHandler : IRequestHandler<GetMyDirection
         }
 
         var directions = await _directionRepository.GetBySupervisorAsync(currentUserId, semesterId, cancellationToken);
-        
+
         var creatorIds = directions.Select(d => d.CreatedBy).Distinct().ToList();
         var creators = new Dictionary<int, (string FullName, string PositionTitle)>();
-        
+
         if (creatorIds.Any())
         {
             var employees = await _employeeRepository.GetByIdsAsync(creatorIds, cancellationToken);
             var users = await _userReadOnlyRepository.GetByIdsAsync(creatorIds, cancellationToken);
-            
+
             foreach (var creatorId in creatorIds)
             {
                 var user = users.FirstOrDefault(u => u.Id == creatorId);
                 var employee = employees.FirstOrDefault(e => e.Id == creatorId);
-                
+
                 if (user != null)
                 {
                     var fullName = $"{user.LastName} {user.FirstName} {user.MiddleName}".Trim();
-                    var mainPosition = employee?.Positions?.FirstOrDefault(p => p.IsMainPosition) 
+                    var mainPosition = employee?.Positions?.FirstOrDefault(p => p.IsMainPosition)
                                        ?? employee?.Positions?.FirstOrDefault();
                     creators[creatorId] = (fullName, mainPosition?.Position?.Title ?? "");
                 }
@@ -109,22 +109,29 @@ public sealed class GetMyDirectionsQueryHandler : IRequestHandler<GetMyDirection
             }
         }
 
-        var resultList = directions.Select(d => {
+        var resultList = directions.Select(d =>
+        {
             statesDict.TryGetValue(d.CurrentStateId, out var stateInfo);
             return new DirectionSummaryDto(
                 d.Id,
                 d.OrgUnitId,
                 d.SemesterId,
+                d.WorkTypeId,
+                d.CreatedBy, // SupervisorId
                 d.TitleRu,
                 d.TitleKz,
                 d.TitleEn,
+                d.DescriptionRu,
+                d.DescriptionKz,
+                d.DescriptionEn,
                 d.CurrentStateId,
                 stateInfo.SystemName ?? "",
                 stateInfo.DisplayName ?? "",
                 d.CreatedAt,
                 d.CreatedBy,
                 creators.TryGetValue(d.CreatedBy, out var info) ? info.FullName : "Unknown",
-                creators.TryGetValue(d.CreatedBy, out var info2) ? info2.PositionTitle : ""
+                creators.TryGetValue(d.CreatedBy, out var info2) ? info2.PositionTitle : "",
+                d.ReviewComment
             );
         }).ToList();
 

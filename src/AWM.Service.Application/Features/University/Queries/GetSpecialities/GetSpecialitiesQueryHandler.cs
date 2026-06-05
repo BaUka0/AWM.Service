@@ -1,4 +1,5 @@
 namespace AWM.Service.Application.Features.University.Queries.GetSpecialities;
+
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;

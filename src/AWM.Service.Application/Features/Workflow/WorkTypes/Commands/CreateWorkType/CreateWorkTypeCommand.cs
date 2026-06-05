@@ -1,4 +1,5 @@
 namespace AWM.Service.Application.Features.Workflow.WorkTypes.Commands.CreateWorkType;
+
 using KDS.Primitives.FluentResult;
 using MediatR;
 using AWM.Service.Domain.Repositories;

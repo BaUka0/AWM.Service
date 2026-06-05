@@ -33,6 +33,7 @@ public class Topic : AggregateRoot<long>, IAuditable, ISoftDeletable
     /// </summary>
     public TopicStatus Status { get; private set; }
 
+    public DateTime? SubmittedAt { get; private set; }
     public string? ReviewComment { get; private set; }
     public int? ReviewedBy { get; private set; }
     public DateTime? ReviewedAt { get; private set; }
@@ -162,6 +163,7 @@ public class Topic : AggregateRoot<long>, IAuditable, ISoftDeletable
             throw new DomainException("Topic.AlreadyApproved", "Topic is already approved.");
 
         Status = TopicStatus.Pending;
+        SubmittedAt = DateTime.UtcNow;
         ReviewComment = null;
     }
 
@@ -209,7 +211,7 @@ public class Topic : AggregateRoot<long>, IAuditable, ISoftDeletable
         Status = TopicStatus.Closed;
         RaiseDomainEvent(new TopicClosedEvent(Id));
     }
-    
+
     /// <summary>
     /// Reopens the topic for applications.
     /// </summary>
@@ -271,7 +273,7 @@ public class Topic : AggregateRoot<long>, IAuditable, ISoftDeletable
     {
         if (application is null)
             throw new DomainException("Topic.ApplicationRequired", "Application is required.");
-    
+
         _applications.Add(application);
     }
 

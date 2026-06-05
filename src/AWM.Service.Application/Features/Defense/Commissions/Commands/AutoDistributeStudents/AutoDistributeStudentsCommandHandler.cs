@@ -95,7 +95,7 @@ public sealed class AutoDistributeStudentsCommandHandler : IRequestHandler<AutoD
 
         // 2. Fetch student works in the target org unit & semester
         var allWorks = await _studentWorkRepository.GetByOrgUnitAsync(request.OrgUnitId, request.SemesterId, cancellationToken);
-        
+
         var worksToDistribute = allWorks
             .Where(w => !w.IsDeleted && waitingStateIds.Contains(w.CurrentStateId))
             .ToList();
@@ -113,9 +113,9 @@ public sealed class AutoDistributeStudentsCommandHandler : IRequestHandler<AutoD
 
         // 3. Fetch commissions
         var allCommissions = await _commissionRepository.GetByTypeAsync(
-            request.OrgUnitId, 
-            request.SemesterId, 
-            request.CommissionTypeId, 
+            request.OrgUnitId,
+            request.SemesterId,
+            request.CommissionTypeId,
             cancellationToken);
 
         var targetCommissions = allCommissions.Where(c => !c.IsDeleted).ToList();

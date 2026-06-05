@@ -41,6 +41,7 @@ public sealed class UserAccessRepository : IUserAccessRepository
     public async Task<IReadOnlyList<UserAccess>> GetAllAsync(CancellationToken cancellationToken = default)
     {
         return await _context.UserAccesses
+            .Include(ua => ua.RoleAccess)
             .AsNoTracking()
             .ToListAsync(cancellationToken);
     }

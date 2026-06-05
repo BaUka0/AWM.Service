@@ -16,12 +16,15 @@ public class EmployeePositionConfiguration : IEntityTypeConfiguration<EmployeePo
             .ValueGeneratedNever();
 
         builder.Property(e => e.EmployeeId)
+            .HasColumnName("EmployeeID")
             .IsRequired();
 
         builder.Property(e => e.OrgUnitId)
+            .HasColumnName("OrgUnitID")
             .IsRequired();
 
         builder.Property(e => e.PositionId)
+            .HasColumnName("PositionID")
             .IsRequired();
 
         builder.Property(e => e.StartedOn)

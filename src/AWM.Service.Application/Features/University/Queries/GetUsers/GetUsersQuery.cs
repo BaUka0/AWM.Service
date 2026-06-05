@@ -1,4 +1,5 @@
 namespace AWM.Service.Application.Features.University.Queries.GetUsers;
+
 using AWM.Service.Application.Features.University.DTOs;
 using KDS.Primitives.FluentResult;
 using MediatR;

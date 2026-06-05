@@ -15,7 +15,7 @@ public class WorkReview : Entity<long>, IAuditable, ISoftDeletable
     public string ReviewText { get; private set; } = null!;
     public string? MetadataJson { get; private set; }
     public bool IsFinal { get; private set; }
-    
+
     public DateTime CreatedAt { get; private set; }
     public int CreatedBy { get; private set; }
     public DateTime? LastModifiedAt { get; private set; }
@@ -38,7 +38,7 @@ public class WorkReview : Entity<long>, IAuditable, ISoftDeletable
         ReviewText = reviewText;
         MetadataJson = metadataJson;
         IsFinal = false;
-        
+
         CreatedAt = DateTime.UtcNow;
         CreatedBy = createdBy;
         IsDeleted = false;

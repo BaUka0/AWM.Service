@@ -12,7 +12,7 @@ public class WorkflowHistory : Entity<long>, IAuditable
     public int ToStateId { get; private set; }
     public int UserId { get; private set; }
     public string? Comment { get; private set; }
-    
+
     public DateTime CreatedAt { get; private set; }
     public int CreatedBy { get; private set; }
     public DateTime? LastModifiedAt { get; private set; }
@@ -30,7 +30,7 @@ public class WorkflowHistory : Entity<long>, IAuditable
         ToStateId = toStateId;
         UserId = userId;
         Comment = comment;
-        
+
         CreatedAt = DateTime.UtcNow;
         CreatedBy = userId;
     }

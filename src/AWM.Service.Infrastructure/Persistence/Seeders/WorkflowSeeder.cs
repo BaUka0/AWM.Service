@@ -30,13 +30,13 @@ internal sealed class WorkflowSeeder
             // Fresh DB: inserted in ID order so IDENTITY values match WorkflowStageIds constants (1–8).
             _context.WorkflowStages.AddRange(
                 new WorkflowStage("DirectionProposal", 1), // Id = 1 = WorkflowStageIds.DirectionProposal
-                new WorkflowStage("TopicProposal",     2), // Id = 2 = WorkflowStageIds.TopicProposal
-                new WorkflowStage("TopicPreparation",  3), // Id = 3 = WorkflowStageIds.TopicPreparation (Student selection)
-                new WorkflowStage("Preparation",       4), // Id = 4 = WorkflowStageIds.Preparation (Work starts)
-                new WorkflowStage("PreDefense1",       5), // Id = 5
-                new WorkflowStage("PreDefense2",       6), // Id = 6
-                new WorkflowStage("PreDefense3",       7), // Id = 7
-                new WorkflowStage("FinalDefense",      8)  // Id = 8
+                new WorkflowStage("TopicProposal", 2), // Id = 2 = WorkflowStageIds.TopicProposal
+                new WorkflowStage("TopicPreparation", 3), // Id = 3 = WorkflowStageIds.TopicPreparation (Student selection)
+                new WorkflowStage("Preparation", 4), // Id = 4 = WorkflowStageIds.Preparation (Work starts)
+                new WorkflowStage("PreDefense1", 5), // Id = 5
+                new WorkflowStage("PreDefense2", 6), // Id = 6
+                new WorkflowStage("PreDefense3", 7), // Id = 7
+                new WorkflowStage("FinalDefense", 8)  // Id = 8
             );
             await _context.SaveChangesAsync(ct);
         }
@@ -54,10 +54,10 @@ internal sealed class WorkflowSeeder
     {
         if (await _context.WorkTypes.AnyAsync(ct)) return;
 
-        var courseWork   = new WorkType("CourseWork");
-        var diplomaWork  = new WorkType("DiplomaWork");
+        var courseWork = new WorkType("CourseWork");
+        var diplomaWork = new WorkType("DiplomaWork");
         var masterThesis = new WorkType("MasterThesis");
-        var phd          = new WorkType("PhD");
+        var phd = new WorkType("PhD");
 
         _context.WorkTypes.AddRange(courseWork, diplomaWork, masterThesis, phd);
         await _context.SaveChangesAsync(ct);
@@ -84,8 +84,8 @@ internal sealed class WorkflowSeeder
 
         var s = states.ToDictionary(x => x.SystemName);
         _context.Transitions.AddRange(
-            Transition.Automatic(s["Draft"].Id,       s["Submitted"].Id),
-            Transition.Automatic(s["Submitted"].Id,   s["UnderReview"].Id),
+            Transition.Automatic(s["Draft"].Id, s["Submitted"].Id),
+            Transition.Automatic(s["Submitted"].Id, s["UnderReview"].Id),
             Transition.Automatic(s["UnderReview"].Id, s["Approved"].Id),
             Transition.Automatic(s["UnderReview"].Id, s["Rejected"].Id)
         );

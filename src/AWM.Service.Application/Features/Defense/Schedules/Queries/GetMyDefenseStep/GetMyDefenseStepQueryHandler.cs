@@ -91,7 +91,8 @@ public sealed class GetMyDefenseStepQueryHandler : IRequestHandler<GetMyDefenseS
 
                 commissionMembers = commission.Assignments
                     .Where(a => a.IsActive && !a.IsDeleted)
-                    .Select(a => {
+                    .Select(a =>
+                    {
                         var user = users.FirstOrDefault(u => u.Id == a.UserId);
                         var name = user != null ? $"{user.LastName} {user.FirstName}" : "Unknown";
                         return new CommissionMemberInfoDto(a.RoleType.ToString(), name);
@@ -103,7 +104,7 @@ public sealed class GetMyDefenseStepQueryHandler : IRequestHandler<GetMyDefenseS
         // 4. Previous attempts (Pre-defenses)
         var attempts = await _attemptRepository.GetByWorkIdAsync(work.Id, cancellationToken);
         var previousAttempts = new List<AttemptHistoryDto>();
-        
+
         foreach (var attempt in attempts)
         {
             string? comments = null;

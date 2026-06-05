@@ -25,7 +25,7 @@ public sealed class PdfReportService : IPdfReportService
             bodyWriter.Write("BT\n");
             bodyWriter.Write("/F1 14 Tf\n");
             bodyWriter.Write("70 770 Td\n");
-            
+
             // Header
             bodyWriter.Write($"(AWM Academic Protocol - {EscapePdfString(data.CommissionName)}) Tj\n");
             bodyWriter.Write("0 -24 Td\n");
@@ -33,7 +33,7 @@ public sealed class PdfReportService : IPdfReportService
             bodyWriter.Write("0 -20 Td\n");
             bodyWriter.Write($"(Session Date: {EscapePdfString(data.SessionDate)}) Tj\n");
             bodyWriter.Write("0 -24 Td\n");
-            
+
             // Student Details
             bodyWriter.Write("/F1 12 Tf\n");
             bodyWriter.Write($"(Student Name: {EscapePdfString(data.StudentName)}) Tj\n");
@@ -60,7 +60,7 @@ public sealed class PdfReportService : IPdfReportService
             bodyWriter.Write($"(Final Score: {data.FinalScore:F2} / Letter Grade: {data.FinalGradeLetter}) Tj\n");
             bodyWriter.Write("0 -18 Td\n");
             bodyWriter.Write($"(Decision: {EscapePdfString(data.Decision)}) Tj\n");
-            
+
             if (!string.IsNullOrWhiteSpace(data.Comments))
             {
                 bodyWriter.Write("0 -18 Td\n");
@@ -240,19 +240,90 @@ public sealed class PdfReportService : IPdfReportService
     {
         return c switch
         {
-            'а' => "a", 'б' => "b", 'в' => "v", 'г' => "g", 'д' => "d", 'е' => "e", 'ё' => "yo", 'ж' => "zh",
-            'з' => "z", 'и' => "i", 'й' => "y", 'к' => "k", 'л' => "l", 'м' => "m", 'н' => "n", 'о' => "o",
-            'п' => "p", 'р' => "r", 'с' => "s", 'т' => "t", 'у' => "u", 'ф' => "f", 'х' => "kh", 'ц' => "ts",
-            'ч' => "ch", 'ш' => "sh", 'щ' => "shch", 'ъ' => "", 'ы' => "y", 'ь' => "", 'э' => "e", 'ю' => "yu",
+            'а' => "a",
+            'б' => "b",
+            'в' => "v",
+            'г' => "g",
+            'д' => "d",
+            'е' => "e",
+            'ё' => "yo",
+            'ж' => "zh",
+            'з' => "z",
+            'и' => "i",
+            'й' => "y",
+            'к' => "k",
+            'л' => "l",
+            'м' => "m",
+            'н' => "n",
+            'о' => "o",
+            'п' => "p",
+            'р' => "r",
+            'с' => "s",
+            'т' => "t",
+            'у' => "u",
+            'ф' => "f",
+            'х' => "kh",
+            'ц' => "ts",
+            'ч' => "ch",
+            'ш' => "sh",
+            'щ' => "shch",
+            'ъ' => "",
+            'ы' => "y",
+            'ь' => "",
+            'э' => "e",
+            'ю' => "yu",
             'я' => "ya",
-            'А' => "A", 'Б' => "B", 'В' => "V", 'Г' => "G", 'Д' => "D", 'Е' => "E", 'Ё' => "Yo", 'Ж' => "Zh",
-            'З' => "Z", 'И' => "I", 'Й' => "Y", 'К' => "K", 'Л' => "L", 'М' => "M", 'Н' => "N", 'О' => "O",
-            'П' => "P", 'Р' => "R", 'С' => "S", 'Т' => "T", 'У' => "U", 'Ф' => "F", 'Х' => "Kh", 'Ц' => "Ts",
-            'Ч' => "Ch", 'Ш' => "Sh", 'Щ' => "Shch", 'Ъ' => "", 'Ы' => "Y", 'Ь' => "", 'Э' => "E", 'Ю' => "Yu",
+            'А' => "A",
+            'Б' => "B",
+            'В' => "V",
+            'Г' => "G",
+            'Д' => "D",
+            'Е' => "E",
+            'Ё' => "Yo",
+            'Ж' => "Zh",
+            'З' => "Z",
+            'И' => "I",
+            'Й' => "Y",
+            'К' => "K",
+            'Л' => "L",
+            'М' => "M",
+            'Н' => "N",
+            'О' => "O",
+            'П' => "P",
+            'Р' => "R",
+            'С' => "S",
+            'Т' => "T",
+            'У' => "U",
+            'Ф' => "F",
+            'Х' => "Kh",
+            'Ц' => "Ts",
+            'Ч' => "Ch",
+            'Ш' => "Sh",
+            'Щ' => "Shch",
+            'Ъ' => "",
+            'Ы' => "Y",
+            'Ь' => "",
+            'Э' => "E",
+            'Ю' => "Yu",
             'Я' => "Ya",
-            'ә' => "ae", 'Ә' => "Ae", 'ғ' => "gh", 'Ғ' => "Gh", 'қ' => "q", 'Қ' => "Q", 'ң' => "ng", 'Ң' => "Ng",
-            'ө' => "oe", 'Ө' => "Oe", 'ү' => "ue", 'Ү' => "Ue", 'ұ' => "u", 'Ұ' => "U", 'h' => "h", 'H' => "H",
-            'і' => "i", 'І' => "I",
+            'ә' => "ae",
+            'Ә' => "Ae",
+            'ғ' => "gh",
+            'Ғ' => "Gh",
+            'қ' => "q",
+            'Қ' => "Q",
+            'ң' => "ng",
+            'Ң' => "Ng",
+            'ө' => "oe",
+            'Ө' => "Oe",
+            'ү' => "ue",
+            'Ү' => "Ue",
+            'ұ' => "u",
+            'Ұ' => "U",
+            'h' => "h",
+            'H' => "H",
+            'і' => "i",
+            'І' => "I",
             _ => c.ToString()
         };
     }

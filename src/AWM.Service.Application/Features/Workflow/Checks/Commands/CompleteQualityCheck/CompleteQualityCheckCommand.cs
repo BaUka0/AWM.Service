@@ -113,12 +113,12 @@ public sealed class CompleteQualityCheckCommandHandler : IRequestHandler<Complet
 
                 // Load all active configurations for this department
                 var configs = await _specialityCheckTypeRepository.GetByOrgUnitAsync(work.OrgUnitId, cancellationToken);
-                
+
                 // Select active configurations for the work's speciality, fallback to department default
                 var activeConfigs = configs.Where(c => c.IsActive).ToList();
                 var specialityConfigs = activeConfigs.Where(c => c.SpecialityId.HasValue && c.SpecialityId.Value == work.SpecialityId).ToList();
-                var selectedConfigs = specialityConfigs.Any() 
-                    ? specialityConfigs 
+                var selectedConfigs = specialityConfigs.Any()
+                    ? specialityConfigs
                     : activeConfigs.Where(c => !c.SpecialityId.HasValue).ToList();
 
                 var passedCheckTypeIds = work.QualityChecks.Where(c => c.IsPassed).Select(c => c.CheckTypeId).ToHashSet();

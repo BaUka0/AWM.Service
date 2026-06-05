@@ -56,13 +56,13 @@ public sealed class GetQualityChecksByWorkQueryHandler : IRequestHandler<GetQual
         var isExpert = false;
 
         var userAssignments = await _staffAssignmentRepository.GetByUserAsync(currentUserId, cancellationToken);
-        isSupervisor = userAssignments.Any(a => 
+        isSupervisor = userAssignments.Any(a =>
             a.IsActive && !a.IsDeleted &&
             a.RoleType == StaffRoleType.Supervisor &&
             a.TargetEntityType == "OrgUnit" &&
             a.TargetEntityId == work.OrgUnitId);
 
-        isExpert = userAssignments.Any(a => 
+        isExpert = userAssignments.Any(a =>
             a.IsActive && !a.IsDeleted &&
             a.TargetEntityType == "OrgUnit" &&
             a.TargetEntityId == work.OrgUnitId &&

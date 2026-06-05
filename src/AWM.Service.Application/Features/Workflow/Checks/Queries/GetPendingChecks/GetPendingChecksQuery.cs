@@ -25,7 +25,7 @@ public sealed class GetPendingChecksQueryHandler : IRequestHandler<GetPendingChe
     private readonly IStaffAssignmentRepository _staffAssignmentRepository;
     private readonly IEmployeeRepository _employeeRepository;
     private readonly ICheckTypeRepository _checkTypeRepository;
-    private readonly IUserRepository _userRepository;
+    private readonly IUserReadOnlyRepository _userRepository;
     private readonly ITopicRepository _topicRepository;
 
     public GetPendingChecksQueryHandler(
@@ -34,7 +34,7 @@ public sealed class GetPendingChecksQueryHandler : IRequestHandler<GetPendingChe
         IStaffAssignmentRepository staffAssignmentRepository,
         IEmployeeRepository employeeRepository,
         ICheckTypeRepository checkTypeRepository,
-        IUserRepository userRepository,
+        IUserReadOnlyRepository userRepository,
         ITopicRepository topicRepository)
     {
         _studentWorkRepository = studentWorkRepository;
@@ -57,13 +57,13 @@ public sealed class GetPendingChecksQueryHandler : IRequestHandler<GetPendingChe
 
         // Load the expert's assignments to determine which CheckTypeIds they are allowed to see
         var userAssignments = await _staffAssignmentRepository.GetByUserAsync(currentUserId, cancellationToken);
-        
+
         var allowedCheckTypeIds = userAssignments
-            .Where(a => a.IsActive && !a.IsDeleted && 
-                        a.RoleType == StaffRoleType.QualityExpert && 
-                        a.TargetEntityType == "OrgUnit" && 
+            .Where(a => a.IsActive && !a.IsDeleted &&
+                        a.RoleType == StaffRoleType.QualityExpert &&
+                        a.TargetEntityType == "OrgUnit" &&
                         a.TargetEntityId == request.OrgUnitId)
-            .Select(a => 
+            .Select(a =>
             {
                 if (string.IsNullOrEmpty(a.MetadataJson)) return 0;
                 try
@@ -104,13 +104,13 @@ public sealed class GetPendingChecksQueryHandler : IRequestHandler<GetPendingChe
             .ToList();
         var studentUsers = studentUserIds.Count > 0
             ? await _userRepository.GetByIdsAsync(studentUserIds, cancellationToken)
-            : System.Array.Empty<AWM.Service.Domain.University.User>();
+            : new List<AWM.Service.Domain.University.User>();
         var studentUserMap = studentUsers.ToDictionary(u => u.Id, u => $"{u.LastName} {u.FirstName} {u.MiddleName}".Trim());
 
         var topicIds = works.Where(w => w.TopicId.HasValue).Select(w => w.TopicId!.Value).Distinct().ToList();
         var topics = topicIds.Count > 0
             ? await _topicRepository.GetByIdsAsync(topicIds, cancellationToken)
-            : new System.Collections.Generic.List<AWM.Service.Domain.Thesis.Entities.Topic>();
+            : new List<AWM.Service.Domain.Thesis.Entities.Topic>();
         var topicMap = topics.ToDictionary(t => t.Id, t => t.TitleRu ?? t.TitleKz ?? t.TitleEn ?? "—");
 
         var pendingChecks = new List<QualityCheckDto>();
@@ -166,7 +166,7 @@ public sealed class GetPendingChecksQueryHandler : IRequestHandler<GetPendingChe
                     c.CheckTypeId,
                     checkTypeMap.TryGetValue(c.CheckTypeId, out var cName) ? cName : $"Проверка #{c.CheckTypeId}",
                     c.AssignedExpertId,
-                    null,
+                    c.AssignedExpertId.HasValue && employeeMap.TryGetValue(c.AssignedExpertId.Value, out var name) ? name : null,
                     c.AttemptNumber,
                     c.IsPassed,
                     c.ResultValue,

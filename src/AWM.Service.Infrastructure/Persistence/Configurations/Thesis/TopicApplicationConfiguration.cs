@@ -56,7 +56,7 @@ public class TopicApplicationConfiguration : SoftDeletableEntityConfiguration<To
             .HasConstraintName("FK_Applications_Topic")
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasOne<Student>()
+        builder.HasOne(e => e.Student)
             .WithMany()
             .HasForeignKey(e => e.StudentId)
             .HasConstraintName("FK_Applications_Student")

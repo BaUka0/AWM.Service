@@ -29,8 +29,8 @@ public sealed class ReviewerRepository : RepositoryBase<Reviewer, int>, IReviewe
 
         return await Context.Reviewers
             .AsNoTracking()
-            .Where(r => (r.FullName.Contains(searchTerm) || 
-                         (r.Organization != null && r.Organization.Contains(searchTerm))) && 
+            .Where(r => (r.FullName.Contains(searchTerm) ||
+                         (r.Organization != null && r.Organization.Contains(searchTerm))) &&
                         !r.IsDeleted)
             .ToListAsync(cancellationToken);
     }

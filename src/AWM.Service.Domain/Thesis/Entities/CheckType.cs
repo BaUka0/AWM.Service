@@ -10,12 +10,12 @@ using AWM.Service.Domain.Common;
 public class CheckType : Entity<int>
 {
     public string Title { get; private set; } = null!;
-    
+
     /// <summary>
     /// If true, this check type requires/supports a numeric result (e.g., percentage for Antiplagiarism).
     /// </summary>
     public bool HasNumericResult { get; private set; }
-    
+
     /// <summary>
     /// Optional system code for hardcoded logic if absolutely necessary (e.g., "ANTIPLAGIARISM").
     /// </summary>

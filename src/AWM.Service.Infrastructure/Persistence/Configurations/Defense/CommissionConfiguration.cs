@@ -18,7 +18,7 @@ public class CommissionConfiguration : SoftDeletableEntityConfiguration<Commissi
 
         builder.ToTable("Commissions", "Defense", t =>
         {
-            t.HasCheckConstraint("Check_Commission_PreDefNum", 
+            t.HasCheckConstraint("Check_Commission_PreDefNum",
                 "[PreDefenseNumber] IS NULL OR [PreDefenseNumber] BETWEEN 1 AND 3");
         });
 

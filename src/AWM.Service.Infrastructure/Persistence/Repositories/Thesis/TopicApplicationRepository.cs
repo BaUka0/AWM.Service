@@ -23,11 +23,7 @@ public sealed class TopicApplicationRepository : RepositoryBase<TopicApplication
     /// <inheritdoc />
     public async Task<TopicApplication?> GetByIdWithTopicAsync(long id, CancellationToken cancellationToken = default)
     {
-        // Despite the method name, this repository method intentionally only loads the TopicApplication entity.
-        // The corresponding Topic is resolved by higher-level query handlers using TopicId (for example, via a separate repository).
-        // This keeps the repository focused on the TopicApplication aggregate and avoids assuming a specific navigation configuration.
         return await Context.TopicApplications
-            .AsNoTracking()
             .FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
     }
 

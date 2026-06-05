@@ -35,6 +35,7 @@ public sealed class RoleAccessRepository : IRoleAccessRepository
     public async Task<IReadOnlyList<RoleAccess>> GetAllAsync(CancellationToken cancellationToken = default)
     {
         return await _context.RoleAccesses
+            .Include(r => r.UserAccesses)
             .AsNoTracking()
             .OrderBy(r => r.Code)
             .ToListAsync(cancellationToken);

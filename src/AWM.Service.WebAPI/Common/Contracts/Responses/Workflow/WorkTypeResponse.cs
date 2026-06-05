@@ -5,5 +5,6 @@ public record WorkTypeResponse(
     string Name,
     string Description,
     int DurationDays,
-    bool IsActive
+    bool IsActive,
+    int? DegreeLevelId
 );

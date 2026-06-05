@@ -46,9 +46,9 @@ public sealed class DirectionsController : BaseController
     {
         var query = new GetMyDirectionsQuery(semesterId);
         var result = await _sender.Send(query, cancellationToken);
-        
+
         if (result.IsFailed) return HandleResultError(result.Error);
-        
+
         var response = result.Value.Adapt<IReadOnlyList<DirectionSummaryResponse>>();
         return Ok(response);
     }
@@ -66,9 +66,9 @@ public sealed class DirectionsController : BaseController
     {
         var query = new GetDirectionByIdQuery(id);
         var result = await _sender.Send(query, cancellationToken);
-        
+
         if (result.IsFailed) return HandleResultError(result.Error);
-        
+
         var response = result.Value.Adapt<DirectionResponse>();
         return Ok(response);
     }
@@ -87,9 +87,9 @@ public sealed class DirectionsController : BaseController
     {
         var query = new GetOrgUnitDirectionsQuery(orgUnitId, semesterId, stateId);
         var result = await _sender.Send(query, cancellationToken);
-        
+
         if (result.IsFailed) return HandleResultError(result.Error);
-        
+
         var response = result.Value.Adapt<IReadOnlyList<DirectionSummaryResponse>>();
         return Ok(response);
     }
@@ -108,9 +108,9 @@ public sealed class DirectionsController : BaseController
         var command = request.Adapt<CreateDirectionCommand>();
 
         var result = await _sender.Send(command, cancellationToken);
-        
+
         if (result.IsFailed) return HandleResultError(result.Error);
-        
+
         return CreatedAtAction(nameof(GetDirectionById), new { id = result.Value }, result.Value);
     }
 
@@ -137,9 +137,9 @@ public sealed class DirectionsController : BaseController
             request.DescriptionEn);
 
         var result = await _sender.Send(command, cancellationToken);
-        
+
         if (result.IsFailed) return HandleResultError(result.Error);
-        
+
         return NoContent();
     }
 
@@ -155,11 +155,11 @@ public sealed class DirectionsController : BaseController
         CancellationToken cancellationToken)
     {
         var command = new SubmitDirectionCommand(id);
-        
+
         var result = await _sender.Send(command, cancellationToken);
-        
+
         if (result.IsFailed) return HandleResultError(result.Error);
-        
+
         return Ok();
     }
 
@@ -185,11 +185,11 @@ public sealed class DirectionsController : BaseController
             id,
             (ReviewDecision)request.DecisionId,
             request.Comment);
-            
+
         var result = await _sender.Send(command, cancellationToken);
-        
+
         if (result.IsFailed) return HandleResultError(result.Error);
-        
+
         return NoContent();
     }
 }

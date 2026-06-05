@@ -106,7 +106,7 @@ public sealed class GetMySupervisedWorksQueryHandler : IRequestHandler<GetMySupe
             {
                 studentMap.TryGetValue(p.StudentId, out var user);
                 var studentName = user != null ? $"{user.LastName} {user.FirstName} {user.MiddleName}".Trim() : "Unknown";
-                
+
                 // Average score from latest pre-defense attempt or similar
                 decimal? score = null;
                 var latestCheck = work.QualityChecks.OrderByDescending(c => c.AttemptNumber).FirstOrDefault();
@@ -175,7 +175,7 @@ public sealed class GetMySupervisedWorksQueryHandler : IRequestHandler<GetMySupe
     {
         if (systemName.StartsWith("PreDefense", StringComparison.OrdinalIgnoreCase))
             return "preDefense";
-        if (systemName.Contains("Defense", StringComparison.OrdinalIgnoreCase) || 
+        if (systemName.Contains("Defense", StringComparison.OrdinalIgnoreCase) ||
             systemName.Equals("ReadyForDefense", StringComparison.OrdinalIgnoreCase))
             return "defense";
         return "development";

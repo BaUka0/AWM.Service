@@ -6,5 +6,8 @@ public record AdminUserResponse(
     string FullName,
     string Email,
     string PositionTitle,
-    int? OrgUnitId
+    int? OrgUnitId,
+    bool IsActive = true,
+    DateTime? CreatedAt = null,
+    IReadOnlyList<string> Roles = null
 );

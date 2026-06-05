@@ -4,5 +4,6 @@ public record UpdateWorkTypeRequest(
     string Name,
     string Description,
     int DurationDays,
-    bool IsActive
+    bool IsActive,
+    int? DegreeLevelId
 );

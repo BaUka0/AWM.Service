@@ -68,39 +68,40 @@ internal sealed class AuthSeeder
         if (await _context.RoleOperations.AnyAsync(ct)) return;
 
         // Root nodes
-        var thesis  = new RoleOperation("THESIS",  "Управление ВКР",        "ДЖ басқару",          "Thesis Management",       0, null, 10);
-        var defense = new RoleOperation("DEFENSE", "Защита ВКР",            "ДЖ қорғау",           "Defense",                  0, null, 20);
-        var system  = new RoleOperation("SYSTEM",  "Системное управление",  "Жүйелік басқару",     "System Management",        0, null, 30);
+        var thesis = new RoleOperation("THESIS", "Управление ВКР", "ДЖ басқару", "Thesis Management", 0, null, 10);
+        var defense = new RoleOperation("DEFENSE", "Защита ВКР", "ДЖ қорғау", "Defense", 0, null, 20);
+        var system = new RoleOperation("SYSTEM", "Системное управление", "Жүйелік басқару", "System Management", 0, null, 30);
 
         _context.RoleOperations.AddRange(thesis, defense, system);
         await _context.SaveChangesAsync(ct);
 
         // THESIS children
         _context.RoleOperations.AddRange(
-            new RoleOperation("THESIS.DIRECTION",  "Направления",          "Бағыттар",            "Directions",              0, thesis.Id,  10),
-            new RoleOperation("THESIS.TOPIC",      "Темы",                 "Тақырыптар",          "Topics",                  0, thesis.Id,  20),
-            new RoleOperation("THESIS.WORK",       "Студенческие работы",  "Студенттік жұмыстар", "Student Works",            0, thesis.Id,  30),
-            new RoleOperation("THESIS.ATTACHMENT", "Документы",            "Құжаттар",            "Documents",               0, thesis.Id,  40),
-            new RoleOperation("THESIS.CHECK",      "Проверки качества",    "Сапа тексерулері",    "Quality Checks",           0, thesis.Id,  50),
-            new RoleOperation("THESIS.REVIEW",     "Рецензии",             "Рецензиялар",         "Reviews",                 0, thesis.Id,  60)
+            new RoleOperation("THESIS.DIRECTION", "Направления", "Бағыттар", "Directions", 0, thesis.Id, 10),
+            new RoleOperation("THESIS.TOPIC", "Темы", "Тақырыптар", "Topics", 0, thesis.Id, 20),
+            new RoleOperation("THESIS.WORK", "Студенческие работы", "Студенттік жұмыстар", "Student Works", 0, thesis.Id, 30),
+            new RoleOperation("THESIS.ATTACHMENT", "Документы", "Құжаттар", "Documents", 0, thesis.Id, 40),
+            new RoleOperation("THESIS.CHECK", "Проверки качества", "Сапа тексерулері", "Quality Checks", 0, thesis.Id, 50),
+            new RoleOperation("THESIS.REVIEW", "Рецензии", "Рецензиялар", "Reviews", 0, thesis.Id, 60),
+            new RoleOperation("THESIS.APPLICATION", "Заявки на темы", "Тақырыпқа өтінімдер", "Topic Applications", 0, thesis.Id, 70)
         );
 
         // DEFENSE children
         _context.RoleOperations.AddRange(
-            new RoleOperation("DEFENSE.PREDEFENSE", "Предзащита",   "Алдын ала қорғау", "Pre-Defense",  0, defense.Id, 10),
-            new RoleOperation("DEFENSE.COMMISSION", "Комиссия",     "Комиссия",         "Commission",   0, defense.Id, 20),
-            new RoleOperation("DEFENSE.SCHEDULE",   "Расписание",   "Кесте",            "Schedule",     0, defense.Id, 30),
-            new RoleOperation("DEFENSE.GRADE",      "Оценки",       "Бағалар",          "Grades",       0, defense.Id, 40),
-            new RoleOperation("DEFENSE.PROTOCOL",   "Протоколы",    "Хаттамалар",       "Protocols",    0, defense.Id, 50)
+            new RoleOperation("DEFENSE.PREDEFENSE", "Предзащита", "Алдын ала қорғау", "Pre-Defense", 0, defense.Id, 10),
+            new RoleOperation("DEFENSE.COMMISSION", "Комиссия", "Комиссия", "Commission", 0, defense.Id, 20),
+            new RoleOperation("DEFENSE.SCHEDULE", "Расписание", "Кесте", "Schedule", 0, defense.Id, 30),
+            new RoleOperation("DEFENSE.GRADE", "Оценки", "Бағалар", "Grades", 0, defense.Id, 40),
+            new RoleOperation("DEFENSE.PROTOCOL", "Протоколы", "Хаттамалар", "Protocols", 0, defense.Id, 50)
         );
 
         // SYSTEM children
         _context.RoleOperations.AddRange(
-            new RoleOperation("SYSTEM.ROLE",      "Роли и доступ",    "Рөлдер мен қол жеткізу", "Roles & Access",       0, system.Id, 10),
-            new RoleOperation("SYSTEM.USER",      "Пользователи",     "Пайдаланушылар",          "Users",                0, system.Id, 20),
-            new RoleOperation("SYSTEM.STAGE",     "Этапы",            "Кезеңдер",                "Stages",               0, system.Id, 30),
-            new RoleOperation("SYSTEM.WORKTYPE",  "Типы работ",       "Жұмыс түрлері",           "Work Types",           0, system.Id, 40),
-            new RoleOperation("SYSTEM.CRITERIA",  "Критерии оценки",  "Бағалау өлшемдері",       "Evaluation Criteria",  0, system.Id, 50)
+            new RoleOperation("SYSTEM.ROLE", "Роли и доступ", "Рөлдер мен қол жеткізу", "Roles & Access", 0, system.Id, 10),
+            new RoleOperation("SYSTEM.USER", "Пользователи", "Пайдаланушылар", "Users", 0, system.Id, 20),
+            new RoleOperation("SYSTEM.STAGE", "Этапы", "Кезеңдер", "Stages", 0, system.Id, 30),
+            new RoleOperation("SYSTEM.WORKTYPE", "Типы работ", "Жұмыс түрлері", "Work Types", 0, system.Id, 40),
+            new RoleOperation("SYSTEM.CRITERIA", "Критерии оценки", "Бағалау өлшемдері", "Evaluation Criteria", 0, system.Id, 50)
         );
 
         await _context.SaveChangesAsync(ct);
@@ -110,8 +111,8 @@ internal sealed class AuthSeeder
     {
         if (await _context.RoleOperationActions.AnyAsync(ct)) return;
 
-        var roles   = await _context.RoleAccesses.ToDictionaryAsync(r => r.Code, ct);
-        var ops     = await _context.RoleOperations.ToDictionaryAsync(o => o.Name, ct);
+        var roles = await _context.RoleAccesses.ToDictionaryAsync(r => r.Code, ct);
+        var ops = await _context.RoleOperations.ToDictionaryAsync(o => o.Name, ct);
         var actions = await _context.RoleActionTypes.ToDictionaryAsync(a => a.Code, ct);
 
         int R = actions["READ"].Id;
@@ -119,10 +120,10 @@ internal sealed class AuthSeeder
         int U = actions["UPDATE"].Id;
         int D = actions["DELETE"].Id;
         int[] RCUD = { R, C, U, D };
-        int[] RCU  = { R, C, U };
-        int[] RC   = { R, C };
-        int[] RU   = { R, U };
-        int[] Ro   = { R };
+        int[] RCU = { R, C, U };
+        int[] RC = { R, C };
+        int[] RU = { R, U };
+        int[] Ro = { R };
 
         var matrix = new List<(string Role, string Op, int[] Actions)>
         {
@@ -134,6 +135,7 @@ internal sealed class AuthSeeder
             ("ADMIN", "THESIS.ATTACHMENT", RCUD),
             ("ADMIN", "THESIS.CHECK",      RCUD),
             ("ADMIN", "THESIS.REVIEW",     RCUD),
+            ("ADMIN", "THESIS.APPLICATION",RCUD),
             ("ADMIN", "DEFENSE",           RCUD),
             ("ADMIN", "DEFENSE.PREDEFENSE",RCUD),
             ("ADMIN", "DEFENSE.COMMISSION",RCUD),
@@ -154,6 +156,7 @@ internal sealed class AuthSeeder
             ("DEPARTMENT_HEAD", "THESIS.ATTACHMENT", Ro),
             ("DEPARTMENT_HEAD", "THESIS.CHECK",      Ro),
             ("DEPARTMENT_HEAD", "THESIS.REVIEW",     Ro),
+            ("DEPARTMENT_HEAD", "THESIS.APPLICATION",RCUD),
             ("DEPARTMENT_HEAD", "DEFENSE.PREDEFENSE",Ro),
             ("DEPARTMENT_HEAD", "DEFENSE.COMMISSION",RCUD),
             ("DEPARTMENT_HEAD", "DEFENSE.SCHEDULE",  Ro),
@@ -168,12 +171,14 @@ internal sealed class AuthSeeder
             ("SUPERVISOR", "THESIS.WORK",       Ro),
             ("SUPERVISOR", "THESIS.ATTACHMENT", Ro),
             ("SUPERVISOR", "THESIS.REVIEW",     RC),
+            ("SUPERVISOR", "THESIS.APPLICATION",RCUD),
             ("SUPERVISOR", "DEFENSE.PREDEFENSE",Ro),
 
             // STUDENT
             ("STUDENT", "THESIS.TOPIC",      Ro),
             ("STUDENT", "THESIS.WORK",       RC),
             ("STUDENT", "THESIS.ATTACHMENT", RC),
+            ("STUDENT", "THESIS.APPLICATION",RCUD),
             ("STUDENT", "DEFENSE.PREDEFENSE",Ro),
 
             // COMMISSION_CHAIRMAN
@@ -218,6 +223,7 @@ internal sealed class AuthSeeder
             ("DEAN_OFFICE", "THESIS.ATTACHMENT", Ro),
             ("DEAN_OFFICE", "THESIS.CHECK",      Ro),
             ("DEAN_OFFICE", "THESIS.REVIEW",     Ro),
+            ("DEAN_OFFICE", "THESIS.APPLICATION",Ro),
             ("DEAN_OFFICE", "DEFENSE.PREDEFENSE",Ro),
             ("DEAN_OFFICE", "DEFENSE.COMMISSION",Ro),
             ("DEAN_OFFICE", "DEFENSE.SCHEDULE",  Ro),

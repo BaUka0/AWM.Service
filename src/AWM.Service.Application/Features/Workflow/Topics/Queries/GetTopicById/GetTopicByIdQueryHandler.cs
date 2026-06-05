@@ -60,7 +60,18 @@ public sealed class GetTopicByIdQueryHandler : IRequestHandler<GetTopicByIdQuery
             topic.ReviewedBy,
             topic.ReviewedAt,
             topic.CreatedAt,
-            topic.CreatedBy
+            topic.CreatedBy,
+            topic.Applications.Select(a => new TopicApplicationDto(
+                a.Id,
+                a.StudentId,
+                a.Student?.User != null ? $"{a.Student.User.LastName} {a.Student.User.FirstName} {a.Student.User.MiddleName}".Trim() : $"Student #{a.StudentId}",
+                "", // GroupCode
+                a.Student?.Speciality?.Title ?? "", // StudentSpecialityName
+                a.StatusId,
+                a.StatusId == 1 ? "pending" : a.StatusId == 2 ? "approved" : "rejected",
+                a.MotivationLetter,
+                a.AppliedAt
+            )).ToList()
         );
 
         return Result.Success(dto);

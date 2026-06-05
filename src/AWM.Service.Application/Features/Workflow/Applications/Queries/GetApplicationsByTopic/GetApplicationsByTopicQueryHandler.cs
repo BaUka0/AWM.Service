@@ -10,16 +10,22 @@ public sealed class GetApplicationsByTopicQueryHandler : IRequestHandler<GetAppl
 {
     private readonly ITopicApplicationRepository _applicationRepository;
     private readonly ITopicRepository _topicRepository;
-    private readonly IUserRepository _userRepository;
+    private readonly IUserReadOnlyRepository _userRepository;
+    private readonly IWorkflowRepository _workflowRepository;
+    private readonly IDirectionRepository _directionRepository;
 
     public GetApplicationsByTopicQueryHandler(
         ITopicApplicationRepository applicationRepository,
-        ITopicRepository topicRepository,
-        IUserRepository userRepository)
+        ITopicRepository applicationTopicRepository,
+        IUserReadOnlyRepository applicationUserRepository,
+        IWorkflowRepository workflowRepository,
+        IDirectionRepository directionRepository)
     {
         _applicationRepository = applicationRepository;
-        _topicRepository = topicRepository;
-        _userRepository = userRepository;
+        _topicRepository = applicationTopicRepository;
+        _userRepository = applicationUserRepository;
+        _workflowRepository = workflowRepository;
+        _directionRepository = directionRepository;
     }
 
     public async Task<Result<List<TopicApplicationDto>>> Handle(GetApplicationsByTopicQuery request, CancellationToken cancellationToken)
@@ -29,27 +35,57 @@ public sealed class GetApplicationsByTopicQueryHandler : IRequestHandler<GetAppl
         // Load topic title
         var topics = await _topicRepository.GetByIdsAsync(new[] { request.TopicId }, cancellationToken);
         var topic = topics.FirstOrDefault();
-        var topicTitle = topic?.TitleRu ?? topic?.TitleKz ?? topic?.TitleEn ?? "";
 
         // Bulk-load student names
         var studentIds = applications.Select(a => a.StudentId).Distinct().ToList();
         var users = studentIds.Any()
             ? await _userRepository.GetByIdsAsync(studentIds, cancellationToken)
-            : Array.Empty<AWM.Service.Domain.University.User>();
+            : new List<AWM.Service.Domain.University.User>();
         var userMap = users.ToDictionary(u => u.Id, u => $"{u.LastName} {u.FirstName} {u.MiddleName}".Trim());
+
+        // Load work types for the topic
+        var workTypes = await _workflowRepository.GetAllWorkTypesAsync(cancellationToken);
+        var workTypeMap = workTypes.ToDictionary(wt => wt.Id);
+        var workTypeName = (topic != null && workTypeMap.TryGetValue(topic.WorkTypeId, out var wt)) ? wt.Name : "";
+
+        // Load supervisor name
+        var supervisorName = "Unknown";
+        if (topic != null)
+        {
+            var supervisor = await _userRepository.GetByIdAsync(topic.CreatedBy, cancellationToken);
+            supervisorName = supervisor != null ? $"{supervisor.LastName} {supervisor.FirstName} {supervisor.MiddleName}".Trim() : "Unknown";
+        }
+
+        // Load direction title
+        var directionTitle = "";
+        if (topic?.DirectionId.HasValue == true)
+        {
+            var dirs = await _directionRepository.GetByIdsAsync(new[] { topic.DirectionId.Value }, cancellationToken);
+            var dir = dirs.FirstOrDefault();
+            directionTitle = dir != null ? (dir.TitleRu ?? dir.TitleKz ?? dir.TitleEn ?? "") : "";
+        }
 
         var dtos = applications.Select(a => new TopicApplicationDto(
             a.Id,
             a.TopicId,
-            topicTitle,
+            topic?.TitleRu ?? "",
+            topic?.TitleKz,
+            topic?.TitleEn,
             a.StudentId,
-            userMap.GetValueOrDefault(a.StudentId, ""),
+            userMap.GetValueOrDefault(a.StudentId, "Unknown"),
             "", // Student Group — not available without University DB
             a.MotivationLetter,
             GetStatus(a.StatusId),
             a.ReviewComment,
             a.AppliedAt,
-            a.ReviewedAt
+            a.ReviewedAt,
+            topic?.CreatedBy,
+            supervisorName,
+            topic?.WorkTypeId,
+            workTypeName,
+            topic?.MaxParticipants,
+            topic != null ? (topic.MaxParticipants - topic.Applications.Count(x => x.StatusId == 2)) : 0,
+            directionTitle
         )).ToList();
 
         return Result.Success(dtos);

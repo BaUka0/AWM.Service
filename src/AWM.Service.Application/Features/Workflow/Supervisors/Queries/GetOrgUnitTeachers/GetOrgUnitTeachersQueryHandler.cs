@@ -21,13 +21,13 @@ public sealed class GetOrgUnitTeachersQueryHandler : IRequestHandler<GetOrgUnitT
         var teachers = employees.Select(e =>
         {
             var user = e.User;
-            var fullName = user != null 
-                ? $"{user.LastName} {user.FirstName} {user.MiddleName}".Trim() 
+            var fullName = user != null
+                ? $"{user.LastName} {user.FirstName} {user.MiddleName}".Trim()
                 : "Unknown";
 
-            var mainPosition = e.Positions.FirstOrDefault(p => p.IsMainPosition) 
+            var mainPosition = e.Positions.FirstOrDefault(p => p.IsMainPosition)
                                ?? e.Positions.FirstOrDefault();
-            
+
             var positionTitle = mainPosition?.Position?.Title ?? "Без должности";
 
             return new TeacherDto(

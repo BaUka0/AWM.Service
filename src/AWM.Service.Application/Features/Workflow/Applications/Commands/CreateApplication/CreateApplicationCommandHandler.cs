@@ -12,6 +12,7 @@ public sealed class CreateApplicationCommandHandler : IRequestHandler<CreateAppl
 {
     private readonly ITopicApplicationRepository _applicationRepository;
     private readonly ITopicRepository _topicRepository;
+    private readonly IStudentReadOnlyRepository _studentReadOnlyRepository;
     private readonly ICurrentUserProvider _currentUserProvider;
     private readonly IStageValidationService _stageValidationService;
     private readonly IUnitOfWork _unitOfWork;
@@ -19,12 +20,14 @@ public sealed class CreateApplicationCommandHandler : IRequestHandler<CreateAppl
     public CreateApplicationCommandHandler(
         ITopicApplicationRepository applicationRepository,
         ITopicRepository topicRepository,
+        IStudentReadOnlyRepository studentReadOnlyRepository,
         ICurrentUserProvider currentUserProvider,
         IStageValidationService stageValidationService,
         IUnitOfWork unitOfWork)
     {
         _applicationRepository = applicationRepository;
         _topicRepository = topicRepository;
+        _studentReadOnlyRepository = studentReadOnlyRepository;
         _currentUserProvider = currentUserProvider;
         _stageValidationService = stageValidationService;
         _unitOfWork = unitOfWork;
@@ -62,11 +65,17 @@ public sealed class CreateApplicationCommandHandler : IRequestHandler<CreateAppl
         if (alreadyApplied)
             return Result.Failure<long>(new Error("Applications.AlreadyApplied", "You have already applied to this topic."));
 
+        // Get student's speciality
+        var student = await _studentReadOnlyRepository.GetByUserIdAsync(studentId, cancellationToken);
+        if (student == null)
+            return Result.Failure<long>(new Error("Students.NotFound", "Student record not found."));
+
         // Create application
         var application = new TopicApplication(
             topicId: request.TopicId,
             studentId: studentId,
-            motivationLetter: request.MotivationLetter);
+            motivationLetter: request.MotivationLetter,
+            specialityId: student.SpecialityId);
 
         await _applicationRepository.AddAsync(application, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);

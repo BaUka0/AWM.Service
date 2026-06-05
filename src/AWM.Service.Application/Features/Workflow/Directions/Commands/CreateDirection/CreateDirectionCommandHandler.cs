@@ -66,9 +66,9 @@ public sealed class CreateDirectionCommandHandler : IRequestHandler<CreateDirect
                 return Result.Failure<long>(new Error("Directions.EmployeeNotFound", "Employee record not found for the current user in University SoT."));
             }
 
-            var mainPosition = employee.Positions.FirstOrDefault(p => p.IsMainPosition) 
+            var mainPosition = employee.Positions.FirstOrDefault(p => p.IsMainPosition)
                                 ?? employee.Positions.FirstOrDefault();
-            
+
             if (mainPosition == null)
             {
                 return Result.Failure<long>(new Error("Directions.OrgUnitNotFound", "Employee has no assigned department in University SoT."));
@@ -90,7 +90,7 @@ public sealed class CreateDirectionCommandHandler : IRequestHandler<CreateDirect
         }
 
         var draftState = await _workflowRepository.GetStateBySystemNameAsync(request.WorkTypeId, DirectionStates.Draft, cancellationToken);
-            
+
         if (draftState == null)
             return Result.Failure<long>(new Error("State.NotFound", "Draft state not found in the system."));
 

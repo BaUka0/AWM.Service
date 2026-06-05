@@ -45,7 +45,7 @@ public sealed class SupervisorsController : BaseController
     public async Task<IActionResult> GetAvailableTeachers(int orgUnitId, CancellationToken cancellationToken)
     {
         var result = await _sender.Send(new GetOrgUnitTeachersQuery(orgUnitId), cancellationToken);
-        
+
         if (result.IsFailed)
         {
             return HandleResultError(result.Error);
@@ -67,13 +67,13 @@ public sealed class SupervisorsController : BaseController
     [RequireAccess("SYSTEM.STAGE", "Read")]
     [ProducesResponseType(typeof(IReadOnlyList<TeacherResponse>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetApprovedSupervisors(
-        int orgUnitId, 
-        [FromQuery] int semesterId, 
-        [FromQuery] int? specialityId, 
+        int orgUnitId,
+        [FromQuery] int semesterId,
+        [FromQuery] int? specialityId,
         CancellationToken cancellationToken)
     {
         var result = await _sender.Send(new GetApprovedSupervisorsQuery(orgUnitId, semesterId, specialityId), cancellationToken);
-        
+
         if (result.IsFailed)
         {
             return HandleResultError(result.Error);
@@ -95,14 +95,14 @@ public sealed class SupervisorsController : BaseController
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> ApproveSupervisors(
-        int orgUnitId, 
-        [FromBody] ApproveSupervisorsRequest request, 
+        int orgUnitId,
+        [FromBody] ApproveSupervisorsRequest request,
         CancellationToken cancellationToken)
     {
         var command = request.Adapt<ApproveSupervisorsCommand>() with { OrgUnitId = orgUnitId };
 
         var result = await _sender.Send(command, cancellationToken);
-        
+
         if (result.IsFailed)
         {
             return HandleResultError(result.Error);
@@ -141,7 +141,7 @@ public sealed class SupervisorsController : BaseController
             request.MaxWorkload);
 
         var result = await _sender.Send(command, cancellationToken);
-        
+
         if (result.IsFailed)
         {
             return HandleResultError(result.Error);
@@ -177,7 +177,7 @@ public sealed class SupervisorsController : BaseController
             specialityId);
 
         var result = await _sender.Send(command, cancellationToken);
-        
+
         if (result.IsFailed)
         {
             return HandleResultError(result.Error);
@@ -204,7 +204,7 @@ public sealed class SupervisorsController : BaseController
         CancellationToken cancellationToken)
     {
         var result = await _sender.Send(new GetSupervisorsStatusQuery(orgUnitId, semesterId, specialityId), cancellationToken);
-        
+
         if (result.IsFailed)
         {
             return HandleResultError(result.Error);
@@ -231,9 +231,9 @@ public sealed class SupervisorsController : BaseController
         CancellationToken cancellationToken)
     {
         var command = new ConfirmSupervisorsCommand(orgUnitId, request.SemesterId, request.SpecialityId);
-        
+
         var result = await _sender.Send(command, cancellationToken);
-        
+
         if (result.IsFailed)
         {
             return HandleResultError(result.Error);
@@ -259,9 +259,9 @@ public sealed class SupervisorsController : BaseController
         CancellationToken cancellationToken)
     {
         var command = new UnlockSupervisorsCommand(orgUnitId, request.SemesterId, request.SpecialityId);
-        
+
         var result = await _sender.Send(command, cancellationToken);
-        
+
         if (result.IsFailed)
         {
             return HandleResultError(result.Error);

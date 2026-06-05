@@ -37,7 +37,7 @@ public sealed class AddGradeCommandHandler : IRequestHandler<AddGradeCommand, Re
             return Result.Failure<long>(new Error("Schedule.NotFound", $"Schedule with ID {request.ScheduleId} not found."));
         }
         var commission = await _commissionRepository.GetByIdWithAssignmentsAsync(schedule.CommissionId, cancellationToken);
-        
+
         if (commission == null)
         {
             return Result.Failure<long>(new Error("Commission.NotFound", "Commission for this schedule not found."));
@@ -52,7 +52,7 @@ public sealed class AddGradeCommandHandler : IRequestHandler<AddGradeCommand, Re
         try
         {
             var grade = schedule.AddGrade(userAssignment.Id, request.CriteriaId, request.Score, currentUserId, request.Comment);
-            
+
             await _scheduleRepository.UpdateAsync(schedule, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 

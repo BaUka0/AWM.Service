@@ -52,6 +52,11 @@ public class StudentReadOnlyRepository : IStudentReadOnlyRepository
 
     public async Task<IReadOnlyList<Student>> GetAllAsync(CancellationToken cancellationToken = default)
     {
-        return await _context.Students.Take(MaxQuerySize).ToListAsync(cancellationToken);
+        return await _context.Students
+            .Include(s => s.User)
+            .Include(s => s.Speciality)
+            .Include(s => s.Status)
+            .Take(MaxQuerySize)
+            .ToListAsync(cancellationToken);
     }
 }

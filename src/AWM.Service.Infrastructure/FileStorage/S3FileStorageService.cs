@@ -28,7 +28,7 @@ public sealed class S3FileStorageService : IAttachmentService
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
-        var settings = storageOptions?.Value?.S3 
+        var settings = storageOptions?.Value?.S3
             ?? throw new InvalidOperationException("FileStorage:S3 settings are not configured.");
 
         _bucketName = settings.BucketName;
@@ -79,8 +79,8 @@ public sealed class S3FileStorageService : IAttachmentService
 
         var request = new PutObjectRequest
         {
-            BucketName  = _bucketName,
-            Key         = key,
+            BucketName = _bucketName,
+            Key = key,
             InputStream = fileStream,
             ContentType = contentType,
             AutoCloseStream = false

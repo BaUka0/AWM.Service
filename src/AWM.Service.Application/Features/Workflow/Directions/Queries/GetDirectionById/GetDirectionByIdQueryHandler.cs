@@ -54,7 +54,7 @@ public sealed class GetDirectionByIdQueryHandler : IRequestHandler<GetDirectionB
         if (user != null)
         {
             fullName = $"{user.LastName} {user.FirstName} {user.MiddleName}".Trim();
-            var mainPosition = employee?.Positions?.FirstOrDefault(p => p.IsMainPosition) 
+            var mainPosition = employee?.Positions?.FirstOrDefault(p => p.IsMainPosition)
                                ?? employee?.Positions?.FirstOrDefault();
             positionTitle = mainPosition?.Position?.Title ?? "";
         }

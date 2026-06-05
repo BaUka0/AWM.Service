@@ -38,7 +38,7 @@ public sealed class StartReconciliationCommandHandler : IRequestHandler<StartRec
             return Result.Failure(new Error("Schedule.NotFound", $"Schedule with ID {request.ScheduleId} not found."));
         }
         var commission = await _commissionRepository.GetByIdWithAssignmentsAsync(schedule.CommissionId, cancellationToken);
-        
+
         if (commission == null)
         {
             return Result.Failure(new Error("Commission.NotFound", "Commission for this schedule not found."));
@@ -54,7 +54,7 @@ public sealed class StartReconciliationCommandHandler : IRequestHandler<StartRec
         try
         {
             schedule.StartReconciliation(currentUserId);
-            
+
             await _scheduleRepository.UpdateAsync(schedule, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 

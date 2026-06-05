@@ -10,7 +10,7 @@ using AWM.Service.Domain.Common;
 public class AttachmentType : Entity<int>
 {
     public string Title { get; private set; } = null!;
-    
+
     /// <summary>
     /// Optional system code for hardcoded logic (e.g., "FINAL_WORK").
     /// </summary>

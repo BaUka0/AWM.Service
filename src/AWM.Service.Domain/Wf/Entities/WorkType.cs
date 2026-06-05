@@ -32,7 +32,7 @@ public class WorkType : Entity<int>, IAuditable, ISoftDeletable
 
         Name = name;
         SpecialityLevelId = specialityLevelId;
-        
+
         CreatedAt = DateTime.UtcNow;
         CreatedBy = createdBy;
         IsDeleted = false;
@@ -48,7 +48,7 @@ public class WorkType : Entity<int>, IAuditable, ISoftDeletable
 
         Name = name;
         SpecialityLevelId = specialityLevelId;
-        
+
         LastModifiedAt = DateTime.UtcNow;
         LastModifiedBy = modifiedBy;
     }
@@ -71,18 +71,18 @@ public class WorkType : Entity<int>, IAuditable, ISoftDeletable
     /// <summary>
     /// Creates DiplomaWork (Bachelor) type.
     /// </summary>
-    public static WorkType DiplomaWork(int bachelorSpecialityLevelId, int createdBy = 0) 
+    public static WorkType DiplomaWork(int bachelorSpecialityLevelId, int createdBy = 0)
         => new("DiplomaWork", createdBy, bachelorSpecialityLevelId);
 
     /// <summary>
     /// Creates MasterThesis type.
     /// </summary>
-    public static WorkType MasterThesis(int masterSpecialityLevelId, int createdBy = 0) 
+    public static WorkType MasterThesis(int masterSpecialityLevelId, int createdBy = 0)
         => new("MasterThesis", createdBy, masterSpecialityLevelId);
 
     /// <summary>
     /// Creates PhD thesis type.
     /// </summary>
-    public static WorkType PhD(int phdSpecialityLevelId, int createdBy = 0) 
+    public static WorkType PhD(int phdSpecialityLevelId, int createdBy = 0)
         => new("PhD", createdBy, phdSpecialityLevelId);
 }

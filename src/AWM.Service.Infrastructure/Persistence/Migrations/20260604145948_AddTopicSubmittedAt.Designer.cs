@@ -4,6 +4,7 @@ using AWM.Service.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AWM.Service.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260604145948_AddTopicSubmittedAt")]
+    partial class AddTopicSubmittedAt
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -3040,7 +3043,7 @@ namespace AWM.Service.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .HasConstraintName("FK_Applications_Reviewer");
 
-                    b.HasOne("AWM.Service.Domain.University.Student", "Student")
+                    b.HasOne("AWM.Service.Domain.University.Student", null)
                         .WithMany()
                         .HasForeignKey("StudentId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -3053,8 +3056,6 @@ namespace AWM.Service.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("FK_Applications_Topic");
-
-                    b.Navigation("Student");
                 });
 
             modelBuilder.Entity("AWM.Service.Domain.Thesis.Entities.WorkParticipant", b =>

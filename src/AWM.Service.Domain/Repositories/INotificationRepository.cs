@@ -21,9 +21,9 @@ public interface INotificationRepository
     /// Gets recent notifications for a user (paginated).
     /// </summary>
     Task<IReadOnlyList<Notification>> GetByUserAsync(
-        int userId, 
-        int skip = 0, 
-        int take = 20, 
+        int userId,
+        int skip = 0,
+        int take = 20,
         CancellationToken cancellationToken = default);
 
     /// <summary>

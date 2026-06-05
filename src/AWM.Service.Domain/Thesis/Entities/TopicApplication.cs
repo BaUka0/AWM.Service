@@ -27,6 +27,9 @@ public class TopicApplication : Entity<long>, IAuditable, ISoftDeletable
     public DateTime? DeletedAt { get; private set; }
     public int? DeletedBy { get; private set; }
 
+    // Navigation properties
+    public University.Student? Student { get; private set; }
+
     private TopicApplication() { }
 
     public TopicApplication(long topicId, int studentId, string? motivationLetter = null, int? specialityId = null)
@@ -55,7 +58,7 @@ public class TopicApplication : Entity<long>, IAuditable, ISoftDeletable
         ReviewedAt = DateTime.UtcNow;
         ReviewedBy = reviewedBy;
         ReviewComment = null;
-        
+
         LastModifiedAt = ReviewedAt;
         LastModifiedBy = reviewedBy;
     }

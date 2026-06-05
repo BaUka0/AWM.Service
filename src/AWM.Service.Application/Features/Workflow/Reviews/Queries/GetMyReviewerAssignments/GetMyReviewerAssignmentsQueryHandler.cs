@@ -48,9 +48,9 @@ public sealed class GetMyReviewerAssignmentsQueryHandler : IRequestHandler<GetMy
         // Query active reviewer assignments for the current user
         var staffAssignments = await _staffAssignmentRepository.GetByUserAsync(currentUserId, cancellationToken);
         var activeAssignments = staffAssignments
-            .Where(a => a.RoleType == StaffRoleType.Reviewer && 
-                        a.TargetEntityType == "StudentWork" && 
-                        a.IsActive && 
+            .Where(a => a.RoleType == StaffRoleType.Reviewer &&
+                        a.TargetEntityType == "StudentWork" &&
+                        a.IsActive &&
                         !a.IsDeleted)
             .ToList();
 
@@ -61,7 +61,7 @@ public sealed class GetMyReviewerAssignmentsQueryHandler : IRequestHandler<GetMy
 
         var workIds = activeAssignments.Select(a => a.TargetEntityId).Distinct().ToList();
         var works = await _studentWorkRepository.GetByIdsWithDetailsAsync(workIds, cancellationToken);
-        
+
         // Load Topics
         var topicIds = works.Where(w => w.TopicId.HasValue).Select(w => w.TopicId!.Value).Distinct().ToList();
         var topics = await _topicRepository.GetByIdsAsync(topicIds, cancellationToken);

@@ -12,7 +12,7 @@ public class Grade : Entity<long>, IAuditable
     public int CriteriaId { get; private set; }
     public int Score { get; private set; }
     public string? Comment { get; private set; }
-    
+
     public DateTime CreatedAt { get; private set; }
     public int CreatedBy { get; private set; }
     public DateTime? LastModifiedAt { get; private set; }
@@ -33,7 +33,7 @@ public class Grade : Entity<long>, IAuditable
         CriteriaId = criteriaId;
         Score = score;
         Comment = comment;
-        
+
         CreatedAt = DateTime.UtcNow;
         CreatedBy = createdBy;
     }
@@ -48,7 +48,7 @@ public class Grade : Entity<long>, IAuditable
 
         Score = score;
         Comment = comment;
-        
+
         LastModifiedAt = DateTime.UtcNow;
         LastModifiedBy = modifiedBy;
     }

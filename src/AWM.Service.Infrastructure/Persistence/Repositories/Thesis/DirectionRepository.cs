@@ -38,14 +38,14 @@ public sealed class DirectionRepository : IDirectionRepository
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<Direction>> GetByOrgUnitAsync(
-        int orgUnitId, 
-        int semesterId, 
+        int orgUnitId,
+        int semesterId,
         CancellationToken cancellationToken = default)
     {
         return await _context.Directions
             .AsNoTracking()
-            .Where(d => !d.IsDeleted && 
-                        d.OrgUnitId == orgUnitId && 
+            .Where(d => !d.IsDeleted &&
+                        d.OrgUnitId == orgUnitId &&
                         d.SemesterId == semesterId)
             .OrderByDescending(d => d.CreatedAt)
             .ToListAsync(cancellationToken);
@@ -53,20 +53,26 @@ public sealed class DirectionRepository : IDirectionRepository
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<Direction>> GetBySupervisorAsync(
-        int userId, 
-        int semesterId, 
+        int userId,
+        int semesterId,
         CancellationToken cancellationToken = default)
     {
-        return await _context.StaffAssignments
+        // Get IDs of directions where the user is assigned as supervisor
+        var assignedDirectionIds = await _context.StaffAssignments
             .AsNoTracking()
             .Where(a => a.UserId == userId &&
                         a.RoleType == StaffRoleType.Supervisor &&
                         a.TargetEntityType == "Direction" &&
                         a.IsActive && !a.IsDeleted)
-            .Join(_context.Directions.Where(d => !d.IsDeleted && d.SemesterId == semesterId),
-                a => a.TargetEntityId,
-                d => d.Id,
-                (a, d) => d)
+            .Select(a => a.TargetEntityId)
+            .ToListAsync(cancellationToken);
+
+        // Return directions that are either assigned to the user OR created by the user
+        return await _context.Directions
+            .AsNoTracking()
+            .Where(d => !d.IsDeleted &&
+                        d.SemesterId == semesterId &&
+                        (assignedDirectionIds.Contains(d.Id) || d.CreatedBy == userId))
             .OrderByDescending(d => d.CreatedAt)
             .ToListAsync(cancellationToken);
     }

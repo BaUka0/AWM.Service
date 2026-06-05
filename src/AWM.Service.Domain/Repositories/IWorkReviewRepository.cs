@@ -32,7 +32,7 @@ public interface IWorkReviewRepository
     /// Adds a new review.
     /// </summary>
     Task AddAsync(WorkReview review, CancellationToken cancellationToken = default);
-    
+
     /// <summary>
     /// Updates an existing review.
     /// </summary>

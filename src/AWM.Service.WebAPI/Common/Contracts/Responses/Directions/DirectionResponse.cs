@@ -21,4 +21,6 @@ public record DirectionResponse(
     int? ReviewedBy,
     string? ReviewComment,
     DateTime CreatedAt,
-    int CreatedBy);
+    int CreatedBy,
+    string SupervisorFullName,
+    string SupervisorPositionTitle);

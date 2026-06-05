@@ -24,9 +24,9 @@ internal static class ValidationResponseCache<TResponse>
         {
             var failureMethod = typeof(Result)
                 .GetMethods(BindingFlags.Public | BindingFlags.Static)
-                .FirstOrDefault(m => m.Name == "Failure" && 
-                                     !m.IsGenericMethod && 
-                                     m.GetParameters().Length == 1 && 
+                .FirstOrDefault(m => m.Name == "Failure" &&
+                                     !m.IsGenericMethod &&
+                                     m.GetParameters().Length == 1 &&
                                      m.GetParameters()[0].ParameterType == typeof(Error));
 
             if (failureMethod != null)
@@ -39,9 +39,9 @@ internal static class ValidationResponseCache<TResponse>
             var innerType = responseType.GetGenericArguments()[0];
             var failureMethod = typeof(Result)
                 .GetMethods(BindingFlags.Public | BindingFlags.Static)
-                .FirstOrDefault(m => m.Name == "Failure" && 
-                                     m.IsGenericMethod && 
-                                     m.GetParameters().Length == 1 && 
+                .FirstOrDefault(m => m.Name == "Failure" &&
+                                     m.IsGenericMethod &&
+                                     m.GetParameters().Length == 1 &&
                                      m.GetParameters()[0].ParameterType == typeof(Error));
 
             if (failureMethod != null)

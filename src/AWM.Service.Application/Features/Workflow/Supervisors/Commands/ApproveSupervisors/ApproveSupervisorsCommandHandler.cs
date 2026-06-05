@@ -45,19 +45,19 @@ public sealed class ApproveSupervisorsCommandHandler : IRequestHandler<ApproveSu
         }
 
         var currentUserId = _currentUserProvider.UserId.Value;
-        
+
         var existingAssignments = await _staffAssignmentRepository.GetByRoleAsync(
-            "OrgUnit", 
-            request.OrgUnitId, 
-            StaffRoleType.Supervisor, 
+            "OrgUnit",
+            request.OrgUnitId,
+            StaffRoleType.Supervisor,
             cancellationToken);
 
         var filteredAssignments = existingAssignments
             .Where(a => a.IsActive && !a.IsDeleted)
-            .Where(a => 
+            .Where(a =>
             {
                 if (string.IsNullOrEmpty(a.MetadataJson)) return false;
-                try 
+                try
                 {
                     var meta = JsonSerializer.Deserialize<SupervisorAssignmentMetadata>(a.MetadataJson);
                     return meta?.SemesterId == request.SemesterId && meta?.SpecialityId == request.SpecialityId;
@@ -121,12 +121,12 @@ public sealed class ApproveSupervisorsCommandHandler : IRequestHandler<ApproveSu
         if (newUserAssignments.Any())
         {
             var roleAccess = await _roleAccessRepository.GetByCodeAsync("Supervisor", cancellationToken);
-            
+
             foreach (var assignmentInfo in newUserAssignments)
             {
-                var metadata = new SupervisorAssignmentMetadata 
-                { 
-                    SemesterId = request.SemesterId, 
+                var metadata = new SupervisorAssignmentMetadata
+                {
+                    SemesterId = request.SemesterId,
                     SpecialityId = request.SpecialityId,
                     MaxWorkload = assignmentInfo.MaxWorkload,
                     IsConfirmed = false
@@ -140,7 +140,7 @@ public sealed class ApproveSupervisorsCommandHandler : IRequestHandler<ApproveSu
                     request.OrgUnitId,
                     currentUserId,
                     metadataJson);
-                
+
                 await _staffAssignmentRepository.AddAsync(assignment, cancellationToken);
 
                 // Add UserAccess if role exists and user doesn't have it

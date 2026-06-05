@@ -32,21 +32,26 @@ public sealed class RejectApplicationCommandHandler : IRequestHandler<RejectAppl
 
         var currentUserId = _currentUserProvider.UserId.Value;
 
-        var application = await _applicationRepository.GetByIdWithTopicAsync(request.ApplicationId, cancellationToken);
-        if (application == null)
+        // Get application (detached, only for TopicId)
+        var applicationInfo = await _applicationRepository.GetByIdAsync(request.ApplicationId, cancellationToken);
+        if (applicationInfo == null)
             return Result.Failure(new Error("Applications.NotFound", "Application not found."));
 
-        var topic = await _topicRepository.GetByIdAsync(application.TopicId, cancellationToken);
+        // Load topic with applications (tracked)
+        var topic = await _topicRepository.GetByIdAsync(applicationInfo.TopicId, cancellationToken);
         if (topic == null)
             return Result.Failure(new Error("Topics.NotFound", "Topic not found."));
+
+        var application = topic.Applications.FirstOrDefault(a => a.Id == request.ApplicationId);
+        if (application == null)
+            return Result.Failure(new Error("Applications.NotFound", "Application not found."));
 
         // Validate that current user is the supervisor
         if (topic.CreatedBy != currentUserId)
             return Result.Failure(new Error("Applications.Unauthorized", "You are not authorized to reject applications for this topic."));
 
-        // Reject application
+        // Reject tracked application entity — no explicit Update needed
         application.Reject(currentUserId, request.Reason);
-        await _applicationRepository.UpdateAsync(application, cancellationToken);
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 

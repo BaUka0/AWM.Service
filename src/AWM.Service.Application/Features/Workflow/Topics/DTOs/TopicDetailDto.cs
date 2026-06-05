@@ -21,4 +21,5 @@ public record TopicDetailDto(
     int? ReviewedBy,
     DateTime? ReviewedAt,
     DateTime CreatedAt,
-    int CreatedBy);
+    int CreatedBy,
+    IReadOnlyList<TopicApplicationDto> Applications);

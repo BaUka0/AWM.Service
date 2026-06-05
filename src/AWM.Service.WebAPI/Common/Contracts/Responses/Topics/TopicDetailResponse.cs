@@ -21,4 +21,5 @@ public record TopicDetailResponse(
     int? ReviewedBy,
     DateTime? ReviewedAt,
     DateTime CreatedAt,
-    int CreatedBy);
+    int CreatedBy,
+    IReadOnlyList<TopicApplicationResponse> Applications);

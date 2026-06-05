@@ -54,7 +54,7 @@ public class PreDefenseAttempt : Entity<long>, IAuditable
 
         AverageScore = averageScore;
         IsPassed = isPassed;
-        
+
         LastModifiedAt = DateTime.UtcNow;
         LastModifiedBy = modifiedBy;
     }

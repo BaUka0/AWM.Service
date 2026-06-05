@@ -21,6 +21,9 @@ public class GetCurrentUserQueryHandler : IRequestHandler<GetCurrentUserQuery, R
     private readonly IUserAccessRepository _userAccessRepository;
     private readonly IRoleAccessRepository _roleAccessRepository;
     private readonly IEmployeeReadOnlyRepository _employeeReadOnlyRepository;
+    private readonly IStudentReadOnlyRepository _studentReadOnlyRepository;
+    private readonly ISpecialitySpecializationReadOnlyRepository _specSpecRepository;
+    private readonly ISpecializationsOrgUnitReadOnlyRepository _specOrgRepository;
     private readonly ISemesterReadOnlyRepository _semesterReadOnlyRepository;
 
     public GetCurrentUserQueryHandler(
@@ -29,6 +32,9 @@ public class GetCurrentUserQueryHandler : IRequestHandler<GetCurrentUserQuery, R
         IUserAccessRepository userAccessRepository,
         IRoleAccessRepository roleAccessRepository,
         IEmployeeReadOnlyRepository employeeReadOnlyRepository,
+        IStudentReadOnlyRepository studentReadOnlyRepository,
+        ISpecialitySpecializationReadOnlyRepository specSpecRepository,
+        ISpecializationsOrgUnitReadOnlyRepository specOrgRepository,
         ISemesterReadOnlyRepository semesterReadOnlyRepository)
     {
         _currentUserProvider = currentUserProvider;
@@ -36,6 +42,9 @@ public class GetCurrentUserQueryHandler : IRequestHandler<GetCurrentUserQuery, R
         _userAccessRepository = userAccessRepository;
         _roleAccessRepository = roleAccessRepository;
         _employeeReadOnlyRepository = employeeReadOnlyRepository;
+        _studentReadOnlyRepository = studentReadOnlyRepository;
+        _specSpecRepository = specSpecRepository;
+        _specOrgRepository = specOrgRepository;
         _semesterReadOnlyRepository = semesterReadOnlyRepository;
     }
 
@@ -58,9 +67,28 @@ public class GetCurrentUserQueryHandler : IRequestHandler<GetCurrentUserQuery, R
         var userRoleIds = userAccesses.Select(ua => ua.RoleAccessId).ToHashSet();
         var roles = allRoles.Where(r => userRoleIds.Contains(r.Id)).Select(r => r.Code).ToList();
 
+        // 1. Try to find as Employee
         var employee = await _employeeReadOnlyRepository.GetByUserIdAsync(user.Id, cancellationToken);
-        var orgUnitId = employee?.Positions?.FirstOrDefault(p => p.IsMainPosition)?.OrgUnitId 
+        var orgUnitId = employee?.Positions?.FirstOrDefault(p => p.IsMainPosition)?.OrgUnitId
                            ?? employee?.Positions?.FirstOrDefault()?.OrgUnitId;
+
+        // 2. If not found, try to find as Student
+        if (orgUnitId == null)
+        {
+            var student = await _studentReadOnlyRepository.GetByUserIdAsync(user.Id, cancellationToken);
+            if (student != null && student.SpecialityId.HasValue)
+            {
+                // Chain: Speciality -> Specialization -> OrgUnit
+                var specSpecs = await _specSpecRepository.GetBySpecialityAsync(student.SpecialityId.Value, cancellationToken);
+                var specId = specSpecs.FirstOrDefault()?.SpecializationId;
+                
+                if (specId.HasValue)
+                {
+                    var specOrgs = await _specOrgRepository.GetBySpecializationAsync(specId.Value, cancellationToken);
+                    orgUnitId = specOrgs.FirstOrDefault()?.OrgUnitId;
+                }
+            }
+        }
 
         var currentSemester = await _semesterReadOnlyRepository.GetCurrentAsync(cancellationToken);
         var currentSemesterId = currentSemester?.Id;

@@ -35,9 +35,9 @@ public class Protocol : Entity<long>, IAuditable, ISoftDeletable
     private Protocol() { }
 
     public Protocol(
-        long scheduleId, 
-        int commissionId, 
-        DateTime sessionDate, 
+        long scheduleId,
+        int commissionId,
+        DateTime sessionDate,
         int createdBy,
         string? protocolNumber = null,
         decimal? finalScoreNumeric = null,

@@ -11,12 +11,12 @@ public class StaffAssignment : AggregateRoot<long>, IAuditable, ISoftDeletable
 {
     public int UserId { get; private set; }
     public StaffRoleType RoleType { get; private set; }
-    
+
     /// <summary>
     /// Type of the entity this assignment is related to (e.g., "Commission", "StudentWork", "OrgUnit").
     /// </summary>
     public string TargetEntityType { get; private set; } = null!;
-    
+
     /// <summary>
     /// ID of the entity this assignment is related to.
     /// </summary>
@@ -43,10 +43,10 @@ public class StaffAssignment : AggregateRoot<long>, IAuditable, ISoftDeletable
     private StaffAssignment() { }
 
     public StaffAssignment(
-        int userId, 
-        StaffRoleType roleType, 
-        string targetEntityType, 
-        long targetEntityId, 
+        int userId,
+        StaffRoleType roleType,
+        string targetEntityType,
+        long targetEntityId,
         int createdBy,
         string? metadataJson = null,
         DateTime? validFrom = null)
@@ -56,10 +56,10 @@ public class StaffAssignment : AggregateRoot<long>, IAuditable, ISoftDeletable
         TargetEntityType = targetEntityType;
         TargetEntityId = targetEntityId;
         MetadataJson = metadataJson;
-        
+
         ValidFrom = validFrom ?? DateTime.UtcNow;
         IsActive = true;
-        
+
         CreatedAt = DateTime.UtcNow;
         CreatedBy = createdBy;
         IsDeleted = false;

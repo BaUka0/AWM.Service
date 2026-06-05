@@ -39,7 +39,7 @@ public class GlobalExceptionHandler : IExceptionHandler
         };
 
         if (exception is DomainException)
-            _logger.LogWarning(exception, "Domain exception: {ErrorCode} - {Message}", 
+            _logger.LogWarning(exception, "Domain exception: {ErrorCode} - {Message}",
                 ((DomainException)exception).ErrorCode, exception.Message);
         else
             _logger.LogError(exception, "Unhandled exception occurred: {Message}", exception.Message);
@@ -66,9 +66,10 @@ public class GlobalExceptionHandler : IExceptionHandler
 
         if (exception is ValidationException ve)
         {
-            problemDetails.Extensions["validationErrors"] = ve.Errors.Select(e => new { 
-                field = e.PropertyName, 
-                message = e.ErrorMessage 
+            problemDetails.Extensions["validationErrors"] = ve.Errors.Select(e => new
+            {
+                field = e.PropertyName,
+                message = e.ErrorMessage
             });
         }
 

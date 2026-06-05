@@ -68,8 +68,8 @@ public sealed class ApproveChecksPeriodsCommandHandler : IRequestHandler<Approve
 
         foreach (var periodDto in request.Periods)
         {
-            var existingStage = existingStages.FirstOrDefault(s => 
-                s.WorkflowStageId == periodDto.WorkflowStageId && 
+            var existingStage = existingStages.FirstOrDefault(s =>
+                s.WorkflowStageId == periodDto.WorkflowStageId &&
                 s.SpecialityId == request.SpecialityId);
 
             if (existingStage != null)
@@ -87,7 +87,7 @@ public sealed class ApproveChecksPeriodsCommandHandler : IRequestHandler<Approve
                     periodDto.EndDate,
                     currentUserId,
                     request.SpecialityId);
-                
+
                 await _stageRepository.AddAsync(newStage, cancellationToken);
             }
         }
@@ -96,9 +96,9 @@ public sealed class ApproveChecksPeriodsCommandHandler : IRequestHandler<Approve
 
         // Notify Quality Experts
         var experts = await _staffAssignmentRepository.GetByRoleAsync(
-            "OrgUnit", 
-            orgUnitId, 
-            Domain.CommonDomain.Enums.StaffRoleType.QualityExpert, 
+            "OrgUnit",
+            orgUnitId,
+            Domain.CommonDomain.Enums.StaffRoleType.QualityExpert,
             cancellationToken);
 
         var expertUserIds = experts.Where(e => e.IsActive && !e.IsDeleted).Select(e => e.UserId).Distinct().ToList();

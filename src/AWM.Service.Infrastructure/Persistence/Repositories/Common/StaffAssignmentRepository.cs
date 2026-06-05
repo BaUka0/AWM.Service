@@ -26,9 +26,9 @@ public sealed class StaffAssignmentRepository : RepositoryBase<StaffAssignment, 
     public async Task<IReadOnlyList<StaffAssignment>> GetByRoleAsync(string targetEntityType, long targetEntityId, StaffRoleType roleType, CancellationToken cancellationToken = default)
     {
         return await Context.StaffAssignments
-            .Where(a => a.TargetEntityType == targetEntityType && 
-                        a.TargetEntityId == targetEntityId && 
-                        a.RoleType == roleType && 
+            .Where(a => a.TargetEntityType == targetEntityType &&
+                        a.TargetEntityId == targetEntityId &&
+                        a.RoleType == roleType &&
                         a.IsActive)
             .ToListAsync(cancellationToken);
     }
@@ -39,9 +39,9 @@ public sealed class StaffAssignmentRepository : RepositoryBase<StaffAssignment, 
         if (entityIds.Count == 0) return [];
 
         return await Context.StaffAssignments
-            .Where(a => a.TargetEntityType == targetEntityType && 
-                        entityIds.Contains(a.TargetEntityId) && 
-                        a.RoleType == roleType && 
+            .Where(a => a.TargetEntityType == targetEntityType &&
+                        entityIds.Contains(a.TargetEntityId) &&
+                        a.RoleType == roleType &&
                         a.IsActive)
             .ToListAsync(cancellationToken);
     }

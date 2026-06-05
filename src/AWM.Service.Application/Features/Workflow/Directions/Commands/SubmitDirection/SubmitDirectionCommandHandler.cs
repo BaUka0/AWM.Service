@@ -70,7 +70,7 @@ public sealed class SubmitDirectionCommandHandler : IRequestHandler<SubmitDirect
 
         var draftState = await _workflowRepository.GetStateBySystemNameAsync(direction.WorkTypeId, DirectionStates.Draft, cancellationToken);
         var revisionState = await _workflowRepository.GetStateBySystemNameAsync(direction.WorkTypeId, DirectionStates.RequiresRevision, cancellationToken);
-        
+
         if (direction.CurrentStateId != draftState?.Id && direction.CurrentStateId != revisionState?.Id)
             return Result.Failure<Unit>(new Error("Direction.InvalidState", "Direction must be in Draft or Requires Revision state to be submitted."));
 

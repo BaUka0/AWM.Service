@@ -9,7 +9,7 @@ public sealed class AutoDistributeStudentsCommandValidator : AbstractValidator<A
         RuleFor(x => x.OrgUnitId).GreaterThan(0);
         RuleFor(x => x.SemesterId).GreaterThan(0);
         RuleFor(x => x.CommissionTypeId).InclusiveBetween(1, 2);
-        
+
         RuleFor(x => x.PreDefenseNumber)
             .InclusiveBetween(1, 3)
             .When(x => x.CommissionTypeId == 1);

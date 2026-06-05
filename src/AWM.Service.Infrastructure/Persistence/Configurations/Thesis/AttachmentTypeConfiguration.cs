@@ -15,7 +15,7 @@ public class AttachmentTypeConfiguration : IEntityTypeConfiguration<AttachmentTy
         builder.ToTable("AttachmentTypes", "Thesis");
 
         builder.HasKey(e => e.Id);
-        
+
         builder.Property(e => e.Id)
             .ValueGeneratedNever();
 

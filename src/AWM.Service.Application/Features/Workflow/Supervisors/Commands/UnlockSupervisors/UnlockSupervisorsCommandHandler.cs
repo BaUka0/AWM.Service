@@ -67,7 +67,7 @@ public sealed class UnlockSupervisorsCommandHandler : IRequestHandler<UnlockSupe
             SupervisorAssignmentMetadata metadata;
             try
             {
-                metadata = JsonSerializer.Deserialize<SupervisorAssignmentMetadata>(assignment.MetadataJson!) 
+                metadata = JsonSerializer.Deserialize<SupervisorAssignmentMetadata>(assignment.MetadataJson!)
                            ?? new SupervisorAssignmentMetadata();
             }
             catch

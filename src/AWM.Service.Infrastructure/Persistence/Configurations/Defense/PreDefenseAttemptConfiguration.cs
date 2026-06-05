@@ -18,7 +18,7 @@ public class PreDefenseAttemptConfiguration : AuditableEntityConfiguration<PreDe
 
         builder.ToTable("PreDefenseAttempts", "Defense", t =>
         {
-            t.HasCheckConstraint("Check_PreDefNum", 
+            t.HasCheckConstraint("Check_PreDefNum",
                 "[PreDefenseNumber] BETWEEN 1 AND 3");
         });
 

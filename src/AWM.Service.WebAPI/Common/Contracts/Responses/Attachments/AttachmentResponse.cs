@@ -13,4 +13,5 @@ public record AttachmentResponse(
     string ContentType,
     string FileHash,
     DateTime UploadedAt,
-    int UploadedBy);
+    int UploadedBy,
+    string? DownloadUrl = null);

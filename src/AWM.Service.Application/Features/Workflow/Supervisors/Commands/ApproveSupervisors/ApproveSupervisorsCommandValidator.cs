@@ -21,7 +21,7 @@ public sealed class ApproveSupervisorsCommandValidator : AbstractValidator<Appro
         {
             assignments.RuleFor(a => a.UserId)
                 .GreaterThan(0).WithMessage("UserId must be greater than 0.");
-            
+
             assignments.RuleFor(a => a.MaxWorkload)
                 .GreaterThan(0).WithMessage("MaxWorkload must be greater than 0.");
         });

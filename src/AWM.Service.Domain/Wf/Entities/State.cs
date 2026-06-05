@@ -88,7 +88,7 @@ public static class WorkStates
 {
     // 1. Начало работы
     public const string Draft = "Draft";
-    
+
     // 2. Предзащита 1 (Обязательная)
     public const string PreDefense1WaitingForFiles = "PreDefense1.WaitingForFiles";
     public const string PreDefense1WaitingForSchedule = "PreDefense1.WaitingForSchedule";

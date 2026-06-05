@@ -52,7 +52,7 @@ public sealed class WorksController : BaseController
     public async Task<IActionResult> GetMyProgress(CancellationToken ct)
     {
         var result = await _sender.Send(new GetMyWorkProgressQuery(), ct);
-        
+
         if (result.IsFailed)
             return HandleResultError(result.Error);
 
@@ -68,7 +68,7 @@ public sealed class WorksController : BaseController
     public async Task<IActionResult> GetMySupervised(CancellationToken ct)
     {
         var result = await _sender.Send(new GetMySupervisedWorksQuery(), ct);
-        
+
         if (result.IsFailed)
             return HandleResultError(result.Error);
 
@@ -83,8 +83,8 @@ public sealed class WorksController : BaseController
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> SubmitSupervisorReview(
-        long workId, 
-        [FromForm] SubmitSupervisorReviewRequest request, 
+        long workId,
+        [FromForm] SubmitSupervisorReviewRequest request,
         CancellationToken ct)
     {
         var command = new SubmitSupervisorReviewCommand(
@@ -96,7 +96,7 @@ public sealed class WorksController : BaseController
             request.Comment ?? string.Empty);
 
         var result = await _sender.Send(command, ct);
-        
+
         if (result.IsFailed)
             return HandleResultError(result.Error);
 
@@ -111,13 +111,13 @@ public sealed class WorksController : BaseController
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> AssignReviewer(
-        long workId, 
-        [FromBody] AssignReviewerRequest request, 
+        long workId,
+        [FromBody] AssignReviewerRequest request,
         CancellationToken ct)
     {
         var command = new AssignReviewerCommand(workId, request.ReviewerEntityId);
         var result = await _sender.Send(command, ct);
-        
+
         if (result.IsFailed)
             return HandleResultError(result.Error);
 

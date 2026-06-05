@@ -78,9 +78,9 @@ internal sealed class ThesisSeeder
     private async Task SeedCheckTypesAsync(CancellationToken ct)
     {
         var existingIds = await _context.CheckTypes.Select(c => c.Id).ToListAsync(ct);
-        
+
         var toAdd = new List<CheckType>();
-        
+
         if (!existingIds.Contains(1))
             toAdd.Add(new CheckType(1, "Нормоконтроль", hasNumericResult: false, CheckTypeCodes.NormControl));
         if (!existingIds.Contains(2))

@@ -16,7 +16,8 @@ public record WorkAttachmentResponse(
     long FileSizeBytes,
     string ContentType,
     DateTime CreatedAt,
-    string UploadedBy);
+    string UploadedBy,
+    string? DownloadUrl = null);
 
 public record WorkProgressResponse(
     long WorkId,
@@ -30,7 +31,8 @@ public record WorkProgressResponse(
     MultilingualTextResponse TopicTitle,
     MultilingualTextResponse DirectionTitle,
     string SupervisorName,
-    string SupervisorContacts,
+    string SupervisorEmail,
+    string SupervisorPhone,
     DateTime CreatedAt,
     string WorkTypeName,
     bool IsDefended,

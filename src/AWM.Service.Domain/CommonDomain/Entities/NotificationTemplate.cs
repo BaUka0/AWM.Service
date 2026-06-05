@@ -47,7 +47,7 @@ public class NotificationTemplate : Entity<int>, IAuditable, ISoftDeletable
         BodyTemplateRu = bodyTemplateRu;
         BodyTemplateKz = bodyTemplateKz;
         BodyTemplateEn = bodyTemplateEn;
-        
+
         CreatedAt = DateTime.UtcNow;
         CreatedBy = createdBy;
         IsDeleted = false;

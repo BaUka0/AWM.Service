@@ -235,7 +235,7 @@ public class StudentWork : AggregateRoot<long>, IAuditable, ISoftDeletable
     public void UpdateCheckAttachment(long checkId, long attachmentId, int modifiedBy)
     {
         var check = _qualityChecks.FirstOrDefault(c => c.Id == checkId)
-            ?? throw new DomainException("StudentWork.QualityCheckNotFound", 
+            ?? throw new DomainException("StudentWork.QualityCheckNotFound",
                 $"QualityCheck with ID {checkId} was not found on this work.");
         check.UpdateAttachmentId(attachmentId, modifiedBy);
         LastModifiedAt = DateTime.UtcNow;

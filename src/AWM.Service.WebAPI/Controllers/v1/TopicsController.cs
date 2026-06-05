@@ -51,7 +51,7 @@ public sealed class TopicsController : BaseController
     public async Task<IActionResult> GetMyTopics([FromQuery] int semesterId, CancellationToken cancellationToken)
     {
         var result = await _sender.Send(new GetMyTopicsQuery(semesterId), cancellationToken);
-        
+
         if (result.IsFailed)
         {
             return HandleResultError(result.Error);
@@ -74,7 +74,7 @@ public sealed class TopicsController : BaseController
     public async Task<IActionResult> GetTopicById(long id, CancellationToken cancellationToken)
     {
         var result = await _sender.Send(new GetTopicByIdQuery(id), cancellationToken);
-        
+
         if (result.IsFailed)
         {
             return HandleResultError(result.Error);
@@ -98,7 +98,7 @@ public sealed class TopicsController : BaseController
     {
         var command = request.Adapt<CreateTopicCommand>();
         var result = await _sender.Send(command, cancellationToken);
-        
+
         if (result.IsFailed)
         {
             return HandleResultError(result.Error);
@@ -122,7 +122,7 @@ public sealed class TopicsController : BaseController
     {
         var command = request.Adapt<UpdateTopicCommand>() with { Id = id };
         var result = await _sender.Send(command, cancellationToken);
-        
+
         if (result.IsFailed)
         {
             return HandleResultError(result.Error);
@@ -143,7 +143,7 @@ public sealed class TopicsController : BaseController
     public async Task<IActionResult> SubmitTopics([FromBody] SubmitTopicsRequest request, CancellationToken cancellationToken)
     {
         var result = await _sender.Send(new SubmitTopicsCommand(request.TopicIds), cancellationToken);
-        
+
         if (result.IsFailed)
         {
             return HandleResultError(result.Error);
@@ -166,7 +166,7 @@ public sealed class TopicsController : BaseController
     {
         var command = request.Adapt<ReviewTopicCommand>() with { TopicId = id };
         var result = await _sender.Send(command, cancellationToken);
-        
+
         if (result.IsFailed)
         {
             return HandleResultError(result.Error);
@@ -188,7 +188,7 @@ public sealed class TopicsController : BaseController
     public async Task<IActionResult> GetOrgUnitTopics([FromQuery] int orgUnitId, [FromQuery] int semesterId, CancellationToken cancellationToken)
     {
         var result = await _sender.Send(new GetOrgUnitTopicsQuery(orgUnitId, semesterId), cancellationToken);
-        
+
         if (result.IsFailed)
         {
             return HandleResultError(result.Error);
@@ -211,7 +211,7 @@ public sealed class TopicsController : BaseController
     public async Task<IActionResult> GetAvailableTopics([FromQuery] int orgUnitId, [FromQuery] int semesterId, CancellationToken cancellationToken)
     {
         var result = await _sender.Send(new GetAvailableTopicsQuery(orgUnitId, semesterId), cancellationToken);
-        
+
         if (result.IsFailed)
         {
             return HandleResultError(result.Error);
@@ -235,7 +235,7 @@ public sealed class TopicsController : BaseController
     public async Task<IActionResult> CloseTopic(long id, CancellationToken cancellationToken)
     {
         var result = await _sender.Send(new CloseTopicCommand(id), cancellationToken);
-        
+
         if (result.IsFailed)
         {
             return HandleResultError(result.Error);

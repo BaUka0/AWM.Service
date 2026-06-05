@@ -30,7 +30,7 @@ public class SpecialityCheckType : Entity<int>
         MinimumPassValue = minimumPassValue;
         IsActive = isActive;
     }
-    
+
     public void Update(decimal? minimumPassValue, bool isActive)
     {
         MinimumPassValue = minimumPassValue;

@@ -12,18 +12,24 @@ public sealed class GetMyApplicationsQueryHandler : IRequestHandler<GetMyApplica
     private readonly ITopicApplicationRepository _applicationRepository;
     private readonly ICurrentUserProvider _currentUserProvider;
     private readonly ITopicRepository _topicRepository;
-    private readonly IUserRepository _userRepository;
+    private readonly IUserReadOnlyRepository _userRepository;
+    private readonly IWorkflowRepository _workflowRepository;
+    private readonly IDirectionRepository _directionRepository;
 
     public GetMyApplicationsQueryHandler(
         ITopicApplicationRepository applicationRepository,
         ICurrentUserProvider currentUserProvider,
         ITopicRepository topicRepository,
-        IUserRepository userRepository)
+        IUserReadOnlyRepository userRepository,
+        IWorkflowRepository workflowRepository,
+        IDirectionRepository directionRepository)
     {
         _applicationRepository = applicationRepository;
         _currentUserProvider = currentUserProvider;
         _topicRepository = topicRepository;
         _userRepository = userRepository;
+        _workflowRepository = workflowRepository;
+        _directionRepository = directionRepository;
     }
 
     public async Task<Result<List<TopicApplicationDto>>> Handle(GetMyApplicationsQuery request, CancellationToken cancellationToken)
@@ -34,36 +40,69 @@ public sealed class GetMyApplicationsQueryHandler : IRequestHandler<GetMyApplica
         var studentId = _currentUserProvider.UserId.Value;
         var applications = await _applicationRepository.GetByStudentIdAndYearAsync(studentId, request.SemesterId, cancellationToken);
 
-        // Bulk-load topics for titles
+        // Bulk-load topics for titles and supervisors
         var topicIds = applications.Select(a => a.TopicId).Distinct().ToList();
         var topics = topicIds.Any()
             ? await _topicRepository.GetByIdsAsync(topicIds, cancellationToken)
             : new List<AWM.Service.Domain.Thesis.Entities.Topic>();
         var topicMap = topics.ToDictionary(t => t.Id);
 
+        // Bulk-load directions
+        var directionIds = topics.Where(t => t.DirectionId.HasValue).Select(t => t.DirectionId.Value).Distinct().ToList();
+        var directions = directionIds.Any()
+            ? await _directionRepository.GetByIdsAsync(directionIds, cancellationToken)
+            : new List<AWM.Service.Domain.Thesis.Entities.Direction>();
+        var directionMap = directions.ToDictionary(d => d.Id);
+
         // Load student name
-        var users = await _userRepository.GetByIdsAsync(new[] { studentId }, cancellationToken);
-        var student = users.FirstOrDefault();
-        var studentName = student != null
-            ? $"{student.LastName} {student.FirstName} {student.MiddleName}".Trim()
-            : "";
+        var studentUser = await _userRepository.GetByIdAsync(studentId, cancellationToken);
+        var studentFullName = studentUser != null
+            ? $"{studentUser.LastName} {studentUser.FirstName} {studentUser.MiddleName}".Trim()
+            : "Unknown";
+
+        // Load supervisor names
+        var supervisorIds = topics.Select(t => t.CreatedBy).Distinct().ToList();
+        var supervisors = supervisorIds.Any()
+            ? await _userRepository.GetByIdsAsync(supervisorIds, cancellationToken)
+            : new List<AWM.Service.Domain.University.User>();
+        var supervisorMap = supervisors.ToDictionary(u => u.Id, u => $"{u.LastName} {u.FirstName} {u.MiddleName}".Trim());
+
+        // Load work types
+        var workTypes = await _workflowRepository.GetAllWorkTypesAsync(cancellationToken);
+        var workTypeMap = workTypes.ToDictionary(wt => wt.Id);
 
         var dtos = applications.Select(a =>
         {
             topicMap.TryGetValue(a.TopicId, out var topic);
-            var topicTitle = topic?.TitleRu ?? topic?.TitleKz ?? topic?.TitleEn ?? "";
+            var supervisorName = topic != null ? supervisorMap.GetValueOrDefault(topic.CreatedBy, "Unknown") : "Unknown";
+            var workType = (topic != null && workTypeMap.TryGetValue(topic.WorkTypeId, out var wt)) ? wt.Name : "";
+            var directionTitle = "";
+            if (topic?.DirectionId.HasValue == true && directionMap.TryGetValue(topic.DirectionId.Value, out var dir))
+            {
+                directionTitle = dir.TitleRu ?? dir.TitleKz ?? dir.TitleEn ?? "";
+            }
+
             return new TopicApplicationDto(
                 a.Id,
                 a.TopicId,
-                topicTitle,
+                topic?.TitleRu ?? "",
+                topic?.TitleKz,
+                topic?.TitleEn,
                 a.StudentId,
-                studentName,
+                studentFullName,
                 "", // Student Group — not available without University DB
                 a.MotivationLetter,
                 GetStatus(a.StatusId),
                 a.ReviewComment,
                 a.AppliedAt,
-                a.ReviewedAt
+                a.ReviewedAt,
+                topic?.CreatedBy,
+                supervisorName,
+                topic?.WorkTypeId,
+                workType,
+                topic?.MaxParticipants,
+                topic != null ? (topic.MaxParticipants - topic.Applications.Count(x => x.StatusId == 2)) : 0,
+                directionTitle
             );
         }).ToList();
 

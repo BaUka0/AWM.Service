@@ -25,6 +25,50 @@ builder.Services.AddControllers();
 
 builder.Services.AddSingleton(TypeAdapterConfig.GlobalSettings);
 
+// Configure Mapster mappings to align read-only University DB schema with API contracts
+TypeAdapterConfig<AWM.Service.Application.Features.University.DTOs.OrgUnitDto, AWM.Service.WebAPI.Common.Contracts.Responses.University.OrgUnitResponse>.NewConfig()
+    .Map(dest => dest.NameRu, src => src.Name)
+    .Map(dest => dest.NameKz, src => src.Name)
+    .Map(dest => dest.NameEn, src => src.Name)
+    .Map(dest => dest.Code, src => src.Id.ToString())
+    .Map(dest => dest.ParentId, src => src.ParentId);
+
+TypeAdapterConfig<AWM.Service.Application.Features.University.DTOs.SpecialityDto, AWM.Service.WebAPI.Common.Contracts.Responses.University.AcademicProgramResponse>.NewConfig()
+    .Map(dest => dest.NameRu, src => src.Name)
+    .Map(dest => dest.NameKz, src => src.Name)
+    .Map(dest => dest.NameEn, src => src.Name)
+    .Map(dest => dest.DepartmentId, src => src.OrgUnitId);
+
+TypeAdapterConfig<AWM.Service.Application.Features.University.DTOs.SpecialityLevelDto, AWM.Service.WebAPI.Common.Contracts.Responses.University.DegreeLevelResponse>.NewConfig()
+    .Map(dest => dest.NameRu, src => src.Name)
+    .Map(dest => dest.NameKz, src => src.Name)
+    .Map(dest => dest.NameEn, src => src.Name)
+    .Map(dest => dest.Name, src => src.Name);
+
+TypeAdapterConfig<AWM.Service.Domain.Auth.Entities.RoleAccess, AWM.Service.WebAPI.Common.Contracts.Responses.Auth.RoleAccessResponse>.NewConfig()
+    .Map(dest => dest.Name, src => src.NameRu)
+    .Map(dest => dest.UsersCount, src => src.UserAccesses.Count);
+
+TypeAdapterConfig<AWM.Service.Application.Features.University.DTOs.UserDto, AWM.Service.WebAPI.Common.Contracts.Responses.University.AdminUserResponse>.NewConfig()
+    .Map(dest => dest.Roles, src => src.Roles)
+    .Map(dest => dest.IsActive, src => src.IsActive)
+    .Map(dest => dest.CreatedAt, src => src.CreatedAt);
+
+TypeAdapterConfig<AWM.Service.WebAPI.Common.Contracts.Requests.Workflow.CreateWorkTypeRequest, AWM.Service.Application.Features.Workflow.WorkTypes.Commands.CreateWorkType.CreateWorkTypeCommand>.NewConfig()
+    .Map(dest => dest.SpecialityLevelId, src => src.DegreeLevelId);
+
+TypeAdapterConfig<AWM.Service.WebAPI.Common.Contracts.Requests.Workflow.UpdateWorkTypeRequest, AWM.Service.Application.Features.Workflow.WorkTypes.Commands.UpdateWorkType.UpdateWorkTypeCommand>.NewConfig()
+    .Map(dest => dest.SpecialityLevelId, src => src.DegreeLevelId);
+
+TypeAdapterConfig<AWM.Service.Application.Features.Workflow.WorkTypes.DTOs.WorkTypeDto, AWM.Service.WebAPI.Common.Contracts.Responses.Workflow.WorkTypeResponse>.NewConfig()
+    .Map(dest => dest.DegreeLevelId, src => src.SpecialityLevelId);
+
+TypeAdapterConfig<AWM.Service.Application.Features.Workflow.Works.DTOs.WorkAttachmentDto, AWM.Service.WebAPI.Common.Contracts.Responses.Works.WorkAttachmentResponse>.NewConfig()
+    .Map(dest => dest.DownloadUrl, src => $"/api/v1/student-works/attachments/{src.Id}/download");
+
+TypeAdapterConfig<AWM.Service.Application.Features.Workflow.Attachments.DTOs.AttachmentDto, AWM.Service.WebAPI.Common.Contracts.Responses.Attachments.AttachmentResponse>.NewConfig()
+    .Map(dest => dest.DownloadUrl, src => $"/api/v1/student-works/attachments/{src.Id}/download");
+
 var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
 
 builder.Services.AddCors(options =>

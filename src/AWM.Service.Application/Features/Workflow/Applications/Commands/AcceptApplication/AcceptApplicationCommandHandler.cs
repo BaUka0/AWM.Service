@@ -33,13 +33,19 @@ public sealed class AcceptApplicationCommandHandler : IRequestHandler<AcceptAppl
 
         var currentUserId = _currentUserProvider.UserId.Value;
 
-        var application = await _applicationRepository.GetByIdWithTopicAsync(request.ApplicationId, cancellationToken);
-        if (application == null)
+        // Get application (detached, only for TopicId)
+        var applicationInfo = await _applicationRepository.GetByIdAsync(request.ApplicationId, cancellationToken);
+        if (applicationInfo == null)
             return Result.Failure(new Error("Applications.NotFound", "Application not found."));
 
-        var topic = await _topicRepository.GetByIdAsync(application.TopicId, cancellationToken);
+        // Load topic with applications (tracked)
+        var topic = await _topicRepository.GetByIdAsync(applicationInfo.TopicId, cancellationToken);
         if (topic == null)
             return Result.Failure(new Error("Topics.NotFound", "Topic not found."));
+
+        var application = topic.Applications.FirstOrDefault(a => a.Id == request.ApplicationId);
+        if (application == null)
+            return Result.Failure(new Error("Applications.NotFound", "Application not found."));
 
         // Validate that current user is the supervisor
         if (topic.CreatedBy != currentUserId)
@@ -48,19 +54,14 @@ public sealed class AcceptApplicationCommandHandler : IRequestHandler<AcceptAppl
         if (!topic.CanAcceptApplications())
             return Result.Failure(new Error("Topics.Closed", "Topic has reached its participant limit or is closed."));
 
-        // Accept application
+        // Accept tracked application entity — no explicit Update needed
         application.Accept(currentUserId);
-        await _applicationRepository.UpdateAsync(application, cancellationToken);
 
         // Check if we should close the topic
-        // Note: Repository might need to refresh applications list or we manually check count
-        var allApplications = await _applicationRepository.GetByTopicIdAsync(topic.Id, cancellationToken);
-        var acceptedCount = allApplications.Count(a => a.StatusId == (int)ApplicationStatusType.Accepted);
-
+        var acceptedCount = topic.Applications.Count(a => a.StatusId == (int)ApplicationStatusType.Accepted);
         if (acceptedCount >= topic.MaxParticipants)
         {
             topic.Close();
-            await _topicRepository.UpdateAsync(topic, cancellationToken);
         }
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);

@@ -55,8 +55,8 @@ public interface IProtocolRepository
     /// Gets all protocols for an org unit in a semester (для печати реестра).
     /// </summary>
     Task<IReadOnlyList<Protocol>> GetByOrgUnitAsync(
-        int orgUnitId, 
-        int semesterId, 
+        int orgUnitId,
+        int semesterId,
         CancellationToken cancellationToken = default);
 
     Task AddAsync(Protocol protocol, CancellationToken cancellationToken = default);

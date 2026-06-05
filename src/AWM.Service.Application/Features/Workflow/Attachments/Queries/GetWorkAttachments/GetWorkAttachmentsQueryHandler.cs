@@ -62,14 +62,14 @@ public sealed class GetWorkAttachmentsQueryHandler : IRequestHandler<GetWorkAtta
         }
 
         var isAssignedExpert = work.QualityChecks.Any(c => c.AssignedExpertId == currentUserId);
-        
+
         var isStaffInDepartment = false;
         if (!isParticipant && !isSupervisor && !isAssignedExpert)
         {
             var userAssignments = await _staffAssignmentRepository.GetByUserAsync(currentUserId, cancellationToken);
-            isStaffInDepartment = userAssignments.Any(a => 
+            isStaffInDepartment = userAssignments.Any(a =>
                 a.IsActive && !a.IsDeleted &&
-                a.TargetEntityType == "OrgUnit" && 
+                a.TargetEntityType == "OrgUnit" &&
                 a.TargetEntityId == work.OrgUnitId &&
                 (a.RoleType == StaffRoleType.CommissionMember ||
                  a.RoleType == StaffRoleType.QualityExpert ||

@@ -58,9 +58,9 @@ public sealed class GetOrgUnitSpecialitiesQueryHandler : IRequestHandler<GetOrgU
                 return Result.Failure<IReadOnlyList<SpecialityDto>>(new Error("Stages.EmployeeNotFound", "Employee record not found for the current user in University SoT."));
             }
 
-            var mainPosition = employee.Positions.FirstOrDefault(p => p.IsMainPosition) 
+            var mainPosition = employee.Positions.FirstOrDefault(p => p.IsMainPosition)
                                ?? employee.Positions.FirstOrDefault();
-            
+
             if (mainPosition == null)
             {
                 return Result.Failure<IReadOnlyList<SpecialityDto>>(new Error("Stages.OrgUnitNotFound", "Employee has no assigned department in University SoT."));

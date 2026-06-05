@@ -59,7 +59,7 @@ public sealed class UpdateSupervisorWorkloadCommandHandler : IRequestHandler<Upd
 
         var metadata = JsonSerializer.Deserialize<SupervisorAssignmentMetadata>(assignment.MetadataJson!);
         metadata!.MaxWorkload = request.MaxWorkload;
-        
+
         assignment.UpdateMetadata(JsonSerializer.Serialize(metadata), currentUserId);
         await _staffAssignmentRepository.UpdateAsync(assignment, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);

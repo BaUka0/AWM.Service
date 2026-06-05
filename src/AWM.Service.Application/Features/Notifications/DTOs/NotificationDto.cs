@@ -10,5 +10,7 @@ public sealed record NotificationDto(
     bool IsRead,
     DateTime CreatedAt,
     string? RelatedEntityType,
-    long? RelatedEntityId
+    long? RelatedEntityId,
+    string? ActorFullName = null,
+    string? RelatedEntityTitle = null
 );

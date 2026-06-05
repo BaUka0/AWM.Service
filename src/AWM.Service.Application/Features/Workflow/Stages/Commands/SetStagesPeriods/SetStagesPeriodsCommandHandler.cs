@@ -65,9 +65,9 @@ public sealed class SetStagesPeriodsCommandHandler : IRequestHandler<SetStagesPe
                 return Result.Failure<Unit>(new Error("Stages.EmployeeNotFound", "Employee record not found for the current user in University SoT."));
             }
 
-            var mainPosition = employee.Positions.FirstOrDefault(p => p.IsMainPosition) 
+            var mainPosition = employee.Positions.FirstOrDefault(p => p.IsMainPosition)
                                ?? employee.Positions.FirstOrDefault();
-            
+
             if (mainPosition == null)
             {
                 return Result.Failure<Unit>(new Error("Stages.OrgUnitNotFound", "Employee has no assigned department in University SoT."));
@@ -75,17 +75,17 @@ public sealed class SetStagesPeriodsCommandHandler : IRequestHandler<SetStagesPe
 
             orgUnitId = mainPosition.OrgUnitId;
         }
-        
+
         // 2. Fetch existing stages for the department and semester
         var existingStages = await _stageRepository.GetByOrgUnitAsync(
-            orgUnitId, 
-            request.SemesterId, 
+            orgUnitId,
+            request.SemesterId,
             cancellationToken);
 
         foreach (var periodDto in request.Periods)
         {
-            var existingStage = existingStages.FirstOrDefault(s => 
-                s.WorkflowStageId == periodDto.WorkflowStageId && 
+            var existingStage = existingStages.FirstOrDefault(s =>
+                s.WorkflowStageId == periodDto.WorkflowStageId &&
                 s.SpecialityId == request.SpecialityId);
 
             if (existingStage != null)
@@ -103,7 +103,7 @@ public sealed class SetStagesPeriodsCommandHandler : IRequestHandler<SetStagesPe
                     periodDto.EndDate,
                     currentUserId,
                     request.SpecialityId);
-                
+
                 await _stageRepository.AddAsync(newStage, cancellationToken);
             }
         }
@@ -119,9 +119,9 @@ public sealed class SetStagesPeriodsCommandHandler : IRequestHandler<SetStagesPe
 
         // For Supervisors (Teachers)
         var supervisors = await _staffAssignmentRepository.GetByRoleAsync(
-            "OrgUnit", 
-            orgUnitId, 
-            Domain.CommonDomain.Enums.StaffRoleType.Supervisor, 
+            "OrgUnit",
+            orgUnitId,
+            Domain.CommonDomain.Enums.StaffRoleType.Supervisor,
             cancellationToken);
 
         var supervisorUserIds = supervisors

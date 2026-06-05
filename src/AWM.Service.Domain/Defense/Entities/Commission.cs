@@ -64,7 +64,7 @@ public class Commission : AggregateRoot<int>, IAuditable, ISoftDeletable
             return $"Комиссия предзащиты №{preDefenseNumber ?? 1}";
         if (typeId == (int)CommissionTypes.GAK)
             return "Государственная аттестационная комиссия";
-        
+
         return "Комиссия";
     }
 
@@ -89,12 +89,12 @@ public class Commission : AggregateRoot<int>, IAuditable, ISoftDeletable
         }
 
         var assignment = new StaffAssignment(
-            userId, 
-            roleType, 
-            "Commission", 
-            Id, 
+            userId,
+            roleType,
+            "Commission",
+            Id,
             createdBy);
-            
+
         _assignments.Add(assignment);
 
         LastModifiedAt = DateTime.UtcNow;
@@ -161,7 +161,7 @@ public class Commission : AggregateRoot<int>, IAuditable, ISoftDeletable
             throw new DomainException("Commission.MissingSecretary", "Commission must have an active secretary.");
 
         var memberCount = activeAssignments.Count(a => a.RoleType == StaffRoleType.CommissionMember);
-        
+
         if (CommissionTypeId == (int)CommissionTypes.GAK)
         {
             if (memberCount < 1 || memberCount > 4)
@@ -182,7 +182,7 @@ public class Commission : AggregateRoot<int>, IAuditable, ISoftDeletable
         IsDeleted = true;
         DeletedAt = DateTime.UtcNow;
         DeletedBy = deletedBy;
-        
+
         foreach (var assignment in _assignments)
         {
             assignment.Delete(deletedBy);

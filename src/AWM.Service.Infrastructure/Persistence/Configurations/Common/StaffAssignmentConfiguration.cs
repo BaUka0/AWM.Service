@@ -29,7 +29,7 @@ public sealed class StaffAssignmentConfiguration : IEntityTypeConfiguration<Staf
         builder.HasIndex(e => new { e.TargetEntityType, e.TargetEntityId });
         builder.HasIndex(e => e.UserId);
         builder.HasIndex(e => e.IsActive);
-        
+
         builder.HasQueryFilter(e => !e.IsDeleted);
     }
 }

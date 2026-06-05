@@ -42,7 +42,7 @@ public sealed class ApplicationsController : BaseController
     public async Task<IActionResult> GetMyApplications([FromQuery] int semesterId, CancellationToken cancellationToken)
     {
         var result = await _sender.Send(new GetMyApplicationsQuery(semesterId), cancellationToken);
-        
+
         if (result.IsFailed)
         {
             return HandleResultError(result.Error);
@@ -64,7 +64,7 @@ public sealed class ApplicationsController : BaseController
     public async Task<IActionResult> GetApplicationsByTopic(long topicId, CancellationToken cancellationToken)
     {
         var result = await _sender.Send(new GetApplicationsByTopicQuery(topicId), cancellationToken);
-        
+
         if (result.IsFailed)
         {
             return HandleResultError(result.Error);
@@ -88,7 +88,7 @@ public sealed class ApplicationsController : BaseController
     {
         var command = request.Adapt<CreateApplicationCommand>();
         var result = await _sender.Send(command, cancellationToken);
-        
+
         if (result.IsFailed)
         {
             return HandleResultError(result.Error);
@@ -109,7 +109,7 @@ public sealed class ApplicationsController : BaseController
     public async Task<IActionResult> AcceptApplication(long id, CancellationToken cancellationToken)
     {
         var result = await _sender.Send(new AcceptApplicationCommand(id), cancellationToken);
-        
+
         if (result.IsFailed)
         {
             return HandleResultError(result.Error);
@@ -131,7 +131,7 @@ public sealed class ApplicationsController : BaseController
     public async Task<IActionResult> RejectApplication(long id, [FromBody] RejectApplicationRequest request, CancellationToken cancellationToken)
     {
         var result = await _sender.Send(new RejectApplicationCommand(id, request.Reason), cancellationToken);
-        
+
         if (result.IsFailed)
         {
             return HandleResultError(result.Error);
@@ -152,7 +152,7 @@ public sealed class ApplicationsController : BaseController
     public async Task<IActionResult> WithdrawApplication(long id, CancellationToken cancellationToken)
     {
         var result = await _sender.Send(new WithdrawApplicationCommand(id), cancellationToken);
-        
+
         if (result.IsFailed)
         {
             return HandleResultError(result.Error);

@@ -19,6 +19,11 @@ public sealed class TopicRepository : RepositoryBase<Topic, long>, ITopicReposit
     {
         return await Context.Topics
             .Include(t => t.Applications)
+                .ThenInclude(a => a.Student)
+                    .ThenInclude(s => s.User)
+            .Include(t => t.Applications)
+                .ThenInclude(a => a.Student)
+                    .ThenInclude(s => s.Speciality)
             .FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
     }
 
@@ -39,7 +44,9 @@ public sealed class TopicRepository : RepositoryBase<Topic, long>, ITopicReposit
         CancellationToken cancellationToken = default)
     {
         return await Context.Topics
-            .AsNoTracking()
+            .Include(t => t.Applications)
+                .ThenInclude(a => a.Student)
+                    .ThenInclude(s => s.User)
             .Where(t => t.OrgUnitId == orgUnitId &&
                         t.SemesterId == semesterId)
             .OrderByDescending(t => t.CreatedAt)
@@ -54,6 +61,8 @@ public sealed class TopicRepository : RepositoryBase<Topic, long>, ITopicReposit
     {
         return await Context.Topics
             .Include(t => t.Applications)
+                .ThenInclude(a => a.Student)
+                    .ThenInclude(s => s.User)
             .Where(t => t.OrgUnitId == orgUnitId &&
                         t.SemesterId == semesterId)
             .OrderByDescending(t => t.CreatedAt)
@@ -66,16 +75,24 @@ public sealed class TopicRepository : RepositoryBase<Topic, long>, ITopicReposit
         int semesterId,
         CancellationToken cancellationToken = default)
     {
-        return await Context.StaffAssignments
+        // Get IDs of topics where the user is assigned as supervisor via StaffAssignments
+        var assignedTopicIds = await Context.StaffAssignments
             .AsNoTracking()
             .Where(a => a.UserId == userId &&
                         a.RoleType == StaffRoleType.Supervisor &&
                         a.TargetEntityType == "Topic" &&
-                        a.IsActive)
-            .Join(Context.Topics.Where(t => t.SemesterId == semesterId),
-                a => a.TargetEntityId,
-                t => t.Id,
-                (a, t) => t)
+                        a.IsActive && !a.IsDeleted)
+            .Select(a => a.TargetEntityId)
+            .ToListAsync(cancellationToken);
+
+        // Return topics that are either assigned to the user OR created by the user
+        return await Context.Topics
+            .Include(t => t.Applications)
+                .ThenInclude(a => a.Student)
+                    .ThenInclude(s => s.User)
+            .Where(t => !t.IsDeleted &&
+                        t.SemesterId == semesterId &&
+                        (assignedTopicIds.Contains(t.Id) || t.CreatedBy == userId))
             .OrderByDescending(t => t.CreatedAt)
             .ToListAsync(cancellationToken);
     }

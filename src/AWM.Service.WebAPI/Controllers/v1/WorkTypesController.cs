@@ -31,17 +31,20 @@ public class WorkTypesController : BaseController
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] CreateWorkTypeCommand cmd, CancellationToken ct)
+    [ProducesResponseType(typeof(int), StatusCodes.Status200OK)]
+    public async Task<IActionResult> Create([FromBody] CreateWorkTypeRequest request, CancellationToken ct)
     {
+        var cmd = request.Adapt<CreateWorkTypeCommand>();
         var result = await _sender.Send(cmd, ct);
         if (result.IsFailed) return HandleResultError(result.Error);
-        return Ok(result.Value.Adapt<IReadOnlyList<WorkTypeResponse>>());
+        return Ok(result.Value);
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(int id, [FromBody] UpdateWorkTypeCommand cmd, CancellationToken ct)
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> Update(int id, [FromBody] UpdateWorkTypeRequest request, CancellationToken ct)
     {
-        if (id != cmd.Id) return BadRequest();
+        var cmd = request.Adapt<UpdateWorkTypeCommand>() with { Id = id };
         var result = await _sender.Send(cmd, ct);
         if (result.IsFailed) return HandleResultError(result.Error);
         return Ok();
