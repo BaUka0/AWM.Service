@@ -1,8 +1,12 @@
+using System.Text.Json;
+using AWM.Service.Application.Features.Workflow.Employees.DTOs;
 using AWM.Service.Domain.Common;
 using AWM.Service.Domain.CommonDomain.Constants;
+using AWM.Service.Domain.CommonDomain.Enums;
 using AWM.Service.Domain.CommonDomain.Services;
 using AWM.Service.Domain.Repositories;
 using AWM.Service.Domain.Thesis.Entities;
+using AWM.Service.Domain.Thesis.Enums;
 using KDS.Primitives.FluentResult;
 using MediatR;
 
@@ -12,6 +16,7 @@ public sealed class CreateTopicCommandHandler : IRequestHandler<CreateTopicComma
 {
     private readonly ITopicRepository _topicRepository;
     private readonly IDirectionRepository _directionRepository;
+    private readonly IStaffAssignmentRepository _staffAssignmentRepository;
     private readonly ICurrentUserProvider _currentUserProvider;
     private readonly IOrgUnitResolver _orgUnitResolver;
     private readonly IStageValidationService _stageValidationService;
@@ -20,6 +25,7 @@ public sealed class CreateTopicCommandHandler : IRequestHandler<CreateTopicComma
     public CreateTopicCommandHandler(
         ITopicRepository topicRepository,
         IDirectionRepository directionRepository,
+        IStaffAssignmentRepository staffAssignmentRepository,
         ICurrentUserProvider currentUserProvider,
         IOrgUnitResolver orgUnitResolver,
         IStageValidationService stageValidationService,
@@ -27,6 +33,7 @@ public sealed class CreateTopicCommandHandler : IRequestHandler<CreateTopicComma
     {
         _topicRepository = topicRepository;
         _directionRepository = directionRepository;
+        _staffAssignmentRepository = staffAssignmentRepository;
         _currentUserProvider = currentUserProvider;
         _orgUnitResolver = orgUnitResolver;
         _stageValidationService = stageValidationService;
@@ -71,6 +78,46 @@ public sealed class CreateTopicCommandHandler : IRequestHandler<CreateTopicComma
         if (!isAllowed)
         {
             return Result.Failure<long>(new Error("Topics.StageClosed", errorMessage ?? "The topic formation stage is closed."));
+        }
+
+        // Validate MaxWorkload: sum of MaxParticipants of all existing topics + new topic must not exceed MaxWorkload
+        var supervisorAssignments = await _staffAssignmentRepository.GetByRoleAsync(
+            "OrgUnit", orgUnitId, StaffRoleType.Supervisor, cancellationToken);
+
+        var assignment = supervisorAssignments
+            .Where(a => a.IsActive && !a.IsDeleted && a.UserId == currentUserId)
+            .FirstOrDefault(a =>
+            {
+                if (string.IsNullOrEmpty(a.MetadataJson)) return false;
+                try
+                {
+                    var meta = JsonSerializer.Deserialize<EmployeeAssignmentMetadata>(a.MetadataJson);
+                    return meta?.SemesterId == request.SemesterId && meta?.SpecialityId == request.SpecialityId;
+                }
+                catch { return false; }
+            });
+
+        if (assignment != null)
+        {
+            var metadata = JsonSerializer.Deserialize<EmployeeAssignmentMetadata>(assignment.MetadataJson!);
+            int? maxWorkload = metadata?.MaxWorkload;
+
+                if (maxWorkload.HasValue)
+                {
+                    var existingTopics = await _topicRepository.GetBySupervisorAsync(currentUserId, request.SemesterId, cancellationToken);
+                    int currentTotal = existingTopics
+                        .Where(t => t.Status == TopicStatus.Approved
+                                 || t.Status == TopicStatus.Pending
+                                 || t.Status == TopicStatus.Closed
+                                 || t.Status == TopicStatus.Reconciled)
+                        .Sum(t => t.MaxParticipants);
+
+                    if (currentTotal + request.MaxParticipants > maxWorkload.Value)
+                    {
+                        return Result.Failure<long>(new Error("Supervisor.WorkloadExceeded",
+                            $"Creating this topic would exceed your MaxWorkload. Current: {currentTotal}, New: {request.MaxParticipants}, Max: {maxWorkload.Value}."));
+                    }
+                }
         }
 
         var topic = new Topic(

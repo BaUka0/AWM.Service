@@ -5,5 +5,6 @@ public record TeacherDto(
     string FullName,
     string? Email,
     string PositionTitle,
-    int? MaxWorkload = null
+    int? MaxWorkload = null,
+    int CurrentStudents = 0
 );

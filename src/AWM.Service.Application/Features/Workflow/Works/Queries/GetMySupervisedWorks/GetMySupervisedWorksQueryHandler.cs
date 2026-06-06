@@ -56,6 +56,11 @@ public sealed class GetMySupervisedWorksQueryHandler : IRequestHandler<GetMySupe
         // Get works supervised by the current teacher
         var works = await _studentWorkRepository.GetBySupervisorAsync(currentUserId, currentSemester.Id, cancellationToken);
 
+        // Bulk load work details (includes QualityChecks, Attachments, WorkflowHistory, WorkReviews)
+        var workIds = works.Select(w => w.Id).ToList();
+        var worksWithDetails = await _studentWorkRepository.GetByIdsWithDetailsAsync(workIds, cancellationToken);
+        var workDetailsMap = worksWithDetails.ToDictionary(w => w.Id);
+
         // Get all topics supervised by the current teacher (including those without StudentWork yet)
         var topics = await _topicRepository.GetBySupervisorAsync(currentUserId, currentSemester.Id, cancellationToken);
 
@@ -171,6 +176,19 @@ public sealed class GetMySupervisedWorksQueryHandler : IRequestHandler<GetMySupe
                 r.CreatedAt.ToString("dd.MM.yyyy HH:mm")
             )).ToList();
 
+            // Build QualityChecks summary from detailed work data
+            var qualityChecksSummary = new List<QualityCheckSummaryDto>();
+            if (workDetailsMap.TryGetValue(work.Id, out var workDetail))
+            {
+                qualityChecksSummary = workDetail.QualityChecks.Select(qc => new QualityCheckSummaryDto(
+                    qc.CheckTypeId,
+                    MapCheckTypeName(qc.CheckTypeId),
+                    qc.IsPassed,
+                    qc.ResultValue,
+                    qc.AttemptNumber
+                )).ToList();
+            }
+
             var workDto = new SupervisedWorkDto(
                 work.Id,
                 stageKey,
@@ -181,7 +199,9 @@ public sealed class GetMySupervisedWorksQueryHandler : IRequestHandler<GetMySupe
                 projectFiles,
                 supervisorFiles,
                 notes,
-                new SupervisedTopicDto(topic?.Id ?? 0, new MultilingualTextDto(topic?.TitleRu ?? "", topic?.TitleKz ?? "", topic?.TitleEn ?? ""))
+                new SupervisedTopicDto(topic?.Id ?? 0, new MultilingualTextDto(topic?.TitleRu ?? "", topic?.TitleKz ?? "", topic?.TitleEn ?? "")),
+                false,
+                qualityChecksSummary
             );
 
             result.Add(workDto);
@@ -233,5 +253,16 @@ public sealed class GetMySupervisedWorksQueryHandler : IRequestHandler<GetMySupe
             systemName.Equals("ReadyForDefense", StringComparison.OrdinalIgnoreCase))
             return "defense";
         return "development";
+    }
+
+    private static string MapCheckTypeName(int checkTypeId)
+    {
+        return checkTypeId switch
+        {
+            1 => "NormControl",
+            2 => "AntiPlagiarism",
+            3 => "SoftwareCheck",
+            _ => "Unknown"
+        };
     }
 }

@@ -6,6 +6,7 @@ using AWM.Service.Application.Features.Workflow.Works.Commands.SubmitSupervisorR
 using AWM.Service.Application.Features.Workflow.Reviews.Commands.UploadRecension;
 using AWM.Service.Application.Features.Workflow.Works.Queries.GetMySupervisedWorks;
 using AWM.Service.Application.Features.Workflow.Works.Queries.GetMyWorkProgress;
+using AWM.Service.Application.Features.Workflow.Works.Queries.GetWorkHistory;
 using AWM.Service.Application.Features.Workflow.Reviews.Queries.GetReviewsByWork;
 using AWM.Service.Application.Features.Workflow.Reviews.Queries.GetReviewStatus;
 using AWM.Service.Application.Features.Workflow.Reviews.DTOs;
@@ -268,6 +269,21 @@ public sealed class WorksController : BaseController
             return HandleResultError(result.Error);
 
         return Ok();
+    }
+
+    /// <summary>
+    /// Gets the workflow history for a specific student work.
+    /// </summary>
+    [HttpGet("{workId:long}/history")]
+    [RequireAccess("THESIS.WORK", "Read")]
+    [ProducesResponseType(typeof(IReadOnlyList<WorkHistoryResponse>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetWorkHistory(long workId, CancellationToken ct)
+    {
+        var result = await _sender.Send(new GetWorkHistoryQuery(workId), ct);
+        if (result.IsFailed)
+            return HandleResultError(result.Error);
+
+        return Ok(result.Value);
     }
 
     /// <summary>

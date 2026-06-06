@@ -5,5 +5,6 @@ public record TeacherResponse(
     string FullName,
     string? Email,
     string PositionTitle,
-    int? MaxWorkload
+    int? MaxWorkload,
+    int CurrentStudents = 0
 );

@@ -23,6 +23,13 @@ public record SupervisedTopicDto(
     long Id,
     MultilingualTextDto Title);
 
+public record QualityCheckSummaryDto(
+    int CheckTypeId,
+    string CheckTypeName,
+    bool IsPassed,
+    decimal? ResultValue,
+    int AttemptNumber);
+
 public record SupervisedWorkDto(
     long WorkId,
     string StageKey,
@@ -34,4 +41,5 @@ public record SupervisedWorkDto(
     IReadOnlyList<SupervisedFileDto> SupervisorFiles,
     IReadOnlyList<SupervisedNoteDto> Notes,
     SupervisedTopicDto Topic,
-    bool IsAwaitingDepartmentApproval = false);
+    bool IsAwaitingDepartmentApproval = false,
+    IReadOnlyList<QualityCheckSummaryDto>? QualityChecksSummary = null);

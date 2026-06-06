@@ -2,10 +2,12 @@ using AWM.Service.Application.Features.Defense.Schedules.Commands.AddGrade;
 using AWM.Service.Application.Features.Defense.Schedules.Commands.GenerateSchedule;
 using AWM.Service.Application.Features.Defense.Schedules.Commands.StartReconciliation;
 using AWM.Service.Application.Features.Defense.Schedules.Queries.GetMyDefenseStep;
+using AWM.Service.Application.Features.Defense.Schedules.Queries.GetScheduleByWork;
 using AWM.Service.Application.Features.Defense.Schedules.Queries.GetScheduleGrades;
 using AWM.Service.Application.Features.Defense.Schedules.Queries.GetSchedulesByCommission;
 using AWM.Service.WebAPI.Authorization;
 using AWM.Service.WebAPI.Common.Contracts.Requests.Defense;
+using AWM.Service.WebAPI.Common.Contracts.Responses.Defense;
 using Mapster;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -138,6 +140,24 @@ public sealed class SchedulesController : BaseController
         CancellationToken cancellationToken)
     {
         var result = await _sender.Send(new GetSchedulesByCommissionQuery(commissionId), cancellationToken);
+        if (result.IsFailed)
+        {
+            return HandleResultError(result.Error);
+        }
+        return Ok(result.Value);
+    }
+
+    /// <summary>
+    /// Gets the defense schedule for a specific student work.
+    /// </summary>
+    [HttpGet("by-work/{workId:long}")]
+    [RequireAccess("SYSTEM.STAGE", "Read")]
+    [ProducesResponseType(typeof(ScheduleByWorkResponse), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetByWorkId(
+        long workId,
+        CancellationToken cancellationToken)
+    {
+        var result = await _sender.Send(new GetScheduleByWorkQuery(workId), cancellationToken);
         if (result.IsFailed)
         {
             return HandleResultError(result.Error);

@@ -23,6 +23,13 @@ public record SupervisedTopicResponse(
     long Id,
     MultilingualTextResponse Title);
 
+public record QualityCheckSummaryResponse(
+    int CheckTypeId,
+    string CheckTypeName,
+    bool IsPassed,
+    decimal? ResultValue,
+    int AttemptNumber);
+
 public record SupervisedWorkResponse(
     long WorkId,
     string StageKey,
@@ -34,4 +41,5 @@ public record SupervisedWorkResponse(
     IReadOnlyList<SupervisedFileResponse> SupervisorFiles,
     IReadOnlyList<SupervisedNoteResponse> Notes,
     SupervisedTopicResponse Topic,
-    bool IsAwaitingDepartmentApproval = false);
+    bool IsAwaitingDepartmentApproval = false,
+    IReadOnlyList<QualityCheckSummaryResponse>? QualityChecksSummary = null);
