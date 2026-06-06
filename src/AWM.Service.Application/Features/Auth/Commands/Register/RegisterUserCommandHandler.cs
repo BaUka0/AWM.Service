@@ -30,11 +30,6 @@ public class RegisterUserCommandHandler : IRequestHandler<RegisterUserCommand, R
 
     public async Task<Result<int>> Handle(RegisterUserCommand request, CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
-        {
-            return Result.Failure<int>(new Error(ErrorCodes.RegisterInvalidData, "Email и пароль обязательны."));
-        }
-
         var user = await _userRepository.GetByEmailAsync(request.Email, cancellationToken);
         if (user == null)
         {

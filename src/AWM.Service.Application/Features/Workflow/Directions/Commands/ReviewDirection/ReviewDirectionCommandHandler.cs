@@ -73,9 +73,7 @@ public sealed class ReviewDirectionCommandHandler : IRequestHandler<ReviewDirect
             case ReviewDecision.RequireRevision:
                 var revisionState = await _workflowRepository.GetStateBySystemNameAsync(direction.WorkTypeId, DirectionStates.RequiresRevision, cancellationToken);
                 if (revisionState == null) return Result.Failure<Unit>(new Error("State.NotFound", "Requires Revision state not found."));
-                if (string.IsNullOrWhiteSpace(request.Comment))
-                    return Result.Failure<Unit>(new Error("Review.CommentRequired", "Comment is required when requesting revision."));
-                direction.RequestRevision(revisionState.Id, reviewerUserId, request.Comment);
+                direction.RequestRevision(revisionState.Id, reviewerUserId, request.Comment!);
                 break;
 
             default:

@@ -43,10 +43,7 @@ public sealed class ReviewTopicCommandHandler : IRequestHandler<ReviewTopicComma
         }
         else
         {
-            if (string.IsNullOrWhiteSpace(request.Comment))
-                return Result.Failure(new Error("Topics.CommentRequired", "Comment is required when rejecting a topic."));
-
-            topic.Reject(currentUserId, request.Comment);
+            topic.Reject(currentUserId, request.Comment!);
         }
 
         await _topicRepository.UpdateAsync(topic, cancellationToken);

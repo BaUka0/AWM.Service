@@ -54,11 +54,6 @@ public sealed class MarkAsGraduatedCommandHandler : IRequestHandler<MarkAsGradua
             return Result.Failure<Unit>(new Error("Forbidden", "Only Commission Secretary or Chairman can graduate students."));
         }
 
-        if (request.WorkIds == null || !request.WorkIds.Any())
-        {
-            return Result.Success(Unit.Value);
-        }
-
         var works = await _studentWorkRepository.GetByIdsAsync(request.WorkIds, cancellationToken);
 
         foreach (var work in works)

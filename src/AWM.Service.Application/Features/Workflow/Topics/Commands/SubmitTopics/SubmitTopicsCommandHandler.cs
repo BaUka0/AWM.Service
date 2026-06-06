@@ -35,9 +35,6 @@ public sealed class SubmitTopicsCommandHandler : IRequestHandler<SubmitTopicsCom
 
     public async Task<Result> Handle(SubmitTopicsCommand request, CancellationToken cancellationToken)
     {
-        if (request.TopicIds == null || !request.TopicIds.Any())
-            return Result.Failure(new Error("Topics.EmptyList", "No topic IDs provided."));
-
         if (!_currentUserProvider.UserId.HasValue)
             return Result.Failure(new Error("Auth.Unauthorized", "User is not authenticated."));
 

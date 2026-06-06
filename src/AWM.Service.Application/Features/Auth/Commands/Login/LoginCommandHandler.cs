@@ -39,11 +39,6 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<AuthResu
 
     public async Task<Result<AuthResult>> Handle(LoginCommand request, CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(request.Login) || string.IsNullOrWhiteSpace(request.Password))
-        {
-            return Result.Failure<AuthResult>(new Error(ErrorCodes.AuthInvalidCredentials, "Логин и пароль обязательны для заполнения."));
-        }
-
         var user = await _userRepository.GetByLoginAsync(request.Login, cancellationToken);
         if (user == null)
         {

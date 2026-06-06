@@ -35,11 +35,6 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, R
 
     public async Task<Result<AuthResult>> Handle(RefreshTokenCommand request, CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(request.RefreshToken))
-        {
-            return Result.Failure<AuthResult>(new Error(ErrorCodes.AuthInvalidRefreshToken, "Токен восстановления обязателен."));
-        }
-
         var localAccount = await _localAccountRepository.GetByRefreshTokenAsync(request.RefreshToken, cancellationToken);
         if (localAccount == null || !localAccount.IsActive)
         {
