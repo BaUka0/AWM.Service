@@ -480,6 +480,7 @@ CREATE TABLE [Thesis].[StudentWorks] (
     [IsDeleted]         BIT NOT NULL DEFAULT 0,
     [DeletedAt]         DATETIME2,
     [DeletedBy]         INT,
+    CONSTRAINT [UQ_Works_Topic] UNIQUE ([TopicId]),
     CONSTRAINT [FK_Works_Topic] FOREIGN KEY ([TopicId]) REFERENCES [Thesis].[Topics]([Id]),
     CONSTRAINT [FK_Works_Semester] FOREIGN KEY ([SemesterId]) REFERENCES [Edu_Semesters]([ID]),
     CONSTRAINT [FK_Works_Dept] FOREIGN KEY ([OrgUnitId]) REFERENCES [Edu_OrgUnits]([ID]),

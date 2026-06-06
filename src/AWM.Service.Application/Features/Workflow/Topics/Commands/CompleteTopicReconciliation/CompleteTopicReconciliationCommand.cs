@@ -12,4 +12,5 @@ namespace AWM.Service.Application.Features.Workflow.Topics.Commands.CompleteTopi
 /// </summary>
 public record CompleteTopicReconciliationCommand(
     int OrgUnitId,
-    int SemesterId) : IRequest<Result>;
+    int SemesterId,
+    int? SpecialityId = null) : IRequest<Result>;

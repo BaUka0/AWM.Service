@@ -131,6 +131,11 @@ public class StudentWorkConfiguration : SoftDeletableEntityConfiguration<Student
             .HasField("_workflowHistory")
             .UsePropertyAccessMode(PropertyAccessMode.Field);
 
+        // Unique index on TopicId to prevent duplicate StudentWorks for the same topic
+        builder.HasIndex(e => e.TopicId)
+            .IsUnique()
+            .HasDatabaseName("UQ_Works_Topic");
+
         // Index for filtering
         builder.HasIndex(e => new { e.OrgUnitId, e.SemesterId, e.CurrentStateId })
             .HasDatabaseName("IX_StudentWorks_Filter");

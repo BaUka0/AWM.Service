@@ -232,6 +232,23 @@ public class Topic : AggregateRoot<long>, IAuditable, ISoftDeletable
         Status = TopicStatus.Inactive;
         ReviewedBy = reviewedBy;
         ReviewedAt = DateTime.UtcNow;
+
+        // Reject all pending applications
+        var pendingApplications = _applications
+            .Where(a => a.StatusId == (int)ApplicationStatusType.Submitted)
+            .ToList();
+
+        foreach (var application in pendingApplications)
+        {
+            application.Reject(reviewedBy, "Тема отмечена неактуальной кафедрой");
+        }
+
+        var studentIds = _applications
+            .Where(a => a.StatusId == (int)ApplicationStatusType.Accepted)
+            .Select(a => a.StudentId)
+            .ToList();
+
+        RaiseDomainEvent(new TopicMarkedInactiveEvent(Id, reviewedBy, SpecialityId, studentIds));
     }
 
     /// <summary>
@@ -243,12 +260,38 @@ public class Topic : AggregateRoot<long>, IAuditable, ISoftDeletable
         if (Status != TopicStatus.Approved && Status != TopicStatus.Closed)
             throw new DomainException("Topic.CannotReconcile", "Only approved or closed topics can be reconciled.");
 
+        var acceptedCount = _applications.Count(a => a.StatusId == (int)ApplicationStatusType.Accepted);
+
+        if (acceptedCount == 0)
+            throw new DomainException("Topic.NoAcceptedStudents", "Cannot reconcile topic without accepted students.");
+
+        // Warning: this should not happen due to backend validation, but kept for consistency
+        if (acceptedCount > MaxParticipants)
+        {
+            RaiseDomainEvent(new TopicExcessApplicationsWarningEvent(Id, acceptedCount, MaxParticipants));
+        }
+
+        // Reject all pending applications
+        var pendingApplications = _applications
+            .Where(a => a.StatusId == (int)ApplicationStatusType.Submitted)
+            .ToList();
+
+        foreach (var application in pendingApplications)
+        {
+            application.Reject(reviewedBy, "Тема согласована кафедрой — заявка отклонена");
+        }
+
         Status = TopicStatus.Reconciled;
         ReviewedBy = reviewedBy;
         ReviewedAt = DateTime.UtcNow;
         ReviewComment = null;
 
-        RaiseDomainEvent(new TopicApprovedEvent(Id));
+        var studentIds = _applications
+            .Where(a => a.StatusId == (int)ApplicationStatusType.Accepted)
+            .Select(a => a.StudentId)
+            .ToList();
+
+        RaiseDomainEvent(new TopicReconciledEvent(Id, reviewedBy, SpecialityId, studentIds));
     }
 
     /// <summary>
@@ -267,6 +310,13 @@ public class Topic : AggregateRoot<long>, IAuditable, ISoftDeletable
         ReviewedBy = reviewedBy;
         ReviewedAt = DateTime.UtcNow;
         ReviewComment = comment;
+
+        var studentIds = _applications
+            .Where(a => a.StatusId == (int)ApplicationStatusType.Accepted)
+            .Select(a => a.StudentId)
+            .ToList();
+
+        RaiseDomainEvent(new TopicSentBackForRevisionEvent(Id, reviewedBy, comment, studentIds));
     }
 
     public void AddApplication(TopicApplication application)

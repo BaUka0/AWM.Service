@@ -23,6 +23,12 @@ public interface ITopicRepository
 {
     Task<Topic?> GetByIdAsync(long id, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Topic>> GetByIdsAsync(IEnumerable<long> ids, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets topics by IDs with their applications loaded.
+    /// </summary>
+    Task<IReadOnlyList<Topic>> GetByIdsWithApplicationsAsync(IEnumerable<long> ids, CancellationToken cancellationToken = default);
+
     Task<IReadOnlyList<Topic>> GetByOrgUnitAsync(int orgUnitId, int semesterId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Topic>> GetByOrgUnitWithApplicationsAsync(int orgUnitId, int semesterId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Topic>> GetBySupervisorAsync(int userId, int semesterId, CancellationToken cancellationToken = default);
@@ -59,6 +65,12 @@ public interface IStudentWorkRepository
     Task<IReadOnlyList<StudentWork>> GetByOrgUnitWithParticipantsAndQualityChecksAsync(int orgUnitId, int semesterId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<StudentWork>> GetBySupervisorAsync(int userId, int semesterId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<StudentWork>> GetByStateAsync(int stateId, int orgUnitId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Checks if a StudentWork already exists for a given topic.
+    /// Prevents duplicate StudentWork creation on repeated reconciliation completion.
+    /// </summary>
+    Task<bool> ExistsByTopicIdAsync(long topicId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets works by department with pagination (recommended for large datasets).

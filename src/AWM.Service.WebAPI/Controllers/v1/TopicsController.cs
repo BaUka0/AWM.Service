@@ -374,7 +374,7 @@ public sealed class TopicsController : BaseController
         CancellationToken cancellationToken)
     {
         var result = await _sender.Send(
-            new CompleteTopicReconciliationCommand(request.OrgUnitId, request.SemesterId),
+            new CompleteTopicReconciliationCommand(request.OrgUnitId, request.SemesterId, request.SpecialityId),
             cancellationToken);
 
         if (result.IsFailed)

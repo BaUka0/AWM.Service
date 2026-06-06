@@ -33,6 +33,28 @@ public sealed record TopicsSubmittedForApprovalEvent(IReadOnlyList<long> TopicId
 public sealed record TopicsReconciledEvent(IReadOnlyList<long> TopicIds, int ReconciledBy) : DomainEventBase;
 
 /// <summary>
+/// Event raised when a single topic is reconciled (final approval by department).
+/// </summary>
+public sealed record TopicReconciledEvent(long TopicId, int ReconciledBy, int? SpecialityId, IReadOnlyList<int> StudentIds) : DomainEventBase;
+
+/// <summary>
+/// Event raised when a single topic is marked as inactive (no students applied).
+/// </summary>
+public sealed record TopicMarkedInactiveEvent(long TopicId, int MarkedBy, int? SpecialityId, IReadOnlyList<int> StudentIds) : DomainEventBase;
+
+/// <summary>
+/// Warning event raised when a topic has more accepted applications than MaxParticipants.
+/// This is non-blocking and used for logging/metrics.
+/// </summary>
+public sealed record TopicExcessApplicationsWarningEvent(long TopicId, int AcceptedCount, int MaxParticipants) : DomainEventBase;
+
+/// <summary>
+/// Event raised when a topic is sent back to supervisor for revision.
+/// Notifies supervisor and accepted students.
+/// </summary>
+public sealed record TopicSentBackForRevisionEvent(long TopicId, int ReviewedBy, string Comment, IReadOnlyList<int> StudentIds) : DomainEventBase;
+
+/// <summary>
 /// Event raised when topic reconciliation stage is completed for a department/semester.
 /// This triggers downstream processes (e.g., StudentWork creation).
 /// </summary>

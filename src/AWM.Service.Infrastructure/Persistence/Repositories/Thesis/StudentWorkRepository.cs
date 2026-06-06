@@ -204,6 +204,14 @@ public sealed class StudentWorkRepository : RepositoryBase<StudentWork, long>, I
     }
 
     /// <inheritdoc />
+    public async Task<bool> ExistsByTopicIdAsync(long topicId, CancellationToken cancellationToken = default)
+    {
+        return await Context.StudentWorks
+            .AsNoTracking()
+            .AnyAsync(w => w.TopicId == topicId, cancellationToken);
+    }
+
+    /// <inheritdoc />
     public override async Task AddAsync(StudentWork work, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(work);

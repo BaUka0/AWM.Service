@@ -30,6 +30,9 @@ public sealed class WorkflowNotificationHandlers :
     INotificationHandler<TopicCreatedEvent>,
     INotificationHandler<TopicApprovedEvent>,
     INotificationHandler<TopicsSubmittedForApprovalEvent>,
+    INotificationHandler<TopicReconciledEvent>,
+    INotificationHandler<TopicMarkedInactiveEvent>,
+    INotificationHandler<TopicSentBackForRevisionEvent>,
     INotificationHandler<TopicReconciliationCompletedEvent>,
     INotificationHandler<WorkCreatedEvent>,
     INotificationHandler<WorkStateChangedEvent>,
@@ -380,5 +383,95 @@ public sealed class WorkflowNotificationHandlers :
                 relatedEntityId: notification.OrgUnitId,
                 cancellationToken: cancellationToken);
         }
+    }
+
+    /// <inheritdoc />
+    public async Task Handle(TopicReconciledEvent notification, CancellationToken cancellationToken)
+    {
+        var topic = await _topicRepository.GetByIdAsync(notification.TopicId, cancellationToken);
+        if (topic == null) return;
+
+        // Notify students with accepted applications
+        if (notification.StudentIds.Any())
+        {
+            await _notificationService.SendToManyAsync(
+                userIds: notification.StudentIds.ToList(),
+                title: "Тема согласована",
+                createdBy: notification.ReconciledBy,
+                body: $"Ваша тема \"{topic.TitleRu}\" согласована кафедрой.",
+                relatedEntityType: "Topic",
+                relatedEntityId: notification.TopicId,
+                cancellationToken: cancellationToken);
+        }
+
+        // Notify supervisor
+        await _notificationService.SendAsync(
+            userId: topic.CreatedBy,
+            title: "Тема согласована",
+            createdBy: notification.ReconciledBy,
+            body: $"Тема \"{topic.TitleRu}\" согласована кафедрой.",
+            relatedEntityType: "Topic",
+            relatedEntityId: notification.TopicId,
+            cancellationToken: cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task Handle(TopicMarkedInactiveEvent notification, CancellationToken cancellationToken)
+    {
+        var topic = await _topicRepository.GetByIdAsync(notification.TopicId, cancellationToken);
+        if (topic == null) return;
+
+        // Notify students with accepted applications (if any)
+        if (notification.StudentIds.Any())
+        {
+            await _notificationService.SendToManyAsync(
+                userIds: notification.StudentIds.ToList(),
+                title: "Тема отмечена неактуальной",
+                createdBy: notification.MarkedBy,
+                body: $"Тема \"{topic.TitleRu}\" отмечена неактуальной кафедрой (нет заявок студентов).",
+                relatedEntityType: "Topic",
+                relatedEntityId: notification.TopicId,
+                cancellationToken: cancellationToken);
+        }
+
+        // Notify supervisor
+        await _notificationService.SendAsync(
+            userId: topic.CreatedBy,
+            title: "Тема отмечена неактуальной",
+            createdBy: notification.MarkedBy,
+            body: $"Тема \"{topic.TitleRu}\" отмечена неактуальной кафедрой (нет заявок студентов).",
+            relatedEntityType: "Topic",
+            relatedEntityId: notification.TopicId,
+            cancellationToken: cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task Handle(TopicSentBackForRevisionEvent notification, CancellationToken cancellationToken)
+    {
+        var topic = await _topicRepository.GetByIdAsync(notification.TopicId, cancellationToken);
+        if (topic == null) return;
+
+        // Notify students with accepted applications
+        if (notification.StudentIds.Any())
+        {
+            await _notificationService.SendToManyAsync(
+                userIds: notification.StudentIds.ToList(),
+                title: "Тема отправлена на доработку",
+                createdBy: notification.ReviewedBy,
+                body: $"Ваша тема \"{topic.TitleRu}\" отправлена на доработку. Комментарий кафедры: {notification.Comment}",
+                relatedEntityType: "Topic",
+                relatedEntityId: notification.TopicId,
+                cancellationToken: cancellationToken);
+        }
+
+        // Notify supervisor
+        await _notificationService.SendAsync(
+            userId: topic.CreatedBy,
+            title: "Тема отправлена на доработку",
+            createdBy: notification.ReviewedBy,
+            body: $"Тема \"{topic.TitleRu}\" отправлена на доработку. Комментарий кафедры: {notification.Comment}",
+            relatedEntityType: "Topic",
+            relatedEntityId: notification.TopicId,
+            cancellationToken: cancellationToken);
     }
 }

@@ -38,6 +38,16 @@ public sealed class TopicRepository : RepositoryBase<Topic, long>, ITopicReposit
     }
 
     /// <inheritdoc />
+    public async Task<IReadOnlyList<Topic>> GetByIdsWithApplicationsAsync(IEnumerable<long> ids, CancellationToken cancellationToken = default)
+    {
+        var idList = ids.ToList();
+        return await Context.Topics
+            .Include(t => t.Applications)
+            .Where(t => idList.Contains(t.Id))
+            .ToListAsync(cancellationToken);
+    }
+
+    /// <inheritdoc />
     public async Task<IReadOnlyList<Topic>> GetByOrgUnitAsync(
         int orgUnitId,
         int semesterId,

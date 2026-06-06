@@ -1,4 +1,6 @@
 using AWM.Service.Application.Features.Workflow.Topics.DTOs;
+using AWM.Service.Domain.Common;
+using AWM.Service.Domain.CommonDomain.Services;
 using AWM.Service.Domain.Repositories;
 using AWM.Service.Domain.Thesis.Entities;
 using AWM.Service.Domain.Thesis.Enums;
@@ -9,8 +11,8 @@ namespace AWM.Service.Application.Features.Workflow.Topics.Queries.GetReconcilia
 
 /// <summary>
 /// Handles <see cref="GetReconciliationSummaryQuery"/>.
-/// Loads all topics eligible for reconciliation, resolves supervisor names via IUserRepository,
-/// and computes aggregate statistics for the department dashboard.
+/// Validates user has orgUnit access, loads all topics eligible for reconciliation,
+/// resolves supervisor names via IUserRepository, and computes aggregate statistics.
 /// </summary>
 public sealed class GetReconciliationSummaryQueryHandler
     : IRequestHandler<GetReconciliationSummaryQuery, Result<TopicReconciliationSummaryDto>>
@@ -19,23 +21,44 @@ public sealed class GetReconciliationSummaryQueryHandler
     private readonly IUserRepository _userRepository;
     private readonly IDirectionRepository _directionRepository;
     private readonly IWorkflowRepository _workflowRepository;
+    private readonly ICurrentUserProvider _currentUserProvider;
+    private readonly IEmployeeReadOnlyRepository _employeeRepository;
 
     public GetReconciliationSummaryQueryHandler(
         ITopicRepository topicRepository,
         IUserRepository userRepository,
         IDirectionRepository directionRepository,
-        IWorkflowRepository workflowRepository)
+        IWorkflowRepository workflowRepository,
+        ICurrentUserProvider currentUserProvider,
+        IEmployeeReadOnlyRepository employeeRepository)
     {
         _topicRepository = topicRepository;
         _userRepository = userRepository;
         _directionRepository = directionRepository;
         _workflowRepository = workflowRepository;
+        _currentUserProvider = currentUserProvider;
+        _employeeRepository = employeeRepository;
     }
 
     public async Task<Result<TopicReconciliationSummaryDto>> Handle(
         GetReconciliationSummaryQuery request,
         CancellationToken cancellationToken)
     {
+        if (!_currentUserProvider.UserId.HasValue)
+            return Result.Failure<TopicReconciliationSummaryDto>(new Error("Auth.Unauthorized", "User is not authenticated."));
+
+        var currentUserId = _currentUserProvider.UserId.Value;
+
+        // Validate user has access to the orgUnit via employee positions
+        var employee = await _employeeRepository.GetByUserIdAsync(currentUserId, cancellationToken);
+        var hasOrgUnitAccess = employee?.Positions.Any(p => p.OrgUnitId == request.OrgUnitId) ?? false;
+        if (!hasOrgUnitAccess)
+        {
+            return Result.Failure<TopicReconciliationSummaryDto>(new Error(
+                "Auth.OrgUnitAccessDenied",
+                "You do not have access to this department."));
+        }
+
         var topics = await _topicRepository.GetByOrgUnitForReconciliationAsync(
             request.OrgUnitId, request.SemesterId, cancellationToken);
 

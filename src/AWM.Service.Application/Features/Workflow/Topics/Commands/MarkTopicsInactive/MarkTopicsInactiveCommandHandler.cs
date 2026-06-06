@@ -9,20 +9,26 @@ namespace AWM.Service.Application.Features.Workflow.Topics.Commands.MarkTopicsIn
 /// <summary>
 /// Handles <see cref="MarkTopicsInactiveCommand"/>.
 /// Marks topics without student applications as inactive.
+/// Validates user has orgUnit access before processing.
+/// Domain events (TopicMarkedInactiveEvent) are raised and handled
+/// by <see cref="WorkflowNotificationHandlers"/> for notifications.
 /// </summary>
 public sealed class MarkTopicsInactiveCommandHandler : IRequestHandler<MarkTopicsInactiveCommand, Result>
 {
     private readonly ITopicRepository _topicRepository;
     private readonly ICurrentUserProvider _currentUserProvider;
+    private readonly IEmployeeReadOnlyRepository _employeeRepository;
     private readonly IUnitOfWork _unitOfWork;
 
     public MarkTopicsInactiveCommandHandler(
         ITopicRepository topicRepository,
         ICurrentUserProvider currentUserProvider,
+        IEmployeeReadOnlyRepository employeeRepository,
         IUnitOfWork unitOfWork)
     {
         _topicRepository = topicRepository;
         _currentUserProvider = currentUserProvider;
+        _employeeRepository = employeeRepository;
         _unitOfWork = unitOfWork;
     }
 
@@ -32,7 +38,7 @@ public sealed class MarkTopicsInactiveCommandHandler : IRequestHandler<MarkTopic
             return Result.Failure(new Error("Auth.Unauthorized", "User is not authenticated."));
 
         var currentUserId = _currentUserProvider.UserId.Value;
-        var topics = await _topicRepository.GetByIdsAsync(request.TopicIds, cancellationToken);
+        var topics = await _topicRepository.GetByIdsWithApplicationsAsync(request.TopicIds, cancellationToken);
 
         if (topics.Count != request.TopicIds.Count)
         {
@@ -41,9 +47,25 @@ public sealed class MarkTopicsInactiveCommandHandler : IRequestHandler<MarkTopic
             return Result.Failure(new Error("Topics.NotFound", $"Topics not found: {string.Join(", ", missingIds)}"));
         }
 
+        // Validate user has access to the topics' orgUnit via employee positions
+        var orgUnitId = topics.First().OrgUnitId;
+        if (topics.Any(t => t.OrgUnitId != orgUnitId))
+        {
+            return Result.Failure(new Error("Topics.MultipleOrgUnits", "All topics must belong to the same department."));
+        }
+
+        var employee = await _employeeRepository.GetByUserIdAsync(currentUserId, cancellationToken);
+        var hasOrgUnitAccess = employee?.Positions.Any(p => p.OrgUnitId == orgUnitId) ?? false;
+        if (!hasOrgUnitAccess)
+        {
+            return Result.Failure(new Error(
+                "Auth.OrgUnitAccessDenied",
+                "You do not have access to this department."));
+        }
+
         foreach (var topic in topics)
         {
-            // Domain method validates status
+            // Domain method validates status and raises TopicMarkedInactiveEvent
             topic.MarkInactive(currentUserId);
             await _topicRepository.UpdateAsync(topic, cancellationToken);
         }
