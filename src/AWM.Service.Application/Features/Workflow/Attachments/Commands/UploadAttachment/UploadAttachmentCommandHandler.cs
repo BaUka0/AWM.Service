@@ -20,7 +20,6 @@ public sealed class UploadAttachmentCommandHandler : IRequestHandler<UploadAttac
     private readonly IWorkflowRepository _workflowRepository;
     private readonly ICurrentUserProvider _currentUserProvider;
     private readonly IAttachmentService _attachmentService;
-    private readonly StorageSettings _storageSettings;
     private readonly IUnitOfWork _unitOfWork;
 
     public UploadAttachmentCommandHandler(
@@ -30,7 +29,6 @@ public sealed class UploadAttachmentCommandHandler : IRequestHandler<UploadAttac
         IWorkflowRepository workflowRepository,
         ICurrentUserProvider currentUserProvider,
         IAttachmentService attachmentService,
-        IOptions<StorageSettings> storageSettingsOptions,
         IUnitOfWork unitOfWork)
     {
         _studentWorkRepository = studentWorkRepository;
@@ -39,7 +37,6 @@ public sealed class UploadAttachmentCommandHandler : IRequestHandler<UploadAttac
         _workflowRepository = workflowRepository;
         _currentUserProvider = currentUserProvider;
         _attachmentService = attachmentService;
-        _storageSettings = storageSettingsOptions.Value;
         _unitOfWork = unitOfWork;
     }
 
@@ -80,12 +77,7 @@ public sealed class UploadAttachmentCommandHandler : IRequestHandler<UploadAttac
             return Result.Failure<long>(new Error("AttachmentTypes.NotFound", $"Attachment type with ID {request.AttachmentTypeId} not found."));
         }
 
-        // Validate size
-        long maxSizeBytes = _storageSettings.MaxAttachmentSizeMb * 1024L * 1024L;
-        if (request.FileSizeBytes > maxSizeBytes)
-        {
-            return Result.Failure<long>(new Error("Attachments.FileTooLarge", $"File size exceeds limit of {_storageSettings.MaxAttachmentSizeMb} MB."));
-        }
+
 
         // Compute file hash
         var hash = await _attachmentService.ComputeHashAsync(request.FileStream, cancellationToken);

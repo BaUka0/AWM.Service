@@ -20,7 +20,6 @@ public sealed class UploadExpertDocumentCommandHandler : IRequestHandler<UploadE
     private readonly IStaffAssignmentRepository _staffAssignmentRepository;
     private readonly ICurrentUserProvider _currentUserProvider;
     private readonly IAttachmentService _attachmentService;
-    private readonly StorageSettings _storageSettings;
     private readonly IUnitOfWork _unitOfWork;
 
     public UploadExpertDocumentCommandHandler(
@@ -29,7 +28,6 @@ public sealed class UploadExpertDocumentCommandHandler : IRequestHandler<UploadE
         IStaffAssignmentRepository staffAssignmentRepository,
         ICurrentUserProvider currentUserProvider,
         IAttachmentService attachmentService,
-        IOptions<StorageSettings> storageSettingsOptions,
         IUnitOfWork unitOfWork)
     {
         _studentWorkRepository = studentWorkRepository;
@@ -37,7 +35,6 @@ public sealed class UploadExpertDocumentCommandHandler : IRequestHandler<UploadE
         _staffAssignmentRepository = staffAssignmentRepository;
         _currentUserProvider = currentUserProvider;
         _attachmentService = attachmentService;
-        _storageSettings = storageSettingsOptions.Value;
         _unitOfWork = unitOfWork;
     }
 
@@ -91,12 +88,7 @@ public sealed class UploadExpertDocumentCommandHandler : IRequestHandler<UploadE
             return Result.Failure<long>(new Error("AttachmentTypes.NotFound", $"Attachment type with ID {request.AttachmentTypeId} not found."));
         }
 
-        // Validate size (experts use MaxReviewSizeMb or MaxAttachmentSizeMb)
-        long maxSizeBytes = _storageSettings.MaxReviewSizeMb * 1024L * 1024L;
-        if (request.FileSizeBytes > maxSizeBytes)
-        {
-            return Result.Failure<long>(new Error("Attachments.FileTooLarge", $"File size exceeds limit of {_storageSettings.MaxReviewSizeMb} MB."));
-        }
+
 
         // Compute file hash
         var hash = await _attachmentService.ComputeHashAsync(request.FileStream, cancellationToken);

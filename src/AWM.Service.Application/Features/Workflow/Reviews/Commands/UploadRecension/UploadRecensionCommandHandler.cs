@@ -22,7 +22,6 @@ public sealed class UploadRecensionCommandHandler : IRequestHandler<UploadRecens
     private readonly ICurrentUserProvider _currentUserProvider;
     private readonly IAttachmentService _attachmentService;
     private readonly IStaffAssignmentRepository _staffAssignmentRepository;
-    private readonly StorageSettings _storageSettings;
     private readonly IUnitOfWork _unitOfWork;
 
     public UploadRecensionCommandHandler(
@@ -32,7 +31,6 @@ public sealed class UploadRecensionCommandHandler : IRequestHandler<UploadRecens
         ICurrentUserProvider currentUserProvider,
         IAttachmentService attachmentService,
         IStaffAssignmentRepository staffAssignmentRepository,
-        IOptions<StorageSettings> storageSettingsOptions,
         IUnitOfWork unitOfWork)
     {
         _studentWorkRepository = studentWorkRepository;
@@ -41,7 +39,6 @@ public sealed class UploadRecensionCommandHandler : IRequestHandler<UploadRecens
         _currentUserProvider = currentUserProvider;
         _attachmentService = attachmentService;
         _staffAssignmentRepository = staffAssignmentRepository;
-        _storageSettings = storageSettingsOptions.Value;
         _unitOfWork = unitOfWork;
     }
 
@@ -61,11 +58,7 @@ public sealed class UploadRecensionCommandHandler : IRequestHandler<UploadRecens
             return Result.Failure(new Error("StudentWorks.NotFound", $"Student work with ID {request.WorkId} not found."));
         }
 
-        long maxSizeBytes = _storageSettings.MaxAttachmentSizeMb * 1024L * 1024L;
-        if (request.FileSizeBytes > maxSizeBytes)
-        {
-            return Result.Failure(new Error("Checks.FileTooLarge", $"File size exceeds limit of {_storageSettings.MaxAttachmentSizeMb} MB."));
-        }
+
 
         var hash = await _attachmentService.ComputeHashAsync(request.FileStream, cancellationToken);
         if (request.FileStream.CanSeek)

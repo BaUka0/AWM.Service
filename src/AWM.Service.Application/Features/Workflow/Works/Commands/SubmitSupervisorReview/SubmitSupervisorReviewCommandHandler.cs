@@ -21,7 +21,6 @@ public sealed class SubmitSupervisorReviewCommandHandler : IRequestHandler<Submi
     private readonly IWorkflowRepository _workflowRepository;
     private readonly ICurrentUserProvider _currentUserProvider;
     private readonly IAttachmentService _attachmentService;
-    private readonly StorageSettings _storageSettings;
     private readonly IUnitOfWork _unitOfWork;
 
     public SubmitSupervisorReviewCommandHandler(
@@ -31,7 +30,6 @@ public sealed class SubmitSupervisorReviewCommandHandler : IRequestHandler<Submi
         IWorkflowRepository workflowRepository,
         ICurrentUserProvider currentUserProvider,
         IAttachmentService attachmentService,
-        IOptions<StorageSettings> storageSettingsOptions,
         IUnitOfWork unitOfWork)
     {
         _studentWorkRepository = studentWorkRepository;
@@ -40,7 +38,6 @@ public sealed class SubmitSupervisorReviewCommandHandler : IRequestHandler<Submi
         _workflowRepository = workflowRepository;
         _currentUserProvider = currentUserProvider;
         _attachmentService = attachmentService;
-        _storageSettings = storageSettingsOptions.Value;
         _unitOfWork = unitOfWork;
     }
 
@@ -63,10 +60,7 @@ public sealed class SubmitSupervisorReviewCommandHandler : IRequestHandler<Submi
         if (topic == null || topic.CreatedBy != currentUserId)
             return Result.Failure(new Error("SupervisorReview.Forbidden", "Only the assigned scientific supervisor can submit this review."));
 
-        // Validate size
-        long maxSizeBytes = _storageSettings.MaxAttachmentSizeMb * 1024L * 1024L;
-        if (request.FileSizeBytes > maxSizeBytes)
-            return Result.Failure(new Error("SupervisorReview.FileTooLarge", $"File size exceeds limit of {_storageSettings.MaxAttachmentSizeMb} MB."));
+
 
         // Compute file hash and reset position
         var hash = await _attachmentService.ComputeHashAsync(request.FileStream, cancellationToken);
