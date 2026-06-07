@@ -1,6 +1,8 @@
 using AWM.Service.Application.Features.Defense.Schedules.Commands.AddGrade;
+using AWM.Service.Application.Features.Defense.Schedules.Commands.DeleteSchedule;
 using AWM.Service.Application.Features.Defense.Schedules.Commands.GenerateSchedule;
 using AWM.Service.Application.Features.Defense.Schedules.Commands.StartReconciliation;
+using AWM.Service.Application.Features.Defense.Schedules.Commands.UpdateSchedule;
 using AWM.Service.Application.Features.Defense.Schedules.Queries.GetMyDefenseStep;
 using AWM.Service.Application.Features.Defense.Schedules.Queries.GetScheduleByWork;
 using AWM.Service.Application.Features.Defense.Schedules.Queries.GetScheduleGrades;
@@ -63,6 +65,49 @@ public sealed class SchedulesController : BaseController
         CancellationToken cancellationToken)
     {
         var command = request.Adapt<GenerateScheduleCommand>();
+        var result = await _sender.Send(command, cancellationToken);
+
+        if (result.IsFailed)
+        {
+            return HandleResultError(result.Error);
+        }
+
+        return Ok();
+    }
+
+    /// <summary>
+    /// Updates a defense schedule slot (reschedule or change commission).
+    /// </summary>
+    [HttpPut("{id}")]
+    [RequireAccess("SYSTEM.STAGE", "Update")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> UpdateSchedule(
+        long id,
+        [FromBody] UpdateScheduleRequest request,
+        CancellationToken cancellationToken)
+    {
+        var command = new UpdateScheduleCommand(id, request.CommissionId, request.DefenseDate, request.Location);
+        var result = await _sender.Send(command, cancellationToken);
+
+        if (result.IsFailed)
+        {
+            return HandleResultError(result.Error);
+        }
+
+        return Ok();
+    }
+
+    /// <summary>
+    /// Deletes a defense schedule slot (unschedules the student).
+    /// </summary>
+    [HttpDelete("{id}")]
+    [RequireAccess("SYSTEM.STAGE", "Update")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> DeleteSchedule(
+        long id,
+        CancellationToken cancellationToken)
+    {
+        var command = new DeleteScheduleCommand(id);
         var result = await _sender.Send(command, cancellationToken);
 
         if (result.IsFailed)

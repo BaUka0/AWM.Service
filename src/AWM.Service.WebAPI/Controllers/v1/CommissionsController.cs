@@ -1,8 +1,8 @@
-using AWM.Service.Application.Features.Defense.Commissions.Commands.ApprovePreDefensePeriods;
 using AWM.Service.Application.Features.Defense.Commissions.Commands.CreateCommission;
 using AWM.Service.Application.Features.Defense.Commissions.Commands.DeleteCommission;
 using AWM.Service.Application.Features.Defense.Commissions.Commands.UpdateCommission;
 using AWM.Service.Application.Features.Defense.Commissions.Queries.GetCommissions;
+using AWM.Service.Application.Features.Defense.Commissions.Queries.GetCommissionById;
 using AWM.Service.Application.Features.Defense.Commissions.Commands.AutoDistributeStudents;
 using AWM.Service.WebAPI.Authorization;
 using AWM.Service.WebAPI.Common.Contracts.Requests.Defense;
@@ -52,6 +52,24 @@ public sealed class CommissionsController : BaseController
     }
 
     /// <summary>
+    /// Gets a commission by ID.
+    /// </summary>
+    [HttpGet("{id}")]
+    [RequireAccess("SYSTEM.STAGE", "Read")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetCommissionById(int id, CancellationToken cancellationToken)
+    {
+        var query = new GetCommissionByIdQuery(id);
+        var result = await _sender.Send(query, cancellationToken);
+
+        if (result.IsFailed)
+            return HandleResultError(result.Error);
+
+        return Ok(result.Value);
+    }
+
+    /// <summary>
     /// Creates a new commission.
     /// </summary>
     [HttpPost]
@@ -72,7 +90,7 @@ public sealed class CommissionsController : BaseController
     }
 
     /// <summary>
-    /// Updates an existing commission (e.g. name).
+    /// Updates an existing commission.
     /// </summary>
     [HttpPut("{id}")]
     [RequireAccess("SYSTEM.STAGE", "Update")]
@@ -83,7 +101,15 @@ public sealed class CommissionsController : BaseController
         [FromBody] UpdateCommissionRequest request,
         CancellationToken cancellationToken)
     {
-        var command = new UpdateCommissionCommand(id, request.Name);
+        var command = new UpdateCommissionCommand(
+            id,
+            request.Name,
+            request.CommissionTypeId,
+            request.PreDefenseNumber,
+            request.SpecialityId,
+            request.ChairmanUserId,
+            request.SecretaryUserId,
+            request.MemberUserIds);
         var result = await _sender.Send(command, cancellationToken);
 
         if (result.IsFailed)
@@ -103,27 +129,6 @@ public sealed class CommissionsController : BaseController
     public async Task<IActionResult> DeleteCommission(int id, CancellationToken cancellationToken)
     {
         var command = new DeleteCommissionCommand(id);
-        var result = await _sender.Send(command, cancellationToken);
-
-        if (result.IsFailed)
-            return HandleResultError(result.Error);
-
-        return Ok();
-    }
-
-    /// <summary>
-    /// Approves pre-defense periods and commissions. Validates that all 3 pre-defense stages
-    /// have at least one commission with valid composition.
-    /// </summary>
-    [HttpPost("approve")]
-    [RequireAccess("SYSTEM.STAGE", "Update")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> ApprovePreDefensePeriods(
-        [FromBody] ApprovePreDefensePeriodsRequest request,
-        CancellationToken cancellationToken)
-    {
-        var command = new ApprovePreDefensePeriodsCommand(request.OrgUnitId, request.SemesterId);
         var result = await _sender.Send(command, cancellationToken);
 
         if (result.IsFailed)

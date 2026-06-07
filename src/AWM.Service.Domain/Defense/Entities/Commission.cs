@@ -129,6 +129,80 @@ public class Commission : AggregateRoot<int>, IAuditable, ISoftDeletable
     }
 
     /// <summary>
+    /// Updates commission type and pre-defense number.
+    /// </summary>
+    public void UpdateCommissionType(int commissionTypeId, int? preDefenseNumber, int modifiedBy)
+    {
+        if (commissionTypeId == (int)CommissionTypes.PreDefense && preDefenseNumber.HasValue)
+        {
+            if (preDefenseNumber < 1 || preDefenseNumber > 3)
+                throw new DomainException("Commission.InvalidPreDefenseNumber", "Pre-defense number must be 1, 2, or 3.");
+        }
+
+        CommissionTypeId = commissionTypeId;
+        PreDefenseNumber = preDefenseNumber;
+        Name = GetDefaultName(commissionTypeId, preDefenseNumber);
+        LastModifiedAt = DateTime.UtcNow;
+        LastModifiedBy = modifiedBy;
+    }
+
+    /// <summary>
+    /// Updates commission speciality.
+    /// </summary>
+    public void UpdateSpeciality(int? specialityId, int modifiedBy)
+    {
+        SpecialityId = specialityId;
+        LastModifiedAt = DateTime.UtcNow;
+        LastModifiedBy = modifiedBy;
+    }
+
+    /// <summary>
+    /// Replaces all active members with a new set (deactivates old, adds new).
+    /// Raises domain event for notification tracking.
+    /// </summary>
+    public void ReplaceMembers(int chairmanUserId, int secretaryUserId, List<int> memberUserIds, int modifiedBy)
+    {
+        var oldMemberIds = _assignments
+            .Where(a => a.IsActive && !a.IsDeleted)
+            .Select(a => a.UserId)
+            .ToList();
+
+        // Deactivate all existing active assignments
+        foreach (var assignment in _assignments.Where(a => a.IsActive && !a.IsDeleted).ToList())
+        {
+            assignment.Deactivate(modifiedBy);
+        }
+
+        // Add new chairman, secretary and members
+        AddMember(chairmanUserId, StaffRoleType.CommissionChairman, modifiedBy);
+        AddMember(secretaryUserId, StaffRoleType.CommissionSecretary, modifiedBy);
+
+        foreach (var memberId in memberUserIds.Distinct())
+        {
+            AddMember(memberId, StaffRoleType.CommissionMember, modifiedBy);
+        }
+
+        var newMemberIds = new List<int> { chairmanUserId, secretaryUserId };
+        newMemberIds.AddRange(memberUserIds);
+
+        var addedUserIds = newMemberIds.Distinct().Except(oldMemberIds).ToList();
+        var removedUserIds = oldMemberIds.Except(newMemberIds.Distinct()).ToList();
+
+        if (addedUserIds.Any() || removedUserIds.Any())
+        {
+            RaiseDomainEvent(new AWM.Service.Domain.Defense.Events.CommissionMembersChangedEvent(
+                Id,
+                Name ?? GetDefaultName(CommissionTypeId, PreDefenseNumber),
+                addedUserIds,
+                removedUserIds,
+                modifiedBy));
+        }
+
+        LastModifiedAt = DateTime.UtcNow;
+        LastModifiedBy = modifiedBy;
+    }
+
+    /// <summary>
     /// Removes a member from the commission (deactivates assignment).
     /// </summary>
     public bool RemoveMember(long assignmentId, int modifiedBy)

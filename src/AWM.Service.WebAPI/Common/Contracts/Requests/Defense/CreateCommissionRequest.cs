@@ -1,10 +1,5 @@
 namespace AWM.Service.WebAPI.Common.Contracts.Requests.Defense;
 
-public record ApprovePreDefensePeriodsRequest(
-    int OrgUnitId,
-    int SemesterId
-);
-
 public record CreateCommissionRequest(
     int OrgUnitId,
     int SemesterId,
@@ -18,5 +13,11 @@ public record CreateCommissionRequest(
 );
 
 public record UpdateCommissionRequest(
-    string? Name
+    string? Name,
+    int? CommissionTypeId,
+    int? PreDefenseNumber,
+    int? SpecialityId,
+    int? ChairmanUserId,
+    int? SecretaryUserId,
+    List<int>? MemberUserIds
 );

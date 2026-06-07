@@ -76,6 +76,16 @@ public class Schedule : Entity<long>, IAuditable, ISoftDeletable
     }
 
     /// <summary>
+    /// Changes the commission for this schedule slot.
+    /// </summary>
+    public void ChangeCommission(int commissionId, int modifiedBy)
+    {
+        CommissionId = commissionId;
+        LastModifiedAt = DateTime.UtcNow;
+        LastModifiedBy = modifiedBy;
+    }
+
+    /// <summary>
     /// Adds a grade from a commission member.
     /// </summary>
     public Grade AddGrade(long assignmentId, int criteriaId, int score, int createdBy, string? comment = null)

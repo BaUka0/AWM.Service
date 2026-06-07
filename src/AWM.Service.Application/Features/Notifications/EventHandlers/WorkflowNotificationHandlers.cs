@@ -1,6 +1,7 @@
 using AWM.Service.Domain.Common;
 using AWM.Service.Domain.CommonDomain.Services;
 using AWM.Service.Domain.CommonDomain.Events;
+using AWM.Service.Domain.Defense.Events;
 using AWM.Service.Domain.Repositories;
 using AWM.Service.Domain.Thesis.Events;
 using AWM.Service.Domain.Thesis.Entities;
@@ -38,7 +39,8 @@ public sealed class WorkflowNotificationHandlers :
     INotificationHandler<WorkStateChangedEvent>,
     INotificationHandler<QualityCheckCompletedEvent>,
     INotificationHandler<WorkDefendedEvent>,
-    INotificationHandler<EmployeesApprovedEvent>
+    INotificationHandler<EmployeesApprovedEvent>,
+    INotificationHandler<CommissionMembersChangedEvent>
 {
     private readonly INotificationService _notificationService;
     private readonly ITopicRepository _topicRepository;
@@ -473,5 +475,33 @@ public sealed class WorkflowNotificationHandlers :
             relatedEntityType: "Topic",
             relatedEntityId: notification.TopicId,
             cancellationToken: cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task Handle(CommissionMembersChangedEvent notification, CancellationToken cancellationToken)
+    {
+        if (notification.AddedUserIds.Any())
+        {
+            await _notificationService.SendToManyAsync(
+                userIds: notification.AddedUserIds.ToList(),
+                title: "Назначение в комиссию",
+                createdBy: notification.ModifiedBy,
+                body: $"Вы назначены членом комиссии '{notification.CommissionName}'.",
+                relatedEntityType: "Commission",
+                relatedEntityId: notification.CommissionId,
+                cancellationToken: cancellationToken);
+        }
+
+        if (notification.RemovedUserIds.Any())
+        {
+            await _notificationService.SendToManyAsync(
+                userIds: notification.RemovedUserIds.ToList(),
+                title: "Изменение состава комиссии",
+                createdBy: notification.ModifiedBy,
+                body: $"Вы исключены из состава комиссии '{notification.CommissionName}'.",
+                relatedEntityType: "Commission",
+                relatedEntityId: notification.CommissionId,
+                cancellationToken: cancellationToken);
+        }
     }
 }

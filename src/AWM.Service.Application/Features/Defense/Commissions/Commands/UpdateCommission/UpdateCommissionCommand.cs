@@ -5,4 +5,10 @@ namespace AWM.Service.Application.Features.Defense.Commissions.Commands.UpdateCo
 
 public sealed record UpdateCommissionCommand(
     int Id,
-    string? Name) : IRequest<Result>;
+    string? Name,
+    int? CommissionTypeId,
+    int? PreDefenseNumber,
+    int? SpecialityId,
+    int? ChairmanUserId,
+    int? SecretaryUserId,
+    List<int>? MemberUserIds) : IRequest<Result>;
