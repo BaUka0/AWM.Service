@@ -149,7 +149,7 @@ public sealed class ApproveEmployeesCommandHandler : IRequestHandler<ApproveEmpl
                     var userAccessList = await _userAccessRepository.GetByUserIdAsync(assignmentInfo.UserId, cancellationToken);
                     if (!userAccessList.Any(ua => ua.RoleAccessId == roleAccess.Id))
                     {
-                        var newUserAccess = new UserAccess(assignmentInfo.UserId, roleAccess.Id);
+                        var newUserAccess = new UserAccess(assignmentInfo.UserId, roleAccess.Id, currentUserId);
                         await _userAccessRepository.AddAsync(newUserAccess, cancellationToken);
                     }
                 }

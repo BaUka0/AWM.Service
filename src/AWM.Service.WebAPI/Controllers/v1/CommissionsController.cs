@@ -34,7 +34,7 @@ public sealed class CommissionsController : BaseController
     /// Gets commissions based on filters.
     /// </summary>
     [HttpGet]
-    [RequireAccess("SYSTEM.STAGE", "Read")]
+    [RequireAccess("DEFENSE.COMMISSION", "Read")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetCommissions(
         [FromQuery] int orgUnitId,
@@ -55,7 +55,7 @@ public sealed class CommissionsController : BaseController
     /// Gets a commission by ID.
     /// </summary>
     [HttpGet("{id}")]
-    [RequireAccess("SYSTEM.STAGE", "Read")]
+    [RequireAccess("DEFENSE.COMMISSION", "Read")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetCommissionById(int id, CancellationToken cancellationToken)
@@ -73,7 +73,7 @@ public sealed class CommissionsController : BaseController
     /// Creates a new commission.
     /// </summary>
     [HttpPost]
-    [RequireAccess("SYSTEM.STAGE", "Update")]
+    [RequireAccess("DEFENSE.COMMISSION", "Update")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> CreateCommission(
@@ -93,7 +93,7 @@ public sealed class CommissionsController : BaseController
     /// Updates an existing commission.
     /// </summary>
     [HttpPut("{id}")]
-    [RequireAccess("SYSTEM.STAGE", "Update")]
+    [RequireAccess("DEFENSE.COMMISSION", "Update")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> UpdateCommission(
@@ -122,7 +122,7 @@ public sealed class CommissionsController : BaseController
     /// Deletes a commission (soft-delete). Fails if students are already assigned.
     /// </summary>
     [HttpDelete("{id}")]
-    [RequireAccess("SYSTEM.STAGE", "Update")]
+    [RequireAccess("DEFENSE.COMMISSION", "Update")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -141,7 +141,7 @@ public sealed class CommissionsController : BaseController
     /// Automatically distributes students to commissions.
     /// </summary>
     [HttpPost("auto-distribute")]
-    [RequireAccess("SYSTEM.STAGE", "Update")]
+    [RequireAccess("DEFENSE.COMMISSION", "Update")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> AutoDistributeStudents(

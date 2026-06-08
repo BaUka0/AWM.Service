@@ -1,6 +1,8 @@
 using AWM.Service.Domain.Common;
 using AWM.Service.Domain.CommonDomain.Enums;
 using AWM.Service.Domain.Repositories;
+using AWM.Service.Domain.Auth.Entities;
+using AWM.Service.Domain.Auth.Repositories;
 using KDS.Primitives.FluentResult;
 using MediatR;
 
@@ -10,17 +12,23 @@ public sealed class UpdateCommissionCommandHandler : IRequestHandler<UpdateCommi
 {
     private readonly ICommissionRepository _commissionRepository;
     private readonly IEmployeeRepository _employeeRepository;
+    private readonly IUserAccessRepository _userAccessRepository;
+    private readonly IRoleAccessRepository _roleAccessRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICurrentUserProvider _currentUserProvider;
 
     public UpdateCommissionCommandHandler(
         ICommissionRepository commissionRepository,
         IEmployeeRepository employeeRepository,
+        IUserAccessRepository userAccessRepository,
+        IRoleAccessRepository roleAccessRepository,
         IUnitOfWork unitOfWork,
         ICurrentUserProvider currentUserProvider)
     {
         _commissionRepository = commissionRepository;
         _employeeRepository = employeeRepository;
+        _userAccessRepository = userAccessRepository;
+        _roleAccessRepository = roleAccessRepository;
         _unitOfWork = unitOfWork;
         _currentUserProvider = currentUserProvider;
     }
@@ -88,6 +96,26 @@ public sealed class UpdateCommissionCommandHandler : IRequestHandler<UpdateCommi
             }
 
             commission.ReplaceMembers(chairmanId.Value, secretaryId.Value, memberIds, modifiedBy);
+
+            // Grant Role Access
+            var roleChairman = await _roleAccessRepository.GetByCodeAsync("COMMISSION_CHAIRMAN", cancellationToken);
+            var roleSecretary = await _roleAccessRepository.GetByCodeAsync("COMMISSION_SECRETARY", cancellationToken);
+            var roleMember = await _roleAccessRepository.GetByCodeAsync("COMMISSION_MEMBER", cancellationToken);
+
+            if (roleChairman != null && !await _userAccessRepository.ExistsAsync(chairmanId.Value, roleChairman.Id, cancellationToken))
+                await _userAccessRepository.AddAsync(new UserAccess(chairmanId.Value, roleChairman.Id, modifiedBy), cancellationToken);
+
+            if (roleSecretary != null && !await _userAccessRepository.ExistsAsync(secretaryId.Value, roleSecretary.Id, cancellationToken))
+                await _userAccessRepository.AddAsync(new UserAccess(secretaryId.Value, roleSecretary.Id, modifiedBy), cancellationToken);
+
+            if (roleMember != null)
+            {
+                foreach (var memberUserId in memberIds)
+                {
+                    if (!await _userAccessRepository.ExistsAsync(memberUserId, roleMember.Id, cancellationToken))
+                        await _userAccessRepository.AddAsync(new UserAccess(memberUserId, roleMember.Id, modifiedBy), cancellationToken);
+                }
+            }
         }
 
         // Validate integrity after all changes

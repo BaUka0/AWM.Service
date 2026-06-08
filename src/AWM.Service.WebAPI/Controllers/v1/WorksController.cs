@@ -239,7 +239,7 @@ public sealed class WorksController : BaseController
     /// Saves the GitHub/GitLab repository URL for a software check submission.
     /// </summary>
     [HttpPut("{workId:long}/repo-url")]
-    [RequireAccess("THESIS.WORK", "Update")]
+    [RequireAccess("THESIS.WORK", "Create")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]

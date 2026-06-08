@@ -34,7 +34,7 @@ public sealed class ProtocolsController : BaseController
     /// Creates a new protocol for a defense session.
     /// </summary>
     [HttpPost]
-    [RequireAccess("SYSTEM.STAGE", "Update")]
+    [RequireAccess("DEFENSE.PROTOCOL", "Create")]
     public async Task<IActionResult> CreateProtocol(
         [FromBody] CreateProtocolRequest request,
         CancellationToken cancellationToken)
@@ -54,7 +54,7 @@ public sealed class ProtocolsController : BaseController
     /// Finalizes a protocol, locking all grades and decisions.
     /// </summary>
     [HttpPost("{id}/finalize")]
-    [RequireAccess("SYSTEM.STAGE", "Update")]
+    [RequireAccess("DEFENSE.PROTOCOL", "Update")]
     public async Task<IActionResult> FinalizeProtocol(
         long id,
         [FromBody] FinalizeProtocolRequest? body,
@@ -78,7 +78,7 @@ public sealed class ProtocolsController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A PDF file result.</returns>
     [HttpGet("{id:long}/pdf")]
-    [RequireAccess("SYSTEM.STAGE", "Read")]
+    [RequireAccess("DEFENSE.PROTOCOL", "Read")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -101,7 +101,7 @@ public sealed class ProtocolsController : BaseController
     /// Downloads the PDF list of students admitted to final defense.
     /// </summary>
     [HttpGet("admitted-list")]
-    [RequireAccess("SYSTEM.STAGE", "Read")]
+    [RequireAccess("DEFENSE.PROTOCOL", "Read")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> GetAdmittedStudentsList(
@@ -122,7 +122,7 @@ public sealed class ProtocolsController : BaseController
     /// Downloads the PDF defense schedule for a commission.
     /// </summary>
     [HttpGet("schedule-report")]
-    [RequireAccess("SYSTEM.STAGE", "Read")]
+    [RequireAccess("DEFENSE.PROTOCOL", "Read")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -143,7 +143,7 @@ public sealed class ProtocolsController : BaseController
     /// Sends notifications to all students who are not admitted to defense in a department/semester.
     /// </summary>
     [HttpPost("notify-unready")]
-    [RequireAccess("SYSTEM.STAGE", "Update")]
+    [RequireAccess("DEFENSE.PROTOCOL", "Update")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> NotifyUnreadyStudents(

@@ -77,8 +77,8 @@ public sealed class GetMyDefenseStepQueryHandler : IRequestHandler<GetMyDefenseS
         if (schedule != null)
         {
             scheduleInfo = new ScheduleInfoDto(
-                schedule.DefenseDate.ToShortDateString(),
-                schedule.DefenseDate.ToShortTimeString(),
+                schedule.DefenseDate.ToLocalTime().ToString("dd.MM.yyyy"),
+                schedule.DefenseDate.ToLocalTime().ToString("HH:mm"),
                 schedule.Location ?? "Online"
             );
 

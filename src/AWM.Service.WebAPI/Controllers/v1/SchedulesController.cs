@@ -39,7 +39,7 @@ public sealed class SchedulesController : BaseController
     /// Gets the current defense step information for the authenticated student.
     /// </summary>
     [HttpGet("my-defense-step")]
-    [RequireAccess("SYSTEM.STAGE", "Read")]
+    [RequireAccess("DEFENSE.SCHEDULE", "Read")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetMyDefenseStep(CancellationToken cancellationToken)
     {
@@ -58,7 +58,7 @@ public sealed class SchedulesController : BaseController
     /// Generates defense schedule slots for a commission.
     /// </summary>
     [HttpPost("generate")]
-    [RequireAccess("SYSTEM.STAGE", "Update")]
+    [RequireAccess("DEFENSE.SCHEDULE", "Update")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GenerateSchedule(
         [FromBody] GenerateScheduleRequest request,
@@ -79,7 +79,7 @@ public sealed class SchedulesController : BaseController
     /// Updates a defense schedule slot (reschedule or change commission).
     /// </summary>
     [HttpPut("{id}")]
-    [RequireAccess("SYSTEM.STAGE", "Update")]
+    [RequireAccess("DEFENSE.SCHEDULE", "Update")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> UpdateSchedule(
         long id,
@@ -101,7 +101,7 @@ public sealed class SchedulesController : BaseController
     /// Deletes a defense schedule slot (unschedules the student).
     /// </summary>
     [HttpDelete("{id}")]
-    [RequireAccess("SYSTEM.STAGE", "Update")]
+    [RequireAccess("DEFENSE.SCHEDULE", "Update")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> DeleteSchedule(
         long id,
@@ -122,7 +122,7 @@ public sealed class SchedulesController : BaseController
     /// Adds a grade from a commission member for a specific scheduled defense.
     /// </summary>
     [HttpGet("{id}/grades")]
-    [RequireAccess("SYSTEM.STAGE", "Read")]
+    [RequireAccess("DEFENSE.SCHEDULE", "Read")]
     public async Task<IActionResult> GetGrades(
         long id,
         CancellationToken cancellationToken)
@@ -140,7 +140,7 @@ public sealed class SchedulesController : BaseController
     /// Adds a grade from a commission member for a specific scheduled defense.
     /// </summary>
     [HttpPost("{id}/grades")]
-    [RequireAccess("SYSTEM.STAGE", "Update")]
+    [RequireAccess("DEFENSE.GRADE", "Create")]
     public async Task<IActionResult> AddGrade(
         long id,
         [FromBody] AddGradeRequest request,
@@ -160,7 +160,7 @@ public sealed class SchedulesController : BaseController
     /// Only accessible by commission chairman or secretary.
     /// </summary>
     [HttpPost("{id}/start-reconciliation")]
-    [RequireAccess("SYSTEM.STAGE", "Update")]
+    [RequireAccess("DEFENSE.SCHEDULE", "Update")]
     public async Task<IActionResult> StartReconciliation(
         long id,
         CancellationToken cancellationToken)
@@ -178,7 +178,7 @@ public sealed class SchedulesController : BaseController
     /// Gets defense schedule slots for a commission.
     /// </summary>
     [HttpGet]
-    [RequireAccess("SYSTEM.STAGE", "Read")]
+    [RequireAccess("DEFENSE.SCHEDULE", "Read")]
     [ProducesResponseType(typeof(IReadOnlyList<CommissionScheduleDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetSchedulesByCommission(
         [FromQuery] int commissionId,
@@ -196,7 +196,7 @@ public sealed class SchedulesController : BaseController
     /// Gets the defense schedule for a specific student work.
     /// </summary>
     [HttpGet("by-work/{workId:long}")]
-    [RequireAccess("SYSTEM.STAGE", "Read")]
+    [RequireAccess("DEFENSE.SCHEDULE", "Read")]
     [ProducesResponseType(typeof(ScheduleByWorkResponse), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetByWorkId(
         long workId,

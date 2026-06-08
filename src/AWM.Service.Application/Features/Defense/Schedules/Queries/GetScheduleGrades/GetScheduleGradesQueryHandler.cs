@@ -52,7 +52,8 @@ public sealed class GetScheduleGradesQueryHandler : IRequestHandler<GetScheduleG
                 grade.CriteriaId,
                 grade.Score,
                 grade.Comment,
-                memberName));
+                memberName,
+                user?.Id));
         }
 
         return Result.Success<IReadOnlyList<GradeDto>>(result);

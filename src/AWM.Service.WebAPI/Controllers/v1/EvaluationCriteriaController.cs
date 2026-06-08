@@ -33,7 +33,6 @@ public sealed class EvaluationCriteriaController : BaseController
     /// Optionally filters by defense stage type (1=PreDefense, 2=GAK).
     /// </summary>
     [HttpGet]
-    [RequireAccess("SYSTEM.STAGE", "Read")]
     public async Task<IActionResult> GetCriteria(
         [FromQuery] int workTypeId,
         [FromQuery] int? orgUnitId,
@@ -56,7 +55,7 @@ public sealed class EvaluationCriteriaController : BaseController
     /// Creates a new evaluation criteria.
     /// </summary>
     [HttpPost]
-    [RequireAccess("SYSTEM.STAGE", "Update")]
+    [RequireAccess("SYSTEM.CRITERIA", "Update")]
     public async Task<IActionResult> CreateCriteria(
         [FromBody] CreateCriteriaRequest request,
         CancellationToken cancellationToken)
@@ -76,7 +75,7 @@ public sealed class EvaluationCriteriaController : BaseController
     /// Updates an existing evaluation criteria.
     /// </summary>
     [HttpPut("{id}")]
-    [RequireAccess("SYSTEM.STAGE", "Update")]
+    [RequireAccess("SYSTEM.CRITERIA", "Update")]
     public async Task<IActionResult> UpdateCriteria(
         int id,
         [FromBody] UpdateCriteriaRequest request,
@@ -97,7 +96,7 @@ public sealed class EvaluationCriteriaController : BaseController
     /// Deletes (soft-delete) an evaluation criteria.
     /// </summary>
     [HttpDelete("{id}")]
-    [RequireAccess("SYSTEM.STAGE", "Update")]
+    [RequireAccess("SYSTEM.CRITERIA", "Delete")]
     public async Task<IActionResult> DeleteCriteria(
         int id,
         CancellationToken cancellationToken)

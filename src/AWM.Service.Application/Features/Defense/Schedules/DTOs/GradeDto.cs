@@ -7,5 +7,6 @@ public record GradeDto(
     int CriteriaId,
     int Score,
     string? Comment,
-    string MemberName
+    string MemberName,
+    int? UserId = null
 );

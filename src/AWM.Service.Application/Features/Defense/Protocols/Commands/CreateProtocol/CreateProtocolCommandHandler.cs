@@ -58,7 +58,29 @@ public sealed class CreateProtocolCommandHandler : IRequestHandler<CreateProtoco
 
         var existingProtocol = await _protocolRepository.GetByScheduleIdAsync(request.ScheduleId, cancellationToken);
         if (existingProtocol != null)
-            return Result.Failure<long>(new Error("Protocol.AlreadyExists", "Protocol for this schedule already exists."));
+        {
+            if (!existingProtocol.IsFinalized)
+            {
+                int? decisionType = null;
+                int? readinessPercent = null;
+                if (!string.IsNullOrEmpty(request.DecisionType) && int.TryParse(request.DecisionType, out var dt)) decisionType = dt;
+                if (!string.IsNullOrEmpty(request.ReadinessPercent) && int.TryParse(request.ReadinessPercent, out var rp)) readinessPercent = rp;
+
+                existingProtocol.SetGradingAndDecision(
+                    request.FinalScoreNumeric,
+                    request.FinalGradeLetter,
+                    request.Decision,
+                    request.ProtocolNumber,
+                    currentUserId,
+                    request.Comments,
+                    decisionType,
+                    readinessPercent
+                );
+                _protocolRepository.Update(existingProtocol);
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
+            }
+            return Result.Success(existingProtocol.Id);
+        }
 
         try
         {

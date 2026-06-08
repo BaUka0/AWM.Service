@@ -159,7 +159,7 @@ internal sealed class AuthSeeder
             ("DEPARTMENT_HEAD", "THESIS.APPLICATION",RCUD),
             ("DEPARTMENT_HEAD", "DEFENSE.PREDEFENSE",Ro),
             ("DEPARTMENT_HEAD", "DEFENSE.COMMISSION",RCUD),
-            ("DEPARTMENT_HEAD", "DEFENSE.SCHEDULE",  Ro),
+            ("DEPARTMENT_HEAD", "DEFENSE.SCHEDULE",  RCUD),
             ("DEPARTMENT_HEAD", "DEFENSE.GRADE",     Ro),
             ("DEPARTMENT_HEAD", "DEFENSE.PROTOCOL",  Ro),
             ("DEPARTMENT_HEAD", "SYSTEM.STAGE",      RCUD),
@@ -179,7 +179,9 @@ internal sealed class AuthSeeder
             ("STUDENT", "THESIS.WORK",       RC),
             ("STUDENT", "THESIS.ATTACHMENT", RC),
             ("STUDENT", "THESIS.APPLICATION",RCUD),
+            ("STUDENT", "THESIS.CHECK",      Ro),
             ("STUDENT", "DEFENSE.PREDEFENSE",Ro),
+            ("STUDENT", "DEFENSE.SCHEDULE",  Ro),
 
             // COMMISSION_CHAIRMAN
             ("COMMISSION_CHAIRMAN", "THESIS.WORK",        Ro),

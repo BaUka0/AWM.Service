@@ -63,22 +63,14 @@ public sealed class GetWorkAttachmentsQueryHandler : IRequestHandler<GetWorkAtta
 
         var isAssignedExpert = work.QualityChecks.Any(c => c.AssignedExpertId == currentUserId);
 
-        var isStaffInDepartment = false;
+        var isStaff = false;
         if (!isParticipant && !isSupervisor && !isAssignedExpert)
         {
             var userAssignments = await _staffAssignmentRepository.GetByUserAsync(currentUserId, cancellationToken);
-            isStaffInDepartment = userAssignments.Any(a =>
-                a.IsActive && !a.IsDeleted &&
-                a.TargetEntityType == "OrgUnit" &&
-                a.TargetEntityId == work.OrgUnitId &&
-                (a.RoleType == StaffRoleType.CommissionMember ||
-                 a.RoleType == StaffRoleType.QualityExpert ||
-                 a.RoleType == StaffRoleType.CommissionChairman ||
-                 a.RoleType == StaffRoleType.CommissionSecretary ||
-                 a.RoleType == StaffRoleType.Supervisor));
+            isStaff = userAssignments.Any(a => a.IsActive && !a.IsDeleted);
         }
 
-        if (!isParticipant && !isSupervisor && !isAssignedExpert && !isStaffInDepartment)
+        if (!isParticipant && !isSupervisor && !isAssignedExpert && !isStaff)
         {
             return Result.Failure<IReadOnlyList<AttachmentDto>>(new Error("Attachments.Forbidden", "You do not have permission to view attachments for this work."));
         }

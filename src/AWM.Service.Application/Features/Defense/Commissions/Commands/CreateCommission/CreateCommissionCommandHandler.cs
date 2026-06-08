@@ -2,6 +2,8 @@ using AWM.Service.Domain.Common;
 using AWM.Service.Domain.CommonDomain.Enums;
 using AWM.Service.Domain.Defense.Entities;
 using AWM.Service.Domain.Repositories;
+using AWM.Service.Domain.Auth.Entities;
+using AWM.Service.Domain.Auth.Repositories;
 using KDS.Primitives.FluentResult;
 using MediatR;
 
@@ -11,17 +13,23 @@ public sealed class CreateCommissionCommandHandler : IRequestHandler<CreateCommi
 {
     private readonly ICommissionRepository _commissionRepository;
     private readonly IEmployeeRepository _employeeRepository;
+    private readonly IUserAccessRepository _userAccessRepository;
+    private readonly IRoleAccessRepository _roleAccessRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICurrentUserProvider _currentUserProvider;
 
     public CreateCommissionCommandHandler(
         ICommissionRepository commissionRepository,
         IEmployeeRepository employeeRepository,
+        IUserAccessRepository userAccessRepository,
+        IRoleAccessRepository roleAccessRepository,
         IUnitOfWork unitOfWork,
         ICurrentUserProvider currentUserProvider)
     {
         _commissionRepository = commissionRepository;
         _employeeRepository = employeeRepository;
+        _userAccessRepository = userAccessRepository;
+        _roleAccessRepository = roleAccessRepository;
         _unitOfWork = unitOfWork;
         _currentUserProvider = currentUserProvider;
     }
@@ -83,8 +91,29 @@ public sealed class CreateCommissionCommandHandler : IRequestHandler<CreateCommi
             return Result.Failure<int>(new Error(ex.ErrorCode, ex.Message));
         }
 
-        // 5. Save
+        // 5. Save commission
         await _commissionRepository.AddAsync(commission, cancellationToken);
+
+        // 6. Grant Role Access
+        var roleChairman = await _roleAccessRepository.GetByCodeAsync("COMMISSION_CHAIRMAN", cancellationToken);
+        var roleSecretary = await _roleAccessRepository.GetByCodeAsync("COMMISSION_SECRETARY", cancellationToken);
+        var roleMember = await _roleAccessRepository.GetByCodeAsync("COMMISSION_MEMBER", cancellationToken);
+
+        if (roleChairman != null && !await _userAccessRepository.ExistsAsync(request.ChairmanUserId, roleChairman.Id, cancellationToken))
+            await _userAccessRepository.AddAsync(new UserAccess(request.ChairmanUserId, roleChairman.Id, createdBy), cancellationToken);
+
+        if (roleSecretary != null && !await _userAccessRepository.ExistsAsync(request.SecretaryUserId, roleSecretary.Id, cancellationToken))
+            await _userAccessRepository.AddAsync(new UserAccess(request.SecretaryUserId, roleSecretary.Id, createdBy), cancellationToken);
+
+        if (roleMember != null)
+        {
+            foreach (var memberUserId in memberIds)
+            {
+                if (!await _userAccessRepository.ExistsAsync(memberUserId, roleMember.Id, cancellationToken))
+                    await _userAccessRepository.AddAsync(new UserAccess(memberUserId, roleMember.Id, createdBy), cancellationToken);
+            }
+        }
+
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Result.Success(commission.Id);

@@ -28,7 +28,8 @@ public record CommissionScheduleDto(
     int? PreDefenseNumber,
     string ChairmanName,
     string SecretaryName,
-    IReadOnlyList<string> Members);
+    IReadOnlyList<string> Members,
+    int? WorkTypeId);
 
 public record GetSchedulesByCommissionQuery(int CommissionId) : IRequest<Result<IReadOnlyList<CommissionScheduleDto>>>;
 
@@ -138,8 +139,9 @@ public sealed class GetSchedulesByCommissionQueryHandler : IRequestHandler<GetSc
 
         foreach (var s in schedules)
         {
-            string studentName = "—";
-            string topicTitle = "—";
+            var studentName = "—";
+            var topicTitle = "—";
+            int? workTypeId = null;
 
             if (s.WorkId > 0 && workMap.TryGetValue(s.WorkId, out var work))
             {
@@ -156,6 +158,7 @@ public sealed class GetSchedulesByCommissionQueryHandler : IRequestHandler<GetSc
                 if (work.TopicId.HasValue && topicMap.TryGetValue(work.TopicId.Value, out var topic))
                 {
                     topicTitle = topic.TitleRu ?? topic.TitleKz ?? topic.TitleEn ?? "—";
+                    workTypeId = topic.WorkTypeId;
                 }
             }
 
@@ -178,7 +181,8 @@ public sealed class GetSchedulesByCommissionQueryHandler : IRequestHandler<GetSc
                 commission.PreDefenseNumber,
                 chairmanName,
                 secretaryName,
-                memberNames
+                memberNames,
+                workTypeId
             ));
         }
 
