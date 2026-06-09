@@ -44,7 +44,6 @@ public sealed class FinalizeProtocolCommandHandler : IRequestHandler<FinalizePro
         _currentUserProvider = currentUserProvider;
     }
 
-
     public async Task<Result> Handle(FinalizeProtocolCommand request, CancellationToken cancellationToken)
     {
         if (!_currentUserProvider.IsAuthenticated || !_currentUserProvider.UserId.HasValue)
@@ -56,7 +55,6 @@ public sealed class FinalizeProtocolCommandHandler : IRequestHandler<FinalizePro
         if (protocol == null)
             return Result.Failure(new Error("Protocol.NotFound", $"Protocol with ID {request.ProtocolId} not found."));
 
-        // Only the commission chairman or secretary may finalize
         var commission = await _commissionRepository.GetByIdWithAssignmentsAsync(protocol.CommissionId, cancellationToken);
         if (commission == null)
             return Result.Failure(new Error("Commission.NotFound", "Commission for this protocol not found."));
@@ -76,7 +74,6 @@ public sealed class FinalizeProtocolCommandHandler : IRequestHandler<FinalizePro
         {
             protocol.Finalize(currentUserId);
 
-            // Retrieve Schedule and StudentWork
             var schedule = await _scheduleRepository.GetByIdAsync(protocol.ScheduleId, cancellationToken);
             if (schedule == null)
                 return Result.Failure(new Error("Schedule.NotFound", "Schedule not found."));
@@ -85,12 +82,10 @@ public sealed class FinalizeProtocolCommandHandler : IRequestHandler<FinalizePro
             if (work == null)
                 return Result.Failure(new Error("StudentWork.NotFound", "Student work not found."));
 
-            // Determine if GAK or PreDefense
             if (commission.CommissionTypeId == (int)CommissionTypes.PreDefense)
             {
                 var preDefenseNum = commission.PreDefenseNumber ?? 1;
 
-                // Load or create PreDefenseAttempt
                 var attempts = await _preDefenseAttemptRepository.GetByWorkIdAsync(work.Id, cancellationToken);
                 var attempt = attempts.FirstOrDefault(a => a.PreDefenseNumber == preDefenseNum && a.ScheduleId == schedule.Id);
                 if (attempt == null)
@@ -104,7 +99,6 @@ public sealed class FinalizeProtocolCommandHandler : IRequestHandler<FinalizePro
 
                 if (!request.IsStudentPresent)
                 {
-                    // Absent student — mark attempt as absent and redirect to retake slot
                     attempt.MarkAbsent(currentUserId);
                     targetStateName = preDefenseNum < 3
                         ? WorkStates.PreDefense3WaitingForFiles
@@ -113,13 +107,10 @@ public sealed class FinalizeProtocolCommandHandler : IRequestHandler<FinalizePro
                 }
                 else
                 {
-                    // Present student — record result from protocol decision
-                    // PZ-1 is always informational (isPassed = true regardless)
-                    // PZ-2/PZ-3 use structured DecisionType if available, fallback to string comparison
                     bool isPassed;
                     if (preDefenseNum == 1)
                     {
-                        isPassed = true; // PZ-1 is informational, always passes
+                        isPassed = true;
                     }
                     else if (protocol.DecisionType.HasValue)
                     {
@@ -127,7 +118,6 @@ public sealed class FinalizeProtocolCommandHandler : IRequestHandler<FinalizePro
                     }
                     else
                     {
-                        // Legacy fallback for protocols without DecisionType
                         isPassed = !string.Equals(protocol.Decision, "Не допущен", StringComparison.OrdinalIgnoreCase);
                     }
 
@@ -166,7 +156,6 @@ public sealed class FinalizeProtocolCommandHandler : IRequestHandler<FinalizePro
             }
             else if (commission.CommissionTypeId == (int)CommissionTypes.GAK)
             {
-                // Use structured DecisionType if available, fallback to string comparison
                 bool isPassed;
                 if (protocol.DecisionType.HasValue)
                 {
@@ -174,7 +163,6 @@ public sealed class FinalizeProtocolCommandHandler : IRequestHandler<FinalizePro
                 }
                 else
                 {
-                    // Legacy fallback
                     isPassed = !string.Equals(protocol.Decision, "Не допущен", StringComparison.OrdinalIgnoreCase);
                 }
 

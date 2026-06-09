@@ -60,4 +60,3 @@ public sealed class UsersController : BaseController
         return Ok(result.Value.Adapt<IReadOnlyList<AdminUserResponse>>());
     }
 }
-

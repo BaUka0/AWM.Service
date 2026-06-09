@@ -85,7 +85,6 @@ public sealed class RemoveEmployeeCommandHandler : IRequestHandler<RemoveEmploye
         assignment.Deactivate(currentUserId);
         await _staffAssignmentRepository.UpdateAsync(assignment, cancellationToken);
 
-        // Check if the user has any other active employee assignments
         var userAssignments = await _staffAssignmentRepository.GetByUserAsync(assignment.UserId, cancellationToken);
         var hasOtherActiveEmployeeAssignments = userAssignments.Any(a =>
             a.IsActive &&

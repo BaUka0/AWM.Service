@@ -44,7 +44,6 @@ public sealed class UpdateCommissionCommandHandler : IRequestHandler<UpdateCommi
         if (commission == null)
             return Result.Failure(new Error("Commission.NotFound", $"Commission with ID {request.Id} not found."));
 
-        // Update commission type and pre-defense number first (this may set default name)
         if (request.CommissionTypeId.HasValue)
         {
             commission.UpdateCommissionType(
@@ -53,14 +52,12 @@ public sealed class UpdateCommissionCommandHandler : IRequestHandler<UpdateCommi
                 modifiedBy);
         }
 
-        // Now apply custom name (it will overwrite the default one if provided)
         if (!string.IsNullOrWhiteSpace(request.Name))
             commission.UpdateName(request.Name, modifiedBy);
 
         if (request.SpecialityId.HasValue || request.SpecialityId == null && commission.SpecialityId != null)
             commission.UpdateSpeciality(request.SpecialityId, modifiedBy);
 
-        // Update members if any member-related field is provided
         if (request.ChairmanUserId.HasValue || request.SecretaryUserId.HasValue || request.MemberUserIds != null)
         {
             var chairmanId = request.ChairmanUserId ?? commission.GetChairman()?.UserId;
@@ -76,7 +73,6 @@ public sealed class UpdateCommissionCommandHandler : IRequestHandler<UpdateCommi
                 .Select(a => a.UserId)
                 .ToList();
 
-            // Validate all users are teachers of the department
             var allUserIds = new List<int> { chairmanId.Value, secretaryId.Value };
             allUserIds.AddRange(memberIds);
             allUserIds = allUserIds.Distinct().ToList();
@@ -97,7 +93,6 @@ public sealed class UpdateCommissionCommandHandler : IRequestHandler<UpdateCommi
 
             commission.ReplaceMembers(chairmanId.Value, secretaryId.Value, memberIds, modifiedBy);
 
-            // Grant Role Access
             var roleChairman = await _roleAccessRepository.GetByCodeAsync("COMMISSION_CHAIRMAN", cancellationToken);
             var roleSecretary = await _roleAccessRepository.GetByCodeAsync("COMMISSION_SECRETARY", cancellationToken);
             var roleMember = await _roleAccessRepository.GetByCodeAsync("COMMISSION_MEMBER", cancellationToken);
@@ -118,7 +113,6 @@ public sealed class UpdateCommissionCommandHandler : IRequestHandler<UpdateCommi
             }
         }
 
-        // Validate integrity after all changes
         try
         {
             commission.ValidateIntegrity();

@@ -39,7 +39,7 @@ public class AttachmentConfiguration : AuditableEntityConfiguration<Attachment, 
 
         builder.Property(e => e.FileHash)
             .IsRequired()
-            .HasMaxLength(64); // SHA256
+            .HasMaxLength(64);
 
         builder.Property(e => e.FileSizeBytes)
             .IsRequired();
@@ -48,11 +48,9 @@ public class AttachmentConfiguration : AuditableEntityConfiguration<Attachment, 
             .IsRequired()
             .HasMaxLength(100);
 
-        // Ignore computed properties
         builder.Ignore(e => e.UploadedBy);
         builder.Ignore(e => e.UploadedAt);
 
-        // Foreign keys
         builder.HasOne<StudentWork>()
             .WithMany(w => w.Attachments)
             .HasForeignKey(e => e.WorkId)
@@ -71,7 +69,6 @@ public class AttachmentConfiguration : AuditableEntityConfiguration<Attachment, 
             .HasConstraintName("FK_Attach_Type")
             .OnDelete(DeleteBehavior.Restrict);
 
-        // Indexes
         builder.HasIndex(e => e.WorkId)
             .HasDatabaseName("IX_Attach_Work");
 

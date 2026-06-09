@@ -29,13 +29,11 @@ public sealed class OrgUnitResolver : IOrgUnitResolver
     public async Task<(int? OrgUnitId, string? ErrorMessage)> ResolveAsync(
         int? explicitOrgUnitId, int userId, CancellationToken cancellationToken = default)
     {
-        // 1. If explicit OrgUnitId is provided, use it directly
         if (explicitOrgUnitId.HasValue && explicitOrgUnitId.Value > 0)
         {
             return (explicitOrgUnitId.Value, null);
         }
 
-        // 2. Try to resolve from Employee's main position (for supervisors/staff)
         var employee = await _employeeRepository.GetByUserIdAsync(userId, cancellationToken);
         if (employee != null)
         {
@@ -48,7 +46,6 @@ public sealed class OrgUnitResolver : IOrgUnitResolver
             }
         }
 
-        // 3. Try to resolve from Student's speciality → OrgUnit mapping (for students)
         var student = await _studentRepository.GetByUserIdAsync(userId, cancellationToken);
         if (student?.SpecialityId.HasValue == true)
         {

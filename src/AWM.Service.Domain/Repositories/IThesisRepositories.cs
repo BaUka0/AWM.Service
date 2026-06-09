@@ -215,4 +215,3 @@ public interface ITopicApplicationRepository
     /// </summary>
     Task DeleteAsync(TopicApplication application, CancellationToken cancellationToken = default);
 }
-

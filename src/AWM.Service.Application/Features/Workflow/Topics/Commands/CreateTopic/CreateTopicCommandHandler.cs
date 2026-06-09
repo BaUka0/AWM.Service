@@ -49,7 +49,6 @@ public sealed class CreateTopicCommandHandler : IRequestHandler<CreateTopicComma
 
         var currentUserId = _currentUserProvider.UserId.Value;
 
-        // Resolve OrgUnitId via universal resolver (supports Employee + Student)
         var (resolvedOrgUnitId, orgUnitError) = await _orgUnitResolver.ResolveAsync(request.OrgUnitId, currentUserId, cancellationToken);
         if (!resolvedOrgUnitId.HasValue)
         {
@@ -58,7 +57,6 @@ public sealed class CreateTopicCommandHandler : IRequestHandler<CreateTopicComma
 
         var orgUnitId = resolvedOrgUnitId.Value;
 
-        // Validate Direction if provided
         if (request.DirectionId.HasValue)
         {
             var direction = await _directionRepository.GetByIdAsync(request.DirectionId.Value, cancellationToken);
@@ -68,7 +66,6 @@ public sealed class CreateTopicCommandHandler : IRequestHandler<CreateTopicComma
             }
         }
 
-        // Validate that the TopicProposal stage (Stage 4) is open
         var (isAllowed, errorMessage) = await _stageValidationService.ValidateOperationInStageAsync(
             orgUnitId,
             request.SemesterId,
@@ -80,7 +77,6 @@ public sealed class CreateTopicCommandHandler : IRequestHandler<CreateTopicComma
             return Result.Failure<long>(new Error("Topics.StageClosed", errorMessage ?? "The topic formation stage is closed."));
         }
 
-        // Validate MaxWorkload: sum of MaxParticipants of all existing topics + new topic must not exceed MaxWorkload
         var supervisorAssignments = await _staffAssignmentRepository.GetByRoleAsync(
             "OrgUnit", orgUnitId, StaffRoleType.Supervisor, cancellationToken);
 
@@ -138,7 +134,6 @@ public sealed class CreateTopicCommandHandler : IRequestHandler<CreateTopicComma
         await _topicRepository.AddAsync(topic, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        // Raise domain event after SaveChanges so Id is assigned by DB
         topic.RaiseCreatedEvent();
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 

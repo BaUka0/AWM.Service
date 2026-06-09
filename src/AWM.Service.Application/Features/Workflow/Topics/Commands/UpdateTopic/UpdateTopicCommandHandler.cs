@@ -45,7 +45,6 @@ public sealed class UpdateTopicCommandHandler : IRequestHandler<UpdateTopicComma
         if (topic.Status == Domain.Thesis.Enums.TopicStatus.Approved)
             return Result.Failure(new Error("Topics.AlreadyApproved", "Approved topics cannot be updated."));
 
-        // Validate MaxWorkload only if MaxParticipants is being increased
         if (request.MaxParticipants.HasValue && request.MaxParticipants.Value > topic.MaxParticipants)
         {
             var supervisorAssignments = await _staffAssignmentRepository.GetByRoleAsync(

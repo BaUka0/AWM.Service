@@ -58,4 +58,3 @@ public class WorkTypesController : BaseController
         return Ok();
     }
 }
-

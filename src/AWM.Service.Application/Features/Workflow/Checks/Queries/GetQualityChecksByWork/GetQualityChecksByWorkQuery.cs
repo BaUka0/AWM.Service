@@ -50,7 +50,6 @@ public sealed class GetQualityChecksByWorkQueryHandler : IRequestHandler<GetQual
             return Result.Failure<IReadOnlyList<QualityCheckDto>>(new Error("StudentWorks.NotFound", $"Student work with ID {request.WorkId} not found."));
         }
 
-        // Verify permission: participant, supervisor, or expert
         var isParticipant = work.Participants.Any(p => p.StudentId == currentUserId);
         var isSupervisor = false;
         var isExpert = false;
@@ -99,7 +98,7 @@ public sealed class GetQualityChecksByWorkQueryHandler : IRequestHandler<GetQual
             c.CreatedAt,
             null,
             null,
-            null // SubmissionUrl: not needed for work-level query (student view)
+            null
         )).ToList();
 
         return Result.Success<IReadOnlyList<QualityCheckDto>>(dtos);

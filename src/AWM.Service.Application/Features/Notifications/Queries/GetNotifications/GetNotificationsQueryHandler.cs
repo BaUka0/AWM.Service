@@ -45,14 +45,12 @@ public sealed class GetNotificationsQueryHandler : IRequestHandler<GetNotificati
             ? await _notificationRepository.GetUnreadByUserAsync(currentUserId, cancellationToken)
             : await _notificationRepository.GetByUserAsync(currentUserId, request.Skip, request.Take, cancellationToken);
 
-        // Enrichment: Resolve Actor Names
         var actorIds = notifications.Where(n => n.CreatedBy > 0).Select(n => n.CreatedBy).Distinct().ToList();
         var actors = actorIds.Any()
             ? await _userRepository.GetByIdsAsync(actorIds, cancellationToken)
             : new List<AWM.Service.Domain.University.User>();
         var actorMap = actors.ToDictionary(a => a.Id, a => $"{a.LastName} {a.FirstName} {a.MiddleName}".Trim());
 
-        // Enrichment: Resolve Entity Titles
         var topicIds = notifications.Where(n => n.RelatedEntityType == "Topic" && n.RelatedEntityId.HasValue)
                                    .Select(n => n.RelatedEntityId!.Value).Distinct().ToList();
         var directionIds = notifications.Where(n => n.RelatedEntityType == "Direction" && n.RelatedEntityId.HasValue)

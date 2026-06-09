@@ -42,28 +42,24 @@ public sealed class GenerateDefenseReportQueryHandler : IRequestHandler<Generate
 
     public async Task<Result<byte[]>> Handle(GenerateDefenseReportQuery request, CancellationToken cancellationToken)
     {
-        // 1. Retrieve protocol
         var protocol = await _protocolRepository.GetByIdAsync(request.ProtocolId, cancellationToken);
         if (protocol == null)
         {
             return Result.Failure<byte[]>(new Error("Protocol.NotFound", $"Protocol with ID {request.ProtocolId} not found."));
         }
 
-        // 2. Retrieve schedule
         var schedule = await _scheduleRepository.GetByIdAsync(protocol.ScheduleId, cancellationToken);
         if (schedule == null)
         {
             return Result.Failure<byte[]>(new Error("Schedule.NotFound", "Associated schedule not found."));
         }
 
-        // 3. Retrieve student work
         var work = await _studentWorkRepository.GetByIdWithDetailsAsync(schedule.WorkId, cancellationToken);
         if (work == null)
         {
             return Result.Failure<byte[]>(new Error("StudentWork.NotFound", "Student work not found."));
         }
 
-        // 4. Retrieve student user details
         var studentParticipant = work.Participants.FirstOrDefault();
         string studentName = "Студент";
         if (studentParticipant != null)
@@ -75,7 +71,6 @@ public sealed class GenerateDefenseReportQueryHandler : IRequestHandler<Generate
             }
         }
 
-        // 5. Retrieve speciality
         string specialityName = "Не указана";
         if (work.SpecialityId.HasValue)
         {
@@ -86,23 +81,19 @@ public sealed class GenerateDefenseReportQueryHandler : IRequestHandler<Generate
             }
         }
 
-        // 6. Retrieve commission with assignments
         var commission = await _commissionRepository.GetByIdWithAssignmentsAsync(schedule.CommissionId, cancellationToken);
         if (commission == null)
         {
             return Result.Failure<byte[]>(new Error("Commission.NotFound", "Commission not found."));
         }
 
-        // 7. Retrieve commission members users
         var userIds = commission.Assignments.Select(a => a.UserId).Distinct().ToList();
         var users = await _userRepository.GetByIdsAsync(userIds, cancellationToken);
         var userMap = users.ToDictionary(u => u.Id);
 
-        // 8. Retrieve evaluation criteria
         var criteriaList = await _evaluationCriteriaRepository.GetAllAsync(cancellationToken);
         var criteriaMap = criteriaList.ToDictionary(c => c.Id);
 
-        // 9. Map grades
         var gradesData = new List<MemberGradeData>();
         foreach (var grade in schedule.Grades)
         {
@@ -133,7 +124,6 @@ public sealed class GenerateDefenseReportQueryHandler : IRequestHandler<Generate
             ));
         }
 
-        // 10. Prepare report payload
         var reportData = new ProtocolReportData(
             protocol.Id,
             protocol.ProtocolNumber,
@@ -141,7 +131,7 @@ public sealed class GenerateDefenseReportQueryHandler : IRequestHandler<Generate
             "GAK",
             protocol.SessionDate.ToString("dd.MM.yyyy HH:mm"),
             studentName,
-            work.TopicId.HasValue ? "Topic Work" : "Diplom Work", // Fallback
+            work.TopicId.HasValue ? "Topic Work" : "Diplom Work",
             specialityName,
             protocol.FinalScoreNumeric ?? 0,
             protocol.FinalGradeLetter ?? "-",
@@ -150,7 +140,6 @@ public sealed class GenerateDefenseReportQueryHandler : IRequestHandler<Generate
             gradesData
         );
 
-        // 11. Render PDF
         var pdfBytes = await _pdfReportService.GenerateProtocolReportAsync(reportData);
         return Result.Success(pdfBytes);
     }

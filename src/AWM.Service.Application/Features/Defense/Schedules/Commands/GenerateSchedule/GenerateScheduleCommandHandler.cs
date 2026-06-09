@@ -33,7 +33,6 @@ public sealed class GenerateScheduleCommandHandler : IRequestHandler<GenerateSch
         _currentUserProvider = currentUserProvider;
     }
 
-
     public async Task<Result> Handle(GenerateScheduleCommand request, CancellationToken cancellationToken)
     {
         var currentUserId = _currentUserProvider.UserId ?? 0;
@@ -52,7 +51,6 @@ public sealed class GenerateScheduleCommandHandler : IRequestHandler<GenerateSch
 
                 await _scheduleRepository.AddAsync(schedule, cancellationToken);
 
-                // Automation Hook: Transition student work state to Scheduled
                 var work = await _studentWorkRepository.GetByIdWithDetailsAsync(workId, cancellationToken);
                 if (work != null)
                 {
@@ -81,7 +79,6 @@ public sealed class GenerateScheduleCommandHandler : IRequestHandler<GenerateSch
                     }
                 }
 
-                // Increment time for the next slot
                 currentSlotTime = currentSlotTime.AddMinutes(request.SlotDurationMinutes);
             }
 

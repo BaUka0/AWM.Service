@@ -46,7 +46,6 @@ public sealed class GetMyDefenseStepQueryHandler : IRequestHandler<GetMyDefenseS
             return Result.Failure<DefenseStepDto>(new Error("Auth.Unauthorized", "User not authenticated."));
         }
 
-        // 1. Find student's work
         var works = await _workRepository.GetByStudentAsync(currentUserId, cancellationToken);
         var work = works.FirstOrDefault();
         if (work == null)
@@ -54,7 +53,6 @@ public sealed class GetMyDefenseStepQueryHandler : IRequestHandler<GetMyDefenseS
             return Result.Failure<DefenseStepDto>(new Error("Work.NotFound", "Student work not found."));
         }
 
-        // Determine stepType and preDefenseNumber from current workflow state
         var currentState = await _workflowRepository.GetStateByIdAsync(work.CurrentStateId, cancellationToken);
         var sn = currentState?.SystemName ?? "";
         string stepType = "pre-defense";
@@ -69,7 +67,6 @@ public sealed class GetMyDefenseStepQueryHandler : IRequestHandler<GetMyDefenseS
             stepType = "defense";
         }
 
-        // 2. Find schedule
         var schedule = await _scheduleRepository.GetByWorkIdAsync(work.Id, cancellationToken);
         ScheduleInfoDto? scheduleInfo = null;
         IReadOnlyList<CommissionMemberInfoDto> commissionMembers = new List<CommissionMemberInfoDto>();
@@ -82,7 +79,6 @@ public sealed class GetMyDefenseStepQueryHandler : IRequestHandler<GetMyDefenseS
                 schedule.Location ?? "Online"
             );
 
-            // 3. Find commission members
             var commission = await _commissionRepository.GetByIdWithAssignmentsAsync(schedule.CommissionId, cancellationToken);
             if (commission != null)
             {
@@ -101,7 +97,6 @@ public sealed class GetMyDefenseStepQueryHandler : IRequestHandler<GetMyDefenseS
             }
         }
 
-        // 4. Previous attempts (Pre-defenses)
         var attempts = await _attemptRepository.GetByWorkIdAsync(work.Id, cancellationToken);
         var previousAttempts = new List<AttemptHistoryDto>();
 
@@ -123,13 +118,12 @@ public sealed class GetMyDefenseStepQueryHandler : IRequestHandler<GetMyDefenseS
             ));
         }
 
-        // 5. Results (if protocol exists)
         DefenseResultsDto? results = null;
         var protocol = await _protocolRepository.GetByScheduleIdAsync(schedule?.Id ?? 0, cancellationToken);
         if (protocol != null)
         {
             results = new DefenseResultsDto(
-                protocol.Decision == "Допущен", // Simplified
+                protocol.Decision == "Допущен",
                 protocol.FinalScoreNumeric ?? 0,
                 protocol.FinalGradeLetter ?? "-",
                 protocol.Decision ?? "-",

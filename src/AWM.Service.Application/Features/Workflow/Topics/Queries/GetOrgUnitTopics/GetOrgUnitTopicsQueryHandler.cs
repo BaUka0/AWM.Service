@@ -29,8 +29,7 @@ public sealed class GetOrgUnitTopicsQueryHandler : IRequestHandler<GetOrgUnitTop
     public async Task<Result<List<TopicDto>>> Handle(GetOrgUnitTopicsQuery request, CancellationToken cancellationToken)
     {
         var allTopics = await _topicRepository.GetByOrgUnitAsync(request.OrgUnitId, request.SemesterId, cancellationToken);
-        
-        // Department should only see topics that are NOT in Draft status
+
         var topics = allTopics.Where(t => t.Status != AWM.Service.Domain.Thesis.Enums.TopicStatus.Draft).ToList();
 
         var supervisorIds = topics.Select(t => t.CreatedBy).Distinct().ToList();
@@ -67,11 +66,11 @@ public sealed class GetOrgUnitTopicsQueryHandler : IRequestHandler<GetOrgUnitTop
                 t.WorkTypeId,
                 workTypeMap.TryGetValue(t.WorkTypeId, out var wt) ? wt.Name : "",
                 t.MaxParticipants,
-                t.Applications.Count(a => a.StatusId == 2), // Accepted
-                t.Applications.Count(a => a.StatusId == 1), // Pending
+                t.Applications.Count(a => a.StatusId == 2),
+                t.Applications.Count(a => a.StatusId == 1),
                 t.Status.ToString().ToLowerInvariant(),
-                t.Status.ToString().ToLowerInvariant(), // CurrentStateName
-                GetStatusDisplayName(t.Status), // CurrentStateDisplayName
+                t.Status.ToString().ToLowerInvariant(),
+                GetStatusDisplayName(t.Status),
                 t.ReviewComment,
                 t.SubmittedAt,
                 t.CreatedAt,
@@ -79,8 +78,8 @@ public sealed class GetOrgUnitTopicsQueryHandler : IRequestHandler<GetOrgUnitTop
                     a.Id,
                     a.StudentId,
                     a.Student?.User != null ? $"{a.Student.User.LastName} {a.Student.User.FirstName} {a.Student.User.MiddleName}".Trim() : $"Student #{a.StudentId}",
-                    "", // GroupCode
-                    a.Student?.Speciality?.Title ?? "", // StudentSpecialityName
+                    "",
+                    a.Student?.Speciality?.Title ?? "",
                     a.StatusId,
                     a.StatusId == 1 ? "pending" : a.StatusId == 2 ? "approved" : "rejected",
                     a.MotivationLetter,

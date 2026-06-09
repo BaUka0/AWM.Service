@@ -44,10 +44,8 @@ public class QualityCheckConfiguration : AuditableEntityConfiguration<QualityChe
 
         builder.Property(e => e.AttachmentId);
 
-        // Ignore computed property
         builder.Ignore(e => e.CheckedAt);
 
-        // Foreign keys
         builder.HasOne(e => e.Attachment)
             .WithMany()
             .HasForeignKey(e => e.AttachmentId)
@@ -65,7 +63,6 @@ public class QualityCheckConfiguration : AuditableEntityConfiguration<QualityChe
             .HasConstraintName("FK_Check_Type")
             .OnDelete(DeleteBehavior.Restrict);
 
-        // Index for check queries
         builder.HasIndex(e => new { e.WorkId, e.CheckTypeId, e.AttemptNumber })
             .HasDatabaseName("IX_QualityChecks_Work");
     }

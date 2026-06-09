@@ -67,7 +67,6 @@ internal sealed class AuthSeeder
     {
         if (await _context.RoleOperations.AnyAsync(ct)) return;
 
-        // Root nodes
         var thesis = new RoleOperation("THESIS", "Управление ВКР", "ДЖ басқару", "Thesis Management", 0, null, 10);
         var defense = new RoleOperation("DEFENSE", "Защита ВКР", "ДЖ қорғау", "Defense", 0, null, 20);
         var system = new RoleOperation("SYSTEM", "Системное управление", "Жүйелік басқару", "System Management", 0, null, 30);
@@ -75,7 +74,6 @@ internal sealed class AuthSeeder
         _context.RoleOperations.AddRange(thesis, defense, system);
         await _context.SaveChangesAsync(ct);
 
-        // THESIS children
         _context.RoleOperations.AddRange(
             new RoleOperation("THESIS.DIRECTION", "Направления", "Бағыттар", "Directions", 0, thesis.Id, 10),
             new RoleOperation("THESIS.TOPIC", "Темы", "Тақырыптар", "Topics", 0, thesis.Id, 20),
@@ -86,7 +84,6 @@ internal sealed class AuthSeeder
             new RoleOperation("THESIS.APPLICATION", "Заявки на темы", "Тақырыпқа өтінімдер", "Topic Applications", 0, thesis.Id, 70)
         );
 
-        // DEFENSE children
         _context.RoleOperations.AddRange(
             new RoleOperation("DEFENSE.PREDEFENSE", "Предзащита", "Алдын ала қорғау", "Pre-Defense", 0, defense.Id, 10),
             new RoleOperation("DEFENSE.COMMISSION", "Комиссия", "Комиссия", "Commission", 0, defense.Id, 20),
@@ -95,7 +92,6 @@ internal sealed class AuthSeeder
             new RoleOperation("DEFENSE.PROTOCOL", "Протоколы", "Хаттамалар", "Protocols", 0, defense.Id, 50)
         );
 
-        // SYSTEM children
         _context.RoleOperations.AddRange(
             new RoleOperation("SYSTEM.ROLE", "Роли и доступ", "Рөлдер мен қол жеткізу", "Roles & Access", 0, system.Id, 10),
             new RoleOperation("SYSTEM.USER", "Пользователи", "Пайдаланушылар", "Users", 0, system.Id, 20),
@@ -127,7 +123,6 @@ internal sealed class AuthSeeder
 
         var matrix = new List<(string Role, string Op, int[] Actions)>
         {
-            // ADMIN — full access to everything
             ("ADMIN", "THESIS",            RCUD),
             ("ADMIN", "THESIS.DIRECTION",  RCUD),
             ("ADMIN", "THESIS.TOPIC",      RCUD),
@@ -149,7 +144,6 @@ internal sealed class AuthSeeder
             ("ADMIN", "SYSTEM.WORKTYPE",   RCUD),
             ("ADMIN", "SYSTEM.CRITERIA",   RCUD),
 
-            // DEPARTMENT_HEAD
             ("DEPARTMENT_HEAD", "THESIS.DIRECTION",  RCUD),
             ("DEPARTMENT_HEAD", "THESIS.TOPIC",      RCUD),
             ("DEPARTMENT_HEAD", "THESIS.WORK",       Ro),
@@ -165,7 +159,6 @@ internal sealed class AuthSeeder
             ("DEPARTMENT_HEAD", "SYSTEM.STAGE",      RCUD),
             ("DEPARTMENT_HEAD", "SYSTEM.CRITERIA",   RCUD),
 
-            // SUPERVISOR
             ("SUPERVISOR", "THESIS.DIRECTION",  RCU),
             ("SUPERVISOR", "THESIS.TOPIC",      RCU),
             ("SUPERVISOR", "THESIS.WORK",       Ro),
@@ -174,7 +167,6 @@ internal sealed class AuthSeeder
             ("SUPERVISOR", "THESIS.APPLICATION",RCUD),
             ("SUPERVISOR", "DEFENSE.PREDEFENSE",Ro),
 
-            // STUDENT
             ("STUDENT", "THESIS.TOPIC",      Ro),
             ("STUDENT", "THESIS.WORK",       RC),
             ("STUDENT", "THESIS.ATTACHMENT", RC),
@@ -183,7 +175,6 @@ internal sealed class AuthSeeder
             ("STUDENT", "DEFENSE.PREDEFENSE",Ro),
             ("STUDENT", "DEFENSE.SCHEDULE",  Ro),
 
-            // COMMISSION_CHAIRMAN
             ("COMMISSION_CHAIRMAN", "THESIS.WORK",        Ro),
             ("COMMISSION_CHAIRMAN", "THESIS.ATTACHMENT",  Ro),
             ("COMMISSION_CHAIRMAN", "DEFENSE.PREDEFENSE", Ro),
@@ -192,14 +183,12 @@ internal sealed class AuthSeeder
             ("COMMISSION_CHAIRMAN", "DEFENSE.GRADE",      RCU),
             ("COMMISSION_CHAIRMAN", "DEFENSE.PROTOCOL",   RCU),
 
-            // COMMISSION_SECRETARY
             ("COMMISSION_SECRETARY", "THESIS.WORK",        Ro),
             ("COMMISSION_SECRETARY", "DEFENSE.PREDEFENSE", Ro),
             ("COMMISSION_SECRETARY", "DEFENSE.COMMISSION", Ro),
             ("COMMISSION_SECRETARY", "DEFENSE.SCHEDULE",   RCU),
             ("COMMISSION_SECRETARY", "DEFENSE.PROTOCOL",   RCU),
 
-            // COMMISSION_MEMBER
             ("COMMISSION_MEMBER", "THESIS.WORK",        Ro),
             ("COMMISSION_MEMBER", "THESIS.ATTACHMENT",  Ro),
             ("COMMISSION_MEMBER", "DEFENSE.PREDEFENSE", Ro),
@@ -208,17 +197,14 @@ internal sealed class AuthSeeder
             ("COMMISSION_MEMBER", "DEFENSE.GRADE",      RC),
             ("COMMISSION_MEMBER", "DEFENSE.PROTOCOL",   Ro),
 
-            // QUALITY_EXPERT
             ("QUALITY_EXPERT", "THESIS.WORK",       Ro),
             ("QUALITY_EXPERT", "THESIS.ATTACHMENT", Ro),
             ("QUALITY_EXPERT", "THESIS.CHECK",      RCU),
 
-            // REVIEWER
             ("REVIEWER", "THESIS.WORK",       Ro),
             ("REVIEWER", "THESIS.ATTACHMENT", Ro),
             ("REVIEWER", "THESIS.REVIEW",     RC),
 
-            // DEAN_OFFICE
             ("DEAN_OFFICE", "THESIS.DIRECTION",  Ro),
             ("DEAN_OFFICE", "THESIS.TOPIC",      Ro),
             ("DEAN_OFFICE", "THESIS.WORK",       Ro),

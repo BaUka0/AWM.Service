@@ -6,18 +6,15 @@ namespace AWM.Service.Domain.CommonDomain.Constants;
 /// </summary>
 public static class WorkflowStageIds
 {
-    // Initial Stages
     public const int DirectionProposal = 1;
     public const int TopicProposal = 2;
-    public const int TopicPreparation = 3; // Selection by students?
-    public const int Preparation = 4;      // Actual work starts
+    public const int TopicPreparation = 3;
+    public const int Preparation = 4;
 
-    // Defense Stages
     public const int PreDefense1 = 5;
     public const int PreDefense2 = 6;
     public const int PreDefense3 = 7;
     public const int FinalDefense = 8;
 
-    // Checks Stage
     public const int ChecksPeriod = 9;
 }

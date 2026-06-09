@@ -40,7 +40,6 @@ public sealed class CreateProtocolCommandHandler : IRequestHandler<CreateProtoco
         if (schedule == null)
             return Result.Failure<long>(new Error("Schedule.NotFound", $"Schedule with ID {request.ScheduleId} not found."));
 
-        // Only the commission chairman or secretary may create the protocol
         var commission = await _commissionRepository.GetByIdWithAssignmentsAsync(schedule.CommissionId, cancellationToken);
         if (commission == null)
             return Result.Failure<long>(new Error("Commission.NotFound", "Commission for this schedule not found."));
@@ -61,11 +60,6 @@ public sealed class CreateProtocolCommandHandler : IRequestHandler<CreateProtoco
         {
             if (!existingProtocol.IsFinalized)
             {
-                int? decisionType = null;
-                int? readinessPercent = null;
-                if (!string.IsNullOrEmpty(request.DecisionType) && int.TryParse(request.DecisionType, out var dt)) decisionType = dt;
-                if (!string.IsNullOrEmpty(request.ReadinessPercent) && int.TryParse(request.ReadinessPercent, out var rp)) readinessPercent = rp;
-
                 existingProtocol.SetGradingAndDecision(
                     request.FinalScoreNumeric,
                     request.FinalGradeLetter,
@@ -73,10 +67,10 @@ public sealed class CreateProtocolCommandHandler : IRequestHandler<CreateProtoco
                     request.ProtocolNumber,
                     currentUserId,
                     request.Comments,
-                    decisionType,
-                    readinessPercent
+                    request.DecisionType,
+                    request.ReadinessPercent
                 );
-                _protocolRepository.Update(existingProtocol);
+                await _protocolRepository.UpdateAsync(existingProtocol, cancellationToken);
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
             }
             return Result.Success(existingProtocol.Id);

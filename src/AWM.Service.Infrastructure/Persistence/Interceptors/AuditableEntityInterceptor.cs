@@ -70,7 +70,6 @@ public sealed class AuditableEntityInterceptor : SaveChangesInterceptor
         {
             if (entry.State == EntityState.Added)
             {
-                // Smart timestamps: only set if the entity hasn't already provided a value
                 var createdAtValue = entry.Property(nameof(IAuditable.CreatedAt)).CurrentValue;
                 if (createdAtValue is DateTime createdAt && createdAt == default)
                 {

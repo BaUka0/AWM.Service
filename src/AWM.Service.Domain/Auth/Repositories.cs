@@ -97,4 +97,3 @@ public interface ILocalAccountRepository
     Task AddAsync(LocalAccount localAccount, CancellationToken cancellationToken = default);
     Task UpdateAsync(LocalAccount localAccount, CancellationToken cancellationToken = default);
 }
-

@@ -59,7 +59,7 @@ public sealed class UnlockEmployeesCommandHandler : IRequestHandler<UnlockEmploy
 
         if (filteredAssignments.Count == 0)
         {
-            return Result.Success(); // Nothing to unlock
+            return Result.Success();
         }
 
         foreach (var assignment in filteredAssignments)

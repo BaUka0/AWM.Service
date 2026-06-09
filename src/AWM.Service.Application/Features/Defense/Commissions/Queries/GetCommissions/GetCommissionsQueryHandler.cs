@@ -23,7 +23,6 @@ public sealed class GetCommissionsQueryHandler : IRequestHandler<GetCommissionsQ
         if (request.SpecialityId.HasValue)
             commissions = commissions.Where(c => c.SpecialityId == null || c.SpecialityId == request.SpecialityId.Value).ToList();
 
-        // Batch-load all users across all commissions in one query
         var allUserIds = commissions
             .SelectMany(c => c.Assignments.Select(a => a.UserId))
             .Distinct()

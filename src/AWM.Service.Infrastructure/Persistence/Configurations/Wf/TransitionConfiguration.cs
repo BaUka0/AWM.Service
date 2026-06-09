@@ -34,7 +34,6 @@ public class TransitionConfiguration : SoftDeletableEntityConfiguration<Transiti
             .IsRequired()
             .HasDefaultValue(false);
 
-        // Foreign keys
         builder.HasOne<State>()
             .WithMany()
             .HasForeignKey(e => e.FromStateId)
@@ -53,7 +52,6 @@ public class TransitionConfiguration : SoftDeletableEntityConfiguration<Transiti
             .HasConstraintName("FK_Trans_Role")
             .OnDelete(DeleteBehavior.Restrict);
 
-        // Index on FromStateId for transition lookup
         builder.HasIndex(e => e.FromStateId)
             .HasDatabaseName("IX_Transitions_From");
     }

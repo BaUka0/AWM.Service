@@ -52,7 +52,6 @@ public sealed class DeleteAttachmentCommandHandler : IRequestHandler<DeleteAttac
             return Result.Failure(new Error("Attachments.NotFound", $"Attachment with ID {request.AttachmentId} not found on this work."));
         }
 
-        // Check rights: participant or supervisor
         var isParticipant = work.Participants.Any(p => p.StudentId == currentUserId);
         var isSupervisor = false;
         if (work.TopicId.HasValue)
@@ -66,10 +65,8 @@ public sealed class DeleteAttachmentCommandHandler : IRequestHandler<DeleteAttac
             return Result.Failure(new Error("Attachments.Forbidden", "You do not have permission to delete this attachment."));
         }
 
-        // Physically delete file
         await _attachmentService.DeleteAsync(attachment.FileStoragePath, cancellationToken);
 
-        // Remove from domain collection
         work.RemoveAttachment(request.AttachmentId, currentUserId);
 
         await _studentWorkRepository.UpdateAsync(work, cancellationToken);

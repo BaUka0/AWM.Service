@@ -40,7 +40,6 @@ public sealed class UploadAttachmentCommandHandler : IRequestHandler<UploadAttac
         _unitOfWork = unitOfWork;
     }
 
-
     public async Task<Result<long>> Handle(UploadAttachmentCommand request, CancellationToken cancellationToken)
     {
         if (!_currentUserProvider.UserId.HasValue)
@@ -56,7 +55,6 @@ public sealed class UploadAttachmentCommandHandler : IRequestHandler<UploadAttac
             return Result.Failure<long>(new Error("StudentWorks.NotFound", $"Student work with ID {request.WorkId} not found."));
         }
 
-        // Verify permissions (participant or supervisor)
         var isParticipant = work.Participants.Any(p => p.StudentId == currentUserId);
         var isSupervisor = false;
         if (work.TopicId.HasValue)
@@ -70,28 +68,21 @@ public sealed class UploadAttachmentCommandHandler : IRequestHandler<UploadAttac
             return Result.Failure<long>(new Error("Attachments.Forbidden", "You do not have permission to upload attachments for this work."));
         }
 
-        // Verify attachment type
         var attachmentType = await _attachmentTypeRepository.GetByIdAsync(request.AttachmentTypeId, cancellationToken);
         if (attachmentType == null)
         {
             return Result.Failure<long>(new Error("AttachmentTypes.NotFound", $"Attachment type with ID {request.AttachmentTypeId} not found."));
         }
 
-
-
-        // Compute file hash
         var hash = await _attachmentService.ComputeHashAsync(request.FileStream, cancellationToken);
 
-        // Reset stream position (just in case)
         if (request.FileStream.CanSeek)
         {
             request.FileStream.Position = 0;
         }
 
-        // Save file physically
         var storagePath = await _attachmentService.SaveAsync(request.FileName, request.FileStream, request.ContentType, cancellationToken);
 
-        // Add attachment in Domain
         var attachment = work.AddAttachment(
             request.AttachmentTypeId,
             request.FileName,
@@ -102,7 +93,6 @@ public sealed class UploadAttachmentCommandHandler : IRequestHandler<UploadAttac
             request.ContentType
         );
 
-        // Automation Hook: Transition to waiting for schedule when both draft and presentation are uploaded
         var currentState = await _workflowRepository.GetStateByIdAsync(work.CurrentStateId, cancellationToken);
         if (currentState != null)
         {

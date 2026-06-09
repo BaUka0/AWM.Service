@@ -42,7 +42,6 @@ public sealed class UploadRecensionCommandHandler : IRequestHandler<UploadRecens
         _unitOfWork = unitOfWork;
     }
 
-
     public async Task<Result> Handle(UploadRecensionCommand request, CancellationToken cancellationToken)
     {
         if (!_currentUserProvider.UserId.HasValue)
@@ -57,8 +56,6 @@ public sealed class UploadRecensionCommandHandler : IRequestHandler<UploadRecens
         {
             return Result.Failure(new Error("StudentWorks.NotFound", $"Student work with ID {request.WorkId} not found."));
         }
-
-
 
         var hash = await _attachmentService.ComputeHashAsync(request.FileStream, cancellationToken);
         if (request.FileStream.CanSeek)
@@ -106,7 +103,6 @@ public sealed class UploadRecensionCommandHandler : IRequestHandler<UploadRecens
 
         work.AddReview(reviewerUserId, ReviewType.ExternalReview, "Recension uploaded", currentUserId);
 
-        // Automation Hook: Transition state to ReadyForDefense if in ReviewsWaitingForReviewer
         var currentState = await _workflowRepository.GetStateByIdAsync(work.CurrentStateId, cancellationToken);
         if (currentState != null && currentState.SystemName == WorkStates.ReviewsWaitingForReviewer)
         {

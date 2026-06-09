@@ -39,17 +39,15 @@ public sealed class SubmitTopicsCommandHandler : IRequestHandler<SubmitTopicsCom
             return Result.Failure(new Error("Auth.Unauthorized", "User is not authenticated."));
 
         var currentUserId = _currentUserProvider.UserId.Value;
-        var topics = await _topicRepository.GetByIdsAsync(request.TopicIds, cancellationToken);
+        var topics = await _topicRepository.GetByIdsWithApplicationsAsync(request.TopicIds, cancellationToken);
 
         if (topics.Count != request.TopicIds.Count)
             return Result.Failure(new Error("Topics.NotFound", "Some topics were not found."));
 
-        // Topics that will actually transition to Pending (not already Approved)
         var topicsToSubmit = topics.Where(t => t.Status != TopicStatus.Approved).ToList();
         if (!topicsToSubmit.Any())
             return Result.Success();
 
-        // Validate MaxWorkload before submitting
         var firstTopic = topicsToSubmit.First();
         var supervisorAssignments = await _staffAssignmentRepository.GetByRoleAsync(
             "OrgUnit", firstTopic.OrgUnitId, StaffRoleType.Supervisor, cancellationToken);
@@ -98,9 +96,8 @@ public sealed class SubmitTopicsCommandHandler : IRequestHandler<SubmitTopicsCom
                 return Result.Failure(new Error("Topics.Unauthorized", $"You are not authorized to submit topic ID {topic.Id}."));
 
             if (topic.Status == Domain.Thesis.Enums.TopicStatus.Approved)
-                continue; // Already approved topics can be skipped
+                continue;
 
-            // Validate stage for each topic (though they should share the same orgUnit/semester)
             var (isAllowed, errorMessage) = await _stageValidationService.ValidateOperationInStageAsync(
                 topic.OrgUnitId,
                 topic.SemesterId,

@@ -49,7 +49,6 @@ public class StageConfiguration : SoftDeletableEntityConfiguration<Stage, int>
             .IsRequired()
             .HasDefaultValue(true);
 
-        // Foreign keys
         builder.HasOne<OrgUnit>()
             .WithMany()
             .HasForeignKey(e => e.OrgUnitId)
@@ -74,7 +73,6 @@ public class StageConfiguration : SoftDeletableEntityConfiguration<Stage, int>
             .HasConstraintName("FK_Stages_WfStage")
             .OnDelete(DeleteBehavior.Restrict);
 
-        // Index for active stages
         builder.HasIndex(e => new { e.OrgUnitId, e.SpecialityId, e.SemesterId, e.WorkflowStageId })
             .HasDatabaseName("IX_Stages_Active")
             .HasFilter("[IsActive] = 1");

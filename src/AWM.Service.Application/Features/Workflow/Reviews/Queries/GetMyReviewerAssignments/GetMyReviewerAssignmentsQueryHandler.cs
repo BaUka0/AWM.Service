@@ -45,7 +45,6 @@ public sealed class GetMyReviewerAssignmentsQueryHandler : IRequestHandler<GetMy
 
         var currentUserId = _currentUserProvider.UserId.Value;
 
-        // Query active reviewer assignments for the current user
         var staffAssignments = await _staffAssignmentRepository.GetByUserAsync(currentUserId, cancellationToken);
         var activeAssignments = staffAssignments
             .Where(a => a.RoleType == StaffRoleType.Reviewer &&
@@ -62,12 +61,10 @@ public sealed class GetMyReviewerAssignmentsQueryHandler : IRequestHandler<GetMy
         var workIds = activeAssignments.Select(a => a.TargetEntityId).Distinct().ToList();
         var works = await _studentWorkRepository.GetByIdsWithDetailsAsync(workIds, cancellationToken);
 
-        // Load Topics
         var topicIds = works.Where(w => w.TopicId.HasValue).Select(w => w.TopicId!.Value).Distinct().ToList();
         var topics = await _topicRepository.GetByIdsAsync(topicIds, cancellationToken);
         var topicMap = topics.ToDictionary(t => t.Id);
 
-        // Load Students
         var studentIds = works.SelectMany(w => w.Participants.Select(p => p.StudentId)).Distinct().ToList();
         var students = await _userRepository.GetByIdsAsync(studentIds, cancellationToken);
         var studentMap = students.ToDictionary(s => s.Id);
@@ -79,14 +76,12 @@ public sealed class GetMyReviewerAssignmentsQueryHandler : IRequestHandler<GetMy
             var work = works.FirstOrDefault(w => w.Id == workId);
             if (work == null) continue;
 
-            // Resolve Topic Title
             string topicTitle = string.Empty;
             if (work.TopicId.HasValue && topicMap.TryGetValue(work.TopicId.Value, out var topic))
             {
                 topicTitle = topic.TitleRu ?? topic.TitleEn ?? topic.TitleKz ?? string.Empty;
             }
 
-            // Resolve Student Name
             string studentName = "Unknown";
             var participant = work.Participants.FirstOrDefault();
             if (participant != null && studentMap.TryGetValue(participant.StudentId, out var studentUser))

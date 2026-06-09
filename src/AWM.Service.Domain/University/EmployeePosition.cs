@@ -16,7 +16,6 @@ public class EmployeePosition : Entity<int>
     public decimal? Rate { get; private set; }
     public bool IsMainPosition { get; private set; }
 
-    // Navigation properties
     public Employee? Employee { get; private set; }
     public OrgUnit? OrgUnit { get; private set; }
     public Position? Position { get; private set; }

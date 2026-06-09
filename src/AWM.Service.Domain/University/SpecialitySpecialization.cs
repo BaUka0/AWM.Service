@@ -11,7 +11,6 @@ public class SpecialitySpecialization : Entity<int>
     public int? SpecialityId { get; private set; }
     public int? SpecializationId { get; private set; }
 
-    // Navigation properties
     public Speciality? Speciality { get; private set; }
     public Specialization? Specialization { get; private set; }
 

@@ -54,7 +54,6 @@ public sealed class AdmitToDefenseCommandHandler : IRequestHandler<AdmitToDefens
             return Result.Failure(new Error("Work.StateNotFound", "Current state not resolved."));
         }
 
-        // Transition to ReadyForDefense
         var targetState = await _workflowRepository.GetStateBySystemNameAsync(currentState.WorkTypeId, WorkStates.ReadyForDefense, cancellationToken);
         if (targetState == null)
         {

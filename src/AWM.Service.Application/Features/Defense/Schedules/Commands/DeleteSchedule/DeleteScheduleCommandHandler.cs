@@ -49,11 +49,9 @@ public sealed class DeleteScheduleCommandHandler : IRequestHandler<DeleteSchedul
             return Result.Failure(new Error("Schedule.NotFound", $"Schedule slot with ID {request.Id} not found."));
         }
 
-        // Soft delete the schedule slot
         schedule.Delete(deletedBy);
         await _scheduleRepository.UpdateAsync(schedule, cancellationToken);
 
-        // Automate state machine transition: revert student work state back to WaitingForSchedule
         var work = await _studentWorkRepository.GetByIdWithDetailsAsync(schedule.WorkId, cancellationToken);
         if (work != null)
         {

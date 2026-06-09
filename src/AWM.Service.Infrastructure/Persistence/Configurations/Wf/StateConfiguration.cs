@@ -34,14 +34,12 @@ public class StateConfiguration : SoftDeletableEntityConfiguration<State, int>
             .IsRequired()
             .HasDefaultValue(false);
 
-        // Foreign key to WorkType
         builder.HasOne<WorkType>()
             .WithMany()
             .HasForeignKey(e => e.WorkTypeId)
             .HasConstraintName("FK_States_WorkType")
             .OnDelete(DeleteBehavior.Restrict);
 
-        // Unique constraint on (WorkTypeId, SystemName)
         builder.HasIndex(e => new { e.WorkTypeId, e.SystemName })
             .IsUnique()
             .HasFilter("[IsDeleted] = 0")

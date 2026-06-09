@@ -8,7 +8,6 @@ public class OrgUnitReadOnlyRepository : IOrgUnitReadOnlyRepository
 {
     private readonly UniversityDbContext _context;
 
-    // TypeId constants from Edu_OrgUnitTypes
     private const int TypeDepartment = 1;
     private const int TypeInstitute = 2;
 

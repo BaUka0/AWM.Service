@@ -23,10 +23,8 @@ public class Attachment : Entity<long>, IAuditable
     public DateTime? LastModifiedAt { get; private set; }
     public int? LastModifiedBy { get; private set; }
 
-    // Navigation properties
     public AttachmentType? AttachmentType { get; private set; }
 
-    // Legacy fields for backward compatibility/DB mapping
     public int UploadedBy => CreatedBy;
     public DateTime UploadedAt => CreatedAt;
 

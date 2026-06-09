@@ -42,7 +42,6 @@ public sealed class GetOrgUnitDirectionsQueryHandler : IRequestHandler<GetOrgUni
     /// </summary>
     public async Task<Result<IReadOnlyList<DirectionSummaryDto>>> Handle(GetOrgUnitDirectionsQuery request, CancellationToken cancellationToken)
     {
-        // Resolve semesterId fallback if null
         int semesterId;
         if (request.SemesterId.HasValue)
         {
@@ -111,7 +110,7 @@ public sealed class GetOrgUnitDirectionsQueryHandler : IRequestHandler<GetOrgUni
                 d.OrgUnitId,
                 d.SemesterId,
                 d.WorkTypeId,
-                d.CreatedBy, // SupervisorId
+                d.CreatedBy,
                 d.TitleRu,
                 d.TitleKz,
                 d.TitleEn,
@@ -133,5 +132,3 @@ public sealed class GetOrgUnitDirectionsQueryHandler : IRequestHandler<GetOrgUni
         return Result.Success<IReadOnlyList<DirectionSummaryDto>>(resultList);
     }
 }
-
-

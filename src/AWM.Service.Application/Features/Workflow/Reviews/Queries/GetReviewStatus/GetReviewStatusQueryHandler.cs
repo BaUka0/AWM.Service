@@ -46,7 +46,6 @@ public sealed class GetReviewStatusQueryHandler : IRequestHandler<GetReviewStatu
             return Result.Failure<IReadOnlyList<WorkReviewStatusDto>>(new Error("Auth.Unauthorized", "User is not authenticated."));
         }
 
-        // Get basic works in department
         var basicWorks = await _studentWorkRepository.GetByOrgUnitAsync(request.OrgUnitId, request.SemesterId, cancellationToken);
         if (!basicWorks.Any())
         {
@@ -56,19 +55,16 @@ public sealed class GetReviewStatusQueryHandler : IRequestHandler<GetReviewStatu
         var workIds = basicWorks.Select(w => w.Id).ToList();
         var works = await _studentWorkRepository.GetByIdsWithDetailsAsync(workIds, cancellationToken);
 
-        // Load Topics
         var topicIds = works.Where(w => w.TopicId.HasValue).Select(w => w.TopicId!.Value).Distinct().ToList();
         var topics = await _topicRepository.GetByIdsAsync(topicIds, cancellationToken);
         var topicMap = topics.ToDictionary(t => t.Id);
 
-        // Load Reviewer Assignments (active only per work)
         var reviewerAssignments = await _staffAssignmentRepository.GetByTargetsAndRoleAsync("StudentWork", workIds, StaffRoleType.Reviewer, cancellationToken);
         var activeReviewerAssignmentsMap = reviewerAssignments
             .Where(a => a.IsActive && !a.IsDeleted)
             .GroupBy(a => a.TargetEntityId)
             .ToDictionary(g => g.Key, g => g.First());
 
-        // Resolve all user names in bulk
         var studentIds = works.SelectMany(w => w.Participants.Select(p => p.StudentId)).Distinct().ToList();
         var supervisorIds = topics.Select(t => t.CreatedBy).Distinct().ToList();
         var reviewerUserIds = activeReviewerAssignmentsMap.Values.Select(a => a.UserId).Distinct().ToList();
@@ -77,11 +73,9 @@ public sealed class GetReviewStatusQueryHandler : IRequestHandler<GetReviewStatu
         var users = await _userRepository.GetByIdsAsync(allUserIds, cancellationToken);
         var userMap = users.ToDictionary(u => u.Id);
 
-        // Bulk-load Reviewer entities by UserId to get ReviewerEntityId
         var reviewerEntitiesMap = new Dictionary<int, Domain.Thesis.Entities.Reviewer>();
         if (reviewerUserIds.Any())
         {
-            // Fetch reviewer entities for all assigned reviewer user IDs
             foreach (var reviewerUserId in reviewerUserIds)
             {
                 var reviewerEntity = await _reviewerRepository.GetByUserIdAsync(reviewerUserId, cancellationToken);
@@ -96,7 +90,6 @@ public sealed class GetReviewStatusQueryHandler : IRequestHandler<GetReviewStatu
 
         foreach (var work in works)
         {
-            // Resolve Student Name
             string studentName = "Unknown";
             var participant = work.Participants.FirstOrDefault();
             if (participant != null && userMap.TryGetValue(participant.StudentId, out var studentUser))
@@ -104,7 +97,6 @@ public sealed class GetReviewStatusQueryHandler : IRequestHandler<GetReviewStatu
                 studentName = $"{studentUser.LastName} {studentUser.FirstName} {studentUser.MiddleName}".Trim();
             }
 
-            // Resolve Topic & Supervisor Name
             string topicTitle = string.Empty;
             string supervisorName = "Unknown";
             if (work.TopicId.HasValue && topicMap.TryGetValue(work.TopicId.Value, out var topic))
@@ -116,13 +108,11 @@ public sealed class GetReviewStatusQueryHandler : IRequestHandler<GetReviewStatu
                 }
             }
 
-            // Resolve Reviewer Name and ReviewerEntityId
             string reviewerName = "Not Assigned";
             int? reviewerEntityId = null;
 
             if (activeReviewerAssignmentsMap.TryGetValue(work.Id, out var activeReviewerAssignment))
             {
-                // Try to get name from Reviewer entity (external reviewer)
                 if (reviewerEntitiesMap.TryGetValue(activeReviewerAssignment.UserId, out var reviewerEntity))
                 {
                     reviewerName = reviewerEntity.FullName;
@@ -130,7 +120,6 @@ public sealed class GetReviewStatusQueryHandler : IRequestHandler<GetReviewStatu
                 }
                 else if (userMap.TryGetValue(activeReviewerAssignment.UserId, out var reviewerUser))
                 {
-                    // Fallback to system user name if no Reviewer entity found
                     reviewerName = $"{reviewerUser.LastName} {reviewerUser.FirstName} {reviewerUser.MiddleName}".Trim();
                 }
             }

@@ -38,7 +38,6 @@ public class ScheduleConfiguration : SoftDeletableEntityConfiguration<Schedule, 
             .IsRequired()
             .HasDefaultValue(false);
 
-        // Foreign keys
         builder.HasOne<Commission>()
             .WithMany()
             .HasForeignKey(e => e.CommissionId)
@@ -51,13 +50,11 @@ public class ScheduleConfiguration : SoftDeletableEntityConfiguration<Schedule, 
             .HasConstraintName("FK_Sched_Work")
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Navigation to grades
         builder.HasMany(e => e.Grades)
             .WithOne()
             .HasForeignKey(e => e.ScheduleId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Unique constraint - one schedule per work per commission
         builder.HasIndex(e => new { e.CommissionId, e.WorkId })
             .IsUnique()
             .HasFilter("[IsDeleted] = 0")

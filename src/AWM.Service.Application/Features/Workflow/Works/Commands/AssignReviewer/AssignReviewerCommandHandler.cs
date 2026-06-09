@@ -49,21 +49,18 @@ public sealed class AssignReviewerCommandHandler : IRequestHandler<AssignReviewe
 
         var currentUserId = _currentUserProvider.UserId.Value;
 
-        // Verify StudentWork exists
         var work = await _studentWorkRepository.GetByIdAsync(request.WorkId, cancellationToken);
         if (work == null)
         {
             return Result.Failure(new Error("StudentWorks.NotFound", $"Student work with ID {request.WorkId} not found."));
         }
 
-        // Verify Reviewer entity exists
         var reviewer = await _reviewerRepository.GetByIdAsync(request.ReviewerEntityId, cancellationToken);
         if (reviewer == null)
         {
             return Result.Failure(new Error("Reviewers.NotFound", $"Reviewer with ID {request.ReviewerEntityId} not found."));
         }
 
-        // Reviewer must have a linked system account to be assigned
         if (!reviewer.UserId.HasValue)
         {
             return Result.Failure(new Error("Reviewers.NoSystemAccount",
@@ -72,7 +69,6 @@ public sealed class AssignReviewerCommandHandler : IRequestHandler<AssignReviewe
 
         var reviewerUserId = reviewer.UserId.Value;
 
-        // 1. Deactivate existing reviewer assignments for this work
         var existingAssignments = await _staffAssignmentRepository.GetByRoleAsync(
             "StudentWork",
             request.WorkId,
@@ -85,7 +81,6 @@ public sealed class AssignReviewerCommandHandler : IRequestHandler<AssignReviewe
             assignment.Deactivate(currentUserId);
             await _staffAssignmentRepository.UpdateAsync(assignment, cancellationToken);
 
-            // Check if this deactivated user has any other active reviewer assignments in the system
             var userAssignments = await _staffAssignmentRepository.GetByUserAsync(assignment.UserId, cancellationToken);
             var hasOtherActiveAssignments = userAssignments.Any(a =>
                 a.IsActive &&
@@ -108,7 +103,6 @@ public sealed class AssignReviewerCommandHandler : IRequestHandler<AssignReviewe
             }
         }
 
-        // 2. Create new StaffAssignment for the reviewer (using reviewer's UserId)
         var newAssignment = new StaffAssignment(
             reviewerUserId,
             StaffRoleType.Reviewer,
@@ -118,7 +112,6 @@ public sealed class AssignReviewerCommandHandler : IRequestHandler<AssignReviewe
 
         await _staffAssignmentRepository.AddAsync(newAssignment, cancellationToken);
 
-        // 3. Grant the REVIEWER role in UserAccesses to the user
         var reviewerRole = await _roleAccessRepository.GetByCodeAsync("REVIEWER", cancellationToken);
         if (reviewerRole == null)
         {

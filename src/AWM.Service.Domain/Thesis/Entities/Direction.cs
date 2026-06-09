@@ -74,8 +74,6 @@ public class Direction : AggregateRoot<long>, IAuditable, ISoftDeletable
         LastModifiedBy = createdByUserId;
         IsDeleted = false;
 
-        // NOTE: Domain event is NOT raised in constructor because EF Identity
-        // has not yet assigned the Id. Call RaiseCreatedEvent() after AddAsync/SaveChanges.
     }
 
     /// <summary>

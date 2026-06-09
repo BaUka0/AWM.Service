@@ -44,7 +44,6 @@ public sealed class MarkAsGraduatedCommandHandler : IRequestHandler<MarkAsGradua
 
         var currentUserId = _currentUserProvider.UserId.Value;
 
-        // Verify the user has Secretary or Chairman role
         var assignments = await _staffAssignmentRepository.GetByUserAsync(currentUserId, cancellationToken);
         bool hasAccess = assignments.Any(a => a.IsActive && !a.IsDeleted &&
             (a.RoleType == StaffRoleType.CommissionSecretary || a.RoleType == StaffRoleType.CommissionChairman));
@@ -64,7 +63,6 @@ public sealed class MarkAsGraduatedCommandHandler : IRequestHandler<MarkAsGradua
                 continue;
             }
 
-            // Must be defended to be graduated
             if (currentState.SystemName != WorkStates.Defended)
             {
                 continue;

@@ -35,7 +35,6 @@ public class SpecialityConfiguration : IEntityTypeConfiguration<Speciality>
         builder.Property(e => e.Deleted)
             .IsRequired();
 
-        // FK to level
         builder.HasOne(e => e.Level)
             .WithMany()
             .HasForeignKey(e => e.LevelId)

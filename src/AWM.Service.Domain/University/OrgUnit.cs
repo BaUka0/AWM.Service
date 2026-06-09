@@ -15,7 +15,6 @@ public class OrgUnit : Entity<int>
     public int TypeId { get; private set; }
     public bool Deleted { get; private set; }
 
-    // Navigation properties
     public OrgUnitType? Type { get; private set; }
     public OrgUnit? Parent { get; private set; }
     public ICollection<OrgUnit> Children { get; private set; } = new List<OrgUnit>();

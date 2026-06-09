@@ -47,4 +47,3 @@ public sealed class ProtocolRepository : RepositoryBase<Protocol, long>, IProtoc
             .ToListAsync(cancellationToken);
     }
 }
-

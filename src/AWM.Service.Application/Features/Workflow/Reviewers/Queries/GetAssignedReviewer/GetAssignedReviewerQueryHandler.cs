@@ -24,7 +24,6 @@ public sealed class GetAssignedReviewerQueryHandler : IRequestHandler<GetAssigne
 
     public async Task<Result<ReviewerDto?>> Handle(GetAssignedReviewerQuery request, CancellationToken cancellationToken)
     {
-        // Find the active reviewer assignment for this work
         var assignments = await _staffAssignmentRepository.GetByRoleAsync(
             "StudentWork",
             request.WorkId,
@@ -37,7 +36,6 @@ public sealed class GetAssignedReviewerQueryHandler : IRequestHandler<GetAssigne
             return Result.Success<ReviewerDto?>(null);
         }
 
-        // Look up the Reviewer entity by linked UserId
         var reviewer = await _reviewerRepository.GetByUserIdAsync(activeAssignment.UserId, cancellationToken);
         if (reviewer == null)
         {

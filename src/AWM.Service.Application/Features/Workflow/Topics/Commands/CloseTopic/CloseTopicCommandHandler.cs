@@ -36,11 +36,9 @@ public sealed class CloseTopicCommandHandler : IRequestHandler<CloseTopicCommand
         if (topic == null)
             return Result.Failure(new Error("Topics.NotFound", $"Topic with ID {request.TopicId} not found."));
 
-        // Only the topic creator can close the topic
         if (topic.CreatedBy != _currentUserProvider.UserId.Value)
             return Result.Failure(new Error("Topics.Forbidden", "Only the topic creator can close the topic."));
 
-        // Domain method handles status validation and raises TopicClosedEvent
         topic.Close();
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);

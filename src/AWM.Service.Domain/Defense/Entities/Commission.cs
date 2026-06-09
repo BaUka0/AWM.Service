@@ -73,14 +73,12 @@ public class Commission : AggregateRoot<int>, IAuditable, ISoftDeletable
     /// </summary>
     public StaffAssignment AddMember(int userId, StaffRoleType roleType, int createdBy)
     {
-        // Enforce role-specific limits
         if (roleType == StaffRoleType.CommissionChairman && _assignments.Any(a => a.RoleType == StaffRoleType.CommissionChairman && a.IsActive))
             throw new DomainException("Commission.ChairmanAlreadyExists", "Commission already has an active chairman.");
 
         if (roleType == StaffRoleType.CommissionSecretary && _assignments.Any(a => a.RoleType == StaffRoleType.CommissionSecretary && a.IsActive))
             throw new DomainException("Commission.SecretaryAlreadyExists", "Commission already has an active secretary.");
 
-        // For GAK, limit members to 4
         if (CommissionTypeId == (int)CommissionTypes.GAK && roleType == StaffRoleType.CommissionMember)
         {
             var currentMemberCount = _assignments.Count(a => a.RoleType == StaffRoleType.CommissionMember && a.IsActive);
@@ -167,13 +165,11 @@ public class Commission : AggregateRoot<int>, IAuditable, ISoftDeletable
             .Select(a => a.UserId)
             .ToList();
 
-        // Deactivate all existing active assignments
         foreach (var assignment in _assignments.Where(a => a.IsActive && !a.IsDeleted).ToList())
         {
             assignment.Deactivate(modifiedBy);
         }
 
-        // Add new chairman, secretary and members
         AddMember(chairmanUserId, StaffRoleType.CommissionChairman, modifiedBy);
         AddMember(secretaryUserId, StaffRoleType.CommissionSecretary, modifiedBy);
 

@@ -133,7 +133,6 @@ public sealed class WorkflowNotificationHandlers :
         var direction = await _directionRepository.GetByIdAsync(notification.DirectionId, cancellationToken);
         if (direction == null) return;
 
-        // Fetch department chairmen & secretaries
         var chairmen = await _staffAssignmentRepository.GetByRoleAsync("OrgUnit", direction.OrgUnitId, StaffRoleType.CommissionChairman, cancellationToken);
         var secretaries = await _staffAssignmentRepository.GetByRoleAsync("OrgUnit", direction.OrgUnitId, StaffRoleType.CommissionSecretary, cancellationToken);
         var departmentUsersToNotify = chairmen.Concat(secretaries).Select(a => a.UserId).Distinct().ToList();
@@ -393,7 +392,6 @@ public sealed class WorkflowNotificationHandlers :
         var topic = await _topicRepository.GetByIdAsync(notification.TopicId, cancellationToken);
         if (topic == null) return;
 
-        // Notify students with accepted applications
         if (notification.StudentIds.Any())
         {
             await _notificationService.SendToManyAsync(
@@ -406,7 +404,6 @@ public sealed class WorkflowNotificationHandlers :
                 cancellationToken: cancellationToken);
         }
 
-        // Notify supervisor
         await _notificationService.SendAsync(
             userId: topic.CreatedBy,
             title: "Тема согласована",
@@ -423,7 +420,6 @@ public sealed class WorkflowNotificationHandlers :
         var topic = await _topicRepository.GetByIdAsync(notification.TopicId, cancellationToken);
         if (topic == null) return;
 
-        // Notify students with accepted applications (if any)
         if (notification.StudentIds.Any())
         {
             await _notificationService.SendToManyAsync(
@@ -436,7 +432,6 @@ public sealed class WorkflowNotificationHandlers :
                 cancellationToken: cancellationToken);
         }
 
-        // Notify supervisor
         await _notificationService.SendAsync(
             userId: topic.CreatedBy,
             title: "Тема отмечена неактуальной",
@@ -453,7 +448,6 @@ public sealed class WorkflowNotificationHandlers :
         var topic = await _topicRepository.GetByIdAsync(notification.TopicId, cancellationToken);
         if (topic == null) return;
 
-        // Notify students with accepted applications
         if (notification.StudentIds.Any())
         {
             await _notificationService.SendToManyAsync(
@@ -466,7 +460,6 @@ public sealed class WorkflowNotificationHandlers :
                 cancellationToken: cancellationToken);
         }
 
-        // Notify supervisor
         await _notificationService.SendAsync(
             userId: topic.CreatedBy,
             title: "Тема отправлена на доработку",

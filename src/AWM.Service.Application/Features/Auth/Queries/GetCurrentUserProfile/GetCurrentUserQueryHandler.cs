@@ -67,21 +67,18 @@ public class GetCurrentUserQueryHandler : IRequestHandler<GetCurrentUserQuery, R
         var userRoleIds = userAccesses.Select(ua => ua.RoleAccessId).ToHashSet();
         var roles = allRoles.Where(r => userRoleIds.Contains(r.Id)).Select(r => r.Code).ToList();
 
-        // 1. Try to find as Employee
         var employee = await _employeeReadOnlyRepository.GetByUserIdAsync(user.Id, cancellationToken);
         var orgUnitId = employee?.Positions?.FirstOrDefault(p => p.IsMainPosition)?.OrgUnitId
                            ?? employee?.Positions?.FirstOrDefault()?.OrgUnitId;
 
-        // 2. If not found, try to find as Student
         if (orgUnitId == null)
         {
             var student = await _studentReadOnlyRepository.GetByUserIdAsync(user.Id, cancellationToken);
             if (student != null && student.SpecialityId.HasValue)
             {
-                // Chain: Speciality -> Specialization -> OrgUnit
                 var specSpecs = await _specSpecRepository.GetBySpecialityAsync(student.SpecialityId.Value, cancellationToken);
                 var specId = specSpecs.FirstOrDefault()?.SpecializationId;
-                
+
                 if (specId.HasValue)
                 {
                     var specOrgs = await _specOrgRepository.GetBySpecializationAsync(specId.Value, cancellationToken);

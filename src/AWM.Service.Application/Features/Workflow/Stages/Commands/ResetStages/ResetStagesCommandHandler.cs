@@ -39,7 +39,6 @@ public sealed class ResetStagesCommandHandler : IRequestHandler<ResetStagesComma
 
         var currentUserId = _currentUserProvider.UserId.Value;
 
-        // 1. Resolve OrgUnitId
         int orgUnitId;
         if (request.OrgUnitId.HasValue)
         {
@@ -64,23 +63,20 @@ public sealed class ResetStagesCommandHandler : IRequestHandler<ResetStagesComma
             orgUnitId = mainPosition.OrgUnitId;
         }
 
-        // 2. Fetch all tracked stages for the department and semester
         var existingStages = await _stageRepository.GetTrackedByOrgUnitAsync(
             orgUnitId,
             request.SemesterId,
             cancellationToken);
 
-        // 3. Find specific speciality stages
         var specialityStages = existingStages
             .Where(s => s.SpecialityId == request.SpecialityId && !s.IsDeleted)
             .ToList();
 
         if (!specialityStages.Any())
         {
-            return Result.Success(Unit.Value); // Nothing to reset
+            return Result.Success(Unit.Value);
         }
 
-        // 4. Soft-delete the overridden stages
         foreach (var stage in specialityStages)
         {
             stage.Delete(currentUserId);

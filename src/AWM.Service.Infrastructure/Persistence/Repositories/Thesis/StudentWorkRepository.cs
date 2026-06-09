@@ -68,7 +68,7 @@ public sealed class StudentWorkRepository : RepositoryBase<StudentWork, long>, I
             .Include(w => w.QualityChecks)
             .Include(w => w.WorkflowHistory)
             .Include(w => w.WorkReviews)
-            .AsSplitQuery() // Split for performance with multiple collections
+            .AsSplitQuery()
             .FirstOrDefaultAsync(w => w.Id == id, cancellationToken);
     }
 
@@ -123,16 +123,31 @@ public sealed class StudentWorkRepository : RepositoryBase<StudentWork, long>, I
         int semesterId,
         CancellationToken cancellationToken = default)
     {
-        return await Context.StaffAssignments
+        var assignedTopicIds = await Context.StaffAssignments
             .AsNoTracking()
             .Where(a => a.UserId == userId &&
                         a.RoleType == StaffRoleType.Supervisor &&
                         a.TargetEntityType == "Topic" &&
                         a.IsActive && !a.IsDeleted)
-            .Join(Context.StudentWorks.Where(w => !w.IsDeleted && w.SemesterId == semesterId),
-                a => a.TargetEntityId,
-                w => w.TopicId,
-                (a, w) => w)
+            .Select(a => a.TargetEntityId)
+            .ToListAsync(cancellationToken);
+
+        var createdTopicIds = await Context.Topics
+            .AsNoTracking()
+            .Where(t => t.CreatedBy == userId &&
+                        t.SemesterId == semesterId &&
+                        !t.IsDeleted)
+            .Select(t => t.Id)
+            .ToListAsync(cancellationToken);
+
+        var allTopicIds = assignedTopicIds.Concat(createdTopicIds).Distinct().ToList();
+
+        return await Context.StudentWorks
+            .AsNoTracking()
+            .Where(w => !w.IsDeleted &&
+                        w.SemesterId == semesterId &&
+                        w.TopicId.HasValue &&
+                        allTopicIds.Contains(w.TopicId.Value))
             .Include(w => w.Participants)
             .OrderByDescending(w => w.CreatedAt)
             .ToListAsync(cancellationToken);
@@ -226,4 +241,3 @@ public sealed class StudentWorkRepository : RepositoryBase<StudentWork, long>, I
         return Task.CompletedTask;
     }
 }
-

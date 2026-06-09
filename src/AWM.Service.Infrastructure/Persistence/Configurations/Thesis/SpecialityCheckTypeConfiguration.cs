@@ -34,7 +34,6 @@ public class SpecialityCheckTypeConfiguration : IEntityTypeConfiguration<Special
             .HasColumnType("decimal(5,2)")
             .IsRequired(false);
 
-        // Foreign keys
         builder.HasOne(e => e.OrgUnit)
             .WithMany()
             .HasForeignKey(e => e.OrgUnitId)
@@ -53,7 +52,6 @@ public class SpecialityCheckTypeConfiguration : IEntityTypeConfiguration<Special
             .HasConstraintName("FK_SpecChecks_Type")
             .OnDelete(DeleteBehavior.Restrict);
 
-        // Unique constraint
         builder.HasIndex(e => new { e.OrgUnitId, e.SpecialityId, e.CheckTypeId })
             .IsUnique()
             .HasDatabaseName("UQ_OrgUnit_Speciality_CheckType");

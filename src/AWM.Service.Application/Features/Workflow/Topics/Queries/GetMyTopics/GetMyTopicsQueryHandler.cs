@@ -50,8 +50,6 @@ public sealed class GetMyTopicsQueryHandler : IRequestHandler<GetMyTopicsQuery, 
         var workTypes = await _workflowRepository.GetAllWorkTypesAsync(cancellationToken);
         var workTypeMap = workTypes.ToDictionary(wt => wt.Id);
 
-        // States are now mapped from Status enum
-
         var dtos = topics.Select(t => new TopicDto(
             t.Id,
             t.DirectionId,
@@ -70,11 +68,11 @@ public sealed class GetMyTopicsQueryHandler : IRequestHandler<GetMyTopicsQuery, 
             t.WorkTypeId,
             workTypeMap.TryGetValue(t.WorkTypeId, out var wt) ? wt.Name : "",
             t.MaxParticipants,
-            t.Applications.Count(a => a.StatusId == 2), // Accepted
-            t.Applications.Count(a => a.StatusId == 1), // Pending
+            t.Applications.Count(a => a.StatusId == 2),
+            t.Applications.Count(a => a.StatusId == 1),
             t.Status.ToString().ToLowerInvariant(),
-            t.Status.ToString().ToLowerInvariant(), // CurrentStateName
-            GetStatusDisplayName(t.Status), // CurrentStateDisplayName
+            t.Status.ToString().ToLowerInvariant(),
+            GetStatusDisplayName(t.Status),
             t.ReviewComment,
             t.SubmittedAt,
             t.CreatedAt,
@@ -82,8 +80,8 @@ public sealed class GetMyTopicsQueryHandler : IRequestHandler<GetMyTopicsQuery, 
                 a.Id,
                 a.StudentId,
                 a.Student != null ? $"{a.Student.User?.LastName} {a.Student.User?.FirstName} {a.Student.User?.MiddleName}" : "Unknown",
-                "", // GroupCode
-                a.Student?.Speciality?.Title ?? "", // StudentSpecialityName
+                "",
+                a.Student?.Speciality?.Title ?? "",
                 a.StatusId,
                 a.StatusId == 1 ? "pending" : a.StatusId == 2 ? "approved" : "rejected",
                 a.MotivationLetter,

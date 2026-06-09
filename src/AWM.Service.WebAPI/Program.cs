@@ -25,7 +25,6 @@ builder.Services.AddControllers();
 
 builder.Services.AddSingleton(TypeAdapterConfig.GlobalSettings);
 
-// Configure Mapster mappings to align read-only University DB schema with API contracts
 TypeAdapterConfig<AWM.Service.Application.Features.University.DTOs.OrgUnitDto, AWM.Service.WebAPI.Common.Contracts.Responses.University.OrgUnitResponse>.NewConfig()
     .Map(dest => dest.NameRu, src => src.Name)
     .Map(dest => dest.NameKz, src => src.Name)

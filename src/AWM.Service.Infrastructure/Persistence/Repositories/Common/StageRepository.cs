@@ -21,7 +21,6 @@ public sealed class StageRepository : RepositoryBase<Stage, int>, IStageReposito
     {
         var now = DateTime.UtcNow;
 
-        // If speciality is specified, try speciality-specific stage first
         if (specialityId.HasValue)
         {
             var specialized = await Context.Stages
@@ -39,7 +38,6 @@ public sealed class StageRepository : RepositoryBase<Stage, int>, IStageReposito
                 return specialized;
         }
 
-        // Fallback to department-level stage
         return await Context.Stages
             .AsNoTracking()
             .Where(s => s.OrgUnitId == orgUnitId &&
@@ -129,4 +127,3 @@ public sealed class StageRepository : RepositoryBase<Stage, int>, IStageReposito
         return stage != null;
     }
 }
-

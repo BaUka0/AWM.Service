@@ -56,7 +56,6 @@ public sealed class SubmitDirectionCommandHandler : IRequestHandler<SubmitDirect
         if (direction.CreatedBy != currentUserId)
             return Result.Failure<Unit>(new Error("Direction.Unauthorized", "You can only submit your own directions."));
 
-        // Validate that the DirectionProposal stage is open
         var (isAllowed, errorMessage) = await _stageValidationService.ValidateOperationInStageAsync(
             direction.OrgUnitId,
             direction.SemesterId,

@@ -53,7 +53,6 @@ public sealed class GetMyDirectionsQueryHandler : IRequestHandler<GetMyDirection
 
         var currentUserId = _currentUserProvider.UserId.Value;
 
-        // Resolve semesterId fallback if null
         int semesterId;
         if (request.SemesterId.HasValue)
         {
@@ -117,7 +116,7 @@ public sealed class GetMyDirectionsQueryHandler : IRequestHandler<GetMyDirection
                 d.OrgUnitId,
                 d.SemesterId,
                 d.WorkTypeId,
-                d.CreatedBy, // SupervisorId
+                d.CreatedBy,
                 d.TitleRu,
                 d.TitleKz,
                 d.TitleEn,

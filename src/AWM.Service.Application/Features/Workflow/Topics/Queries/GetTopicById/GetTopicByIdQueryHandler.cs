@@ -65,8 +65,8 @@ public sealed class GetTopicByIdQueryHandler : IRequestHandler<GetTopicByIdQuery
                 a.Id,
                 a.StudentId,
                 a.Student?.User != null ? $"{a.Student.User.LastName} {a.Student.User.FirstName} {a.Student.User.MiddleName}".Trim() : $"Student #{a.StudentId}",
-                "", // GroupCode
-                a.Student?.Speciality?.Title ?? "", // StudentSpecialityName
+                "",
+                a.Student?.Speciality?.Title ?? "",
                 a.StatusId,
                 a.StatusId == 1 ? "pending" : a.StatusId == 2 ? "approved" : "rejected",
                 a.MotivationLetter,

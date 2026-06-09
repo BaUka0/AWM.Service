@@ -51,7 +51,6 @@ public sealed class SetStagesPeriodsCommandHandler : IRequestHandler<SetStagesPe
 
         var currentUserId = _currentUserProvider.UserId.Value;
 
-        // 1. Determine OrgUnitId (Department)
         int orgUnitId;
         if (request.OrgUnitId.HasValue)
         {
@@ -76,7 +75,6 @@ public sealed class SetStagesPeriodsCommandHandler : IRequestHandler<SetStagesPe
             orgUnitId = mainPosition.OrgUnitId;
         }
 
-        // 2. Fetch existing stages for the department and semester
         var existingStages = await _stageRepository.GetByOrgUnitAsync(
             orgUnitId,
             request.SemesterId,
@@ -110,14 +108,12 @@ public sealed class SetStagesPeriodsCommandHandler : IRequestHandler<SetStagesPe
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        // 3. Notifications
         var overriddenSpecialityIds = existingStages
             .Where(s => s.SpecialityId.HasValue && s.IsActive && !s.IsDeleted)
             .Select(s => s.SpecialityId!.Value)
             .Distinct()
             .ToList();
 
-        // For Supervisors (Teachers)
         var supervisors = await _staffAssignmentRepository.GetByRoleAsync(
             "OrgUnit",
             orgUnitId,
@@ -168,7 +164,6 @@ public sealed class SetStagesPeriodsCommandHandler : IRequestHandler<SetStagesPe
                 cancellationToken);
         }
 
-        // For Students
         var studentUserIds = new List<int>();
         if (request.SpecialityId.HasValue)
         {
@@ -177,7 +172,6 @@ public sealed class SetStagesPeriodsCommandHandler : IRequestHandler<SetStagesPe
         }
         else
         {
-            // Fetch all specialities for this OrgUnit (department)
             var specializationsOrgUnits = await _specializationsOrgUnitRepository.GetByOrgUnitAsync(orgUnitId, cancellationToken);
             var specIds = specializationsOrgUnits
                 .Where(sou => sou.SpecializationId.HasValue)
@@ -195,7 +189,6 @@ public sealed class SetStagesPeriodsCommandHandler : IRequestHandler<SetStagesPe
             }
             specialityIds = specialityIds.Distinct().ToList();
 
-            // Exclude specialities that have their own Stage override in this semester
             var targetSpecialityIds = specialityIds
                 .Where(id => !overriddenSpecialityIds.Contains(id))
                 .ToList();

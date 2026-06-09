@@ -44,7 +44,6 @@ public sealed class StartReconciliationCommandHandler : IRequestHandler<StartRec
             return Result.Failure(new Error("Commission.NotFound", "Commission for this schedule not found."));
         }
 
-        // Check if user is Secretary
         var userAssignment = commission.Assignments.FirstOrDefault(a => a.UserId == currentUserId && a.IsActive && !a.IsDeleted);
         if (userAssignment == null || userAssignment.RoleType != StaffRoleType.CommissionSecretary)
         {

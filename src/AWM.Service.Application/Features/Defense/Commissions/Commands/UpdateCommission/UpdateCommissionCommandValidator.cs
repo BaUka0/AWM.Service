@@ -15,14 +15,14 @@ public sealed class UpdateCommissionCommandValidator : AbstractValidator<UpdateC
             .WithMessage("Secretary cannot be the same person as Chairman.");
 
         RuleFor(x => x.MemberUserIds)
-            .Must((cmd, memberIds) => 
-                memberIds == null || 
-                !cmd.ChairmanUserId.HasValue || 
+            .Must((cmd, memberIds) =>
+                memberIds == null ||
+                !cmd.ChairmanUserId.HasValue ||
                 !memberIds.Contains(cmd.ChairmanUserId.Value))
             .WithMessage("Commission member cannot be the same person as Chairman.")
-            .Must((cmd, memberIds) => 
-                memberIds == null || 
-                !cmd.SecretaryUserId.HasValue || 
+            .Must((cmd, memberIds) =>
+                memberIds == null ||
+                !cmd.SecretaryUserId.HasValue ||
                 !memberIds.Contains(cmd.SecretaryUserId.Value))
             .WithMessage("Commission member cannot be the same person as Secretary.")
             .Must(m => m == null || m.Count == m.Distinct().Count())

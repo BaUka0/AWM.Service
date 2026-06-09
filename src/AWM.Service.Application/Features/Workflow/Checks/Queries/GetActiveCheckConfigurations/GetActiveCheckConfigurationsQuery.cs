@@ -36,7 +36,6 @@ public sealed class GetActiveCheckConfigurationsQueryHandler
 
         if (request.SpecialityId.HasValue)
         {
-            // Speciality-specific rules override global rules for the same CheckTypeId
             var specificCheckTypeIds = active
                 .Where(c => c.SpecialityId == request.SpecialityId)
                 .Select(c => c.CheckTypeId)
@@ -49,7 +48,6 @@ public sealed class GetActiveCheckConfigurationsQueryHandler
         }
         else
         {
-            // No speciality context — return only global (department-wide) rules
             active = active.Where(c => c.SpecialityId == null).ToList();
         }
 

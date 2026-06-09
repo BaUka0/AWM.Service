@@ -50,7 +50,6 @@ public class EvaluationCriteriaConfiguration : SoftDeletableEntityConfiguration<
             .IsRequired()
             .HasDefaultValue(0);
 
-        // Foreign keys
         builder.HasOne<WorkType>()
             .WithMany()
             .HasForeignKey(e => e.WorkTypeId)

@@ -40,7 +40,6 @@ public class RoleOperationConfiguration : AuditableEntityConfiguration<RoleOpera
             .IsRequired()
             .HasDefaultValue(0);
 
-        // Self-referencing tree
         builder.HasOne(e => e.Parent)
             .WithMany(e => e.Children)
             .HasForeignKey(e => e.ParentId)

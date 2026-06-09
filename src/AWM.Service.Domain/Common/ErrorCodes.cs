@@ -6,18 +6,15 @@ namespace AWM.Service.Domain.Common;
 /// </summary>
 public static class ErrorCodes
 {
-    // Auth
     public const string AuthInvalidCredentials = "Auth.InvalidCredentials";
     public const string AuthInvalidRefreshToken = "Auth.InvalidRefreshToken";
     public const string AuthUserNotFound = "Auth.UserNotFound";
     public const string AuthUnauthorized = "Auth.Unauthorized";
 
-    // Register
     public const string RegisterInvalidData = "Register.InvalidData";
     public const string RegisterUserNotFound = "Register.UserNotFound";
     public const string RegisterAccountExists = "Register.AccountAlreadyExists";
 
-    // General
     public const string NotFound = "NotFound";
     public const string Conflict = "Conflict";
     public const string Validation = "Validation";

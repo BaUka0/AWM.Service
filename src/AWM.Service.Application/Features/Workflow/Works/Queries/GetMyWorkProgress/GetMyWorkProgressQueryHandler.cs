@@ -55,18 +55,15 @@ public sealed class GetMyWorkProgressQueryHandler : IRequestHandler<GetMyWorkPro
 
         var currentUserId = _currentUserProvider.UserId.Value;
 
-        // Retrieve works for the student
         var works = await _studentWorkRepository.GetByStudentAsync(currentUserId, cancellationToken);
         var work = works.FirstOrDefault();
         if (work == null)
             return Result.Failure<WorkProgressDto>(new Error("StudentWorks.NotFound", "No active work found for the current student."));
 
-        // Load details
         var currentState = await _workflowRepository.GetStateByIdAsync(work.CurrentStateId, cancellationToken);
         var stateName = currentState?.SystemName ?? "Unknown";
         var stateDisplayName = currentState?.DisplayName ?? "Unknown";
 
-        // Load Topic, Direction and Supervisor
         Topic? topic = null;
         Direction? direction = null;
         User? supervisor = null;
@@ -94,7 +91,6 @@ public sealed class GetMyWorkProgressQueryHandler : IRequestHandler<GetMyWorkPro
             }
         }
 
-        // Get participants
         var participantIds = work.Participants.Select(p => p.StudentId).ToList();
         var participantUsers = await _userRepository.GetByIdsAsync(participantIds, cancellationToken);
         var participantMap = participantUsers.ToDictionary(u => u.Id);
@@ -109,7 +105,6 @@ public sealed class GetMyWorkProgressQueryHandler : IRequestHandler<GetMyWorkPro
             return new WorkParticipantDto(p.StudentId, name, "Студент");
         }).ToList();
 
-        // Get attachments
         var uploadedByIds = work.Attachments.Select(a => a.CreatedBy).Distinct().ToList();
         var uploaderUsers = await _userRepository.GetByIdsAsync(uploadedByIds, cancellationToken);
         var uploaderMap = uploaderUsers.ToDictionary(u => u.Id);
@@ -133,7 +128,6 @@ public sealed class GetMyWorkProgressQueryHandler : IRequestHandler<GetMyWorkPro
                 uploaderName);
         }).ToList();
 
-        // Get timeline
         var stateIdsInHistory = work.WorkflowHistory
             .SelectMany(h => h.FromStateId.HasValue ? new[] { h.FromStateId.Value, h.ToStateId } : new[] { h.ToStateId })
             .Distinct()
@@ -149,7 +143,6 @@ public sealed class GetMyWorkProgressQueryHandler : IRequestHandler<GetMyWorkPro
             timelineList.Add($"{history.CreatedAt:dd.MM.yyyy HH:mm} - Переход из '{fromName}' в '{toName}'. {history.Comment}".Trim());
         }
 
-        // Get work type name
         string workTypeName = "Дипломная работа";
         if (topic != null)
         {

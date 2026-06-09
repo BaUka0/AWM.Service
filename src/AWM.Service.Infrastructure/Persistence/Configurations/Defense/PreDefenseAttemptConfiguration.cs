@@ -48,7 +48,6 @@ public class PreDefenseAttemptConfiguration : AuditableEntityConfiguration<PreDe
             .IsRequired()
             .HasColumnType("datetime2");
 
-        // Foreign keys
         builder.HasOne<StudentWork>()
             .WithMany()
             .HasForeignKey(e => e.WorkId)
@@ -61,12 +60,10 @@ public class PreDefenseAttemptConfiguration : AuditableEntityConfiguration<PreDe
             .HasConstraintName("FK_PreDef_Schedule")
             .OnDelete(DeleteBehavior.Restrict);
 
-        // Unique constraint - one attempt per work per pre-defense number
         builder.HasIndex(e => new { e.WorkId, e.PreDefenseNumber })
             .IsUnique()
             .HasDatabaseName("UQ_PreDef_Work_Num");
 
-        // Index for queries
         builder.HasIndex(e => new { e.WorkId, e.PreDefenseNumber })
             .HasDatabaseName("IX_PreDefAttempts_Work");
     }

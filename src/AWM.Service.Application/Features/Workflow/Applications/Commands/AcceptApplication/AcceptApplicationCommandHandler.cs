@@ -33,12 +33,10 @@ public sealed class AcceptApplicationCommandHandler : IRequestHandler<AcceptAppl
 
         var currentUserId = _currentUserProvider.UserId.Value;
 
-        // Get application (detached, only for TopicId)
         var applicationInfo = await _applicationRepository.GetByIdAsync(request.ApplicationId, cancellationToken);
         if (applicationInfo == null)
             return Result.Failure(new Error("Applications.NotFound", "Application not found."));
 
-        // Load topic with applications (tracked)
         var topic = await _topicRepository.GetByIdAsync(applicationInfo.TopicId, cancellationToken);
         if (topic == null)
             return Result.Failure(new Error("Topics.NotFound", "Topic not found."));
@@ -47,17 +45,14 @@ public sealed class AcceptApplicationCommandHandler : IRequestHandler<AcceptAppl
         if (application == null)
             return Result.Failure(new Error("Applications.NotFound", "Application not found."));
 
-        // Validate that current user is the supervisor
         if (topic.CreatedBy != currentUserId)
             return Result.Failure(new Error("Applications.Unauthorized", "You are not authorized to accept applications for this topic."));
 
         if (!topic.CanAcceptApplications())
             return Result.Failure(new Error("Topics.Closed", "Topic has reached its participant limit or is closed."));
 
-        // Accept tracked application entity — no explicit Update needed
         application.Accept(currentUserId);
 
-        // Check if we should close the topic
         var acceptedCount = topic.Applications.Count(a => a.StatusId == (int)ApplicationStatusType.Accepted);
         if (acceptedCount >= topic.MaxParticipants)
         {

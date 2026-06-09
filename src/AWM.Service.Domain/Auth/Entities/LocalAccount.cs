@@ -8,7 +8,7 @@ using AWM.Service.Domain.University;
 /// </summary>
 public class LocalAccount : Entity<int>, IAuditable
 {
-    public int UserId { get; private set; } // FK -> Edu_Users.ID
+    public int UserId { get; private set; }
     public string PasswordHash { get; private set; } = null!;
     public string? RefreshToken { get; private set; }
     public DateTime? RefreshTokenExpiryTime { get; private set; }
@@ -19,7 +19,6 @@ public class LocalAccount : Entity<int>, IAuditable
     public DateTime? LastModifiedAt { get; private set; }
     public int? LastModifiedBy { get; private set; }
 
-    // Navigation property
     public User User { get; private set; } = null!;
 
     private LocalAccount() { }

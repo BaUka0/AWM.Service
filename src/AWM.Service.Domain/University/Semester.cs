@@ -14,7 +14,6 @@ public class Semester : Entity<int>
     public int StudyYear { get; private set; }
     public int SemesterTypeId { get; private set; }
 
-    // Navigation properties
     public SemesterType? SemesterType { get; private set; }
 
     private Semester() { }

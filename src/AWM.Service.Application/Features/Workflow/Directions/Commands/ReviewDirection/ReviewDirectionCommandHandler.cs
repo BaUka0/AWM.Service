@@ -83,7 +83,6 @@ public sealed class ReviewDirectionCommandHandler : IRequestHandler<ReviewDirect
         await _directionRepository.UpdateAsync(direction, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        // Send notification to supervisor (CreatedBy)
         string title = "Результат рассмотрения направления";
         string message = "";
         switch (request.Decision)

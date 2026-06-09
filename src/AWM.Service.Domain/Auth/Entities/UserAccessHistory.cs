@@ -9,7 +9,7 @@ public class UserAccessHistory : Entity<int>, IAuditable
 {
     public int UserId { get; private set; }
     public int RoleAccessId { get; private set; }
-    public string Action { get; private set; } = null!; // Added / Removed
+    public string Action { get; private set; } = null!;
     public int? AssignedBy { get; private set; }
     public DateTime AssignedAt { get; private set; }
 

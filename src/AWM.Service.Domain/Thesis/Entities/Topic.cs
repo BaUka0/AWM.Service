@@ -47,7 +47,6 @@ public class Topic : AggregateRoot<long>, IAuditable, ISoftDeletable
     public DateTime? DeletedAt { get; private set; }
     public int? DeletedBy { get; private set; }
 
-    // Navigation properties
     public University.Speciality? Speciality { get; private set; }
 
     private readonly List<TopicApplication> _applications = new();
@@ -89,13 +88,11 @@ public class Topic : AggregateRoot<long>, IAuditable, ISoftDeletable
         SpecialityId = specialityId;
         Status = TopicStatus.Draft;
         CreatedAt = DateTime.UtcNow;
-        CreatedBy = createdByUserId; // Topic creator is supervisor
+        CreatedBy = createdByUserId;
         LastModifiedAt = CreatedAt;
         LastModifiedBy = createdByUserId;
         IsDeleted = false;
 
-        // NOTE: Domain event is NOT raised in constructor because EF Identity
-        // has not yet assigned the Id. Call RaiseCreatedEvent() after AddAsync/SaveChanges.
     }
 
     /// <summary>
@@ -233,7 +230,6 @@ public class Topic : AggregateRoot<long>, IAuditable, ISoftDeletable
         ReviewedBy = reviewedBy;
         ReviewedAt = DateTime.UtcNow;
 
-        // Reject all pending applications
         var pendingApplications = _applications
             .Where(a => a.StatusId == (int)ApplicationStatusType.Submitted)
             .ToList();
@@ -265,13 +261,11 @@ public class Topic : AggregateRoot<long>, IAuditable, ISoftDeletable
         if (acceptedCount == 0)
             throw new DomainException("Topic.NoAcceptedStudents", "Cannot reconcile topic without accepted students.");
 
-        // Warning: this should not happen due to backend validation, but kept for consistency
         if (acceptedCount > MaxParticipants)
         {
             RaiseDomainEvent(new TopicExcessApplicationsWarningEvent(Id, acceptedCount, MaxParticipants));
         }
 
-        // Reject all pending applications
         var pendingApplications = _applications
             .Where(a => a.StatusId == (int)ApplicationStatusType.Submitted)
             .ToList();

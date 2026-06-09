@@ -42,7 +42,6 @@ public class NotificationConfiguration : AuditableEntityConfiguration<Notificati
             .IsRequired()
             .HasDefaultValue(false);
 
-        // Foreign keys
         builder.HasOne<User>()
             .WithMany()
             .HasForeignKey(e => e.UserId)
@@ -54,7 +53,6 @@ public class NotificationConfiguration : AuditableEntityConfiguration<Notificati
             .HasConstraintName("FK_Notif_Template")
             .OnDelete(DeleteBehavior.SetNull);
 
-        // Indexes
         builder.HasIndex(e => new { e.UserId, e.IsRead, e.CreatedAt })
             .HasDatabaseName("IX_Notif_User_Unread")
             .IsDescending(false, false, true);

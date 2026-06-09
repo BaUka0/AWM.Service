@@ -146,7 +146,7 @@ public sealed class WorksController : BaseController
         using var stream = request.File.OpenReadStream();
         var command = new UploadRecensionCommand(
             workId,
-            null, // Auto-resolved by handler
+            null,
             request.File.FileName,
             request.File.ContentType,
             request.File.Length,

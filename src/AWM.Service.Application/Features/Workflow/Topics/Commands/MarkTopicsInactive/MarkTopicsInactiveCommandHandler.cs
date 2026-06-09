@@ -47,7 +47,6 @@ public sealed class MarkTopicsInactiveCommandHandler : IRequestHandler<MarkTopic
             return Result.Failure(new Error("Topics.NotFound", $"Topics not found: {string.Join(", ", missingIds)}"));
         }
 
-        // Validate user has access to the topics' orgUnit via employee positions
         var orgUnitId = topics.First().OrgUnitId;
         if (topics.Any(t => t.OrgUnitId != orgUnitId))
         {
@@ -65,7 +64,6 @@ public sealed class MarkTopicsInactiveCommandHandler : IRequestHandler<MarkTopic
 
         foreach (var topic in topics)
         {
-            // Domain method validates status and raises TopicMarkedInactiveEvent
             topic.MarkInactive(currentUserId);
             await _topicRepository.UpdateAsync(topic, cancellationToken);
         }

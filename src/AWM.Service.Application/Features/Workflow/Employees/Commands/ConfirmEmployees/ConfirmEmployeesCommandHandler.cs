@@ -70,7 +70,6 @@ public sealed class ConfirmEmployeesCommandHandler : IRequestHandler<ConfirmEmpl
             return Result.Failure(new Error("Employees.NoEmployeesToConfirm", "No employee assignments found to confirm."));
         }
 
-        // Check if all are already confirmed
         var alreadyConfirmedCount = filteredAssignments.Count(a =>
         {
             try
@@ -83,7 +82,7 @@ public sealed class ConfirmEmployeesCommandHandler : IRequestHandler<ConfirmEmpl
 
         if (alreadyConfirmedCount == filteredAssignments.Count)
         {
-            return Result.Success(); // Idempotency
+            return Result.Success();
         }
 
         var roleAccess = await _roleAccessRepository.GetByCodeAsync("Supervisor", cancellationToken);
@@ -115,7 +114,6 @@ public sealed class ConfirmEmployeesCommandHandler : IRequestHandler<ConfirmEmpl
             assignment.UpdateMetadata(metadataJson, currentUserId);
             await _staffAssignmentRepository.UpdateAsync(assignment, cancellationToken);
 
-            // Grant role access if not exists
             if (!await _userAccessRepository.ExistsAsync(assignment.UserId, roleAccess.Id, cancellationToken))
             {
                 var userAccess = new UserAccess(assignment.UserId, roleAccess.Id, currentUserId);
@@ -125,7 +123,6 @@ public sealed class ConfirmEmployeesCommandHandler : IRequestHandler<ConfirmEmpl
             employeeUserIds.Add(assignment.UserId);
         }
 
-        // Raise domain event on the first assignment
         if (filteredAssignments.Count > 0)
         {
             filteredAssignments[0].RaiseEmployeesApprovedEvent(

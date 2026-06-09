@@ -48,11 +48,6 @@ public sealed class GetWorkAttachmentsQueryHandler : IRequestHandler<GetWorkAtta
             return Result.Failure<IReadOnlyList<AttachmentDto>>(new Error("StudentWorks.NotFound", $"Student work with ID {request.WorkId} not found."));
         }
 
-        // Verify read permissions:
-        // - Participant
-        // - Supervisor
-        // - Assigned expert
-        // - Department staff assignment
         var isParticipant = work.Participants.Any(p => p.StudentId == currentUserId);
         var isSupervisor = false;
         if (work.TopicId.HasValue)

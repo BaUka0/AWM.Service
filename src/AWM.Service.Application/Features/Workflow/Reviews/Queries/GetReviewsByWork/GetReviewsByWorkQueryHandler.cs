@@ -44,7 +44,6 @@ public sealed class GetReviewsByWorkQueryHandler : IRequestHandler<GetReviewsByW
             return Result.Success<IReadOnlyList<WorkReviewDto>>(new List<WorkReviewDto>());
         }
 
-        // Bulk load users (authors of reviews)
         var authorIds = work.WorkReviews.Select(r => r.AuthorUserId).Distinct().ToList();
         var authors = await _userRepository.GetByIdsAsync(authorIds, cancellationToken);
         var authorMap = authors.ToDictionary(a => a.Id);

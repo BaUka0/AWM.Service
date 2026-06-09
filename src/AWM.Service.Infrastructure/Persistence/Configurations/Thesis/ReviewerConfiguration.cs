@@ -37,7 +37,6 @@ public class ReviewerConfiguration : IEntityTypeConfiguration<Reviewer>
         builder.Property(r => r.UserId)
             .IsRequired(false);
 
-        // Audit fields
         builder.Property(r => r.CreatedAt).IsRequired();
         builder.Property(r => r.CreatedBy).IsRequired();
         builder.Property(r => r.LastModifiedAt).IsRequired(false);

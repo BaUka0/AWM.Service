@@ -32,7 +32,6 @@ public class RoleOperationActionConfiguration : IEntityTypeConfiguration<RoleOpe
             .HasForeignKey(e => e.RoleActionTypeId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Composite unique constraint
         builder.HasIndex(e => new { e.RoleAccessId, e.RoleOperationId, e.RoleActionTypeId })
             .IsUnique()
             .HasDatabaseName("UQ_RoleOperationAction");

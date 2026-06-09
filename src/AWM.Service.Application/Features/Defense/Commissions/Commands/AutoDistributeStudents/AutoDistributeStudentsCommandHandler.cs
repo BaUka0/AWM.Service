@@ -53,15 +53,13 @@ public sealed class AutoDistributeStudentsCommandHandler : IRequestHandler<AutoD
 
         var currentUserId = _currentUserProvider.UserId.Value;
 
-        // 1. Resolve waiting state IDs across all work types
         var waitingStateIds = new List<int>();
         var workTypes = await _workflowRepository.GetAllWorkTypesAsync(cancellationToken);
 
-        if (request.CommissionTypeId == 1) // PreDefense
+        if (request.CommissionTypeId == 1)
         {
             int pdNum = request.PreDefenseNumber ?? 1;
-            
-            // Add Draft state if it's the first pre-defense
+
             if (pdNum == 1)
             {
                 foreach (var wt in workTypes)
@@ -91,7 +89,7 @@ public sealed class AutoDistributeStudentsCommandHandler : IRequestHandler<AutoD
                 }
             }
         }
-        else if (request.CommissionTypeId == 2) // GAK / Final Defense
+        else if (request.CommissionTypeId == 2)
         {
             foreach (var wt in workTypes)
             {
@@ -108,7 +106,6 @@ public sealed class AutoDistributeStudentsCommandHandler : IRequestHandler<AutoD
             return Result.Failure(new Error("AutoDistribute.StatesNotFound", "Could not resolve workflow states for distribution."));
         }
 
-        // 2. Fetch student works in the target org unit & semester
         var allWorks = await _studentWorkRepository.GetByOrgUnitAsync(request.OrgUnitId, request.SemesterId, cancellationToken);
 
         var worksToDistribute = allWorks
@@ -116,7 +113,6 @@ public sealed class AutoDistributeStudentsCommandHandler : IRequestHandler<AutoD
             .DistinctBy(w => w.Id)
             .ToList();
 
-        // If a specific speciality was requested, filter works by it
         if (request.SpecialityId.HasValue)
         {
             worksToDistribute = worksToDistribute.Where(w => w.SpecialityId == request.SpecialityId.Value).ToList();
@@ -127,7 +123,6 @@ public sealed class AutoDistributeStudentsCommandHandler : IRequestHandler<AutoD
             return Result.Failure(new Error("AutoDistribute.NoStudents", "Нет студентов, ожидающих распределения на данном этапе."));
         }
 
-        // 3. Fetch commissions
         var allCommissions = await _commissionRepository.GetByTypeAsync(
             request.OrgUnitId,
             request.SemesterId,
@@ -136,12 +131,11 @@ public sealed class AutoDistributeStudentsCommandHandler : IRequestHandler<AutoD
 
         var targetCommissions = allCommissions.Where(c => !c.IsDeleted).ToList();
 
-        if (request.CommissionTypeId == 1) // PreDefense
+        if (request.CommissionTypeId == 1)
         {
             targetCommissions = targetCommissions.Where(c => c.PreDefenseNumber == request.PreDefenseNumber).ToList();
         }
 
-        // Filter by speciality with fallback to general ones
         if (request.SpecialityId.HasValue)
         {
             var specCommissions = targetCommissions.Where(c => c.SpecialityId == request.SpecialityId.Value).ToList();
@@ -151,13 +145,11 @@ public sealed class AutoDistributeStudentsCommandHandler : IRequestHandler<AutoD
             }
             else
             {
-                // Fallback to general department commissions (SpecialityId is null)
                 targetCommissions = targetCommissions.Where(c => !c.SpecialityId.HasValue).ToList();
             }
         }
         else
         {
-            // If no speciality specified, only use general ones
             targetCommissions = targetCommissions.Where(c => !c.SpecialityId.HasValue).ToList();
         }
 
@@ -166,7 +158,6 @@ public sealed class AutoDistributeStudentsCommandHandler : IRequestHandler<AutoD
             return Result.Failure(new Error("AutoDistribute.NoCommissions", "No active commissions found for student distribution."));
         }
 
-        // 4. Retrieve users to sort students deterministically by name
         var studentUserIds = worksToDistribute.SelectMany(w => w.Participants.Select(p => p.StudentId)).Distinct().ToList();
         var users = await _userRepository.GetByIdsAsync(studentUserIds, cancellationToken);
         var userMap = users.ToDictionary(u => u.Id);
@@ -184,7 +175,6 @@ public sealed class AutoDistributeStudentsCommandHandler : IRequestHandler<AutoD
             })
             .ToList();
 
-        // 5. Get stage dates to set slot times
         int workflowStageId = request.CommissionTypeId == 2 ? 8 : (4 + (request.PreDefenseNumber ?? 1));
         var stage = await _stageRepository.GetActiveByStageAsync(request.OrgUnitId, request.SemesterId, workflowStageId, request.SpecialityId, cancellationToken);
         stage ??= await _stageRepository.GetActiveByStageAsync(request.OrgUnitId, request.SemesterId, workflowStageId, null, cancellationToken);
@@ -195,7 +185,6 @@ public sealed class AutoDistributeStudentsCommandHandler : IRequestHandler<AutoD
             baseTime = DateTime.UtcNow.Date.AddDays(1).AddHours(9);
         }
 
-        // Prepare dictionary for each commission's next available slot time and tracked works
         var sortedCommissions = targetCommissions.OrderBy(c => c.Id).ToList();
         var commissionNextSlotTime = new Dictionary<int, DateTime>();
         var alreadyScheduledWorkIds = new HashSet<long>();
@@ -204,7 +193,7 @@ public sealed class AutoDistributeStudentsCommandHandler : IRequestHandler<AutoD
         {
             var existingSchedules = await _scheduleRepository.GetByCommissionAsync(c.Id, cancellationToken);
             var activeSchedules = existingSchedules.Where(s => !s.IsDeleted).ToList();
-            
+
             foreach (var s in activeSchedules)
             {
                 alreadyScheduledWorkIds.Add(s.WorkId);
@@ -220,16 +209,13 @@ public sealed class AutoDistributeStudentsCommandHandler : IRequestHandler<AutoD
             commissionNextSlotTime[c.Id] = nextTime;
         }
 
-        // 6. Round-robin distribution
         int totalCommissions = sortedCommissions.Count;
         for (int i = 0; i < sortedWorks.Count; i++)
         {
             var work = sortedWorks[i];
-            
-            // Skip if student already has a schedule in one of the target commissions to avoid DB unique constraint conflict
+
             if (alreadyScheduledWorkIds.Contains(work.Id))
             {
-                // Ensure state transition is performed even if already scheduled (e.g. if state was stuck in Draft)
                 await TransitionWorkState(work, "Already scheduled", null, currentUserId, cancellationToken);
                 continue;
             }
@@ -237,20 +223,17 @@ public sealed class AutoDistributeStudentsCommandHandler : IRequestHandler<AutoD
             var commission = sortedCommissions[i % totalCommissions];
             var slotTime = commissionNextSlotTime[commission.Id];
 
-            // Create schedule slot
             var schedule = new Schedule(
                 commission.Id,
                 work.Id,
                 slotTime,
                 currentUserId,
-                "Кафедра" // Default location
+                "Кафедра"
             );
             await _scheduleRepository.AddAsync(schedule, cancellationToken);
 
-            // Automate state machine transition to Scheduled
             await TransitionWorkState(work, commission.Name ?? "Unknown", slotTime, currentUserId, cancellationToken);
 
-            // Update next slot time (30 minutes slot duration)
             commissionNextSlotTime[commission.Id] = slotTime.AddMinutes(30);
         }
 
@@ -260,10 +243,10 @@ public sealed class AutoDistributeStudentsCommandHandler : IRequestHandler<AutoD
     }
 
     private async Task TransitionWorkState(
-        StudentWork work, 
-        string? commissionName, 
-        DateTime? slotTime, 
-        int currentUserId, 
+        StudentWork work,
+        string? commissionName,
+        DateTime? slotTime,
+        int currentUserId,
         CancellationToken cancellationToken)
     {
         var currentState = await _workflowRepository.GetStateByIdAsync(work.CurrentStateId, cancellationToken);
@@ -284,10 +267,10 @@ public sealed class AutoDistributeStudentsCommandHandler : IRequestHandler<AutoD
             var targetState = await _workflowRepository.GetStateBySystemNameAsync(currentState.WorkTypeId, targetStateName, cancellationToken);
             if (targetState != null)
             {
-                string msg = slotTime.HasValue 
+                string msg = slotTime.HasValue
                     ? $"Automatically distributed to commission '{commissionName ?? "Unknown"}' at {slotTime.Value}."
                     : $"Automatically moved to scheduled state (existing schedule found).";
-                
+
                 work.ChangeState(targetState.Id, currentUserId, msg);
                 await _studentWorkRepository.UpdateAsync(work, cancellationToken);
             }

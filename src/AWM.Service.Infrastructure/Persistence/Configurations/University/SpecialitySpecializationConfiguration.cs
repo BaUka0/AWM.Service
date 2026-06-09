@@ -15,14 +15,12 @@ public class SpecialitySpecializationConfiguration : IEntityTypeConfiguration<Sp
             .HasColumnName("ID")
             .ValueGeneratedNever();
 
-        // Foreign key to Speciality
         builder.HasOne(e => e.Speciality)
             .WithMany()
             .HasForeignKey(e => e.SpecialityId)
             .HasConstraintName("FK_Edu_SpecialitySpecializations_Speciality")
             .OnDelete(DeleteBehavior.Restrict);
 
-        // Foreign key to Specialization
         builder.HasOne(e => e.Specialization)
             .WithMany()
             .HasForeignKey(e => e.SpecializationId)

@@ -53,7 +53,6 @@ public class StudentWorkConfiguration : SoftDeletableEntityConfiguration<Student
 
         builder.Property(e => e.MetadataJson);
 
-        // Foreign keys
         builder.HasOne<Topic>()
             .WithMany()
             .HasForeignKey(e => e.TopicId)
@@ -84,7 +83,6 @@ public class StudentWorkConfiguration : SoftDeletableEntityConfiguration<Student
             .HasConstraintName("FK_Works_Semester")
             .OnDelete(DeleteBehavior.Restrict);
 
-        // Navigation collections
         builder.HasMany(e => e.Participants)
             .WithOne()
             .HasForeignKey(e => e.WorkId)
@@ -110,7 +108,6 @@ public class StudentWorkConfiguration : SoftDeletableEntityConfiguration<Student
             .HasForeignKey(e => e.WorkId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Configure backing fields for collections
         builder.Navigation(e => e.WorkReviews)
             .HasField("_workReviews")
             .UsePropertyAccessMode(PropertyAccessMode.Field);
@@ -131,12 +128,10 @@ public class StudentWorkConfiguration : SoftDeletableEntityConfiguration<Student
             .HasField("_workflowHistory")
             .UsePropertyAccessMode(PropertyAccessMode.Field);
 
-        // Unique index on TopicId to prevent duplicate StudentWorks for the same topic
         builder.HasIndex(e => e.TopicId)
             .IsUnique()
             .HasDatabaseName("UQ_Works_Topic");
 
-        // Index for filtering
         builder.HasIndex(e => new { e.OrgUnitId, e.SemesterId, e.CurrentStateId })
             .HasDatabaseName("IX_StudentWorks_Filter");
     }

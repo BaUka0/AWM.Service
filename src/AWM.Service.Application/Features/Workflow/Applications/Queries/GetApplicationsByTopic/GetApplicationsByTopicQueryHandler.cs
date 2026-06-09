@@ -32,23 +32,19 @@ public sealed class GetApplicationsByTopicQueryHandler : IRequestHandler<GetAppl
     {
         var applications = await _applicationRepository.GetByTopicIdAsync(request.TopicId, cancellationToken);
 
-        // Load topic title
         var topics = await _topicRepository.GetByIdsAsync(new[] { request.TopicId }, cancellationToken);
         var topic = topics.FirstOrDefault();
 
-        // Bulk-load student names
         var studentIds = applications.Select(a => a.StudentId).Distinct().ToList();
         var users = studentIds.Any()
             ? await _userRepository.GetByIdsAsync(studentIds, cancellationToken)
             : new List<AWM.Service.Domain.University.User>();
         var userMap = users.ToDictionary(u => u.Id, u => $"{u.LastName} {u.FirstName} {u.MiddleName}".Trim());
 
-        // Load work types for the topic
         var workTypes = await _workflowRepository.GetAllWorkTypesAsync(cancellationToken);
         var workTypeMap = workTypes.ToDictionary(wt => wt.Id);
         var workTypeName = (topic != null && workTypeMap.TryGetValue(topic.WorkTypeId, out var wt)) ? wt.Name : "";
 
-        // Load supervisor name
         var supervisorName = "Unknown";
         if (topic != null)
         {
@@ -56,7 +52,6 @@ public sealed class GetApplicationsByTopicQueryHandler : IRequestHandler<GetAppl
             supervisorName = supervisor != null ? $"{supervisor.LastName} {supervisor.FirstName} {supervisor.MiddleName}".Trim() : "Unknown";
         }
 
-        // Load direction title
         var directionTitle = "";
         if (topic?.DirectionId.HasValue == true)
         {
@@ -73,7 +68,7 @@ public sealed class GetApplicationsByTopicQueryHandler : IRequestHandler<GetAppl
             topic?.TitleEn,
             a.StudentId,
             userMap.GetValueOrDefault(a.StudentId, "Unknown"),
-            "", // Student Group — not available without University DB
+            "",
             a.MotivationLetter,
             GetStatus(a.StatusId),
             a.ReviewComment,

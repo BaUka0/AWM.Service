@@ -43,14 +43,12 @@ public sealed class SaveRepoUrlCommandHandler : IRequestHandler<SaveRepoUrlComma
             return Result.Failure(new Error("StudentWorks.NotFound", $"Student work with ID {request.WorkId} not found."));
         }
 
-        // Only participants can save their repo URL
         var isParticipant = work.Participants.Any(p => p.StudentId == currentUserId);
         if (!isParticipant)
         {
             return Result.Failure(new Error("StudentWorks.Forbidden", "Only participants of this work can update the repository URL."));
         }
 
-        // Parse existing MetadataJson (or start fresh) and set softwareCheckRepoUrl
         JsonObject metadata;
         if (!string.IsNullOrWhiteSpace(work.MetadataJson))
         {

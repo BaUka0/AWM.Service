@@ -19,7 +19,6 @@ public sealed class EvaluationCriteriaRepository : RepositoryBase<EvaluationCrit
         int? specialityId = null,
         CancellationToken cancellationToken = default)
     {
-        // First try speciality-specific criteria
         if (specialityId.HasValue)
         {
             var specCriteria = await Context.EvaluationCriteria
@@ -34,7 +33,6 @@ public sealed class EvaluationCriteriaRepository : RepositoryBase<EvaluationCrit
                 return specCriteria;
         }
 
-        // Then try department-specific criteria
         if (orgUnitId.HasValue)
         {
             var deptCriteria = await Context.EvaluationCriteria
@@ -50,7 +48,6 @@ public sealed class EvaluationCriteriaRepository : RepositoryBase<EvaluationCrit
                 return deptCriteria;
         }
 
-        // Fall back to university-wide criteria
         return await Context.EvaluationCriteria
             .AsNoTracking()
             .Where(e => e.WorkTypeId == workTypeId &&

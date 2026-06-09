@@ -64,7 +64,6 @@ public static class DependencyInjection
             }
         });
 
-        // Register University Read-Only DbContext
         services.AddDbContext<UniversityDbContext>((sp, options) =>
         {
             options.UseSqlServer(connectionString, sqlOptions =>
@@ -76,14 +75,11 @@ public static class DependencyInjection
                    });
         });
 
-        // Register Database Initialiser and Seeder
         services.AddScoped<ApplicationDbContextInitialiser>();
         services.AddScoped<DatabaseSeeder>();
 
-        // Register Unit of Work
         services.AddScoped<IUnitOfWork, UnitOfWork>();
 
-        // Register Common Repositories (Critical)
         services.AddScoped<ISemesterTypeRepository, SemesterTypeRepository>();
         services.AddScoped<ISemesterRepository, SemesterRepository>();
         services.AddScoped<IWorkflowStageRepository, WorkflowStageRepository>();
@@ -92,22 +88,18 @@ public static class DependencyInjection
         services.AddScoped<INotificationRepository, NotificationRepository>();
         services.AddScoped<INotificationTemplateRepository, NotificationTemplateRepository>();
 
-        // Register Workflow Repository (Critical)
         services.AddScoped<IWorkflowRepository, WorkflowRepository>();
 
-        // Register Core Repositories
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IStudentRepository, StudentRepository>();
         services.AddScoped<IEmployeeRepository, EmployeeRepository>();
 
-        // Register Defense Repositories
         services.AddScoped<ICommissionRepository, CommissionRepository>();
         services.AddScoped<IScheduleRepository, ScheduleRepository>();
         services.AddScoped<IPreDefenseAttemptRepository, PreDefenseAttemptRepository>();
         services.AddScoped<IEvaluationCriteriaRepository, EvaluationCriteriaRepository>();
         services.AddScoped<IProtocolRepository, ProtocolRepository>();
 
-        // Register Thesis Repositories
         services.AddScoped<IDirectionRepository, DirectionRepository>();
         services.AddScoped<ITopicRepository, TopicRepository>();
         services.AddScoped<ITopicApplicationRepository, TopicApplicationRepository>();
@@ -118,13 +110,11 @@ public static class DependencyInjection
         services.AddScoped<IReviewerRepository, ReviewerRepository>();
         services.AddScoped<IWorkReviewRepository, WorkReviewRepository>();
 
-        // Register Dictionary/Lookup Repositories
         services.AddScoped<ISpecialityRepository, SpecialityRepository>();
         services.AddScoped<ISpecialityLevelRepository, SpecialityLevelRepository>();
         services.AddScoped<IRoleRepository, RoleRepository>();
         services.AddScoped<IOrganizationLookupRepository, OrganizationLookupRepository>();
 
-        // Register Auth Repositories
         services.AddScoped<IRoleAccessRepository, RoleAccessRepository>();
         services.AddScoped<IRoleOperationRepository, RoleOperationRepository>();
         services.AddScoped<IRoleActionTypeRepository, RoleActionTypeRepository>();
@@ -133,7 +123,6 @@ public static class DependencyInjection
         services.AddScoped<IUserAccessHistoryRepository, UserAccessHistoryRepository>();
         services.AddScoped<ILocalAccountRepository, LocalAccountRepository>();
 
-        // Register University Read-Only Repositories
         services.AddScoped<IUserReadOnlyRepository, UserReadOnlyRepository>();
         services.AddScoped<IStudentReadOnlyRepository, StudentReadOnlyRepository>();
         services.AddScoped<IEmployeeReadOnlyRepository, EmployeeReadOnlyRepository>();
@@ -144,11 +133,9 @@ public static class DependencyInjection
         services.AddScoped<ISpecialitySpecializationReadOnlyRepository, SpecialitySpecializationReadOnlyRepository>();
         services.AddScoped<ISpecializationsOrgUnitReadOnlyRepository, SpecializationsOrgUnitReadOnlyRepository>();
 
-        // Configure StorageSettings
         services.Configure<StorageSettings>(
             configuration.GetSection(StorageSettings.SectionName));
 
-        // Register File Storage Service conditionally based on Provider
         var storageSettings = configuration.GetSection(StorageSettings.SectionName)
             .Get<StorageSettings>()
             ?? new StorageSettings();
@@ -162,7 +149,6 @@ public static class DependencyInjection
             services.AddScoped<IAttachmentService, LocalFileStorageService>();
         }
 
-        // Register Domain/CommonDomain Services
         services.AddScoped<Domain.CommonDomain.Services.INotificationService, Services.NotificationService>();
         services.AddScoped<Domain.CommonDomain.Services.IStageValidationService, Services.StageValidationService>();
         services.AddScoped<Domain.CommonDomain.Services.IOrgUnitResolver, Services.OrgUnitResolver>();
@@ -172,5 +158,3 @@ public static class DependencyInjection
         return services;
     }
 }
-
-

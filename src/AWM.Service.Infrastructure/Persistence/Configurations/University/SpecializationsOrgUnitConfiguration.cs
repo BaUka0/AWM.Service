@@ -21,14 +21,12 @@ public class SpecializationsOrgUnitConfiguration : IEntityTypeConfiguration<Spec
         builder.Property(e => e.OrgUnitId)
             .HasColumnName("OrgUnitID");
 
-        // Foreign key to Specialization
         builder.HasOne(e => e.Specialization)
             .WithMany()
             .HasForeignKey(e => e.SpecializationId)
             .HasConstraintName("FK_Edu_SpecializationsOrgUnits_Specialization")
             .OnDelete(DeleteBehavior.Restrict);
 
-        // Foreign key to OrgUnit
         builder.HasOne(e => e.OrgUnit)
             .WithMany()
             .HasForeignKey(e => e.OrgUnitId)

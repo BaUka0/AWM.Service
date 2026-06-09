@@ -41,7 +41,6 @@ public sealed class CreateCommissionCommandHandler : IRequestHandler<CreateCommi
 
         var createdBy = _currentUserProvider.UserId.Value;
 
-        // 1. Create commission
         var commission = new Commission(
             request.OrgUnitId,
             request.SemesterId,
@@ -51,7 +50,6 @@ public sealed class CreateCommissionCommandHandler : IRequestHandler<CreateCommi
             request.PreDefenseNumber,
             request.SpecialityId);
 
-        // 2. Validate all users are teachers of this OrgUnit
         var memberIds = (request.MemberUserIds ?? Enumerable.Empty<int>()).Distinct().ToList();
 
         var allUserIds = new List<int> { request.ChairmanUserId, request.SecretaryUserId };
@@ -72,7 +70,6 @@ public sealed class CreateCommissionCommandHandler : IRequestHandler<CreateCommi
                     $"User with ID {userId} is not a teacher of the department {request.OrgUnitId}."));
         }
 
-        // 3. Add members
         commission.AddMember(request.ChairmanUserId, StaffRoleType.CommissionChairman, createdBy);
         commission.AddMember(request.SecretaryUserId, StaffRoleType.CommissionSecretary, createdBy);
 
@@ -81,7 +78,6 @@ public sealed class CreateCommissionCommandHandler : IRequestHandler<CreateCommi
             commission.AddMember(memberUserId, StaffRoleType.CommissionMember, createdBy);
         }
 
-        // 4. Validate integrity
         try
         {
             commission.ValidateIntegrity();
@@ -91,10 +87,8 @@ public sealed class CreateCommissionCommandHandler : IRequestHandler<CreateCommi
             return Result.Failure<int>(new Error(ex.ErrorCode, ex.Message));
         }
 
-        // 5. Save commission
         await _commissionRepository.AddAsync(commission, cancellationToken);
 
-        // 6. Grant Role Access
         var roleChairman = await _roleAccessRepository.GetByCodeAsync("COMMISSION_CHAIRMAN", cancellationToken);
         var roleSecretary = await _roleAccessRepository.GetByCodeAsync("COMMISSION_SECRETARY", cancellationToken);
         var roleMember = await _roleAccessRepository.GetByCodeAsync("COMMISSION_MEMBER", cancellationToken);

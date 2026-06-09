@@ -50,26 +50,21 @@ public sealed class GetDefenseReadinessQueryHandler : IRequestHandler<GetDefense
             return Result.Success<IReadOnlyList<DefenseReadinessDto>>(Array.Empty<DefenseReadinessDto>());
         }
 
-        // Bulk load all details
         var worksWithDetails = await _workRepository.GetByIdsWithDetailsAsync(worksList.Select(w => w.Id), cancellationToken);
         var worksMap = worksWithDetails.ToDictionary(w => w.Id);
 
-        // Bulk load student users
         var studentIds = worksWithDetails.SelectMany(w => w.Participants.Select(p => p.StudentId)).Distinct().ToList();
         var students = await _userRepository.GetByIdsAsync(studentIds, cancellationToken);
         var studentMap = students.ToDictionary(s => s.Id);
 
-        // Bulk load topics
         var topicIds = worksWithDetails.Where(w => w.TopicId.HasValue).Select(w => w.TopicId!.Value).Distinct().ToList();
         var topics = await _topicRepository.GetByIdsAsync(topicIds, cancellationToken);
         var topicMap = topics.ToDictionary(t => t.Id);
 
-        // Bulk load states
         var stateIds = worksWithDetails.Select(w => w.CurrentStateId).Distinct().ToList();
         var states = await _workflowRepository.GetStatesByIdsAsync(stateIds, cancellationToken);
         var stateMap = states.ToDictionary(s => s.Id);
 
-        // Bulk load all pre-defense attempts to avoid N+1 queries
         var allAttempts = await _preDefenseAttemptRepository.GetByWorkIdsAsync(
             worksList.Select(w => w.Id), cancellationToken);
         var attemptsByWork = allAttempts
@@ -85,7 +80,6 @@ public sealed class GetDefenseReadinessQueryHandler : IRequestHandler<GetDefense
                 work = w;
             }
 
-            // Student name
             var participant = work.Participants.FirstOrDefault();
             string studentName = "Студент";
             if (participant != null && studentMap.TryGetValue(participant.StudentId, out var user))
@@ -93,32 +87,26 @@ public sealed class GetDefenseReadinessQueryHandler : IRequestHandler<GetDefense
                 studentName = $"{user.LastName} {user.FirstName} {user.MiddleName}".Trim();
             }
 
-            // Topic title
             string topicTitle = "Без темы";
             if (work.TopicId.HasValue && topicMap.TryGetValue(work.TopicId.Value, out var topic))
             {
                 topicTitle = topic.TitleRu ?? topic.TitleKz ?? topic.TitleEn ?? "Без темы";
             }
 
-            // Quality Checks (1 = Normcontrol, 2 = Antiplagiarism, 3 = Software Check)
             bool normocontrolPassed = work.HasPassedCheck(1);
             bool antiplagiarismPassed = work.HasPassedCheck(2);
             bool softwareCheckPassed = work.HasPassedCheck(3);
 
-            // Review statuses (Supervisor review type = 1, External reviewer type = 2)
             bool supervisorReviewPassed = work.WorkReviews.Any(r => r.Type == ReviewType.SupervisorReview);
             bool externalReviewPassed = work.WorkReviews.Any(r => r.Type == ReviewType.ExternalReview);
 
-            // Predefense status — use bulk-loaded attempts
             var attempts = attemptsByWork.TryGetValue(work.Id, out var list) ? list : [];
             bool preDefensePassed = attempts.Any(a => a.PreDefenseNumber == 2 && a.IsPassed) ||
                                     attempts.Any(a => a.PreDefenseNumber == 3 && a.IsPassed);
 
-            // Current state name
             stateMap.TryGetValue(work.CurrentStateId, out var state);
             string stateName = state?.SystemName ?? "Draft";
 
-            // Admitted status is determined by being in ReadyForDefense or any of the final defense states
             bool admitted = stateName == WorkStates.ReadyForDefense ||
                             stateName == WorkStates.DefenseWaitingForSchedule ||
                             stateName == WorkStates.DefenseScheduled ||

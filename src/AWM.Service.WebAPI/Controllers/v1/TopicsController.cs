@@ -160,7 +160,7 @@ public sealed class TopicsController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Success status.</returns>
     [HttpPost("{id:long}/review")]
-    [RequireAccess("THESIS.TOPIC", "Update")] // Usually department role
+    [RequireAccess("THESIS.TOPIC", "Update")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> ReviewTopic(long id, [FromBody] ReviewTopicRequest request, CancellationToken cancellationToken)
     {
@@ -387,4 +387,3 @@ public sealed class TopicsController : BaseController
 
     #endregion
 }
-

@@ -27,10 +27,8 @@ public class WorkParticipantConfiguration : AuditableEntityConfiguration<WorkPar
         builder.Property(e => e.StudentId)
             .IsRequired();
 
-        // Ignore computed property
         builder.Ignore(e => e.JoinedAt);
 
-        // Foreign keys
         builder.HasOne<StudentWork>()
             .WithMany(w => w.Participants)
             .HasForeignKey(e => e.WorkId)
@@ -43,12 +41,10 @@ public class WorkParticipantConfiguration : AuditableEntityConfiguration<WorkPar
             .HasConstraintName("FK_Participants_Student")
             .OnDelete(DeleteBehavior.Restrict);
 
-        // Unique constraint on (WorkId, StudentId)
         builder.HasIndex(e => new { e.WorkId, e.StudentId })
             .IsUnique()
             .HasDatabaseName("UQ_Participant_Work_Student");
 
-        // Indexes
         builder.HasIndex(e => e.WorkId)
             .HasDatabaseName("IX_Participants_Work");
 

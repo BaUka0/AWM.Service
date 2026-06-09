@@ -52,7 +52,6 @@ public sealed class SubmitSupervisorReviewCommandHandler : IRequestHandler<Submi
         if (work == null)
             return Result.Failure(new Error("StudentWorks.NotFound", $"Student work with ID {request.WorkId} not found."));
 
-        // Verify that current user is the supervisor of this work
         if (!work.TopicId.HasValue)
             return Result.Failure(new Error("SupervisorReview.NoTopic", "Work has no associated topic."));
 
@@ -60,22 +59,16 @@ public sealed class SubmitSupervisorReviewCommandHandler : IRequestHandler<Submi
         if (topic == null || topic.CreatedBy != currentUserId)
             return Result.Failure(new Error("SupervisorReview.Forbidden", "Only the assigned scientific supervisor can submit this review."));
 
-
-
-        // Compute file hash and reset position
         var hash = await _attachmentService.ComputeHashAsync(request.FileStream, cancellationToken);
         if (request.FileStream.CanSeek)
             request.FileStream.Position = 0;
 
-        // Save physical file
         var storagePath = await _attachmentService.SaveAsync(request.FileName, request.FileStream, request.ContentType, cancellationToken);
 
-        // Retrieve attachment type by code or ID (ID 6 for SUPERVISOR_REVIEW)
         var attachmentType = await _attachmentTypeRepository.GetByIdAsync(6, cancellationToken);
         if (attachmentType == null)
             return Result.Failure(new Error("AttachmentTypes.NotFound", "Supervisor review attachment type not found."));
 
-        // Add attachment in Domain
         work.AddAttachment(
             attachmentType.Id,
             request.FileName,
@@ -86,11 +79,9 @@ public sealed class SubmitSupervisorReviewCommandHandler : IRequestHandler<Submi
             request.ContentType
         );
 
-        // Add review comment
         var reviewText = string.IsNullOrWhiteSpace(request.Comment) ? "Supervisor review uploaded" : request.Comment;
         work.AddReview(currentUserId, ReviewType.SupervisorReview, reviewText, currentUserId);
 
-        // Automation Hook: Transition to ReviewsWaitingForReviewer if currently in ReviewsWaitingForSupervisor
         var currentState = await _workflowRepository.GetStateByIdAsync(work.CurrentStateId, cancellationToken);
         if (currentState != null && currentState.SystemName == WorkStates.ReviewsWaitingForSupervisor)
         {

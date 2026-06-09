@@ -11,7 +11,6 @@ public class SpecializationsOrgUnit : Entity<int>
     public int? SpecializationId { get; private set; }
     public int? OrgUnitId { get; private set; }
 
-    // Navigation properties
     public Specialization? Specialization { get; private set; }
     public OrgUnit? OrgUnit { get; private set; }
 

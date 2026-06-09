@@ -28,14 +28,12 @@ public class OrgUnitConfiguration : IEntityTypeConfiguration<OrgUnit>
         builder.Property(e => e.Deleted)
             .IsRequired();
 
-        // Self-referencing FK
         builder.HasOne(e => e.Parent)
             .WithMany(e => e.Children)
             .HasForeignKey(e => e.ParentId)
             .HasConstraintName("FK_Edu_OrgUnits_Parent")
             .OnDelete(DeleteBehavior.Restrict);
 
-        // FK to type
         builder.HasOne(e => e.Type)
             .WithMany()
             .HasForeignKey(e => e.TypeId)

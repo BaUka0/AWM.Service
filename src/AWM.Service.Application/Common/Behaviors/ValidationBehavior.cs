@@ -97,7 +97,6 @@ public class ValidationBehavior<TRequest, TResponse> : IPipelineBehavior<TReques
                 return ValidationResponseCache<TResponse>.CreateFailure(error);
             }
 
-            // Fallback: throw ValidationException for non-Result types
             throw new ValidationException(failures);
         }
 

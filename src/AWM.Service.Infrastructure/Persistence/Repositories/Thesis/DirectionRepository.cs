@@ -57,7 +57,6 @@ public sealed class DirectionRepository : IDirectionRepository
         int semesterId,
         CancellationToken cancellationToken = default)
     {
-        // Get IDs of directions where the user is assigned as supervisor
         var assignedDirectionIds = await _context.StaffAssignments
             .AsNoTracking()
             .Where(a => a.UserId == userId &&
@@ -67,7 +66,6 @@ public sealed class DirectionRepository : IDirectionRepository
             .Select(a => a.TargetEntityId)
             .ToListAsync(cancellationToken);
 
-        // Return directions that are either assigned to the user OR created by the user
         return await _context.Directions
             .AsNoTracking()
             .Where(d => !d.IsDeleted &&
@@ -100,4 +98,3 @@ public sealed class DirectionRepository : IDirectionRepository
         return Task.CompletedTask;
     }
 }
-

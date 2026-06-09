@@ -57,9 +57,7 @@ public sealed class CommissionRepository : RepositoryBase<Commission, int>, ICom
     public Task DeleteAsync(Commission commission, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(commission);
-        // Soft delete is handled by the domain entity's Delete method
         Context.Commissions.Update(commission);
         return Task.CompletedTask;
     }
 }
-

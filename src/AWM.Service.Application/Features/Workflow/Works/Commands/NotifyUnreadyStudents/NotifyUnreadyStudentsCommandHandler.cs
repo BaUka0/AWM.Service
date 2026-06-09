@@ -63,7 +63,7 @@ public sealed class NotifyUnreadyStudentsCommandHandler : IRequestHandler<Notify
             await _notificationService.SendToManyAsync(
                 userIds: studentIds,
                 title: "Необходимо завершить подготовку к защите",
-                createdBy: 1, // System admin
+                createdBy: 1,
                 body: $"Ваша выпускная работа по теме '{topicTitle}' на текущий момент не допущена к защите. Пожалуйста, убедитесь, что вы прошли все предзащиты, нормоконтроль, проверку на антиплагиат и получили отзыв руководителя.",
                 relatedEntityType: "StudentWork",
                 relatedEntityId: work.Id,

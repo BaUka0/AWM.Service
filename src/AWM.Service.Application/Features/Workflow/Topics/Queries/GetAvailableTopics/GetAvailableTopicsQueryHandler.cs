@@ -55,7 +55,7 @@ public sealed class GetAvailableTopicsQueryHandler : IRequestHandler<GetAvailabl
                 t.Id,
                 t.DirectionId,
                 dirTitle,
-                t.CreatedBy, // SupervisorId
+                t.CreatedBy,
                 supervisorFullName,
                 t.OrgUnitId,
                 t.SemesterId,
@@ -68,15 +68,15 @@ public sealed class GetAvailableTopicsQueryHandler : IRequestHandler<GetAvailabl
                 t.WorkTypeId,
                 workTypeName,
                 t.MaxParticipants,
-                t.Applications.Count(a => a.StatusId == 2), // AcceptedApplicationsCount
-                t.Applications.Count(a => a.StatusId == 1), // PendingApplicationsCount
-                t.Status.ToString().ToLowerInvariant(), // Status
-                t.Status.ToString().ToLowerInvariant(), // CurrentStateName
-                GetStatusDisplayName(t.Status), // CurrentStateDisplayName
+                t.Applications.Count(a => a.StatusId == 2),
+                t.Applications.Count(a => a.StatusId == 1),
+                t.Status.ToString().ToLowerInvariant(),
+                t.Status.ToString().ToLowerInvariant(),
+                GetStatusDisplayName(t.Status),
                 t.ReviewComment,
                 t.SubmittedAt,
                 t.CreatedAt,
-                new List<TopicApplicationDto>() // Applications (empty for available topics list)
+                new List<TopicApplicationDto>()
             );
         }).ToList();
 

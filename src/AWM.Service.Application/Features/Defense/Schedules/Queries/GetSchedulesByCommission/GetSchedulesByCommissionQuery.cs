@@ -65,12 +65,10 @@ public sealed class GetSchedulesByCommissionQueryHandler : IRequestHandler<GetSc
     {
         var schedules = await _scheduleRepository.GetByCommissionAsync(request.CommissionId, cancellationToken);
 
-        // Load commission to get PreDefenseNumber and assignments
         var commission = await _commissionRepository.GetByIdAsync(request.CommissionId, cancellationToken);
         if (commission == null)
             return Result.Failure<IReadOnlyList<CommissionScheduleDto>>(new Error("Commission.NotFound", $"Commission with ID {request.CommissionId} not found."));
 
-        // Load commission user names from assignments
         var commissionUserIds = commission.Assignments.Select(a => a.UserId).Distinct().ToList();
         var commissionUsers = commissionUserIds.Count > 0
             ? await _userRepository.GetByIdsAsync(commissionUserIds, cancellationToken)
@@ -94,11 +92,9 @@ public sealed class GetSchedulesByCommissionQueryHandler : IRequestHandler<GetSc
             return Result.Success<IReadOnlyList<CommissionScheduleDto>>(new List<CommissionScheduleDto>());
         }
 
-        // Load protocols for this commission to map by schedule ID
         var protocols = await _protocolRepository.GetByCommissionAsync(request.CommissionId, cancellationToken);
         var protocolByScheduleId = protocols.ToDictionary(p => p.ScheduleId);
 
-        // Load all works and topics
         var workIds = schedules.Where(s => s.WorkId > 0).Select(s => s.WorkId).Distinct().ToList();
         var works = workIds.Count > 0
             ? await _studentWorkRepository.GetByIdsWithDetailsAsync(workIds, cancellationToken)
@@ -111,7 +107,6 @@ public sealed class GetSchedulesByCommissionQueryHandler : IRequestHandler<GetSc
             : new List<AWM.Service.Domain.Thesis.Entities.Topic>();
         var topicMap = topics.ToDictionary(t => t.Id);
 
-        // Load student user names
         var studentUserIds = works
             .SelectMany(w => w.Participants.Select(p => p.StudentId))
             .Distinct()
@@ -121,7 +116,6 @@ public sealed class GetSchedulesByCommissionQueryHandler : IRequestHandler<GetSc
             : new List<AWM.Service.Domain.University.User>();
         var userMap = users.ToDictionary(u => u.Id);
 
-        // Load evaluation criteria to compute weighted scores
         var workTypeIds = works
             .Where(w => w.TopicId.HasValue && topicMap.ContainsKey(w.TopicId.Value))
             .Select(w => topicMap[w.TopicId!.Value].WorkTypeId)

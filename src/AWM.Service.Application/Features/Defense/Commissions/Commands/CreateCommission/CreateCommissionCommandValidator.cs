@@ -15,10 +15,10 @@ public sealed class CreateCommissionCommandValidator : AbstractValidator<CreateC
         RuleFor(x => x.ChairmanUserId).GreaterThan(0);
         RuleFor(x => x.SecretaryUserId).GreaterThan(0)
             .NotEqual(x => x.ChairmanUserId).WithMessage("Secretary cannot be the same person as Chairman.");
-        
+
         RuleFor(x => x.MemberUserIds).NotNull();
         RuleForEach(x => x.MemberUserIds).GreaterThan(0);
-        
+
         RuleFor(x => x.MemberUserIds)
             .Must((cmd, memberIds) => memberIds == null || !memberIds.Contains(cmd.ChairmanUserId))
             .WithMessage("Commission member cannot be the same person as Chairman.")

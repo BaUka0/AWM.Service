@@ -66,11 +66,6 @@ public sealed class DownloadExpertDocumentQueryHandler : IRequestHandler<Downloa
             return Result.Failure<FileDownloadDto>(new Error("Attachments.NotFound", $"Linked attachment with ID {check.AttachmentId.Value} not found on this work."));
         }
 
-        // Verify read permissions:
-        // - Participant
-        // - Supervisor
-        // - Assigned expert
-        // - Department staff assignment
         var isParticipant = work.Participants.Any(p => p.StudentId == currentUserId);
         var isSupervisor = false;
         if (work.TopicId.HasValue)

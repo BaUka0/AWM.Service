@@ -60,7 +60,6 @@ public sealed class SaveExpertAssignmentsCommandHandler : IRequestHandler<SaveEx
             StaffRoleType.QualityExpert,
             cancellationToken);
 
-        // Map existing by key (UserId, CheckTypeId)
         var existingMap = new Dictionary<(int UserId, int CheckTypeId), StaffAssignment>();
         foreach (var a in existingAssignments.Where(a => !a.IsDeleted))
         {
@@ -77,7 +76,6 @@ public sealed class SaveExpertAssignmentsCommandHandler : IRequestHandler<SaveEx
             catch { }
         }
 
-        // Process request
         var processedUsers = new HashSet<int>();
 
         foreach (var input in request.Assignments)
@@ -112,7 +110,6 @@ public sealed class SaveExpertAssignmentsCommandHandler : IRequestHandler<SaveEx
             }
         }
 
-        // Deactivate existing ones not in the request
         var requestKeys = request.Assignments.Select(input => (input.UserId, input.CheckTypeId)).ToHashSet();
         foreach (var entry in existingMap)
         {
@@ -126,7 +123,6 @@ public sealed class SaveExpertAssignmentsCommandHandler : IRequestHandler<SaveEx
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        // Update UserAccesses for processed users
         foreach (var userId in processedUsers)
         {
             var userAssignments = await _staffAssignmentRepository.GetByUserAsync(userId, cancellationToken);

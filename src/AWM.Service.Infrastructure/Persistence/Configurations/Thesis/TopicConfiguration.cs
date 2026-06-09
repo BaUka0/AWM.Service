@@ -70,7 +70,6 @@ public class TopicConfiguration : SoftDeletableEntityConfiguration<Topic, long>
             .IsRequired()
             .HasDefaultValue(1);
 
-        // TopicStatus enum stored as int column
         builder.Property(e => e.Status)
             .IsRequired()
             .HasDefaultValue(TopicStatus.Draft)
@@ -84,7 +83,6 @@ public class TopicConfiguration : SoftDeletableEntityConfiguration<Topic, long>
 
         builder.Property(e => e.ReviewedAt);
 
-        // Foreign keys
         builder.HasOne<Direction>()
             .WithMany(d => d.Topics)
             .HasForeignKey(e => e.DirectionId)
@@ -115,13 +113,11 @@ public class TopicConfiguration : SoftDeletableEntityConfiguration<Topic, long>
             .HasConstraintName("FK_Topics_Semester")
             .OnDelete(DeleteBehavior.Restrict);
 
-        // Navigation to applications
         builder.HasMany(e => e.Applications)
             .WithOne()
             .HasForeignKey(e => e.TopicId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Indexes — updated to use Status enum column
         builder.HasIndex(e => new { e.OrgUnitId, e.SemesterId, e.Status })
             .HasDatabaseName("IX_Topics_Filter");
 

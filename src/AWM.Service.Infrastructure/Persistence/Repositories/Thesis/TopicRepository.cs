@@ -85,7 +85,6 @@ public sealed class TopicRepository : RepositoryBase<Topic, long>, ITopicReposit
         int semesterId,
         CancellationToken cancellationToken = default)
     {
-        // Get IDs of topics where the user is assigned as supervisor via StaffAssignments
         var assignedTopicIds = await Context.StaffAssignments
             .AsNoTracking()
             .Where(a => a.UserId == userId &&
@@ -95,7 +94,6 @@ public sealed class TopicRepository : RepositoryBase<Topic, long>, ITopicReposit
             .Select(a => a.TargetEntityId)
             .ToListAsync(cancellationToken);
 
-        // Return topics that are either assigned to the user OR created by the user
         return await Context.Topics
             .Include(t => t.Applications)
                 .ThenInclude(a => a.Student)
@@ -204,4 +202,3 @@ public sealed class TopicRepository : RepositoryBase<Topic, long>, ITopicReposit
         return Task.CompletedTask;
     }
 }
-

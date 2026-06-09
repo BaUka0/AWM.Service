@@ -22,11 +22,9 @@ public class QualityCheck : Entity<long>, IAuditable
     public DateTime? LastModifiedAt { get; private set; }
     public int? LastModifiedBy { get; private set; }
 
-    // Navigation properties
     public CheckType? CheckType { get; private set; }
     public Attachment? Attachment { get; private set; }
 
-    // Legacy field
     public DateTime CheckedAt => CreatedAt;
 
     private QualityCheck() { }

@@ -46,7 +46,6 @@ public sealed class GetEmployeesStatusQueryHandler : IRequestHandler<GetEmployee
             return Result.Success(new EmployeesStatusDto(false));
         }
 
-        // Check if any assignment is confirmed
         var isConfirmed = filteredAssignments.Any(a =>
         {
             try

@@ -49,7 +49,6 @@ public sealed class GetReconciliationSummaryQueryHandler
 
         var currentUserId = _currentUserProvider.UserId.Value;
 
-        // Validate user has access to the orgUnit via employee positions
         var employee = await _employeeRepository.GetByUserIdAsync(currentUserId, cancellationToken);
         var hasOrgUnitAccess = employee?.Positions.Any(p => p.OrgUnitId == request.OrgUnitId) ?? false;
         if (!hasOrgUnitAccess)
@@ -62,17 +61,14 @@ public sealed class GetReconciliationSummaryQueryHandler
         var topics = await _topicRepository.GetByOrgUnitForReconciliationAsync(
             request.OrgUnitId, request.SemesterId, cancellationToken);
 
-        // Apply optional speciality filter
         var filteredTopics = request.SpecialityId.HasValue
             ? topics.Where(t => t.SpecialityId == request.SpecialityId.Value).ToList()
             : topics.ToList();
 
-        // Resolve supervisor names in bulk to avoid N+1
         var supervisorIds = filteredTopics.Select(t => t.CreatedBy).Distinct().ToList();
         var users = await _userRepository.GetByIdsAsync(supervisorIds, cancellationToken);
         var userMap = users.ToDictionary(u => u.Id, u => FormatFullName(u.LastName, u.FirstName, u.MiddleName));
 
-        // Resolve direction titles and work type names
         var directionIds = filteredTopics.Where(t => t.DirectionId.HasValue).Select(t => t.DirectionId!.Value).Distinct().ToList();
         var directions = directionIds.Any()
             ? await _directionRepository.GetByIdsAsync(directionIds, cancellationToken)
@@ -82,7 +78,6 @@ public sealed class GetReconciliationSummaryQueryHandler
         var workTypes = await _workflowRepository.GetAllWorkTypesAsync(cancellationToken);
         var workTypeMap = workTypes.ToDictionary(wt => wt.Id);
 
-        // Map to DTOs
         var items = filteredTopics.Select(t =>
         {
             var acceptedCount = t.Applications.Count(a => a.StatusId == (int)ApplicationStatusType.Accepted);
@@ -111,7 +106,6 @@ public sealed class GetReconciliationSummaryQueryHandler
                 t.CreatedAt);
         }).ToList();
 
-        // Compute aggregate statistics
         var summary = new TopicReconciliationSummaryDto(
             TotalTopics: items.Count,
             TopicsWithAcceptedStudents: items.Count(i => i.AcceptedApplicationsCount > 0),
@@ -136,4 +130,3 @@ public sealed class GetReconciliationSummaryQueryHandler
         return string.Join(" ", parts);
     }
 }
-

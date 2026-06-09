@@ -49,7 +49,6 @@ public class TopicApplicationConfiguration : SoftDeletableEntityConfiguration<To
         builder.Property(e => e.ReviewComment)
             .HasColumnType("nvarchar(max)");
 
-        // Foreign keys
         builder.HasOne<Topic>()
             .WithMany(t => t.Applications)
             .HasForeignKey(e => e.TopicId)
@@ -68,7 +67,6 @@ public class TopicApplicationConfiguration : SoftDeletableEntityConfiguration<To
             .HasConstraintName("FK_Applications_Reviewer")
             .OnDelete(DeleteBehavior.Restrict);
 
-        // Indexes
         builder.HasIndex(e => new { e.StatusId, e.TopicId })
             .HasDatabaseName("IX_Applications_Status");
 

@@ -66,7 +66,6 @@ public sealed class ApproveEmployeesCommandHandler : IRequestHandler<ApproveEmpl
             })
             .ToList();
 
-        // Check if locked/confirmed
         var isLocked = filteredAssignments.Any(a =>
         {
             try
@@ -143,7 +142,6 @@ public sealed class ApproveEmployeesCommandHandler : IRequestHandler<ApproveEmpl
 
                 await _staffAssignmentRepository.AddAsync(assignment, cancellationToken);
 
-                // Add UserAccess if role exists and user doesn't have it
                 if (roleAccess != null)
                 {
                     var userAccessList = await _userAccessRepository.GetByUserIdAsync(assignmentInfo.UserId, cancellationToken);

@@ -129,4 +129,3 @@ public sealed class NotificationsController : BaseController
         return Ok(result.Value.Adapt<IReadOnlyList<NotificationResponse>>());
     }
 }
-

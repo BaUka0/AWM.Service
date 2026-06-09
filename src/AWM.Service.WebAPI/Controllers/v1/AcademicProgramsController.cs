@@ -26,4 +26,3 @@ public class AcademicProgramsController : BaseController
         return Ok(result.Value.Adapt<IReadOnlyList<AcademicProgramResponse>>());
     }
 }
-

@@ -55,11 +55,6 @@ public sealed class DownloadAttachmentQueryHandler : IRequestHandler<DownloadAtt
             return Result.Failure<FileDownloadDto>(new Error("Attachments.NotFound", $"Attachment with ID {request.AttachmentId} not found on this work."));
         }
 
-        // Verify read permissions:
-        // - Participant
-        // - Supervisor
-        // - Assigned expert
-        // - Department staff assignment
         var isParticipant = work.Participants.Any(p => p.StudentId == currentUserId);
         var isSupervisor = false;
         if (work.TopicId.HasValue)

@@ -86,37 +86,31 @@ public static class DirectionStates
 /// </summary>
 public static class WorkStates
 {
-    // 1. Начало работы
     public const string Draft = "Draft";
 
-    // 2. Предзащита 1 (Обязательная)
     public const string PreDefense1WaitingForFiles = "PreDefense1.WaitingForFiles";
     public const string PreDefense1WaitingForSchedule = "PreDefense1.WaitingForSchedule";
     public const string PreDefense1Scheduled = "PreDefense1.Scheduled";
-    public const string PreDefense1Passed = "PreDefense1.Passed"; // Идет на Предзащиту 2
-    public const string PreDefense1Failed = "PreDefense1.Failed"; // Идет на Предзащиту 2
+    public const string PreDefense1Passed = "PreDefense1.Passed";
+    public const string PreDefense1Failed = "PreDefense1.Failed";
 
-    // 3. Предзащита 2 (Обязательная)
     public const string PreDefense2WaitingForFiles = "PreDefense2.WaitingForFiles";
     public const string PreDefense2WaitingForSchedule = "PreDefense2.WaitingForSchedule";
     public const string PreDefense2Scheduled = "PreDefense2.Scheduled";
-    public const string PreDefense2Passed = "PreDefense2.Passed"; // Идет на Проверки (пропускает ПЗ-3)
-    public const string PreDefense2Failed = "PreDefense2.Failed"; // Идет на Предзащиту 3
+    public const string PreDefense2Passed = "PreDefense2.Passed";
+    public const string PreDefense2Failed = "PreDefense2.Failed";
 
-    // 4. Предзащита 3 (Последний шанс)
     public const string PreDefense3WaitingForFiles = "PreDefense3.WaitingForFiles";
     public const string PreDefense3WaitingForSchedule = "PreDefense3.WaitingForSchedule";
     public const string PreDefense3Scheduled = "PreDefense3.Scheduled";
-    public const string PreDefense3Passed = "PreDefense3.Passed"; // Идет на Проверки
-    public const string PreDefense3Failed = "PreDefense3.Failed"; // Недопуск (Отчисление/Отмена)
+    public const string PreDefense3Passed = "PreDefense3.Passed";
+    public const string PreDefense3Failed = "PreDefense3.Failed";
 
-    // 5. Обязательные проверки (Пайплайн)
-    public const string ChecksWaitingForInitial = "Checks.WaitingForInitial"; // Ждем нормоконтроль и доп. проверки кафедры
-    public const string ChecksWaitingForAntiPlagiarism = "Checks.WaitingForAntiPlagiarism"; // Ждем антиплагиат
+    public const string ChecksWaitingForInitial = "Checks.WaitingForInitial";
+    public const string ChecksWaitingForAntiPlagiarism = "Checks.WaitingForAntiPlagiarism";
     public const string ReviewsWaitingForSupervisor = "Reviews.WaitingForSupervisor";
     public const string ReviewsWaitingForReviewer = "Reviews.WaitingForReviewer";
 
-    // 6. Защита (ГАК)
     public const string ReadyForDefense = "ReadyForDefense";
     public const string DefenseWaitingForSchedule = "Defense.WaitingForSchedule";
     public const string DefenseScheduled = "Defense.Scheduled";
@@ -124,6 +118,5 @@ public static class WorkStates
     public const string Graduated = "Graduated";
     public const string DefenseFailed = "Defense.Failed";
 
-    // Отмена / Недопуск
     public const string Cancelled = "Cancelled";
 }

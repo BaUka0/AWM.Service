@@ -94,7 +94,6 @@ public sealed class ApproveChecksPeriodsCommandHandler : IRequestHandler<Approve
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        // Notify Quality Experts
         var experts = await _staffAssignmentRepository.GetByRoleAsync(
             "OrgUnit",
             orgUnitId,

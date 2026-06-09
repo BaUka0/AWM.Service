@@ -60,7 +60,6 @@ public sealed class TopicApplicationRepository : RepositoryBase<TopicApplication
     /// <inheritdoc />
     public async Task<IReadOnlyList<TopicApplication>> GetByStudentIdAndYearAsync(int studentId, int semesterId, CancellationToken cancellationToken = default)
     {
-        // Since TopicApplication doesn't directly have SemesterId, we join with Topics
         return await Context.TopicApplications
             .AsNoTracking()
             .Join(Context.Topics,

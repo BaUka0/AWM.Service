@@ -31,7 +31,6 @@ public sealed class GetStagesPeriodsQueryHandler : IRequestHandler<GetStagesPeri
 
         var currentUserId = _currentUserProvider.UserId.Value;
 
-        // 1. Determine OrgUnitId (Department)
         int orgUnitId;
         if (request.OrgUnitId.HasValue)
         {
@@ -56,20 +55,16 @@ public sealed class GetStagesPeriodsQueryHandler : IRequestHandler<GetStagesPeri
             orgUnitId = mainPosition.OrgUnitId;
         }
 
-        // 2. Fetch all stages for the department and semester
         var allStages = await _stageRepository.GetByOrgUnitAsync(orgUnitId, request.SemesterId, cancellationToken);
 
-        // 3. Filter stages with fallback logic
         var activeStages = allStages.Where(s => s.IsActive && !s.IsDeleted).ToList();
 
         List<Domain.CommonDomain.Entities.Stage> filteredStages;
 
         if (request.SpecialityId.HasValue)
         {
-            // Try specific speciality stages
             filteredStages = activeStages.Where(s => s.SpecialityId == request.SpecialityId.Value).ToList();
 
-            // Fallback to department-wide stages if no speciality-specific stages exist
             if (!filteredStages.Any())
             {
                 filteredStages = activeStages.Where(s => s.SpecialityId == null).ToList();
@@ -77,7 +72,6 @@ public sealed class GetStagesPeriodsQueryHandler : IRequestHandler<GetStagesPeri
         }
         else
         {
-            // Department-wide stages only
             filteredStages = activeStages.Where(s => s.SpecialityId == null).ToList();
         }
 
@@ -88,4 +82,3 @@ public sealed class GetStagesPeriodsQueryHandler : IRequestHandler<GetStagesPeri
         return Result.Success<IReadOnlyList<StagePeriodDto>>(dtos);
     }
 }
-

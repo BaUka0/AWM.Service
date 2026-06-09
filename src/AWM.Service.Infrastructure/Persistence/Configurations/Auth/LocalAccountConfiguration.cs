@@ -34,13 +34,11 @@ public class LocalAccountConfiguration : AuditableEntityConfiguration<LocalAccou
             .IsRequired()
             .HasDefaultValue(true);
 
-        // One-to-one relationship with read-only University User
         builder.HasOne(e => e.User)
             .WithOne()
             .HasForeignKey<LocalAccount>(e => e.UserId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Unique index on UserId
         builder.HasIndex(e => e.UserId)
             .IsUnique()
             .HasDatabaseName("UQ_LocalAccount_UserId");

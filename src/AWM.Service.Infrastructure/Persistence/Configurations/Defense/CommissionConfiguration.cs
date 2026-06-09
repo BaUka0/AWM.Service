@@ -41,7 +41,6 @@ public class CommissionConfiguration : SoftDeletableEntityConfiguration<Commissi
 
         builder.Property(e => e.PreDefenseNumber);
 
-        // Foreign keys
         builder.HasOne<OrgUnit>()
             .WithMany()
             .HasForeignKey(e => e.OrgUnitId)
@@ -60,7 +59,6 @@ public class CommissionConfiguration : SoftDeletableEntityConfiguration<Commissi
             .HasConstraintName("FK_Comm_Semester")
             .OnDelete(DeleteBehavior.Restrict);
 
-        // Navigation to assignments (Unified Staff Assignments)
         builder.HasMany(e => e.Assignments)
             .WithOne()
             .HasForeignKey("CommissionId")

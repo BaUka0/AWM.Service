@@ -27,7 +27,6 @@ public class GetStudentsQueryHandler : IRequestHandler<GetStudentsQuery, Result<
 
         if (!string.IsNullOrWhiteSpace(request.Status))
         {
-            // Mapping status string to some condition, simplified for now
         }
 
         var dtos = query.Select(s => new StudentDto(

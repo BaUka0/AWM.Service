@@ -59,7 +59,6 @@ public sealed class UploadExpertDocumentCommandHandler : IRequestHandler<UploadE
             return Result.Failure<long>(new Error("QualityChecks.NotFound", $"Quality check with ID {request.QualityCheckId} not found on this work."));
         }
 
-        // Check rights: assigned expert or department expert/commission member
         var isAssignedExpert = check.AssignedExpertId.HasValue && check.AssignedExpertId.Value == currentUserId;
         var isExpertInDepartment = false;
 
@@ -81,28 +80,21 @@ public sealed class UploadExpertDocumentCommandHandler : IRequestHandler<UploadE
             return Result.Failure<long>(new Error("QualityChecks.Forbidden", "You do not have permission to upload expert documents for this check."));
         }
 
-        // Verify attachment type
         var attachmentType = await _attachmentTypeRepository.GetByIdAsync(request.AttachmentTypeId, cancellationToken);
         if (attachmentType == null)
         {
             return Result.Failure<long>(new Error("AttachmentTypes.NotFound", $"Attachment type with ID {request.AttachmentTypeId} not found."));
         }
 
-
-
-        // Compute file hash
         var hash = await _attachmentService.ComputeHashAsync(request.FileStream, cancellationToken);
 
-        // Reset stream position (just in case)
         if (request.FileStream.CanSeek)
         {
             request.FileStream.Position = 0;
         }
 
-        // Save file physically
         var storagePath = await _attachmentService.SaveAsync(request.FileName, request.FileStream, request.ContentType, cancellationToken);
 
-        // Add attachment in Domain
         var attachment = work.AddAttachment(
             request.AttachmentTypeId,
             request.FileName,
@@ -113,11 +105,9 @@ public sealed class UploadExpertDocumentCommandHandler : IRequestHandler<UploadE
             request.ContentType
         );
 
-        // Save changes to generate attachment ID
         await _studentWorkRepository.UpdateAsync(work, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        // Link attachment to the quality check
         work.UpdateCheckAttachment(request.QualityCheckId, attachment.Id, currentUserId);
 
         await _studentWorkRepository.UpdateAsync(work, cancellationToken);

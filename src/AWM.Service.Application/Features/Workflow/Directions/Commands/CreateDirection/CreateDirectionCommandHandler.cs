@@ -52,7 +52,6 @@ public sealed class CreateDirectionCommandHandler : IRequestHandler<CreateDirect
 
         var currentUserId = _currentUserProvider.UserId.Value;
 
-        // Resolve OrgUnitId
         int orgUnitId;
         if (request.OrgUnitId.HasValue)
         {
@@ -77,7 +76,6 @@ public sealed class CreateDirectionCommandHandler : IRequestHandler<CreateDirect
             orgUnitId = mainPosition.OrgUnitId;
         }
 
-        // Validate that the DirectionProposal stage is open
         var (isAllowed, errorMessage) = await _stageValidationService.ValidateOperationInStageAsync(
             orgUnitId,
             request.SemesterId,

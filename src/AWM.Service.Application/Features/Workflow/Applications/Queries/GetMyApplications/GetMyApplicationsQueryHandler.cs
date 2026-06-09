@@ -40,34 +40,29 @@ public sealed class GetMyApplicationsQueryHandler : IRequestHandler<GetMyApplica
         var studentId = _currentUserProvider.UserId.Value;
         var applications = await _applicationRepository.GetByStudentIdAndYearAsync(studentId, request.SemesterId, cancellationToken);
 
-        // Bulk-load topics for titles and supervisors
         var topicIds = applications.Select(a => a.TopicId).Distinct().ToList();
         var topics = topicIds.Any()
             ? await _topicRepository.GetByIdsAsync(topicIds, cancellationToken)
             : new List<AWM.Service.Domain.Thesis.Entities.Topic>();
         var topicMap = topics.ToDictionary(t => t.Id);
 
-        // Bulk-load directions
         var directionIds = topics.Where(t => t.DirectionId.HasValue).Select(t => t.DirectionId.Value).Distinct().ToList();
         var directions = directionIds.Any()
             ? await _directionRepository.GetByIdsAsync(directionIds, cancellationToken)
             : new List<AWM.Service.Domain.Thesis.Entities.Direction>();
         var directionMap = directions.ToDictionary(d => d.Id);
 
-        // Load student name
         var studentUser = await _userRepository.GetByIdAsync(studentId, cancellationToken);
         var studentFullName = studentUser != null
             ? $"{studentUser.LastName} {studentUser.FirstName} {studentUser.MiddleName}".Trim()
             : "Unknown";
 
-        // Load supervisor names
         var supervisorIds = topics.Select(t => t.CreatedBy).Distinct().ToList();
         var supervisors = supervisorIds.Any()
             ? await _userRepository.GetByIdsAsync(supervisorIds, cancellationToken)
             : new List<AWM.Service.Domain.University.User>();
         var supervisorMap = supervisors.ToDictionary(u => u.Id, u => $"{u.LastName} {u.FirstName} {u.MiddleName}".Trim());
 
-        // Load work types
         var workTypes = await _workflowRepository.GetAllWorkTypesAsync(cancellationToken);
         var workTypeMap = workTypes.ToDictionary(wt => wt.Id);
 
@@ -90,7 +85,7 @@ public sealed class GetMyApplicationsQueryHandler : IRequestHandler<GetMyApplica
                 topic?.TitleEn,
                 a.StudentId,
                 studentFullName,
-                "", // Student Group — not available without University DB
+                "",
                 a.MotivationLetter,
                 GetStatus(a.StatusId),
                 a.ReviewComment,

@@ -26,4 +26,3 @@ public class StudentsController : BaseController
         return Ok(result.Value.Adapt<IReadOnlyList<StudentResponse>>());
     }
 }
-

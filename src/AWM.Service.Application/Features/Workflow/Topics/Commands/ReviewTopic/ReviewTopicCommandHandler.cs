@@ -33,7 +33,6 @@ public sealed class ReviewTopicCommandHandler : IRequestHandler<ReviewTopicComma
         if (topic == null)
             return Result.Failure(new Error("Topics.NotFound", "Topic not found."));
 
-        // Validation: Topic must be submitted for approval
         if (topic.Status != Domain.Thesis.Enums.TopicStatus.Pending && topic.Status != Domain.Thesis.Enums.TopicStatus.Approved)
             return Result.Failure(new Error("Topics.NotSubmitted", "Topic is not submitted for approval yet."));
 

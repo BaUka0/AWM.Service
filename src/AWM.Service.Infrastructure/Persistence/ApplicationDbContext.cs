@@ -68,7 +68,6 @@ public class ApplicationDbContext : DbContext
     public DbSet<Reviewer> Reviewers => Set<Reviewer>();
     public DbSet<Direction> Directions => Set<Direction>();
 
-    // Reference tables
     public DbSet<AttachmentType> AttachmentTypes => Set<AttachmentType>();
     public DbSet<CheckType> CheckTypes => Set<CheckType>();
     public DbSet<SpecialityCheckType> SpecialityCheckTypes => Set<SpecialityCheckType>();
@@ -87,12 +86,8 @@ public class ApplicationDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        // Apply all configurations from the current assembly
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
 
-        // Fix 4.3: Global Query Filters for ISoftDeletable entities.
-        // Automatically exclude soft-deleted records from all queries.
-        // Use .IgnoreQueryFilters() in repositories when you need to include deleted records.
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())
         {
             if (typeof(Domain.Common.ISoftDeletable).IsAssignableFrom(entityType.ClrType))
@@ -106,7 +101,6 @@ public class ApplicationDbContext : DbContext
             }
         }
 
-        // RBAC+ Database Views (HasNoKey)
         modelBuilder.Entity<UserAccessMatrix>().HasNoKey().ToView("UserAccessMatrix", "Auth");
         modelBuilder.Entity<RoleAccessMatrix>().HasNoKey().ToView("RoleAccessMatrix", "Auth");
         modelBuilder.Entity<ReducedUserAccessMatrix>().HasNoKey().ToView("ReducedUserAccessMatrix", "Auth");

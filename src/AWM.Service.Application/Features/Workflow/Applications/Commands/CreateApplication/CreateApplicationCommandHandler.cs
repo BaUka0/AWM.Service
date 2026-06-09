@@ -50,7 +50,6 @@ public sealed class CreateApplicationCommandHandler : IRequestHandler<CreateAppl
         if (topic.Status == Domain.Thesis.Enums.TopicStatus.Closed)
             return Result.Failure<long>(new Error("Topics.Closed", "Topic is closed for new applications."));
 
-        // Validate Stage 5 (TopicSelection)
         var (isAllowed, errorMessage) = await _stageValidationService.ValidateOperationInStageAsync(
             topic.OrgUnitId,
             topic.SemesterId,
@@ -60,17 +59,14 @@ public sealed class CreateApplicationCommandHandler : IRequestHandler<CreateAppl
         if (!isAllowed)
             return Result.Failure<long>(new Error("Applications.StageClosed", errorMessage ?? "Topic selection period is closed."));
 
-        // Check if already applied
         var alreadyApplied = await _applicationRepository.HasStudentAppliedToTopicAsync(studentId, request.TopicId, cancellationToken);
         if (alreadyApplied)
             return Result.Failure<long>(new Error("Applications.AlreadyApplied", "You have already applied to this topic."));
 
-        // Get student's speciality
         var student = await _studentReadOnlyRepository.GetByUserIdAsync(studentId, cancellationToken);
         if (student == null)
             return Result.Failure<long>(new Error("Students.NotFound", "Student record not found."));
 
-        // Create application
         var application = new TopicApplication(
             topicId: request.TopicId,
             studentId: studentId,

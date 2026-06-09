@@ -63,7 +63,6 @@ public class ProtocolConfiguration : SoftDeletableEntityConfiguration<Protocol, 
         builder.Property(e => e.ProtocolNumber)
             .HasMaxLength(50);
 
-        // Foreign keys
         builder.HasOne<Schedule>()
             .WithMany()
             .HasForeignKey(e => e.ScheduleId)
@@ -82,7 +81,6 @@ public class ProtocolConfiguration : SoftDeletableEntityConfiguration<Protocol, 
             .HasConstraintName("FK_Protocols_Finalizer")
             .OnDelete(DeleteBehavior.Restrict);
 
-        // Unique constraint - one protocol per schedule
         builder.HasIndex(e => e.ScheduleId)
             .IsUnique()
             .HasFilter("[IsDeleted] = 0")

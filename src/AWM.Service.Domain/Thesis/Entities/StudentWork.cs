@@ -4,7 +4,6 @@ using AWM.Service.Domain.Common;
 using AWM.Service.Domain.Thesis.Enums;
 using AWM.Service.Domain.Thesis.Events;
 
-
 /// <summary>
 /// StudentWork entity - the main thesis work aggregate root.
 /// Represents the actual work being done by student(s) on a topic.
@@ -66,8 +65,6 @@ public class StudentWork : AggregateRoot<long>, IAuditable, ISoftDeletable
         LastModifiedBy = createdBy;
         IsDeleted = false;
 
-        // NOTE: Domain event is NOT raised in constructor because EF Identity
-        // has not yet assigned the Id. Call RaiseCreatedEvent() after AddAsync/SaveChanges.
     }
 
     /// <summary>
@@ -86,11 +83,9 @@ public class StudentWork : AggregateRoot<long>, IAuditable, ISoftDeletable
     /// <param name="maxParticipants">Maximum allowed participants (from related Topic).</param>
     public WorkParticipant AddParticipant(int studentId, int maxParticipants)
     {
-        // Check if already a participant
         if (_participants.Any(p => p.StudentId == studentId))
             throw new DomainException("StudentWork.AlreadyParticipant", "Student is already a participant.");
 
-        // Check max participants from the associated topic
         if (_participants.Count >= maxParticipants)
             throw new DomainException("StudentWork.MaxParticipantsExceeded", $"Maximum {maxParticipants} participants allowed.");
 
@@ -259,8 +254,7 @@ public class StudentWork : AggregateRoot<long>, IAuditable, ISoftDeletable
     public void MarkAsGraduated(string? finalGrade)
     {
         IsDefended = true;
-        FinalGrade = finalGrade; // Allow updating grade
-        // Optionally add WorkGraduatedEvent if needed
+        FinalGrade = finalGrade;
     }
 
     /// <summary>

@@ -18,7 +18,6 @@ public class Grade : Entity<long>, IAuditable
     public DateTime? LastModifiedAt { get; private set; }
     public int? LastModifiedBy { get; private set; }
 
-    // Legacy field
     public DateTime GradedAt => CreatedAt;
 
     private Grade() { }

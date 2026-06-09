@@ -15,7 +15,6 @@ public class WorkParticipant : Entity<long>, IAuditable
     public DateTime? LastModifiedAt { get; private set; }
     public int? LastModifiedBy { get; private set; }
 
-    // Legacy field
     public DateTime JoinedAt => CreatedAt;
 
     private WorkParticipant() { }
@@ -29,4 +28,3 @@ public class WorkParticipant : Entity<long>, IAuditable
         CreatedBy = createdBy;
     }
 }
-

@@ -95,4 +95,3 @@ public sealed class ScheduleRepository : IScheduleRepository
         return Task.CompletedTask;
     }
 }
-

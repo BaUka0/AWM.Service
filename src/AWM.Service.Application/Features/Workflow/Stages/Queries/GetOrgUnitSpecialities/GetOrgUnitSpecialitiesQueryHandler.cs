@@ -44,7 +44,6 @@ public sealed class GetOrgUnitSpecialitiesQueryHandler : IRequestHandler<GetOrgU
 
         var currentUserId = _currentUserProvider.UserId.Value;
 
-        // Resolve OrgUnitId
         int orgUnitId;
         if (request.OrgUnitId.HasValue)
         {
@@ -69,7 +68,6 @@ public sealed class GetOrgUnitSpecialitiesQueryHandler : IRequestHandler<GetOrgU
             orgUnitId = mainPosition.OrgUnitId;
         }
 
-        // Fetch all specializations mapped to this department
         var specializationsOrgUnits = await _specializationsOrgUnitRepository.GetByOrgUnitAsync(orgUnitId, cancellationToken);
         var specIds = specializationsOrgUnits
             .Where(sou => sou.SpecializationId.HasValue)
@@ -77,7 +75,6 @@ public sealed class GetOrgUnitSpecialitiesQueryHandler : IRequestHandler<GetOrgU
             .Distinct()
             .ToList();
 
-        // Fetch all speciality IDs for those specializations
         var specialityIds = new List<int>();
         foreach (var specId in specIds)
         {
@@ -88,7 +85,6 @@ public sealed class GetOrgUnitSpecialitiesQueryHandler : IRequestHandler<GetOrgU
         }
         specialityIds = specialityIds.Distinct().ToList();
 
-        // Fetch details of each speciality
         var dtos = new List<SpecialityDto>();
         foreach (var specialityId in specialityIds)
         {

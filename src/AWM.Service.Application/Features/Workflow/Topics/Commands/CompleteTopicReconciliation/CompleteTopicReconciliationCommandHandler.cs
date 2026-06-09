@@ -56,7 +56,6 @@ public sealed class CompleteTopicReconciliationCommandHandler
 
         var currentUserId = _currentUserProvider.UserId.Value;
 
-        // Validate user has access to the orgUnit via employee positions
         var employee = await _employeeRepository.GetByUserIdAsync(currentUserId, cancellationToken);
         var hasOrgUnitAccess = employee?.Positions.Any(p => p.OrgUnitId == request.OrgUnitId) ?? false;
         if (!hasOrgUnitAccess)
@@ -66,11 +65,9 @@ public sealed class CompleteTopicReconciliationCommandHandler
                 "You do not have access to this department."));
         }
 
-        // 1. Load all topics for this department/semester with their applications
         var topics = await _topicRepository.GetByOrgUnitForReconciliationAsync(
             request.OrgUnitId, request.SemesterId, cancellationToken);
 
-        // Apply optional speciality filter
         var filteredTopics = request.SpecialityId.HasValue
             ? topics.Where(t => t.SpecialityId == request.SpecialityId.Value).ToList()
             : topics.ToList();
@@ -78,7 +75,6 @@ public sealed class CompleteTopicReconciliationCommandHandler
         if (filteredTopics.Count == 0)
             return Result.Failure(new Error("Topics.NoTopicsFound", "No topics found for reconciliation in this department/semester."));
 
-        // 2. Validate no "hanging" topics remain (Approved or Closed that weren't processed)
         var hangingTopics = filteredTopics
             .Where(t => t.Status == TopicStatus.Approved || t.Status == TopicStatus.Closed)
             .ToList();
@@ -92,7 +88,6 @@ public sealed class CompleteTopicReconciliationCommandHandler
                 $"marked inactive, or sent back for revision. Topic IDs: {hangingIds}"));
         }
 
-        // Also check for NeedsRevision — topics sent back to supervisors must be resolved first
         var revisionTopics = filteredTopics
             .Where(t => t.Status == TopicStatus.NeedsRevision)
             .ToList();
@@ -106,15 +101,11 @@ public sealed class CompleteTopicReconciliationCommandHandler
                 $"Topic IDs: {revisionIds}"));
         }
 
-        // 3. Create StudentWork for each Reconciled topic
         var reconciledTopics = filteredTopics.Where(t => t.Status == TopicStatus.Reconciled).ToList();
         var anyWorkCreated = false;
 
         if (reconciledTopics.Count > 0)
         {
-            // Get the first reconciled topic's WorkTypeId to look up the Draft state
-            // NOTE: All topics in a department/semester should share the same workflow,
-            // but we group by WorkTypeId to handle mixed types correctly
             var topicsByWorkType = reconciledTopics.GroupBy(t => t.WorkTypeId);
 
             foreach (var workTypeGroup in topicsByWorkType)
@@ -134,14 +125,12 @@ public sealed class CompleteTopicReconciliationCommandHandler
                         .ToList();
 
                     if (acceptedApplications.Count == 0)
-                        continue; // Skip reconciled topics with no accepted students (shouldn't happen due to domain validation)
+                        continue;
 
-                    // Prevent duplicate StudentWork creation
                     var alreadyExists = await _studentWorkRepository.ExistsByTopicIdAsync(topic.Id, cancellationToken);
                     if (alreadyExists)
                         continue;
 
-                    // Create StudentWork entity
                     var work = new StudentWork(
                         semesterId: topic.SemesterId,
                         orgUnitId: topic.OrgUnitId,
@@ -152,16 +141,13 @@ public sealed class CompleteTopicReconciliationCommandHandler
 
                     await _studentWorkRepository.AddAsync(work, cancellationToken);
 
-                    // We need to save to get the generated Id before adding participants
                     await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-                    // Add each accepted student as a participant
                     foreach (var application in acceptedApplications)
                     {
                         work.AddParticipant(application.StudentId, topic.MaxParticipants);
                     }
 
-                    // Raise the created event now that we have a valid Id
                     work.RaiseCreatedEvent();
 
                     await _studentWorkRepository.UpdateAsync(work, cancellationToken);
@@ -170,10 +156,8 @@ public sealed class CompleteTopicReconciliationCommandHandler
             }
         }
 
-        // 4. Final save
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        // Publish the reconciliation completed event only if new works were actually created
         if (anyWorkCreated)
         {
             await _mediator.Publish(
@@ -184,4 +168,3 @@ public sealed class CompleteTopicReconciliationCommandHandler
         return Result.Success();
     }
 }
-

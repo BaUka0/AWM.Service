@@ -39,7 +39,6 @@ public class EmployeePositionConfiguration : IEntityTypeConfiguration<EmployeePo
         builder.Property(e => e.IsMainPosition)
             .IsRequired();
 
-        // Foreign keys
         builder.HasOne(e => e.OrgUnit)
             .WithMany()
             .HasForeignKey(e => e.OrgUnitId)

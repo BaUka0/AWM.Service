@@ -18,7 +18,6 @@ public class EmployeeConfiguration : IEntityTypeConfiguration<Employee>
         builder.Property(e => e.IsAdvisor)
             .IsRequired();
 
-        // Foreign key to User
         builder.HasOne(e => e.User)
             .WithMany()
             .HasForeignKey(e => e.Id)
@@ -26,7 +25,6 @@ public class EmployeeConfiguration : IEntityTypeConfiguration<Employee>
             .HasConstraintName("FK_Edu_Employees_User")
             .OnDelete(DeleteBehavior.Restrict);
 
-        // Navigation to positions
         builder.HasMany(e => e.Positions)
             .WithOne(p => p.Employee)
             .HasForeignKey(p => p.EmployeeId)

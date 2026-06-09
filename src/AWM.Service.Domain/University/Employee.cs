@@ -10,7 +10,6 @@ public class Employee : Entity<int>
 {
     public bool IsAdvisor { get; private set; }
 
-    // Navigation properties
     public User? User { get; private set; }
     public ICollection<EmployeePosition> Positions { get; private set; } = new List<EmployeePosition>();
 

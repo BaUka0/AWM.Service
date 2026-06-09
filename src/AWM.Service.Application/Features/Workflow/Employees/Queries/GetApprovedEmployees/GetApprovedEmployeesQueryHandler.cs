@@ -56,11 +56,9 @@ public sealed class GetApprovedEmployeesQueryHandler : IRequestHandler<GetApprov
             return Result.Success<IReadOnlyList<TeacherDto>>(new List<TeacherDto>());
         }
 
-        // Load all topics for this orgUnit/semester with applications
         var topics = await _topicRepository.GetByOrgUnitWithApplicationsAsync(
             request.OrgUnitId, request.SemesterId, cancellationToken);
 
-        // Exclude rejected/inactive/draft/needs-revision topics from workload count
         var activeTopics = topics
             .Where(t => t.Status == Domain.Thesis.Enums.TopicStatus.Approved
                      || t.Status == Domain.Thesis.Enums.TopicStatus.Pending
@@ -70,11 +68,9 @@ public sealed class GetApprovedEmployeesQueryHandler : IRequestHandler<GetApprov
 
         var topicIds = activeTopics.Select(t => t.Id).ToList();
 
-        // Load supervisor assignments for these topics
         var topicAssignments = await _staffAssignmentRepository.GetByTargetsAndRoleAsync(
             "Topic", topicIds, StaffRoleType.Supervisor, cancellationToken);
 
-        // Build map: topicId -> supervisorUserId
         var topicSupervisorMap = topicAssignments
             .Where(a => a.IsActive && !a.IsDeleted)
             .GroupBy(a => a.TargetEntityId)
@@ -82,11 +78,9 @@ public sealed class GetApprovedEmployeesQueryHandler : IRequestHandler<GetApprov
                 g => g.Key,
                 g => g.First().UserId);
 
-        // Build map: userId -> currentStudents (count of accepted applications)
         var currentStudentsMap = new Dictionary<int, int>();
         foreach (var topic in activeTopics)
         {
-            // Determine supervisor for this topic
             if (!topicSupervisorMap.TryGetValue(topic.Id, out var supervisorId))
             {
                 supervisorId = topic.CreatedBy;

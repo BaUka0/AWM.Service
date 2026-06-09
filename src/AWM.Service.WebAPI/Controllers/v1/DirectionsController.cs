@@ -193,4 +193,3 @@ public sealed class DirectionsController : BaseController
         return NoContent();
     }
 }
-

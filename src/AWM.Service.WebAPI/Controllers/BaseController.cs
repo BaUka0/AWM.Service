@@ -30,11 +30,9 @@ namespace AWM.Service.WebAPI.Controllers
         /// </summary>
         private static int ResolveStatusCode(string errorCode)
         {
-            // 1. Exact match
             if (ErrorCodes.StatusMap.TryGetValue(errorCode, out var mapped))
                 return mapped;
 
-            // 2. Convention-based suffix match (e.g., "Topics.NotFound" → "NotFound")
             var lastDot = errorCode.LastIndexOf('.');
             if (lastDot >= 0)
             {
@@ -43,9 +41,7 @@ namespace AWM.Service.WebAPI.Controllers
                     return suffixMapped;
             }
 
-            // 3. Fallback
             return StatusCodes.Status500InternalServerError;
         }
     }
 }
-

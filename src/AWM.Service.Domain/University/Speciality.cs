@@ -15,7 +15,6 @@ public class Speciality : Entity<int>
     public int LevelId { get; private set; }
     public bool Deleted { get; private set; }
 
-    // Navigation properties
     public SpecialityLevel? Level { get; private set; }
 
     private Speciality() { }

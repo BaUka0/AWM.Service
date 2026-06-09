@@ -24,4 +24,3 @@ public record NotifyUnreadyStudentsRequest(
     int SemesterId,
     int? SpecialityId = null
 );
-

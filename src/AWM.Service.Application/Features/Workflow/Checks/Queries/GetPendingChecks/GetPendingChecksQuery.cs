@@ -55,7 +55,6 @@ public sealed class GetPendingChecksQueryHandler : IRequestHandler<GetPendingChe
 
         var currentUserId = _currentUserProvider.UserId.Value;
 
-        // Load the expert's assignments to determine which CheckTypeIds they are allowed to see
         var userAssignments = await _staffAssignmentRepository.GetByUserAsync(currentUserId, cancellationToken);
 
         var allowedCheckTypeIds = userAssignments
@@ -77,13 +76,11 @@ public sealed class GetPendingChecksQueryHandler : IRequestHandler<GetPendingChe
             .Distinct()
             .ToList();
 
-        // If not assigned as an expert in this department, return empty list
         if (!allowedCheckTypeIds.Any())
         {
             return Result.Success<IReadOnlyList<QualityCheckDto>>(new List<QualityCheckDto>());
         }
 
-        // Get works with participants and quality checks
         var works = await _studentWorkRepository.GetByOrgUnitWithParticipantsAndQualityChecksAsync(
             request.OrgUnitId,
             request.SemesterId,
@@ -97,7 +94,6 @@ public sealed class GetPendingChecksQueryHandler : IRequestHandler<GetPendingChe
             .Where(e => e.User != null)
             .ToDictionary(e => e.User!.Id, e => $"{e.User!.LastName} {e.User!.FirstName} {e.User!.MiddleName}".Trim());
 
-        // Load student names and topic titles for enrichment
         var studentUserIds = works
             .SelectMany(w => w.Participants.Select(p => p.StudentId))
             .Distinct()
@@ -135,10 +131,8 @@ public sealed class GetPendingChecksQueryHandler : IRequestHandler<GetPendingChe
 
                 if (!isPending && !(request.IncludeCompleted && isCompleted)) continue;
 
-                // Expert is only allowed to access checks they are assigned to
                 if (!allowedCheckTypeIds.Contains(c.CheckTypeId)) continue;
 
-                // Optional filter by CheckTypeId in query
                 if (request.CheckTypeId.HasValue && c.CheckTypeId != request.CheckTypeId.Value) continue;
 
                 var status = c.IsPassed
@@ -147,7 +141,6 @@ public sealed class GetPendingChecksQueryHandler : IRequestHandler<GetPendingChe
                         ? QualityCheckStatus.SentForRevision
                         : QualityCheckStatus.Pending;
 
-                // Extract repo URL from StudentWork.MetadataJson for SoftwareCheck (checkTypeId=3)
                 string? submissionUrl = null;
                 if (c.CheckTypeId == 3 && !string.IsNullOrWhiteSpace(work.MetadataJson))
                 {

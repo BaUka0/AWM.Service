@@ -22,7 +22,6 @@ public class UserRepository : IUserRepository
 
     public async Task<User?> GetByLoginAsync(string login, CancellationToken cancellationToken = default)
     {
-        // University users don't have Login field - use Email as login
         return await _context.Users
             .FirstOrDefaultAsync(u => u.Email == login, cancellationToken);
     }

@@ -73,7 +73,6 @@ public class DirectionConfiguration : SoftDeletableEntityConfiguration<Direction
         builder.Property(e => e.ReviewComment)
             .HasColumnType("nvarchar(max)");
 
-        // Foreign keys
         builder.HasOne<OrgUnit>()
             .WithMany()
             .HasForeignKey(e => e.OrgUnitId)
@@ -98,13 +97,11 @@ public class DirectionConfiguration : SoftDeletableEntityConfiguration<Direction
             .HasConstraintName("FK_Directions_Semester")
             .OnDelete(DeleteBehavior.Restrict);
 
-        // Navigation to Topics
         builder.HasMany(e => e.Topics)
             .WithOne()
             .HasForeignKey(e => e.DirectionId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        // Index for filtering
         builder.HasIndex(e => new { e.OrgUnitId, e.SemesterId, e.CurrentStateId })
             .HasDatabaseName("IX_Directions_Dept_Year");
     }

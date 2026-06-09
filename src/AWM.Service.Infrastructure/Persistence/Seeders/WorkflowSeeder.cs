@@ -27,21 +27,19 @@ internal sealed class WorkflowSeeder
     {
         if (!await _context.WorkflowStages.AnyAsync(ct))
         {
-            // Fresh DB: inserted in ID order so IDENTITY values match WorkflowStageIds constants (1–8).
             _context.WorkflowStages.AddRange(
-                new WorkflowStage("DirectionProposal", 1), // Id = 1 = WorkflowStageIds.DirectionProposal
-                new WorkflowStage("TopicProposal", 2), // Id = 2 = WorkflowStageIds.TopicProposal
-                new WorkflowStage("TopicPreparation", 3), // Id = 3 = WorkflowStageIds.TopicPreparation (Student selection)
-                new WorkflowStage("Preparation", 4), // Id = 4 = WorkflowStageIds.Preparation (Work starts)
-                new WorkflowStage("PreDefense1", 5), // Id = 5
-                new WorkflowStage("PreDefense2", 6), // Id = 6
-                new WorkflowStage("PreDefense3", 7), // Id = 7
-                new WorkflowStage("FinalDefense", 8)  // Id = 8
+                new WorkflowStage("DirectionProposal", 1),
+                new WorkflowStage("TopicProposal", 2),
+                new WorkflowStage("TopicPreparation", 3),
+                new WorkflowStage("Preparation", 4),
+                new WorkflowStage("PreDefense1", 5),
+                new WorkflowStage("PreDefense2", 6),
+                new WorkflowStage("PreDefense3", 7),
+                new WorkflowStage("FinalDefense", 8)
             );
             await _context.SaveChangesAsync(ct);
         }
 
-        // Ensure ChecksPeriod (ID=9) exists — needed for existing DBs seeded without it.
         if (!await _context.WorkflowStages.AnyAsync(ws => ws.Id == WorkflowStageIds.ChecksPeriod, ct))
         {
             _context.WorkflowStages.Add(
@@ -94,7 +92,6 @@ internal sealed class WorkflowSeeder
 
     private async Task SeedThesisStatesAsync(int workTypeId, CancellationToken ct)
     {
-        // Direction workflow states
         var directionStates = new[]
         {
             new State(workTypeId, DirectionStates.Draft,             0, "Черновик направления"),
@@ -104,7 +101,6 @@ internal sealed class WorkflowSeeder
             new State(workTypeId, DirectionStates.RequiresRevision,  0, "Требует доработки"),
         };
 
-        // StudentWork workflow states
         var workStates = new[]
         {
             new State(workTypeId, WorkStates.Draft,                         0, "Черновик"),
@@ -149,51 +145,40 @@ internal sealed class WorkflowSeeder
 
         var transitions = new List<Transition>
         {
-            // Direction flow
             Transition.Automatic(d[DirectionStates.Draft].Id,            d[DirectionStates.Submitted].Id),
             Transition.Automatic(d[DirectionStates.Submitted].Id,        d[DirectionStates.Approved].Id),
             Transition.Automatic(d[DirectionStates.Submitted].Id,        d[DirectionStates.Rejected].Id),
             Transition.Automatic(d[DirectionStates.Submitted].Id,        d[DirectionStates.RequiresRevision].Id),
             Transition.Automatic(d[DirectionStates.RequiresRevision].Id, d[DirectionStates.Submitted].Id),
 
-            // Draft → PreDefense-1
             Transition.Automatic(w[WorkStates.Draft].Id, w[WorkStates.PreDefense1WaitingForFiles].Id),
 
-            // PreDefense-1 pipeline
             Transition.Automatic(w[WorkStates.PreDefense1WaitingForFiles].Id,    w[WorkStates.PreDefense1WaitingForSchedule].Id),
             Transition.Automatic(w[WorkStates.PreDefense1WaitingForSchedule].Id, w[WorkStates.PreDefense1Scheduled].Id),
             Transition.Automatic(w[WorkStates.PreDefense1Scheduled].Id,          w[WorkStates.PreDefense1Passed].Id),
             Transition.Automatic(w[WorkStates.PreDefense1Scheduled].Id,          w[WorkStates.PreDefense1Failed].Id),
-            // PD1 → PD2 (both outcomes continue to PD2)
             Transition.Automatic(w[WorkStates.PreDefense1Passed].Id, w[WorkStates.PreDefense2WaitingForFiles].Id),
             Transition.Automatic(w[WorkStates.PreDefense1Failed].Id, w[WorkStates.PreDefense2WaitingForFiles].Id),
 
-            // PreDefense-2 pipeline
             Transition.Automatic(w[WorkStates.PreDefense2WaitingForFiles].Id,    w[WorkStates.PreDefense2WaitingForSchedule].Id),
             Transition.Automatic(w[WorkStates.PreDefense2WaitingForSchedule].Id, w[WorkStates.PreDefense2Scheduled].Id),
             Transition.Automatic(w[WorkStates.PreDefense2Scheduled].Id,          w[WorkStates.PreDefense2Passed].Id),
             Transition.Automatic(w[WorkStates.PreDefense2Scheduled].Id,          w[WorkStates.PreDefense2Failed].Id),
-            // PD2 passed → skip PD3, go to checks
             Transition.Automatic(w[WorkStates.PreDefense2Passed].Id, w[WorkStates.ChecksWaitingForInitial].Id),
-            // PD2 failed → last chance PD3
             Transition.Automatic(w[WorkStates.PreDefense2Failed].Id, w[WorkStates.PreDefense3WaitingForFiles].Id),
 
-            // PreDefense-3 pipeline
             Transition.Automatic(w[WorkStates.PreDefense3WaitingForFiles].Id,    w[WorkStates.PreDefense3WaitingForSchedule].Id),
             Transition.Automatic(w[WorkStates.PreDefense3WaitingForSchedule].Id, w[WorkStates.PreDefense3Scheduled].Id),
             Transition.Automatic(w[WorkStates.PreDefense3Scheduled].Id,          w[WorkStates.PreDefense3Passed].Id),
             Transition.Automatic(w[WorkStates.PreDefense3Scheduled].Id,          w[WorkStates.PreDefense3Failed].Id),
-            // PD3 passed → checks; PD3 failed → cancelled
             Transition.Automatic(w[WorkStates.PreDefense3Passed].Id, w[WorkStates.ChecksWaitingForInitial].Id),
             Transition.Automatic(w[WorkStates.PreDefense3Failed].Id, w[WorkStates.Cancelled].Id),
 
-            // Checks & reviews pipeline
             Transition.Automatic(w[WorkStates.ChecksWaitingForInitial].Id,        w[WorkStates.ChecksWaitingForAntiPlagiarism].Id),
             Transition.Automatic(w[WorkStates.ChecksWaitingForAntiPlagiarism].Id, w[WorkStates.ReviewsWaitingForSupervisor].Id),
             Transition.Automatic(w[WorkStates.ReviewsWaitingForSupervisor].Id,    w[WorkStates.ReviewsWaitingForReviewer].Id),
             Transition.Automatic(w[WorkStates.ReviewsWaitingForReviewer].Id,      w[WorkStates.ReadyForDefense].Id),
 
-            // Final defense
             Transition.Automatic(w[WorkStates.ReadyForDefense].Id,           w[WorkStates.DefenseWaitingForSchedule].Id),
             Transition.Automatic(w[WorkStates.DefenseWaitingForSchedule].Id, w[WorkStates.DefenseScheduled].Id),
             Transition.Automatic(w[WorkStates.DefenseScheduled].Id,          w[WorkStates.Defended].Id),

@@ -11,7 +11,6 @@ public sealed class CreateTopicCommandValidator : AbstractValidator<CreateTopicC
         RuleFor(x => x.TitleRu).NotEmpty().MaximumLength(500);
         RuleFor(x => x.MaxParticipants).InclusiveBetween(1, 3);
 
-        // Optional field validations
         RuleFor(x => x.TitleKz).MaximumLength(500).When(x => x.TitleKz != null);
         RuleFor(x => x.TitleEn).MaximumLength(500).When(x => x.TitleEn != null);
         RuleFor(x => x.DescriptionRu).MaximumLength(4000).When(x => x.DescriptionRu != null);

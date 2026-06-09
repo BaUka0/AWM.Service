@@ -27,7 +27,6 @@ public class TopicApplication : Entity<long>, IAuditable, ISoftDeletable
     public DateTime? DeletedAt { get; private set; }
     public int? DeletedBy { get; private set; }
 
-    // Navigation properties
     public University.Student? Student { get; private set; }
 
     private TopicApplication() { }
@@ -42,7 +41,7 @@ public class TopicApplication : Entity<long>, IAuditable, ISoftDeletable
         StatusId = (int)ApplicationStatusType.Submitted;
 
         CreatedAt = AppliedAt;
-        CreatedBy = studentId; // Student is the creator
+        CreatedBy = studentId;
         IsDeleted = false;
     }
 

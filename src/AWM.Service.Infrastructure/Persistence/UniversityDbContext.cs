@@ -43,7 +43,6 @@ public sealed class UniversityDbContext : DbContext
     {
         base.OnConfiguring(optionsBuilder);
 
-        // Read-only: no change tracking
         optionsBuilder.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
     }
 }

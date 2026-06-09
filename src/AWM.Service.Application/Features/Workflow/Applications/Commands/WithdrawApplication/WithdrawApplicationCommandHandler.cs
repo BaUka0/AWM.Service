@@ -33,14 +33,12 @@ public sealed class WithdrawApplicationCommandHandler : IRequestHandler<Withdraw
         if (application == null)
             return Result.Failure(new Error("Applications.NotFound", "Application not found."));
 
-        // Validate that current user is the student
         if (application.StudentId != studentId)
             return Result.Failure(new Error("Applications.Unauthorized", "You can only withdraw your own applications."));
 
         if (!application.IsPending)
             return Result.Failure(new Error("Applications.InvalidState", "Only pending applications can be withdrawn."));
 
-        // Withdraw (soft delete)
         await _applicationRepository.DeleteAsync(application, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 

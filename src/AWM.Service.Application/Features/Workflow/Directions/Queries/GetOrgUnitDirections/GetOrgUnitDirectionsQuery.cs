@@ -9,5 +9,3 @@ public record GetOrgUnitDirectionsQuery(
     int OrgUnitId,
     int? SemesterId,
     int? StateId) : IRequest<Result<IReadOnlyList<DirectionSummaryDto>>>;
-
-

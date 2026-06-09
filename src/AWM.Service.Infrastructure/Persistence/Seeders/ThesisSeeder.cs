@@ -28,7 +28,6 @@ internal sealed class ThesisSeeder
     {
         if (await _context.AttachmentTypes.AnyAsync(ct)) return;
 
-        // IDs are stable (ValueGeneratedNever). Do not reorder.
         _context.AttachmentTypes.AddRange(
             new AttachmentType(1, "Черновик работы", "DRAFT_WORK"),
             new AttachmentType(2, "Финальная работа", "FINAL_WORK"),
@@ -42,13 +41,10 @@ internal sealed class ThesisSeeder
         await _context.SaveChangesAsync(ct);
     }
 
-    // Adds university-wide default evaluation criteria per work type if none exist yet.
-    // Departments can override or extend these via the EvaluationCriteria admin UI.
     private async Task SeedDefaultEvaluationCriteriaAsync(CancellationToken ct)
     {
         if (await _context.EvaluationCriteria.AnyAsync(ct)) return;
 
-        // System user (ID=1) creates the seed records.
         const int systemUserId = 1;
 
         var workTypes = await _context.WorkTypes

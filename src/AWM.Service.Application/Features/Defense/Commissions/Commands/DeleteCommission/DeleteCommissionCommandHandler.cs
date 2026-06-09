@@ -36,7 +36,6 @@ public sealed class DeleteCommissionCommandHandler : IRequestHandler<DeleteCommi
         if (commission == null)
             return Result.Failure(new Error("Commission.NotFound", $"Commission with ID {request.Id} not found."));
 
-        // Guard: cannot delete if students are already assigned to schedules
         var schedules = await _scheduleRepository.GetByCommissionAsync(request.Id, cancellationToken);
         if (schedules.Any(s => !s.IsDeleted))
             return Result.Failure(new Error("Commission.HasAssignedStudents",

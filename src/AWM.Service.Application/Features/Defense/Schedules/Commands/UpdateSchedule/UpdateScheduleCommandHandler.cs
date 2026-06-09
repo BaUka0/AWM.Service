@@ -42,7 +42,7 @@ public sealed class UpdateScheduleCommandHandler : IRequestHandler<UpdateSchedul
             var commission = await _commissionRepository.GetByIdAsync(request.CommissionId.Value, cancellationToken);
             if (commission == null)
                 return Result.Failure(new Error("Commission.NotFound", $"Commission with ID {request.CommissionId.Value} not found."));
-            
+
             schedule.ChangeCommission(request.CommissionId.Value, modifiedBy);
         }
 

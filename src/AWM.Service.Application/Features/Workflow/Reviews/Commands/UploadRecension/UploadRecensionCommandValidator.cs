@@ -12,13 +12,13 @@ public sealed class UploadRecensionCommandValidator : AbstractValidator<UploadRe
         RuleFor(x => x.ReviewerUserId).GreaterThan(0).When(x => x.ReviewerUserId.HasValue);
         RuleFor(x => x.FileName).NotEmpty();
         RuleFor(x => x.ContentType).NotEmpty();
-        
+
         long maxSizeBytes = storageSettings.Value.MaxAttachmentSizeMb * 1024L * 1024L;
         RuleFor(x => x.FileSizeBytes)
             .GreaterThan(0)
             .LessThanOrEqualTo(maxSizeBytes)
             .WithMessage($"File size exceeds limit of {storageSettings.Value.MaxAttachmentSizeMb} MB.");
-            
+
         RuleFor(x => x.FileStream).NotNull();
     }
 }

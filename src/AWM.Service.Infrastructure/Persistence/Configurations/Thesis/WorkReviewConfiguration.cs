@@ -30,7 +30,6 @@ public class WorkReviewConfiguration : IEntityTypeConfiguration<WorkReview>
         builder.Property(r => r.IsFinal)
             .HasDefaultValue(false);
 
-        // Audit fields
         builder.Property(r => r.CreatedAt).IsRequired();
         builder.Property(r => r.CreatedBy).IsRequired();
         builder.Property(r => r.LastModifiedAt).IsRequired(false);
@@ -41,8 +40,6 @@ public class WorkReviewConfiguration : IEntityTypeConfiguration<WorkReview>
 
         builder.HasQueryFilter(r => !r.IsDeleted);
 
-        // Foreign keys are configured in DB script (to StudentWorks and Edu_Users)
-        // Here we just map it to the StudentWork aggregate.
         builder.HasOne<StudentWork>()
             .WithMany(w => w.WorkReviews)
             .HasForeignKey(r => r.WorkId)

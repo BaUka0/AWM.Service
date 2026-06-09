@@ -17,7 +17,7 @@ public sealed record ProtocolReportData(
     long ProtocolId,
     string? ProtocolNumber,
     string CommissionName,
-    string CommissionType, // "PreDefense" or "GAK"
+    string CommissionType,
     string SessionDate,
     string StudentName,
     string TopicTitle,
@@ -63,4 +63,3 @@ public interface IPdfReportService
     Task<byte[]> GenerateAdmittedStudentsListAsync(AdmittedStudentsListData data);
     Task<byte[]> GenerateScheduleReportAsync(ScheduleReportData data);
 }
-

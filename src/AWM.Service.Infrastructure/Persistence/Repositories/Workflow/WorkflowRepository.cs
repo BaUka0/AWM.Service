@@ -139,13 +139,11 @@ public sealed class WorkflowRepository : IWorkflowRepository
     /// <inheritdoc />
     public async Task<IReadOnlyList<Transition>> GetWorkflowGraphAsync(int workTypeId, CancellationToken cancellationToken = default)
     {
-        // Get all state IDs for this work type
         var stateIds = await _context.States
             .Where(s => s.WorkTypeId == workTypeId)
             .Select(s => s.Id)
             .ToListAsync(cancellationToken);
 
-        // Get all transitions involving these states
         return await _context.Transitions
             .AsNoTracking()
             .Where(t => stateIds.Contains(t.FromStateId))

@@ -67,10 +67,6 @@ public sealed class DispatchDomainEventsInterceptor : SaveChangesInterceptor, ID
         return base.SaveChangesFailedAsync(eventData, cancellationToken);
     }
 
-    // ──────────────────────────────────────────────────────────────────────────
-    // IDbTransactionInterceptor implementation
-    // ──────────────────────────────────────────────────────────────────────────
-
     public void TransactionCommitted(DbTransaction transaction, TransactionEndEventData eventData)
     {
         if (_pendingEvents.Count > 0)
@@ -116,8 +112,6 @@ public sealed class DispatchDomainEventsInterceptor : SaveChangesInterceptor, ID
         return Task.CompletedTask;
     }
 
-    // Helper methods
-
     private void CollectAndAccumulateDomainEvents(DbContext? context)
     {
         if (context == null) return;
@@ -142,7 +136,6 @@ public sealed class DispatchDomainEventsInterceptor : SaveChangesInterceptor, ID
 
     private void DispatchPendingEvents(DbContext? context)
     {
-        // If there's an active manual transaction, defer dispatching until TransactionCommitted
         if (context?.Database.CurrentTransaction != null)
         {
             return;
@@ -161,7 +154,6 @@ public sealed class DispatchDomainEventsInterceptor : SaveChangesInterceptor, ID
 
     private async Task DispatchPendingEventsAsync(DbContext? context, CancellationToken cancellationToken = default)
     {
-        // If there's an active manual transaction, defer dispatching until TransactionCommittedAsync
         if (context?.Database.CurrentTransaction != null)
         {
             return;

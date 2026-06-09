@@ -23,7 +23,6 @@ public class Student : Entity<int>
     public bool NeedsDorm { get; private set; }
     public DateTime? EntryDate { get; private set; }
 
-    // Navigation properties
     public User? User { get; private set; }
     public Speciality? Speciality { get; private set; }
     public StudentStatus? Status { get; private set; }

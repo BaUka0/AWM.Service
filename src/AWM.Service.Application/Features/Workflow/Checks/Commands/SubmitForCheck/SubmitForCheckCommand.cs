@@ -45,35 +45,30 @@ public sealed class SubmitForCheckCommandHandler : IRequestHandler<SubmitForChec
             return Result.Failure<long>(new Error("StudentWorks.NotFound", $"Student work with ID {request.WorkId} not found."));
         }
 
-        // Check if student is participant
         var isParticipant = work.Participants.Any(p => p.StudentId == currentUserId);
         if (!isParticipant)
         {
             return Result.Failure<long>(new Error("Checks.Forbidden", "Only participants of this work can submit it for checking."));
         }
 
-        // Check if checks stage is active
         var currentState = await _workflowRepository.GetStateByIdAsync(work.CurrentStateId, cancellationToken);
         if (currentState == null)
         {
             return Result.Failure<long>(new Error("Workflow.StateNotFound", "Current state of work was not found."));
         }
 
-        // Check if there is already a pending check of this type
         var hasPending = work.QualityChecks.Any(c => c.CheckTypeId == request.CheckTypeId && !c.IsPassed && !c.AssignedExpertId.HasValue);
         if (hasPending)
         {
             return Result.Failure<long>(new Error("Checks.Duplicate", "There is already a pending check request of this type."));
         }
 
-        // Check if there is already a passed check of this type
         var hasPassed = work.QualityChecks.Any(c => c.CheckTypeId == request.CheckTypeId && c.IsPassed);
         if (hasPassed)
         {
             return Result.Failure<long>(new Error("Checks.AlreadyPassed", "This check has already been passed successfully."));
         }
 
-        // Add quality check
         var check = work.AddQualityCheck(request.CheckTypeId, isPassed: false);
 
         await _studentWorkRepository.UpdateAsync(work, cancellationToken);

@@ -33,7 +33,6 @@ public class SemesterConfiguration : IEntityTypeConfiguration<Semester>
         builder.Property(e => e.SemesterTypeId)
             .IsRequired();
 
-        // FK to semester type
         builder.HasOne(e => e.SemesterType)
             .WithMany()
             .HasForeignKey(e => e.SemesterTypeId)

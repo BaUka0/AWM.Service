@@ -34,7 +34,6 @@ public class StudentConfiguration : IEntityTypeConfiguration<Student>
         builder.Property(e => e.EntryDate)
             .HasColumnType("datetime");
 
-        // Foreign keys
         builder.HasOne(e => e.User)
             .WithOne()
             .HasForeignKey<Student>(e => e.Id)

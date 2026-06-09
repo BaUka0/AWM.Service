@@ -15,7 +15,6 @@ public class SpecialityCheckType : Entity<int>
     public decimal? MinimumPassValue { get; private set; }
     public bool IsActive { get; private set; }
 
-    // Navigation properties
     public OrgUnit? OrgUnit { get; private set; }
     public Speciality? Speciality { get; private set; }
     public CheckType? CheckType { get; private set; }
