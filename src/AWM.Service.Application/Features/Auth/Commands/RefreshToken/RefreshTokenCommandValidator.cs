@@ -2,9 +2,6 @@ using FluentValidation;
 
 namespace AWM.Service.Application.Features.Auth.Commands.RefreshToken;
 
-/// <summary>
-/// Validator for RefreshTokenCommand.
-/// </summary>
 public class RefreshTokenCommandValidator : AbstractValidator<RefreshTokenCommand>
 {
     public RefreshTokenCommandValidator()

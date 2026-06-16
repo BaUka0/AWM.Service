@@ -1,47 +1,50 @@
 namespace AWM.Service.Infrastructure.Persistence.Configurations.Thesis;
 
+using AWM.Service.Domain.Thesis.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using AWM.Service.Domain.Thesis.Entities;
-using AWM.Service.Infrastructure.Persistence.Configurations.Base;
 
-/// <summary>
-/// EF Core configuration for Reviewer entity.
-/// Maps to [Thesis].[Reviewers] table.
-/// External reviewers (not university employees).
-/// </summary>
-public class ReviewerConfiguration : SoftDeletableEntityConfiguration<Reviewer, int>
+public class ReviewerConfiguration : IEntityTypeConfiguration<Reviewer>
 {
-    public override void Configure(EntityTypeBuilder<Reviewer> builder)
+    public void Configure(EntityTypeBuilder<Reviewer> builder)
     {
-        base.Configure(builder);
-
         builder.ToTable("Reviewers", "Thesis");
 
-        builder.Property(e => e.Id)
-            .UseIdentityColumn();
+        builder.HasKey(r => r.Id);
 
-        builder.Property(e => e.FullName)
+        builder.Property(r => r.FullName)
             .IsRequired()
             .HasMaxLength(255);
 
-        builder.Property(e => e.Position)
-            .HasMaxLength(200);
+        builder.Property(r => r.Position)
+            .HasMaxLength(255);
 
-        builder.Property(e => e.AcademicDegree)
+        builder.Property(r => r.AcademicDegree)
             .HasMaxLength(100);
 
-        builder.Property(e => e.Organization)
+        builder.Property(r => r.Organization)
             .HasMaxLength(255);
 
-        builder.Property(e => e.Email)
+        builder.Property(r => r.Email)
             .HasMaxLength(255);
 
-        builder.Property(e => e.Phone)
+        builder.Property(r => r.Phone)
             .HasMaxLength(50);
 
-        builder.Property(e => e.IsActive)
-            .IsRequired()
+        builder.Property(r => r.IsActive)
             .HasDefaultValue(true);
+
+        builder.Property(r => r.UserId)
+            .IsRequired(false);
+
+        builder.Property(r => r.CreatedAt).IsRequired();
+        builder.Property(r => r.CreatedBy).IsRequired();
+        builder.Property(r => r.LastModifiedAt).IsRequired(false);
+        builder.Property(r => r.LastModifiedBy).IsRequired(false);
+        builder.Property(r => r.IsDeleted).HasDefaultValue(false);
+        builder.Property(r => r.DeletedAt).IsRequired(false);
+        builder.Property(r => r.DeletedBy).IsRequired(false);
+
+        builder.HasQueryFilter(r => !r.IsDeleted);
     }
 }

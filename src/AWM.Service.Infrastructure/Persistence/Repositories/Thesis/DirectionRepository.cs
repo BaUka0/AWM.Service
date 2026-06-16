@@ -2,6 +2,7 @@ namespace AWM.Service.Infrastructure.Persistence.Repositories.Thesis;
 
 using AWM.Service.Domain.Repositories;
 using AWM.Service.Domain.Thesis.Entities;
+using AWM.Service.Domain.CommonDomain.Enums;
 using Microsoft.EntityFrameworkCore;
 
 /// <summary>
@@ -36,31 +37,40 @@ public sealed class DirectionRepository : IDirectionRepository
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<Direction>> GetByDepartmentAsync(
-        int departmentId, 
-        int academicYearId, 
+    public async Task<IReadOnlyList<Direction>> GetByOrgUnitAsync(
+        int orgUnitId,
+        int semesterId,
         CancellationToken cancellationToken = default)
     {
         return await _context.Directions
             .AsNoTracking()
-            .Where(d => !d.IsDeleted && 
-                        d.DepartmentId == departmentId && 
-                        d.AcademicYearId == academicYearId)
+            .Where(d => !d.IsDeleted &&
+                        d.OrgUnitId == orgUnitId &&
+                        d.SemesterId == semesterId)
             .OrderByDescending(d => d.CreatedAt)
             .ToListAsync(cancellationToken);
     }
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<Direction>> GetBySupervisorAsync(
-        int supervisorId, 
-        int academicYearId, 
+        int userId,
+        int semesterId,
         CancellationToken cancellationToken = default)
     {
+        var assignedDirectionIds = await _context.StaffAssignments
+            .AsNoTracking()
+            .Where(a => a.UserId == userId &&
+                        a.RoleType == StaffRoleType.Supervisor &&
+                        a.TargetEntityType == "Direction" &&
+                        a.IsActive && !a.IsDeleted)
+            .Select(a => a.TargetEntityId)
+            .ToListAsync(cancellationToken);
+
         return await _context.Directions
             .AsNoTracking()
-            .Where(d => !d.IsDeleted && 
-                        d.SupervisorId == supervisorId && 
-                        d.AcademicYearId == academicYearId)
+            .Where(d => !d.IsDeleted &&
+                        d.SemesterId == semesterId &&
+                        (assignedDirectionIds.Contains(d.Id) || d.CreatedBy == userId))
             .OrderByDescending(d => d.CreatedAt)
             .ToListAsync(cancellationToken);
     }

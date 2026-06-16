@@ -2,40 +2,46 @@ using AWM.Service.Domain.Common;
 using AWM.Service.Domain.Repositories;
 using KDS.Primitives.FluentResult;
 using MediatR;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace AWM.Service.Application.Features.Defense.Commissions.Commands.DeleteCommission;
 
 public sealed class DeleteCommissionCommandHandler : IRequestHandler<DeleteCommissionCommand, Result>
 {
     private readonly ICommissionRepository _commissionRepository;
-    private readonly ICurrentUserProvider _currentUserProvider;
+    private readonly IScheduleRepository _scheduleRepository;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ICurrentUserProvider _currentUserProvider;
 
     public DeleteCommissionCommandHandler(
-        ICommissionRepository commissionRepository, 
-        ICurrentUserProvider currentUserProvider,
-        IUnitOfWork unitOfWork)
+        ICommissionRepository commissionRepository,
+        IScheduleRepository scheduleRepository,
+        IUnitOfWork unitOfWork,
+        ICurrentUserProvider currentUserProvider)
     {
         _commissionRepository = commissionRepository;
-        _currentUserProvider = currentUserProvider;
+        _scheduleRepository = scheduleRepository;
         _unitOfWork = unitOfWork;
+        _currentUserProvider = currentUserProvider;
     }
 
     public async Task<Result> Handle(DeleteCommissionCommand request, CancellationToken cancellationToken)
     {
-        var userId = _currentUserProvider.UserId;
-        if (!userId.HasValue)
-        {
-            return Result.Failure(new Error("401", "User ID is not available."));
-        }
+        if (!_currentUserProvider.IsAuthenticated || !_currentUserProvider.UserId.HasValue)
+            return Result.Failure(new Error("Auth.MissingPrincipal", "Unable to identify the current user."));
 
-        var commission = await _commissionRepository.GetByIdAsync(request.CommissionId, cancellationToken);
-        if (commission is null)
-        {
-            return Result.Failure(new Error("NotFound.Commission", $"Commission with ID {request.CommissionId} not found."));
-        }
+        var commission = await _commissionRepository.GetByIdAsync(request.Id, cancellationToken);
+        if (commission == null)
+            return Result.Failure(new Error("Commission.NotFound", $"Commission with ID {request.Id} not found."));
 
-        commission.Delete(userId.Value);
+        var schedules = await _scheduleRepository.GetByCommissionAsync(request.Id, cancellationToken);
+        if (schedules.Any(s => !s.IsDeleted))
+            return Result.Failure(new Error("Commission.HasAssignedStudents",
+                "Cannot delete a commission that has assigned students. Reassign or remove students first."));
+
+        commission.Delete(_currentUserProvider.UserId.Value);
         await _commissionRepository.UpdateAsync(commission, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 

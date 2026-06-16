@@ -37,7 +37,7 @@ public class Reviewer : AggregateRoot<int>, IAuditable, ISoftDeletable
         string? phone = null)
     {
         if (string.IsNullOrWhiteSpace(fullName))
-            throw new ArgumentException("Full name is required.", nameof(fullName));
+            throw new DomainException("Reviewer.FullNameRequired", "Full name is required.");
 
         FullName = fullName;
         Position = position;
@@ -65,7 +65,7 @@ public class Reviewer : AggregateRoot<int>, IAuditable, ISoftDeletable
         string? phone)
     {
         if (string.IsNullOrWhiteSpace(fullName))
-            throw new ArgumentException("Full name is required.", nameof(fullName));
+            throw new DomainException("Reviewer.FullNameRequired", "Full name is required.");
 
         FullName = fullName;
         Position = position;

@@ -42,9 +42,9 @@ public class NotificationTemplateConfiguration : SoftDeletableEntityConfiguratio
         builder.Property(e => e.BodyTemplateEn)
             .HasColumnType("nvarchar(max)");
 
-        // Unique constraint on EventType
         builder.HasIndex(e => e.EventType)
             .IsUnique()
+            .HasFilter("[IsDeleted] = 0")
             .HasDatabaseName("UQ_Template_Event");
     }
 }

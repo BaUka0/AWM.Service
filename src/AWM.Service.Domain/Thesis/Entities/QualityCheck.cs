@@ -1,51 +1,52 @@
 namespace AWM.Service.Domain.Thesis.Entities;
 
 using AWM.Service.Domain.Common;
-using AWM.Service.Domain.Thesis.Enums;
 
 /// <summary>
-/// QualityCheck entity - results of quality checks (NormControl, SoftwareCheck, AntiPlagiarism).
+/// QualityCheck entity - results of quality checks (e.g. NormControl, SoftwareCheck, AntiPlagiarism).
 /// Supports retry cycle with attempt numbering.
 /// </summary>
 public class QualityCheck : Entity<long>, IAuditable
 {
     public long WorkId { get; private set; }
-    public CheckType CheckType { get; private set; }
+    public int CheckTypeId { get; private set; }
     public int? AssignedExpertId { get; private set; }
     public int AttemptNumber { get; private set; }
     public bool IsPassed { get; private set; }
     public decimal? ResultValue { get; private set; }
     public string? Comment { get; private set; }
-    public string? DocumentPath { get; private set; }
+    public long? AttachmentId { get; private set; }
 
     public DateTime CreatedAt { get; private set; }
     public int CreatedBy { get; private set; }
     public DateTime? LastModifiedAt { get; private set; }
     public int? LastModifiedBy { get; private set; }
 
-    // Legacy field
+    public CheckType? CheckType { get; private set; }
+    public Attachment? Attachment { get; private set; }
+
     public DateTime CheckedAt => CreatedAt;
 
     private QualityCheck() { }
 
     internal QualityCheck(
         long workId,
-        CheckType checkType,
+        int checkTypeId,
         bool isPassed,
         int attemptNumber = 1,
         int? expertId = null,
         decimal? resultValue = null,
         string? comment = null,
-        string? documentPath = null)
+        long? attachmentId = null)
     {
         WorkId = workId;
-        CheckType = checkType;
+        CheckTypeId = checkTypeId;
         IsPassed = isPassed;
         AttemptNumber = attemptNumber;
         AssignedExpertId = expertId;
         ResultValue = resultValue;
         Comment = comment;
-        DocumentPath = documentPath;
+        AttachmentId = attachmentId;
 
         CreatedAt = DateTime.UtcNow;
         CreatedBy = expertId ?? 0;
@@ -60,27 +61,37 @@ public class QualityCheck : Entity<long>, IAuditable
         bool isPassed,
         decimal? resultValue = null,
         string? comment = null,
-        string? documentPath = null)
+        long? attachmentId = null)
     {
         AssignedExpertId = expertId;
         IsPassed = isPassed;
         ResultValue = resultValue;
         Comment = comment;
-        DocumentPath = documentPath;
+        AttachmentId = attachmentId;
         LastModifiedAt = DateTime.UtcNow;
         LastModifiedBy = expertId;
     }
 
     /// <summary>
-    /// Checks if this is an anti-plagiarism check with percentage result.
+    /// Updates the attachment for this quality check.
     /// </summary>
-    public bool HasPercentageResult => CheckType == CheckType.AntiPlagiarism && ResultValue.HasValue;
+    internal void UpdateAttachmentId(long attachmentId, int modifiedBy)
+    {
+        AttachmentId = attachmentId;
+        LastModifiedAt = DateTime.UtcNow;
+        LastModifiedBy = modifiedBy;
+    }
 
     /// <summary>
-    /// Gets the plagiarism percentage (for AntiPlagiarism checks).
+    /// Checks if this check has a numeric result (e.g. percentage).
     /// </summary>
-    public decimal? GetPlagiarismPercentage()
+    public bool HasNumericResult => ResultValue.HasValue;
+
+    /// <summary>
+    /// Gets the numeric result (e.g. percentage).
+    /// </summary>
+    public decimal? GetNumericResult()
     {
-        return CheckType == CheckType.AntiPlagiarism ? ResultValue : null;
+        return ResultValue;
     }
 }

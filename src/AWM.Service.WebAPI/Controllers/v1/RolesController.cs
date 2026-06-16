@@ -1,43 +1,30 @@
-using AWM.Service.Application.Features.Admin.Roles.Queries.GetAllRoles;
-using AWM.Service.Domain.Auth.Enums;
-using AWM.Service.WebAPI.Authorization;
-using AWM.Service.WebAPI.Common.Contracts.Responses;
-using Mapster;
-using MediatR;
-using Microsoft.AspNetCore.Mvc;
-
 namespace AWM.Service.WebAPI.Controllers.v1;
 
-/// <summary>
-/// Controller for managing system roles.
-/// </summary>
+using AWM.Service.Application.Features.Auth.Auth.Queries.GetAllRoleAccesses;
+using MediatR;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using AWM.Service.WebAPI.Common.Contracts.Responses.Auth;
+using Mapster;
+
+using System.Linq;
+
 [ApiVersion("1.0")]
-[ApiController]
 [Route("api/v{version:apiVersion}/[controller]")]
-[Produces("application/json")]
-public sealed class RolesController : BaseController
+[ApiController]
+[Authorize]
+public class RolesController : BaseController
 {
     private readonly ISender _sender;
+    public RolesController(ISender sender) { _sender = sender; }
 
-    public RolesController(ISender sender)
-    {
-        _sender = sender;
-    }
-
-    /// <summary>
-    /// Get all system roles with user counts for a specific university.
-    /// </summary>
     [HttpGet]
-    [RequirePermission(Permission.Roles_Manage)]
-    [ProducesResponseType(typeof(IReadOnlyList<AdminRoleResponse>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetAll([FromQuery] int universityId, CancellationToken cancellationToken = default)
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetRoles(CancellationToken ct)
     {
-        var query = new GetAllRolesQuery { UniversityId = universityId };
-        var result = await _sender.Send(query, cancellationToken);
-
-        if (result.IsFailed) return HandleResultError(result.Error);
-
-        var response = result.Value.Adapt<IReadOnlyList<AdminRoleResponse>>();
-        return Ok(response);
+        var result = await _sender.Send(new GetAllRoleAccessesQuery(), ct);
+        var dtos = result.Adapt<IReadOnlyList<RoleAccessResponse>>();
+        return Ok(dtos);
     }
 }

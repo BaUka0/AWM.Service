@@ -9,7 +9,7 @@ using AWM.Service.Domain.Common;
 public class WorkType : Entity<int>, IAuditable, ISoftDeletable
 {
     public string Name { get; private set; } = null!;
-    public int? DegreeLevelId { get; private set; }
+    public int? SpecialityLevelId { get; private set; }
 
     public DateTime CreatedAt { get; private set; }
     public int CreatedBy { get; private set; }
@@ -25,14 +25,14 @@ public class WorkType : Entity<int>, IAuditable, ISoftDeletable
 
     private WorkType() { }
 
-    public WorkType(string name, int createdBy = 0, int? degreeLevelId = null)
+    public WorkType(string name, int createdBy = 0, int? specialityLevelId = null)
     {
         if (string.IsNullOrWhiteSpace(name))
-            throw new ArgumentException("Work type name is required.", nameof(name));
+            throw new DomainException("WorkType.NameRequired", "Work type name is required.");
 
         Name = name;
-        DegreeLevelId = degreeLevelId;
-        
+        SpecialityLevelId = specialityLevelId;
+
         CreatedAt = DateTime.UtcNow;
         CreatedBy = createdBy;
         IsDeleted = false;
@@ -41,14 +41,14 @@ public class WorkType : Entity<int>, IAuditable, ISoftDeletable
     /// <summary>
     /// Updates the work type.
     /// </summary>
-    public void Update(string name, int? degreeLevelId, int modifiedBy)
+    public void Update(string name, int? specialityLevelId, int modifiedBy)
     {
         if (string.IsNullOrWhiteSpace(name))
-            throw new ArgumentException("Work type name is required.", nameof(name));
+            throw new DomainException("WorkType.NameRequired", "Work type name is required.");
 
         Name = name;
-        DegreeLevelId = degreeLevelId;
-        
+        SpecialityLevelId = specialityLevelId;
+
         LastModifiedAt = DateTime.UtcNow;
         LastModifiedBy = modifiedBy;
     }
@@ -71,18 +71,18 @@ public class WorkType : Entity<int>, IAuditable, ISoftDeletable
     /// <summary>
     /// Creates DiplomaWork (Bachelor) type.
     /// </summary>
-    public static WorkType DiplomaWork(int bachelorDegreeLevelId, int createdBy = 0) 
-        => new("DiplomaWork", createdBy, bachelorDegreeLevelId);
+    public static WorkType DiplomaWork(int bachelorSpecialityLevelId, int createdBy = 0)
+        => new("DiplomaWork", createdBy, bachelorSpecialityLevelId);
 
     /// <summary>
     /// Creates MasterThesis type.
     /// </summary>
-    public static WorkType MasterThesis(int masterDegreeLevelId, int createdBy = 0) 
-        => new("MasterThesis", createdBy, masterDegreeLevelId);
+    public static WorkType MasterThesis(int masterSpecialityLevelId, int createdBy = 0)
+        => new("MasterThesis", createdBy, masterSpecialityLevelId);
 
     /// <summary>
     /// Creates PhD thesis type.
     /// </summary>
-    public static WorkType PhD(int phdDegreeLevelId, int createdBy = 0) 
-        => new("PhD", createdBy, phdDegreeLevelId);
+    public static WorkType PhD(int phdSpecialityLevelId, int createdBy = 0)
+        => new("PhD", createdBy, phdSpecialityLevelId);
 }

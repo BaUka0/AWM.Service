@@ -3,7 +3,6 @@ namespace AWM.Service.Infrastructure.Persistence.Configurations.Thesis;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using AWM.Service.Domain.Thesis.Entities;
-using AWM.Service.Domain.Thesis.Enums;
 using AWM.Service.Domain.Wf.Entities;
 using AWM.Service.Infrastructure.Persistence.Configurations.Base;
 
@@ -27,10 +26,8 @@ public class AttachmentConfiguration : AuditableEntityConfiguration<Attachment, 
 
         builder.Property(e => e.StateId);
 
-        builder.Property(e => e.AttachmentType)
-            .IsRequired()
-            .HasConversion<string>()
-            .HasMaxLength(50);
+        builder.Property(e => e.AttachmentTypeId)
+            .IsRequired();
 
         builder.Property(e => e.FileName)
             .IsRequired()
@@ -42,13 +39,18 @@ public class AttachmentConfiguration : AuditableEntityConfiguration<Attachment, 
 
         builder.Property(e => e.FileHash)
             .IsRequired()
-            .HasMaxLength(64); // SHA256
+            .HasMaxLength(64);
 
-        // Ignore computed properties
+        builder.Property(e => e.FileSizeBytes)
+            .IsRequired();
+
+        builder.Property(e => e.ContentType)
+            .IsRequired()
+            .HasMaxLength(100);
+
         builder.Ignore(e => e.UploadedBy);
         builder.Ignore(e => e.UploadedAt);
 
-        // Foreign keys
         builder.HasOne<StudentWork>()
             .WithMany(w => w.Attachments)
             .HasForeignKey(e => e.WorkId)
@@ -61,7 +63,12 @@ public class AttachmentConfiguration : AuditableEntityConfiguration<Attachment, 
             .HasConstraintName("FK_Attach_State")
             .OnDelete(DeleteBehavior.Restrict);
 
-        // Indexes
+        builder.HasOne<AttachmentType>()
+            .WithMany()
+            .HasForeignKey(e => e.AttachmentTypeId)
+            .HasConstraintName("FK_Attach_Type")
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.HasIndex(e => e.WorkId)
             .HasDatabaseName("IX_Attach_Work");
 

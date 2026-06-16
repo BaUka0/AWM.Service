@@ -1,13 +1,18 @@
+using AWM.Service.Domain.Common;
 using AWM.Service.Domain.Thesis.Service;
 using AWM.Service.Domain.Repositories;
+using AWM.Service.Domain.Auth.Repositories;
 using AWM.Service.Infrastructure.FileStorage;
 using AWM.Service.Infrastructure.Persistence;
 using AWM.Service.Infrastructure.Persistence.Interceptors;
+using AWM.Service.Infrastructure.Persistence.Seeders;
 using AWM.Service.Infrastructure.Persistence.Repositories.Common;
 using AWM.Service.Infrastructure.Persistence.Repositories.Core;
 using AWM.Service.Infrastructure.Persistence.Repositories.Defense;
 using AWM.Service.Infrastructure.Persistence.Repositories.Dictionary;
+using AWM.Service.Infrastructure.Persistence.Repositories.Auth;
 using AWM.Service.Infrastructure.Persistence.Repositories.Thesis;
+using AWM.Service.Infrastructure.Persistence.Repositories.University;
 using AWM.Service.Infrastructure.Persistence.Repositories.Workflow;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -59,53 +64,97 @@ public static class DependencyInjection
             }
         });
 
-        // Register Unit of Work
+        services.AddDbContext<UniversityDbContext>((sp, options) =>
+        {
+            options.UseSqlServer(connectionString, sqlOptions =>
+                   {
+                       sqlOptions.EnableRetryOnFailure(
+                           maxRetryCount: 3,
+                           maxRetryDelay: TimeSpan.FromSeconds(10),
+                           errorNumbersToAdd: null);
+                   });
+        });
+
+        services.AddScoped<ApplicationDbContextInitialiser>();
+        services.AddScoped<DatabaseSeeder>();
+
         services.AddScoped<IUnitOfWork, UnitOfWork>();
 
-        // Register Common Repositories (Critical)
-        services.AddScoped<IAcademicYearRepository, AcademicYearRepository>();
-        services.AddScoped<IPeriodRepository, PeriodRepository>();
+        services.AddScoped<ISemesterTypeRepository, SemesterTypeRepository>();
+        services.AddScoped<ISemesterRepository, SemesterRepository>();
+        services.AddScoped<IWorkflowStageRepository, WorkflowStageRepository>();
+        services.AddScoped<IStageRepository, StageRepository>();
+        services.AddScoped<IStaffAssignmentRepository, StaffAssignmentRepository>();
         services.AddScoped<INotificationRepository, NotificationRepository>();
         services.AddScoped<INotificationTemplateRepository, NotificationTemplateRepository>();
 
-        // Register Workflow Repository (Critical)
         services.AddScoped<IWorkflowRepository, WorkflowRepository>();
 
-        // Register Core Repositories
-        services.AddScoped<IUniversityRepository, UniversityRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IStudentRepository, StudentRepository>();
-        services.AddScoped<IStaffRepository, StaffRepository>();
+        services.AddScoped<IEmployeeRepository, EmployeeRepository>();
 
-        // Register Defense Repositories
         services.AddScoped<ICommissionRepository, CommissionRepository>();
         services.AddScoped<IScheduleRepository, ScheduleRepository>();
         services.AddScoped<IPreDefenseAttemptRepository, PreDefenseAttemptRepository>();
         services.AddScoped<IEvaluationCriteriaRepository, EvaluationCriteriaRepository>();
         services.AddScoped<IProtocolRepository, ProtocolRepository>();
 
-        // Register Thesis Repositories
         services.AddScoped<IDirectionRepository, DirectionRepository>();
         services.AddScoped<ITopicRepository, TopicRepository>();
         services.AddScoped<ITopicApplicationRepository, TopicApplicationRepository>();
         services.AddScoped<IStudentWorkRepository, StudentWorkRepository>();
+        services.AddScoped<ISpecialityCheckTypeRepository, SpecialityCheckTypeRepository>();
+        services.AddScoped<IAttachmentTypeRepository, AttachmentTypeRepository>();
+        services.AddScoped<ICheckTypeRepository, CheckTypeRepository>();
         services.AddScoped<IReviewerRepository, ReviewerRepository>();
-        services.AddScoped<IExpertRepository, ExpertRepository>();
-        services.AddScoped<ISupervisorReviewRepository, SupervisorReviewRepository>();
-        services.AddScoped<IReviewRepository, ReviewRepository>();
+        services.AddScoped<IWorkReviewRepository, WorkReviewRepository>();
 
-        // Register Dictionary/Lookup Repositories
-        services.AddScoped<IAcademicProgramRepository, AcademicProgramRepository>();
-        services.AddScoped<IDegreeLevelRepository, DegreeLevelRepository>();
+        services.AddScoped<ISpecialityRepository, SpecialityRepository>();
+        services.AddScoped<ISpecialityLevelRepository, SpecialityLevelRepository>();
         services.AddScoped<IRoleRepository, RoleRepository>();
         services.AddScoped<IOrganizationLookupRepository, OrganizationLookupRepository>();
 
-        // Register File Storage Service
-        // Switch to S3FileStorageService for production (add AWSSDK.S3 NuGet + configure "FileStorage:S3" section)
-        services.AddScoped<IAttachmentService, LocalFileStorageService>();
+        services.AddScoped<IRoleAccessRepository, RoleAccessRepository>();
+        services.AddScoped<IRoleOperationRepository, RoleOperationRepository>();
+        services.AddScoped<IRoleActionTypeRepository, RoleActionTypeRepository>();
+        services.AddScoped<IRoleOperationActionRepository, RoleOperationActionRepository>();
+        services.AddScoped<IUserAccessRepository, UserAccessRepository>();
+        services.AddScoped<IUserAccessHistoryRepository, UserAccessHistoryRepository>();
+        services.AddScoped<ILocalAccountRepository, LocalAccountRepository>();
+
+        services.AddScoped<IUserReadOnlyRepository, UserReadOnlyRepository>();
+        services.AddScoped<IStudentReadOnlyRepository, StudentReadOnlyRepository>();
+        services.AddScoped<IEmployeeReadOnlyRepository, EmployeeReadOnlyRepository>();
+        services.AddScoped<IOrgUnitReadOnlyRepository, OrgUnitReadOnlyRepository>();
+        services.AddScoped<ISemesterReadOnlyRepository, SemesterReadOnlyRepository>();
+        services.AddScoped<ISpecialityReadOnlyRepository, SpecialityReadOnlyRepository>();
+        services.AddScoped<ISpecializationReadOnlyRepository, SpecializationReadOnlyRepository>();
+        services.AddScoped<ISpecialitySpecializationReadOnlyRepository, SpecialitySpecializationReadOnlyRepository>();
+        services.AddScoped<ISpecializationsOrgUnitReadOnlyRepository, SpecializationsOrgUnitReadOnlyRepository>();
+
+        services.Configure<StorageSettings>(
+            configuration.GetSection(StorageSettings.SectionName));
+
+        var storageSettings = configuration.GetSection(StorageSettings.SectionName)
+            .Get<StorageSettings>()
+            ?? new StorageSettings();
+
+        if (string.Equals(storageSettings.Provider, "S3", StringComparison.OrdinalIgnoreCase))
+        {
+            services.AddScoped<IAttachmentService, S3FileStorageService>();
+        }
+        else
+        {
+            services.AddScoped<IAttachmentService, LocalFileStorageService>();
+        }
+
+        services.AddScoped<Domain.CommonDomain.Services.INotificationService, Services.NotificationService>();
+        services.AddScoped<Domain.CommonDomain.Services.IStageValidationService, Services.StageValidationService>();
+        services.AddScoped<Domain.CommonDomain.Services.IOrgUnitResolver, Services.OrgUnitResolver>();
+        services.AddScoped<Domain.Auth.Interfaces.IPasswordHasher, Services.PasswordHasher>();
+        services.AddScoped<Domain.Common.IPdfReportService, Services.Reports.PdfReportService>();
 
         return services;
     }
 }
-
-

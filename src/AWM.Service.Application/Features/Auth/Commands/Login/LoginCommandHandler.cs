@@ -1,5 +1,7 @@
 using AWM.Service.Application.Features.Auth.DTOs;
 using AWM.Service.Domain.Auth.Interfaces;
+using AWM.Service.Domain.Auth.Repositories;
+using AWM.Service.Domain.Common;
 using AWM.Service.Domain.Repositories;
 
 using KDS.Primitives.FluentResult;
@@ -7,24 +9,29 @@ using MediatR;
 
 namespace AWM.Service.Application.Features.Auth.Commands.Login;
 
-/// <summary>
-/// Handler for LoginCommand.
-/// Validates credentials and generates JWT token.
-/// </summary>
 public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<AuthResult>>
 {
     private readonly IUserRepository _userRepository;
+    private readonly ILocalAccountRepository _localAccountRepository;
+    private readonly IUserAccessRepository _userAccessRepository;
+    private readonly IRoleAccessRepository _roleAccessRepository;
     private readonly IPasswordHasher _passwordHasher;
     private readonly IJwtTokenService _jwtTokenService;
     private readonly IUnitOfWork _unitOfWork;
 
     public LoginCommandHandler(
         IUserRepository userRepository,
+        ILocalAccountRepository localAccountRepository,
+        IUserAccessRepository userAccessRepository,
+        IRoleAccessRepository roleAccessRepository,
         IPasswordHasher passwordHasher,
         IJwtTokenService jwtTokenService,
         IUnitOfWork unitOfWork)
     {
         _userRepository = userRepository;
+        _localAccountRepository = localAccountRepository;
+        _userAccessRepository = userAccessRepository;
+        _roleAccessRepository = roleAccessRepository;
         _passwordHasher = passwordHasher;
         _jwtTokenService = jwtTokenService;
         _unitOfWork = unitOfWork;
@@ -32,61 +39,45 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<AuthResu
 
     public async Task<Result<AuthResult>> Handle(LoginCommand request, CancellationToken cancellationToken)
     {
-        var user = await _userRepository.GetByLoginWithRoleAssignmentsAsync(request.Login, cancellationToken);
-
-        if (user is null)
+        var user = await _userRepository.GetByLoginAsync(request.Login, cancellationToken);
+        if (user == null)
         {
-            return Result.Failure<AuthResult>(new Error("401", "Неверный логин или пароль."));
+            return Result.Failure<AuthResult>(new Error(ErrorCodes.AuthInvalidCredentials, "Неверный логин или пароль."));
         }
 
-        // Check if user is active
-        if (!user.IsActive)
+        var localAccount = await _localAccountRepository.GetByUserIdAsync(user.Id, cancellationToken);
+        if (localAccount == null || !localAccount.IsActive)
         {
-            return Result.Failure<AuthResult>(new Error("401", "Учетная запись деактивирована."));
+            return Result.Failure<AuthResult>(new Error(ErrorCodes.AuthInvalidCredentials, "Неверный логин или пароль."));
         }
 
-        // Check if user is deleted
-        if (user.IsDeleted)
+        if (!_passwordHasher.VerifyPassword(request.Password, localAccount.PasswordHash))
         {
-            return Result.Failure<AuthResult>(new Error("401", "Учетная запись удалена."));
+            return Result.Failure<AuthResult>(new Error(ErrorCodes.AuthInvalidCredentials, "Неверный логин или пароль."));
         }
 
-        // Verify password
-        if (string.IsNullOrEmpty(user.PasswordHash))
-        {
-            return Result.Failure<AuthResult>(new Error("401", "Для данного пользователя не установлен пароль. Используйте SSO."));
-        }
+        var userAccesses = await _userAccessRepository.GetByUserIdAsync(user.Id, cancellationToken);
+        var allRoles = await _roleAccessRepository.GetAllAsync(cancellationToken);
+        var userRoleIds = userAccesses.Select(ua => ua.RoleAccessId).ToHashSet();
+        var roles = allRoles.Where(r => userRoleIds.Contains(r.Id)).Select(r => r.Code).ToList();
 
-        if (!_passwordHasher.VerifyPassword(request.Password, user.PasswordHash))
-        {
-            return Result.Failure<AuthResult>(new Error("401", "Неверный логин или пароль."));
-        }
-
-        // Get user roles (use Role.SystemName if available, otherwise fall back to RoleId)
-        var roles = user.RoleAssignments
-            .Where(ra => ra.IsCurrentlyValid())
-            .Select(ra => ra.Role?.SystemName ?? ra.RoleId.ToString())
-            .Distinct()
-            .ToList();
-
-        // Generate Tokens
         var token = _jwtTokenService.GenerateToken(user, roles);
-        var refreshTokenResult = _jwtTokenService.GenerateRefreshToken();
+        var (refreshToken, expiry) = _jwtTokenService.GenerateRefreshToken();
 
-        // Update user's refresh token and save
-        user.UpdateRefreshToken(refreshTokenResult.Token, refreshTokenResult.Expiry);
-        await _userRepository.UpdateAsync(user, cancellationToken);
+        localAccount.SetRefreshToken(refreshToken, expiry);
+        await _localAccountRepository.UpdateAsync(localAccount, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        var result = new AuthResult(
-            Token: token,
-            Login: user.Login,
-            UserId: user.Id,
-            Email: user.Email,
-            Roles: roles,
-            RefreshToken: refreshTokenResult.Token
-        );
+        var fullName = $"{user.LastName} {user.FirstName} {user.MiddleName}".Trim();
 
-        return Result.Success(result);
+        return Result.Success(new AuthResult(
+            token,
+            user.Email ?? string.Empty,
+            user.Id,
+            user.Email ?? string.Empty,
+            roles,
+            refreshToken,
+            fullName
+        ));
     }
 }

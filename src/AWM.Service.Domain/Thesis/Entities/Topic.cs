@@ -2,19 +2,21 @@ namespace AWM.Service.Domain.Thesis.Entities;
 
 using AWM.Service.Domain.Common;
 using AWM.Service.Domain.Primitives;
+using AWM.Service.Domain.Thesis.Enums;
 using AWM.Service.Domain.Thesis.Events;
 
 /// <summary>
 /// Topic entity - thesis topic proposed by supervisors.
-/// Can be linked to a direction, supports team works (1-5 participants).
+/// Can be linked to a direction, supports team works (1-3 participants).
+/// Uses <see cref="TopicStatus"/> enum instead of separate boolean flags.
 /// </summary>
 public class Topic : AggregateRoot<long>, IAuditable, ISoftDeletable
 {
     public long? DirectionId { get; private set; }
-    public int AcademicYearId { get; private set; }
-    public int DepartmentId { get; private set; }
-    public int SupervisorId { get; private set; }
+    public int SemesterId { get; private set; }
+    public int OrgUnitId { get; private set; }
     public int WorkTypeId { get; private set; }
+    public int? SpecialityId { get; private set; }
 
     public string TitleRu { get; private set; } = null!;
     public string? TitleEn { get; private set; }
@@ -24,9 +26,17 @@ public class Topic : AggregateRoot<long>, IAuditable, ISoftDeletable
     public string? DescriptionEn { get; private set; }
 
     public int MaxParticipants { get; private set; }
-    public bool IsSubmittedForApproval { get; private set; }
-    public bool IsApproved { get; private set; }
-    public bool IsClosed { get; private set; }
+
+    /// <summary>
+    /// Current topic status. Replaces the legacy boolean flags
+    /// (IsSubmittedForApproval, IsApproved, IsRejected, IsClosed).
+    /// </summary>
+    public TopicStatus Status { get; private set; }
+
+    public DateTime? SubmittedAt { get; private set; }
+    public string? ReviewComment { get; private set; }
+    public int? ReviewedBy { get; private set; }
+    public DateTime? ReviewedAt { get; private set; }
 
     public DateTime CreatedAt { get; private set; }
     public int CreatedBy { get; private set; }
@@ -37,15 +47,17 @@ public class Topic : AggregateRoot<long>, IAuditable, ISoftDeletable
     public DateTime? DeletedAt { get; private set; }
     public int? DeletedBy { get; private set; }
 
+    public University.Speciality? Speciality { get; private set; }
+
     private readonly List<TopicApplication> _applications = new();
     public IReadOnlyCollection<TopicApplication> Applications => _applications.AsReadOnly();
 
     private Topic() { }
 
     public Topic(
-        int departmentId,
-        int supervisorId,
-        int academicYearId,
+        int orgUnitId,
+        int createdByUserId,
+        int semesterId,
         int workTypeId,
         string titleRu,
         long? directionId = null,
@@ -54,17 +66,17 @@ public class Topic : AggregateRoot<long>, IAuditable, ISoftDeletable
         string? descriptionRu = null,
         string? descriptionKz = null,
         string? descriptionEn = null,
-        int maxParticipants = 1)
+        int maxParticipants = 1,
+        int? specialityId = null)
     {
         if (string.IsNullOrWhiteSpace(titleRu))
-            throw new ArgumentException("Russian title is required.", nameof(titleRu));
-        if (maxParticipants < 1 || maxParticipants > 5)
-            throw new ArgumentException("Max participants must be between 1 and 5.", nameof(maxParticipants));
+            throw new DomainException("Topic.TitleRuRequired", "Russian title is required.");
+        if (maxParticipants < 1 || maxParticipants > 3)
+            throw new DomainException("Topic.MaxParticipantsOutOfRange", "Max participants must be between 1 and 3.");
 
         DirectionId = directionId;
-        DepartmentId = departmentId;
-        SupervisorId = supervisorId;
-        AcademicYearId = academicYearId;
+        OrgUnitId = orgUnitId;
+        SemesterId = semesterId;
         WorkTypeId = workTypeId;
         TitleRu = titleRu;
         TitleKz = titleKz;
@@ -73,16 +85,23 @@ public class Topic : AggregateRoot<long>, IAuditable, ISoftDeletable
         DescriptionKz = descriptionKz;
         DescriptionEn = descriptionEn;
         MaxParticipants = maxParticipants;
-        IsSubmittedForApproval = false;
-        IsApproved = false;
-        IsClosed = false;
+        SpecialityId = specialityId;
+        Status = TopicStatus.Draft;
         CreatedAt = DateTime.UtcNow;
-        CreatedBy = supervisorId; // Topic creator is supervisor
+        CreatedBy = createdByUserId;
         LastModifiedAt = CreatedAt;
-        LastModifiedBy = supervisorId;
+        LastModifiedBy = createdByUserId;
         IsDeleted = false;
 
-        RaiseDomainEvent(new TopicCreatedEvent(Id, directionId, supervisorId));
+    }
+
+    /// <summary>
+    /// Raises the TopicCreatedEvent. Must be called after the entity is persisted
+    /// and has a valid Id assigned by the database.
+    /// </summary>
+    public void RaiseCreatedEvent()
+    {
+        RaiseDomainEvent(new TopicCreatedEvent(Id, DirectionId, CreatedBy));
     }
 
     /// <summary>
@@ -102,10 +121,11 @@ public class Topic : AggregateRoot<long>, IAuditable, ISoftDeletable
         string? titleEn,
         string? descriptionRu,
         string? descriptionKz,
-        string? descriptionEn)
+        string? descriptionEn,
+        int? maxParticipants = null)
     {
         if (string.IsNullOrWhiteSpace(titleRu))
-            throw new ArgumentException("Russian title is required.", nameof(titleRu));
+            throw new DomainException("Topic.TitleRuRequired", "Russian title is required.");
 
         TitleRu = titleRu;
         TitleKz = titleKz;
@@ -113,6 +133,11 @@ public class Topic : AggregateRoot<long>, IAuditable, ISoftDeletable
         DescriptionRu = descriptionRu;
         DescriptionKz = descriptionKz;
         DescriptionEn = descriptionEn;
+
+        if (maxParticipants.HasValue)
+        {
+            UpdateMaxParticipants(maxParticipants.Value);
+        }
     }
 
     /// <summary>
@@ -120,8 +145,8 @@ public class Topic : AggregateRoot<long>, IAuditable, ISoftDeletable
     /// </summary>
     public void UpdateMaxParticipants(int maxParticipants)
     {
-        if (maxParticipants < 1 || maxParticipants > 5)
-            throw new ArgumentException("Max participants must be between 1 and 5.", nameof(maxParticipants));
+        if (maxParticipants < 1 || maxParticipants > 3)
+            throw new DomainException("Topic.MaxParticipantsOutOfRange", "Max participants must be between 1 and 3.");
 
         MaxParticipants = maxParticipants;
     }
@@ -131,53 +156,168 @@ public class Topic : AggregateRoot<long>, IAuditable, ISoftDeletable
     /// </summary>
     public void SubmitForApproval()
     {
-        if (IsSubmittedForApproval)
-            throw new InvalidOperationException("Topic is already submitted for approval.");
-        if (IsApproved)
-            throw new InvalidOperationException("Topic is already approved.");
+        if (Status == TopicStatus.Approved)
+            throw new DomainException("Topic.AlreadyApproved", "Topic is already approved.");
 
-        IsSubmittedForApproval = true;
+        Status = TopicStatus.Pending;
+        SubmittedAt = DateTime.UtcNow;
+        ReviewComment = null;
     }
 
     /// <summary>
     /// Approves the topic for student selection.
     /// </summary>
-    public void Approve()
+    public void Approve(int reviewedBy)
     {
-        IsApproved = true;
+        Status = TopicStatus.Approved;
+        ReviewedBy = reviewedBy;
+        ReviewedAt = DateTime.UtcNow;
+        ReviewComment = null;
+
         RaiseDomainEvent(new TopicApprovedEvent(Id));
     }
 
     /// <summary>
-    /// Revokes approval.
+    /// Rejects the topic.
     /// </summary>
-    public void RevokeApproval()
+    public void Reject(int reviewedBy, string comment)
     {
-        IsApproved = false;
+        Status = TopicStatus.Rejected;
+        ReviewedBy = reviewedBy;
+        ReviewedAt = DateTime.UtcNow;
+        ReviewComment = comment;
     }
 
     /// <summary>
-    /// Closes the topic (no more applications).
+    /// Revokes approval, returning topic to Pending status.
+    /// </summary>
+    public void RevokeApproval()
+    {
+        Status = TopicStatus.Pending;
+    }
+
+    /// <summary>
+    /// Closes the topic, preventing new applications.
+    /// Only approved topics can be closed.
     /// </summary>
     public void Close()
     {
-        IsClosed = true;
+        if (Status != TopicStatus.Approved)
+            throw new DomainException("Topic.CannotClose", "Only approved topics can be closed.");
+
+        Status = TopicStatus.Closed;
         RaiseDomainEvent(new TopicClosedEvent(Id));
     }
-    
+
     /// <summary>
     /// Reopens the topic for applications.
     /// </summary>
     public void Reopen()
     {
-        IsClosed = false;
+        Status = TopicStatus.Approved;
     }
-    
+
+    /// <summary>
+    /// Marks the topic as inactive (no students applied).
+    /// Can only be called on Approved or Closed topics.
+    /// </summary>
+    public void MarkInactive(int reviewedBy)
+    {
+        if (Status != TopicStatus.Approved && Status != TopicStatus.Closed)
+            throw new DomainException("Topic.CannotMarkInactive", "Only approved or closed topics can be marked as inactive.");
+
+        Status = TopicStatus.Inactive;
+        ReviewedBy = reviewedBy;
+        ReviewedAt = DateTime.UtcNow;
+
+        var pendingApplications = _applications
+            .Where(a => a.StatusId == (int)ApplicationStatusType.Submitted)
+            .ToList();
+
+        foreach (var application in pendingApplications)
+        {
+            application.Reject(reviewedBy, "Тема отмечена неактуальной кафедрой");
+        }
+
+        var studentIds = _applications
+            .Where(a => a.StatusId == (int)ApplicationStatusType.Accepted)
+            .Select(a => a.StudentId)
+            .ToList();
+
+        RaiseDomainEvent(new TopicMarkedInactiveEvent(Id, reviewedBy, SpecialityId, studentIds));
+    }
+
+    /// <summary>
+    /// Reconciles the topic — final approval by department with assigned students.
+    /// Can only be called on Approved or Closed topics that have at least one accepted application.
+    /// </summary>
+    public void Reconcile(int reviewedBy)
+    {
+        if (Status != TopicStatus.Approved && Status != TopicStatus.Closed)
+            throw new DomainException("Topic.CannotReconcile", "Only approved or closed topics can be reconciled.");
+
+        var acceptedCount = _applications.Count(a => a.StatusId == (int)ApplicationStatusType.Accepted);
+
+        if (acceptedCount == 0)
+            throw new DomainException("Topic.NoAcceptedStudents", "Cannot reconcile topic without accepted students.");
+
+        if (acceptedCount > MaxParticipants)
+        {
+            RaiseDomainEvent(new TopicExcessApplicationsWarningEvent(Id, acceptedCount, MaxParticipants));
+        }
+
+        var pendingApplications = _applications
+            .Where(a => a.StatusId == (int)ApplicationStatusType.Submitted)
+            .ToList();
+
+        foreach (var application in pendingApplications)
+        {
+            application.Reject(reviewedBy, "Тема согласована кафедрой — заявка отклонена");
+        }
+
+        Status = TopicStatus.Reconciled;
+        ReviewedBy = reviewedBy;
+        ReviewedAt = DateTime.UtcNow;
+        ReviewComment = null;
+
+        var studentIds = _applications
+            .Where(a => a.StatusId == (int)ApplicationStatusType.Accepted)
+            .Select(a => a.StudentId)
+            .ToList();
+
+        RaiseDomainEvent(new TopicReconciledEvent(Id, reviewedBy, SpecialityId, studentIds));
+    }
+
+    /// <summary>
+    /// Sends the topic back to supervisor for revision (e.g., excess applications need resolution).
+    /// Uses a dedicated NeedsRevision status so supervisors can distinguish from initial submission.
+    /// </summary>
+    public void SendBackForRevision(int reviewedBy, string comment)
+    {
+        if (string.IsNullOrWhiteSpace(comment))
+            throw new DomainException("Topic.CommentRequired", "Comment is required when sending topic back for revision.");
+
+        if (Status != TopicStatus.Approved && Status != TopicStatus.Closed)
+            throw new DomainException("Topic.CannotSendBackForRevision", "Only approved or closed topics can be sent back for revision.");
+
+        Status = TopicStatus.NeedsRevision;
+        ReviewedBy = reviewedBy;
+        ReviewedAt = DateTime.UtcNow;
+        ReviewComment = comment;
+
+        var studentIds = _applications
+            .Where(a => a.StatusId == (int)ApplicationStatusType.Accepted)
+            .Select(a => a.StudentId)
+            .ToList();
+
+        RaiseDomainEvent(new TopicSentBackForRevisionEvent(Id, reviewedBy, comment, studentIds));
+    }
+
     public void AddApplication(TopicApplication application)
     {
         if (application is null)
-            throw new ArgumentNullException(nameof(application));
-    
+            throw new DomainException("Topic.ApplicationRequired", "Application is required.");
+
         _applications.Add(application);
     }
 
@@ -186,10 +326,10 @@ public class Topic : AggregateRoot<long>, IAuditable, ISoftDeletable
     /// </summary>
     public bool CanAcceptApplications()
     {
-        if (!IsApproved || IsClosed)
+        if (Status != TopicStatus.Approved)
             return false;
 
-        var acceptedCount = _applications.Count(a => a.Status == Enums.ApplicationStatus.Accepted);
+        var acceptedCount = _applications.Count(a => a.StatusId == (int)ApplicationStatusType.Accepted);
         return acceptedCount < MaxParticipants;
     }
 
@@ -198,7 +338,7 @@ public class Topic : AggregateRoot<long>, IAuditable, ISoftDeletable
     /// </summary>
     public int GetAvailableSpots()
     {
-        var acceptedCount = _applications.Count(a => a.Status == Enums.ApplicationStatus.Accepted);
+        var acceptedCount = _applications.Count(a => a.StatusId == (int)ApplicationStatusType.Accepted);
         return Math.Max(0, MaxParticipants - acceptedCount);
     }
 

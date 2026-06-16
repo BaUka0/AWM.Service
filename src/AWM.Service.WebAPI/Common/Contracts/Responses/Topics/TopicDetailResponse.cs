@@ -1,0 +1,25 @@
+namespace AWM.Service.WebAPI.Common.Contracts.Responses.Topics;
+
+public record TopicDetailResponse(
+    long Id,
+    long? DirectionId,
+    string DirectionTitle,
+    int SemesterId,
+    int OrgUnitId,
+    int WorkTypeId,
+    string WorkTypeName,
+    int? SpecialityId,
+    string TitleRu,
+    string? TitleKz,
+    string? TitleEn,
+    string? DescriptionRu,
+    string? DescriptionKz,
+    string? DescriptionEn,
+    int MaxParticipants,
+    string Status,
+    string? ReviewComment,
+    int? ReviewedBy,
+    DateTime? ReviewedAt,
+    DateTime CreatedAt,
+    int CreatedBy,
+    IReadOnlyList<TopicApplicationResponse> Applications);

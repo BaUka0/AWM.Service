@@ -30,7 +30,7 @@ public class Schedule : Entity<long>, IAuditable, ISoftDeletable
     public Schedule(int commissionId, long workId, DateTime defenseDate, int createdBy, string? location = null)
     {
         if (defenseDate < DateTime.UtcNow)
-            throw new ArgumentException("Defense date cannot be in the past.", nameof(defenseDate));
+            throw new DomainException("Schedule.DefenseDateInPast", "Defense date cannot be in the past.");
 
         CommissionId = commissionId;
         WorkId = workId;
@@ -76,18 +76,31 @@ public class Schedule : Entity<long>, IAuditable, ISoftDeletable
     }
 
     /// <summary>
+    /// Changes the commission for this schedule slot.
+    /// </summary>
+    public void ChangeCommission(int commissionId, int modifiedBy)
+    {
+        CommissionId = commissionId;
+        LastModifiedAt = DateTime.UtcNow;
+        LastModifiedBy = modifiedBy;
+    }
+
+    /// <summary>
     /// Adds a grade from a commission member.
     /// </summary>
-    public Grade AddGrade(int memberId, int criteriaId, int score, string? comment = null)
+    public Grade AddGrade(long assignmentId, int criteriaId, int score, int createdBy, string? comment = null)
     {
-        // Check if this member already graded this criteria
-        if (_grades.Any(g => g.MemberId == memberId && g.CriteriaId == criteriaId))
-            throw new InvalidOperationException("Member has already graded this criteria.");
+        if (IsReconciliationStarted)
+            throw new DomainException("Schedule.GradingClosed", "Grades cannot be added after reconciliation has started.");
 
-        var grade = new Grade(Id, memberId, criteriaId, score, comment);
+        if (_grades.Any(g => g.AssignmentId == assignmentId && g.CriteriaId == criteriaId))
+            throw new DomainException("Schedule.MemberAlreadyGraded", "Member has already graded this criteria.");
+
+        var grade = new Grade(Id, assignmentId, criteriaId, score, createdBy, comment);
         _grades.Add(grade);
 
         LastModifiedAt = DateTime.UtcNow;
+        LastModifiedBy = createdBy;
         return grade;
     }
 
@@ -97,7 +110,7 @@ public class Schedule : Entity<long>, IAuditable, ISoftDeletable
     public void StartReconciliation(int modifiedBy)
     {
         if (IsReconciliationStarted)
-            throw new InvalidOperationException("Reconciliation has already been started.");
+            throw new DomainException("Schedule.ReconciliationAlreadyStarted", "Reconciliation has already been started.");
 
         IsReconciliationStarted = true;
         LastModifiedAt = DateTime.UtcNow;

@@ -3,14 +3,13 @@ using FluentValidation;
 using System.Reflection;
 using MediatR;
 using AWM.Service.Application.Common.Behaviors;
-using AWM.Service.Domain.Wf.Services;
-using AWM.Service.Application.Features.Workflow.Services;
-using AWM.Service.Domain.CommonDomain.Services;
-using AWM.Service.Application.Common.Services;
-using AWM.Service.Application.Features.Common.Notifications.Services;
 
 namespace AWM.Service.Application;
 
+/// <summary>
+/// Dependency injection configuration for the Application layer.
+/// Registers MediatR, pipeline behaviors, and FluentValidation validators.
+/// </summary>
 public static class DependencyInjection
 {
     public static IServiceCollection AddApplication(this IServiceCollection services)
@@ -26,10 +25,6 @@ public static class DependencyInjection
         });
 
         services.AddValidatorsFromAssembly(applicationAssembly);
-
-        services.AddScoped<IStateMachine, WorkflowService>();
-        services.AddScoped<IPeriodValidationService, PeriodValidationService>();
-        services.AddScoped<INotificationService, NotificationService>();
 
         return services;
     }

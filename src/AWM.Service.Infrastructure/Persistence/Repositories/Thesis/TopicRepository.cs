@@ -3,6 +3,7 @@ namespace AWM.Service.Infrastructure.Persistence.Repositories.Thesis;
 using AWM.Service.Domain.Repositories;
 using AWM.Service.Domain.Thesis.Entities;
 using AWM.Service.Domain.Thesis.Enums;
+using AWM.Service.Domain.CommonDomain.Enums;
 using AWM.Service.Infrastructure.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
 
@@ -17,7 +18,12 @@ public sealed class TopicRepository : RepositoryBase<Topic, long>, ITopicReposit
     public override async Task<Topic?> GetByIdAsync(long id, CancellationToken cancellationToken = default)
     {
         return await Context.Topics
-            .Include(t => t.Applications.Where(a => !a.IsDeleted))
+            .Include(t => t.Applications)
+                .ThenInclude(a => a.Student)
+                    .ThenInclude(s => s.User)
+            .Include(t => t.Applications)
+                .ThenInclude(a => a.Student)
+                    .ThenInclude(s => s.Speciality)
             .FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
     }
 
@@ -32,56 +38,82 @@ public sealed class TopicRepository : RepositoryBase<Topic, long>, ITopicReposit
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<Topic>> GetByDepartmentAsync(
-        int departmentId,
-        int academicYearId,
+    public async Task<IReadOnlyList<Topic>> GetByIdsWithApplicationsAsync(IEnumerable<long> ids, CancellationToken cancellationToken = default)
+    {
+        var idList = ids.ToList();
+        return await Context.Topics
+            .Include(t => t.Applications)
+            .Where(t => idList.Contains(t.Id))
+            .ToListAsync(cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<Topic>> GetByOrgUnitAsync(
+        int orgUnitId,
+        int semesterId,
         CancellationToken cancellationToken = default)
     {
         return await Context.Topics
-            .AsNoTracking()
-            .Where(t => t.DepartmentId == departmentId &&
-                        t.AcademicYearId == academicYearId)
+            .Include(t => t.Applications)
+                .ThenInclude(a => a.Student)
+                    .ThenInclude(s => s.User)
+            .Where(t => t.OrgUnitId == orgUnitId &&
+                        t.SemesterId == semesterId)
             .OrderByDescending(t => t.CreatedAt)
             .ToListAsync(cancellationToken);
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<Topic>> GetByDepartmentWithApplicationsAsync(
-        int departmentId,
-        int academicYearId,
+    public async Task<IReadOnlyList<Topic>> GetByOrgUnitWithApplicationsAsync(
+        int orgUnitId,
+        int semesterId,
         CancellationToken cancellationToken = default)
     {
         return await Context.Topics
-            .Include(t => t.Applications.Where(a => !a.IsDeleted))
-            .Where(t => t.DepartmentId == departmentId &&
-                        t.AcademicYearId == academicYearId)
+            .Include(t => t.Applications)
+                .ThenInclude(a => a.Student)
+                    .ThenInclude(s => s.User)
+            .Where(t => t.OrgUnitId == orgUnitId &&
+                        t.SemesterId == semesterId)
             .OrderByDescending(t => t.CreatedAt)
             .ToListAsync(cancellationToken);
     }
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<Topic>> GetBySupervisorAsync(
-        int supervisorId,
-        int academicYearId,
+        int userId,
+        int semesterId,
         CancellationToken cancellationToken = default)
     {
-        return await Context.Topics
+        var assignedTopicIds = await Context.StaffAssignments
             .AsNoTracking()
-            .Where(t => t.SupervisorId == supervisorId &&
-                        t.AcademicYearId == academicYearId)
+            .Where(a => a.UserId == userId &&
+                        a.RoleType == StaffRoleType.Supervisor &&
+                        a.TargetEntityType == "Topic" &&
+                        a.IsActive && !a.IsDeleted)
+            .Select(a => a.TargetEntityId)
+            .ToListAsync(cancellationToken);
+
+        return await Context.Topics
+            .Include(t => t.Applications)
+                .ThenInclude(a => a.Student)
+                    .ThenInclude(s => s.User)
+            .Where(t => !t.IsDeleted &&
+                        t.SemesterId == semesterId &&
+                        (assignedTopicIds.Contains(t.Id) || t.CreatedBy == userId))
             .OrderByDescending(t => t.CreatedAt)
             .ToListAsync(cancellationToken);
     }
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<Topic>> GetAvailableForSelectionAsync(
-        int departmentId,
-        int academicYearId,
+        int orgUnitId,
+        int semesterId,
         CancellationToken cancellationToken = default)
     {
         var acceptedCountsQuery = Context.TopicApplications
             .AsNoTracking()
-            .Where(a => !a.IsDeleted && a.Status == ApplicationStatus.Accepted)
+            .Where(a => a.StatusId == 2)
             .GroupBy(a => a.TopicId)
             .Select(group => new
             {
@@ -91,11 +123,10 @@ public sealed class TopicRepository : RepositoryBase<Topic, long>, ITopicReposit
 
         return await Context.Topics
             .AsNoTracking()
-            .Where(t => !t.IsDeleted &&
-                        t.DepartmentId == departmentId &&
-                        t.AcademicYearId == academicYearId &&
-                        t.IsApproved &&
-                        !t.IsClosed)
+            .Include(t => t.Applications)
+            .Where(t => t.OrgUnitId == orgUnitId &&
+                        t.SemesterId == semesterId &&
+                        t.Status == TopicStatus.Approved)
             .GroupJoin(
                 acceptedCountsQuery,
                 topic => topic.Id,
@@ -109,6 +140,30 @@ public sealed class TopicRepository : RepositoryBase<Topic, long>, ITopicReposit
             .OrderByDescending(item => item.Topic.MaxParticipants - item.AcceptedCount)
             .ThenByDescending(item => item.Topic.CreatedAt)
             .Select(item => item.Topic)
+            .ToListAsync(cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<Topic>> GetByOrgUnitForReconciliationAsync(
+        int orgUnitId,
+        int semesterId,
+        CancellationToken cancellationToken = default)
+    {
+        var reconciliationStatuses = new[]
+        {
+            TopicStatus.Approved,
+            TopicStatus.Closed,
+            TopicStatus.Reconciled,
+            TopicStatus.Inactive,
+            TopicStatus.NeedsRevision
+        };
+
+        return await Context.Topics
+            .Include(t => t.Applications)
+            .Where(t => t.OrgUnitId == orgUnitId &&
+                        t.SemesterId == semesterId &&
+                        reconciliationStatuses.Contains(t.Status))
+            .OrderByDescending(t => t.CreatedAt)
             .ToListAsync(cancellationToken);
     }
 

@@ -14,7 +14,7 @@ public class Notification : Entity<long>, IAuditable
     public string? RelatedEntityType { get; private set; }
     public long? RelatedEntityId { get; private set; }
     public bool IsRead { get; private set; }
-    
+
     public DateTime CreatedAt { get; private set; }
     public int CreatedBy { get; private set; }
     public DateTime? LastModifiedAt { get; private set; }
@@ -32,7 +32,7 @@ public class Notification : Entity<long>, IAuditable
         long? relatedEntityId = null)
     {
         if (string.IsNullOrWhiteSpace(title))
-            throw new ArgumentException("Notification title is required.", nameof(title));
+            throw new DomainException("Notification.TitleRequired", "Notification title is required.");
 
         UserId = userId;
         TemplateId = templateId;
@@ -41,7 +41,7 @@ public class Notification : Entity<long>, IAuditable
         RelatedEntityType = relatedEntityType;
         RelatedEntityId = relatedEntityId;
         IsRead = false;
-        
+
         CreatedAt = DateTime.UtcNow;
         CreatedBy = createdBy;
     }

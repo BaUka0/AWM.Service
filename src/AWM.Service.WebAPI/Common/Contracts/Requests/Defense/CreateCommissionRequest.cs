@@ -1,50 +1,23 @@
 namespace AWM.Service.WebAPI.Common.Contracts.Requests.Defense;
 
-using AWM.Service.Domain.Defense.Enums;
+public record CreateCommissionRequest(
+    int OrgUnitId,
+    int SemesterId,
+    int? SpecialityId,
+    int CommissionTypeId,
+    int? PreDefenseNumber,
+    string? Name,
+    int ChairmanUserId,
+    int SecretaryUserId,
+    List<int>? MemberUserIds = null
+);
 
-/// <summary>
-/// Request contract for creating a defense commission.
-/// </summary>
-public sealed record CreateCommissionRequest
-{
-    /// <summary>
-    /// Department ID.
-    /// </summary>
-    /// <example>1</example>
-    public int DepartmentId { get; init; }
-
-    /// <summary>
-    /// Academic year ID.
-    /// </summary>
-    /// <example>2</example>
-    public int AcademicYearId { get; init; }
-
-    /// <summary>
-    /// Type of commission (0 = PreDefense, 1 = GAK).
-    /// </summary>
-    /// <example>0</example>
-    public CommissionType CommissionType { get; init; }
-
-    /// <summary>
-    /// Custom name for the commission (optional — auto-generated if omitted).
-    /// </summary>
-    /// <example>Комиссия предзащиты №1</example>
-    public string? Name { get; init; }
-
-    /// <summary>
-    /// Pre-defense round number (1, 2, or 3). Required for PreDefense type.
-    /// </summary>
-    /// <example>1</example>
-    public int? PreDefenseNumber { get; init; }
-
-    /// <summary>
-    /// Initial members to add to the commission.
-    /// </summary>
-    public IReadOnlyList<CreateCommissionMemberRequest> Members { get; init; } = new List<CreateCommissionMemberRequest>();
-}
-
-public record CreateCommissionMemberRequest
-{
-    public int UserId { get; init; }
-    public RoleInCommission Role { get; init; }
-}
+public record UpdateCommissionRequest(
+    string? Name,
+    int? CommissionTypeId,
+    int? PreDefenseNumber,
+    int? SpecialityId,
+    int? ChairmanUserId,
+    int? SecretaryUserId,
+    List<int>? MemberUserIds
+);

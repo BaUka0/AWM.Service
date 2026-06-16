@@ -3,10 +3,8 @@ namespace AWM.Service.Infrastructure.Persistence.Configurations.Thesis;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using AWM.Service.Domain.Thesis.Entities;
-using AWM.Service.Domain.Org.Entities;
-using AWM.Service.Domain.Edu.Entities;
+using AWM.Service.Domain.University;
 using AWM.Service.Domain.Wf.Entities;
-using AWM.Service.Domain.CommonDomain.Entities;
 using AWM.Service.Infrastructure.Persistence.Configurations.Base;
 
 /// <summary>
@@ -33,13 +31,10 @@ public class DirectionConfiguration : SoftDeletableEntityConfiguration<Direction
         builder.Property(e => e.Id)
             .UseIdentityColumn();
 
-        builder.Property(e => e.DepartmentId)
+        builder.Property(e => e.OrgUnitId)
             .IsRequired();
 
-        builder.Property(e => e.SupervisorId)
-            .IsRequired();
-
-        builder.Property(e => e.AcademicYearId)
+        builder.Property(e => e.SemesterId)
             .IsRequired();
 
         builder.Property(e => e.WorkTypeId)
@@ -78,29 +73,16 @@ public class DirectionConfiguration : SoftDeletableEntityConfiguration<Direction
         builder.Property(e => e.ReviewComment)
             .HasColumnType("nvarchar(max)");
 
-        // Foreign keys
-        builder.HasOne<Department>()
+        builder.HasOne<OrgUnit>()
             .WithMany()
-            .HasForeignKey(e => e.DepartmentId)
+            .HasForeignKey(e => e.OrgUnitId)
             .HasConstraintName("FK_Directions_Dept")
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.HasOne<Staff>()
-            .WithMany()
-            .HasForeignKey(e => e.SupervisorId)
-            .HasConstraintName("FK_Directions_Supervisor")
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.HasOne<AcademicYear>()
-            .WithMany()
-            .HasForeignKey(e => e.AcademicYearId)
-            .HasConstraintName("FK_Directions_Year")
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne<WorkType>()
             .WithMany()
             .HasForeignKey(e => e.WorkTypeId)
-            .HasConstraintName("FK_Directions_WorkType")
+            .HasConstraintName("FK_Directions_Type")
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne<State>()
@@ -109,14 +91,18 @@ public class DirectionConfiguration : SoftDeletableEntityConfiguration<Direction
             .HasConstraintName("FK_Directions_State")
             .OnDelete(DeleteBehavior.Restrict);
 
-        // Navigation to Topics
+        builder.HasOne<Semester>()
+            .WithMany()
+            .HasForeignKey(e => e.SemesterId)
+            .HasConstraintName("FK_Directions_Semester")
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.HasMany(e => e.Topics)
             .WithOne()
             .HasForeignKey(e => e.DirectionId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        // Index for filtering
-        builder.HasIndex(e => new { e.DepartmentId, e.AcademicYearId, e.CurrentStateId })
+        builder.HasIndex(e => new { e.OrgUnitId, e.SemesterId, e.CurrentStateId })
             .HasDatabaseName("IX_Directions_Dept_Year");
     }
 }

@@ -30,13 +30,14 @@ public sealed class ScheduleRepository : IScheduleRepository
     {
         return await _context.Schedules
             .Include(s => s.Grades)
-            .Where(s => !s.IsDeleted)
-            .FirstOrDefaultAsync(s => s.WorkId == workId, cancellationToken);
+            .Where(s => !s.IsDeleted && s.WorkId == workId)
+            .OrderByDescending(s => s.DefenseDate)
+            .FirstOrDefaultAsync(cancellationToken);
     }
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<Schedule>> GetByCommissionAsync(
-        int commissionId, 
+        int commissionId,
         CancellationToken cancellationToken = default)
     {
         return await _context.Schedules
@@ -49,9 +50,9 @@ public sealed class ScheduleRepository : IScheduleRepository
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<Schedule>> GetByDateRangeAsync(
-        int departmentId, 
-        DateTime from, 
-        DateTime to, 
+        int orgUnitId,
+        DateTime from,
+        DateTime to,
         CancellationToken cancellationToken = default)
     {
         return await _context.Schedules
@@ -61,10 +62,10 @@ public sealed class ScheduleRepository : IScheduleRepository
                   schedule => schedule.CommissionId,
                   commission => commission.Id,
                   (schedule, commission) => new { Schedule = schedule, Commission = commission })
-            .Where(x => !x.Schedule.IsDeleted && 
+            .Where(x => !x.Schedule.IsDeleted &&
                         !x.Commission.IsDeleted &&
-                        x.Commission.DepartmentId == departmentId &&
-                        x.Schedule.DefenseDate >= from && 
+                        x.Commission.OrgUnitId == orgUnitId &&
+                        x.Schedule.DefenseDate >= from &&
                         x.Schedule.DefenseDate <= to)
             .OrderBy(x => x.Schedule.DefenseDate)
             .Select(x => x.Schedule)

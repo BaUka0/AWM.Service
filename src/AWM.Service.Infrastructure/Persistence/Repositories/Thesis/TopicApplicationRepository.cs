@@ -2,6 +2,7 @@ namespace AWM.Service.Infrastructure.Persistence.Repositories.Thesis;
 
 using AWM.Service.Domain.Repositories;
 using AWM.Service.Domain.Thesis.Entities;
+using AWM.Service.Domain.Thesis.Enums;
 using AWM.Service.Infrastructure.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
 
@@ -23,11 +24,7 @@ public sealed class TopicApplicationRepository : RepositoryBase<TopicApplication
     /// <inheritdoc />
     public async Task<TopicApplication?> GetByIdWithTopicAsync(long id, CancellationToken cancellationToken = default)
     {
-        // Despite the method name, this repository method intentionally only loads the TopicApplication entity.
-        // The corresponding Topic is resolved by higher-level query handlers using TopicId (for example, via a separate repository).
-        // This keeps the repository focused on the TopicApplication aggregate and avoids assuming a specific navigation configuration.
         return await Context.TopicApplications
-            .AsNoTracking()
             .FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
     }
 
@@ -61,9 +58,8 @@ public sealed class TopicApplicationRepository : RepositoryBase<TopicApplication
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<TopicApplication>> GetByStudentIdAndYearAsync(int studentId, int academicYearId, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<TopicApplication>> GetByStudentIdAndYearAsync(int studentId, int semesterId, CancellationToken cancellationToken = default)
     {
-        // Since TopicApplication doesn't directly have AcademicYearId, we join with Topics
         return await Context.TopicApplications
             .AsNoTracking()
             .Join(Context.Topics,
@@ -73,7 +69,7 @@ public sealed class TopicApplicationRepository : RepositoryBase<TopicApplication
             .Where(x => !x.App.IsDeleted &&
                         !x.Topic.IsDeleted &&
                         x.App.StudentId == studentId &&
-                        x.Topic.AcademicYearId == academicYearId)
+                        x.Topic.SemesterId == semesterId)
             .Select(x => x.App)
             .OrderByDescending(a => a.AppliedAt)
             .ToListAsync(cancellationToken);
@@ -83,11 +79,11 @@ public sealed class TopicApplicationRepository : RepositoryBase<TopicApplication
     public async Task<bool> HasStudentAppliedToTopicAsync(int studentId, long topicId, CancellationToken cancellationToken = default)
     {
         return await Context.TopicApplications
-            .AnyAsync(a => a.StudentId == studentId && a.TopicId == topicId, cancellationToken);
+            .AnyAsync(a => a.StudentId == studentId && a.TopicId == topicId && a.StatusId != (int)ApplicationStatusType.Rejected, cancellationToken);
     }
 
     /// <inheritdoc />
-    public async Task<bool> HasAcceptedApplicationAsync(int studentId, int academicYearId, CancellationToken cancellationToken = default)
+    public async Task<bool> HasAcceptedApplicationAsync(int studentId, int semesterId, CancellationToken cancellationToken = default)
     {
         return await Context.TopicApplications
             .Join(Context.Topics,
@@ -97,8 +93,8 @@ public sealed class TopicApplicationRepository : RepositoryBase<TopicApplication
             .AnyAsync(x => !x.App.IsDeleted &&
                            !x.Topic.IsDeleted &&
                            x.App.StudentId == studentId &&
-                           x.Topic.AcademicYearId == academicYearId &&
-                           x.App.Status == Domain.Thesis.Enums.ApplicationStatus.Accepted,
+                           x.Topic.SemesterId == semesterId &&
+                            x.App.StatusId == 2,
                            cancellationToken);
     }
 

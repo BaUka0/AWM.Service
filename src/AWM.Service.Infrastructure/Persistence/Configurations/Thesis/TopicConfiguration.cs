@@ -3,10 +3,9 @@ namespace AWM.Service.Infrastructure.Persistence.Configurations.Thesis;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using AWM.Service.Domain.Thesis.Entities;
-using AWM.Service.Domain.Org.Entities;
-using AWM.Service.Domain.Edu.Entities;
+using AWM.Service.Domain.Thesis.Enums;
+using AWM.Service.Domain.University;
 using AWM.Service.Domain.Wf.Entities;
-using AWM.Service.Domain.CommonDomain.Entities;
 using AWM.Service.Infrastructure.Persistence.Configurations.Base;
 
 /// <summary>
@@ -37,17 +36,16 @@ public class TopicConfiguration : SoftDeletableEntityConfiguration<Topic, long>
 
         builder.Property(e => e.DirectionId);
 
-        builder.Property(e => e.AcademicYearId)
+        builder.Property(e => e.SemesterId)
             .IsRequired();
 
-        builder.Property(e => e.DepartmentId)
-            .IsRequired();
-
-        builder.Property(e => e.SupervisorId)
+        builder.Property(e => e.OrgUnitId)
             .IsRequired();
 
         builder.Property(e => e.WorkTypeId)
             .IsRequired();
+
+        builder.Property(e => e.SpecialityId);
 
         builder.Property(e => e.TitleRu)
             .IsRequired()
@@ -72,57 +70,55 @@ public class TopicConfiguration : SoftDeletableEntityConfiguration<Topic, long>
             .IsRequired()
             .HasDefaultValue(1);
 
-        builder.Property(e => e.IsApproved)
+        builder.Property(e => e.Status)
             .IsRequired()
-            .HasDefaultValue(false);
+            .HasDefaultValue(TopicStatus.Draft)
+            .HasConversion<int>()
+            .HasColumnName("Status");
 
-        builder.Property(e => e.IsSubmittedForApproval)
-            .IsRequired()
-            .HasDefaultValue(false);
+        builder.Property(e => e.ReviewComment)
+            .HasColumnType("nvarchar(max)");
 
-        builder.Property(e => e.IsClosed)
-            .IsRequired()
-            .HasDefaultValue(false);
+        builder.Property(e => e.ReviewedBy);
 
-        // Foreign keys
+        builder.Property(e => e.ReviewedAt);
+
         builder.HasOne<Direction>()
             .WithMany(d => d.Topics)
             .HasForeignKey(e => e.DirectionId)
             .HasConstraintName("FK_Topics_Direction")
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne<AcademicYear>()
+        builder.HasOne<OrgUnit>()
             .WithMany()
-            .HasForeignKey(e => e.AcademicYearId)
-            .HasConstraintName("FK_Topics_Year")
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.HasOne<Department>()
-            .WithMany()
-            .HasForeignKey(e => e.DepartmentId)
+            .HasForeignKey(e => e.OrgUnitId)
             .HasConstraintName("FK_Topics_Dept")
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.HasOne<Staff>()
-            .WithMany()
-            .HasForeignKey(e => e.SupervisorId)
-            .HasConstraintName("FK_Topics_Supervisor")
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne<WorkType>()
             .WithMany()
             .HasForeignKey(e => e.WorkTypeId)
-            .HasConstraintName("FK_Topics_WorkType")
+            .HasConstraintName("FK_Topics_Type")
             .OnDelete(DeleteBehavior.Restrict);
 
-        // Navigation to applications
+        builder.HasOne(e => e.Speciality)
+            .WithMany()
+            .HasForeignKey(e => e.SpecialityId)
+            .HasConstraintName("FK_Topics_Spec")
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne<Semester>()
+            .WithMany()
+            .HasForeignKey(e => e.SemesterId)
+            .HasConstraintName("FK_Topics_Semester")
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.HasMany(e => e.Applications)
             .WithOne()
             .HasForeignKey(e => e.TopicId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Indexes
-        builder.HasIndex(e => new { e.DepartmentId, e.AcademicYearId, e.IsApproved })
+        builder.HasIndex(e => new { e.OrgUnitId, e.SemesterId, e.Status })
             .HasDatabaseName("IX_Topics_Filter");
 
         builder.HasIndex(e => e.DirectionId)

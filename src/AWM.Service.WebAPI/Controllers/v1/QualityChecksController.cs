@@ -1,27 +1,35 @@
-namespace AWM.Service.WebAPI.Controllers.v1;
-
-using AWM.Service.Application.Features.Thesis.QualityChecks.Commands.AssignExperts;
-using AWM.Service.Application.Features.Thesis.QualityChecks.Commands.RecordCheckResult;
-using AWM.Service.Application.Features.Thesis.QualityChecks.Commands.SubmitForCheck;
-using AWM.Service.Application.Features.Thesis.QualityChecks.DTOs;
-using AWM.Service.Application.Features.Thesis.QualityChecks.Queries.GetChecksByWork;
-using AWM.Service.Application.Features.Thesis.QualityChecks.Queries.GetPendingChecks;
-using AWM.Service.Domain.Auth.Enums;
-using AWM.Service.Domain.Thesis.Enums;
+using AWM.Service.Application.Features.Workflow.Checks.Commands.CompleteQualityCheck;
+using AWM.Service.Application.Features.Workflow.Checks.Commands.DeleteCheckConfiguration;
+using AWM.Service.Application.Features.Workflow.Checks.Commands.SaveCheckConfiguration;
+using AWM.Service.Application.Features.Workflow.Checks.Commands.SaveExpertAssignments;
+using AWM.Service.Application.Features.Workflow.Checks.Commands.SubmitForCheck;
+using AWM.Service.Application.Features.Workflow.Checks.DTOs;
+using AWM.Service.Application.Features.Workflow.Checks.Queries.GetAssignedExperts;
+using AWM.Service.Application.Features.Workflow.Checks.Queries.GetActiveCheckConfigurations;
+using AWM.Service.Application.Features.Workflow.Checks.Queries.GetCheckConfigurations;
+using AWM.Service.Application.Features.Workflow.Checks.Queries.GetPendingChecks;
+using AWM.Service.Application.Features.Workflow.Checks.Queries.GetQualityChecksByWork;
 using AWM.Service.WebAPI.Authorization;
-using AWM.Service.WebAPI.Common.Contracts.Requests.Thesis;
+using AWM.Service.WebAPI.Common.Contracts.Requests.Checks;
 using Mapster;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace AWM.Service.WebAPI.Controllers.v1;
 
 /// <summary>
-/// Controller for managing Quality Checks (NormControl, SoftwareCheck, AntiPlagiarism).
+/// Controller for managing quality checks, configurations, and expert assignments.
 /// </summary>
 [ApiVersion("1.0")]
-[ApiController]
 [Route("api/v{version:apiVersion}/quality-checks")]
-[Produces("application/json")]
-public class QualityChecksController : BaseController
+[ApiController]
+[Authorize]
+public sealed class QualityChecksController : BaseController
 {
     private readonly ISender _sender;
 
@@ -31,146 +39,216 @@ public class QualityChecksController : BaseController
     }
 
     /// <summary>
-    /// Get all quality checks for a specific work.
+    /// Gets all quality checks for a specific student work.
     /// </summary>
-    /// <param name="workId">StudentWork ID</param>
-    /// <returns>List of quality check records ordered by type and attempt</returns>
     [HttpGet("by-work/{workId:long}")]
-    [RequireDepartmentPermission(Permission.QualityChecks_ViewOwn)]
+    [RequireAccess("THESIS.CHECK", "Read")]
     [ProducesResponseType(typeof(IReadOnlyList<QualityCheckDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> GetByWork(long workId)
+    public async Task<IActionResult> GetQualityChecksByWork(long workId, CancellationToken cancellationToken)
     {
-        var query = new GetChecksByWorkQuery { WorkId = workId };
-        var result = await _sender.Send(query);
-
+        var result = await _sender.Send(new GetQualityChecksByWorkQuery(workId), cancellationToken);
         if (result.IsFailed)
-            return HandleResultError(result.Error);
-
-        return Ok(result.Value);
-    }
-
-    /// <summary>
-    /// Get all pending quality checks for a department (expert's work queue).
-    /// </summary>
-    /// <param name="departmentId">Department ID</param>
-    /// <param name="academicYearId">Academic year ID</param>
-    /// <param name="checkType">Optional check type filter</param>
-    /// <returns>List of pending quality checks</returns>
-    [HttpGet("pending")]
-    [RequireDepartmentPermission(Permission.QualityChecks_Perform)]
-    [ProducesResponseType(typeof(IReadOnlyList<QualityCheckDto>), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> GetPending(
-        [FromQuery] int departmentId,
-        [FromQuery] int academicYearId,
-        [FromQuery] CheckType? checkType = null)
-    {
-        var query = new GetPendingChecksQuery
         {
-            DepartmentId = departmentId,
-            AcademicYearId = academicYearId,
-            CheckType = checkType
-        };
-
-        var result = await _sender.Send(query);
-
-        if (result.IsFailed)
             return HandleResultError(result.Error);
-
+        }
         return Ok(result.Value);
     }
 
     /// <summary>
-    /// Submit a work for a quality check (student action).
-    /// Creates a pending check record that an expert will review.
+    /// Submits a work for checking (creates a new quality check attempt).
     /// </summary>
-    /// <param name="workId">StudentWork ID</param>
-    /// <param name="request">Submit request with check type</param>
-    /// <returns>Created quality check ID</returns>
     [HttpPost("works/{workId:long}/submit")]
-    [RequireDepartmentPermission(Permission.QualityChecks_Submit)]
-    [ProducesResponseType(typeof(long), StatusCodes.Status201Created)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> Submit(long workId, [FromBody] SubmitForCheckRequest request)
-    {
-        var command = request.Adapt<SubmitForCheckCommand>() with { WorkId = workId };
-
-        var result = await _sender.Send(command);
-
-        if (result.IsFailed)
-            return HandleResultError(result.Error);
-
-        return CreatedAtAction(nameof(GetByWork), new { workId }, result.Value);
-    }
-
-    /// <summary>
-    /// Record a quality check result (expert action).
-    /// Updates the existing pending check record created by the student's submission.
-    /// </summary>
-    /// <param name="workId">StudentWork ID</param>
-    /// <param name="checkId">ID of the pending QualityCheck to complete (returned by SubmitForCheck)</param>
-    /// <param name="request">Check result details</param>
-    /// <returns>Updated quality check ID</returns>
-    [HttpPut("works/{workId:long}/checks/{checkId:long}/record")]
-    [RequireDepartmentPermission(Permission.QualityChecks_Perform)]
+    [RequireAccess("THESIS.WORK", "Update")]
     [ProducesResponseType(typeof(long), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> RecordResult(long workId, long checkId, [FromBody] RecordCheckResultRequest request)
+    public async Task<IActionResult> SubmitForCheck(
+        long workId,
+        [FromBody] SubmitForCheckRequest request,
+        CancellationToken cancellationToken)
     {
-        var command = request.Adapt<RecordCheckResultCommand>() with { WorkId = workId, CheckId = checkId };
-
-        var result = await _sender.Send(command);
-
+        var result = await _sender.Send(new SubmitForCheckCommand(workId, request.CheckTypeId), cancellationToken);
         if (result.IsFailed)
+        {
             return HandleResultError(result.Error);
-
+        }
         return Ok(result.Value);
     }
 
     /// <summary>
-    /// Assign experts to quality check types for a department.
-    /// Creates Expert entities linking users to specific expertise types.
+    /// Gets pending quality checks for experts.
     /// </summary>
-    /// <param name="request">Expert assignment details</param>
-    /// <returns>Number of new experts created</returns>
-    [HttpPost("assign-experts")]
-    [RequireDepartmentPermission(Permission.Experts_Manage)]
+    [HttpGet("pending")]
+    [RequireAccess("THESIS.CHECK", "Read")]
+    [ProducesResponseType(typeof(IReadOnlyList<QualityCheckDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> GetPendingChecks(
+        [FromQuery] int orgUnitId,
+        [FromQuery] int semesterId,
+        [FromQuery] int? checkTypeId,
+        [FromQuery] bool includeCompleted = false,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await _sender.Send(new GetPendingChecksQuery(orgUnitId, semesterId, checkTypeId, includeCompleted), cancellationToken);
+        if (result.IsFailed)
+        {
+            return HandleResultError(result.Error);
+        }
+        return Ok(result.Value);
+    }
+
+    /// <summary>
+    /// Records expert decision on a quality check.
+    /// </summary>
+    [HttpPost("works/{workId:long}/{checkId:long}/complete")]
+    [RequireAccess("THESIS.CHECK", "Update")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> CompleteQualityCheck(
+        long workId,
+        long checkId,
+        [FromBody] CompleteQualityCheckRequest request,
+        CancellationToken cancellationToken)
+    {
+        var command = new CompleteQualityCheckCommand(
+            workId,
+            checkId,
+            request.IsPassed,
+            request.ResultValue,
+            request.Comment,
+            request.AttachmentId);
+
+        var result = await _sender.Send(command, cancellationToken);
+        if (result.IsFailed)
+        {
+            return HandleResultError(result.Error);
+        }
+        return Ok();
+    }
+
+    /// <summary>
+    /// Gets check configurations for a department.
+    /// </summary>
+    [HttpGet("configurations")]
+    [RequireAccess("SYSTEM.STAGE", "Read")]
+    [ProducesResponseType(typeof(IReadOnlyList<CheckConfigurationDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> GetCheckConfigurations([FromQuery] int orgUnitId, CancellationToken cancellationToken)
+    {
+        var result = await _sender.Send(new GetCheckConfigurationsQuery(orgUnitId), cancellationToken);
+        if (result.IsFailed)
+        {
+            return HandleResultError(result.Error);
+        }
+        return Ok(result.Value);
+    }
+
+    /// <summary>
+    /// Gets active check configurations for a student's org unit and speciality.
+    /// Accessible to students and experts (THESIS.CHECK Read).
+    /// </summary>
+    [HttpGet("configurations/active")]
+    [RequireAccess("THESIS.CHECK", "Read")]
+    [ProducesResponseType(typeof(IReadOnlyList<CheckConfigurationDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> GetActiveCheckConfigurations(
+        [FromQuery] int orgUnitId,
+        [FromQuery] int? specialityId,
+        CancellationToken cancellationToken)
+    {
+        var result = await _sender.Send(
+            new GetActiveCheckConfigurationsQuery(orgUnitId, specialityId), cancellationToken);
+        if (result.IsFailed) return HandleResultError(result.Error);
+        return Ok(result.Value);
+    }
+
+    /// <summary>
+    /// Saves or updates a check configuration for a department.
+    /// </summary>
+    [HttpPost("configurations")]
+    [RequireAccess("SYSTEM.STAGE", "Update")]
     [ProducesResponseType(typeof(int), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> AssignExperts([FromBody] AssignExpertsRequest request)
+    public async Task<IActionResult> SaveCheckConfiguration(
+        [FromBody] SaveCheckConfigurationRequest request,
+        CancellationToken cancellationToken)
     {
-        var assignments = request.Assignments
-            .Select(a => new ExpertAssignmentDto(a.UserId, a.ExpertiseType))
-            .ToList();
-
-        var command = new AssignExpertsCommand
-        {
-            DepartmentId = request.DepartmentId,
-            Assignments = assignments
-        };
-
-        var result = await _sender.Send(command);
-
+        var command = request.Adapt<SaveCheckConfigurationCommand>();
+        var result = await _sender.Send(command, cancellationToken);
         if (result.IsFailed)
+        {
             return HandleResultError(result.Error);
-
+        }
         return Ok(result.Value);
+    }
+
+    /// <summary>
+    /// Deletes a check configuration.
+    /// </summary>
+    [HttpDelete("configurations/{id:int}")]
+    [RequireAccess("SYSTEM.STAGE", "Update")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeleteCheckConfiguration(int id, CancellationToken cancellationToken)
+    {
+        var result = await _sender.Send(new DeleteCheckConfigurationCommand(id), cancellationToken);
+        if (result.IsFailed)
+        {
+            return HandleResultError(result.Error);
+        }
+        return Ok();
+    }
+
+    /// <summary>
+    /// Gets assigned experts for a department.
+    /// </summary>
+    [HttpGet("experts")]
+    [RequireAccess("SYSTEM.STAGE", "Read")]
+    [ProducesResponseType(typeof(IReadOnlyList<ExpertAssignmentDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> GetAssignedExperts([FromQuery] int orgUnitId, CancellationToken cancellationToken)
+    {
+        var result = await _sender.Send(new GetAssignedExpertsQuery(orgUnitId), cancellationToken);
+        if (result.IsFailed)
+        {
+            return HandleResultError(result.Error);
+        }
+        return Ok(result.Value);
+    }
+
+    /// <summary>
+    /// Saves expert assignments for a department.
+    /// </summary>
+    [HttpPost("experts")]
+    [RequireAccess("SYSTEM.STAGE", "Update")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> SaveExpertAssignments(
+        [FromBody] SaveExpertAssignmentsRequest request,
+        CancellationToken cancellationToken)
+    {
+        var command = new SaveExpertAssignmentsCommand(request.OrgUnitId, request.Assignments);
+        var result = await _sender.Send(command, cancellationToken);
+        if (result.IsFailed)
+        {
+            return HandleResultError(result.Error);
+        }
+        return Ok();
     }
 }

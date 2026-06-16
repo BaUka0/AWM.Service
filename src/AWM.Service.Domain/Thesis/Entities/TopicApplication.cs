@@ -10,9 +10,10 @@ public class TopicApplication : Entity<long>, IAuditable, ISoftDeletable
 {
     public long TopicId { get; private set; }
     public int StudentId { get; private set; }
+    public int? SpecialityId { get; private set; }
     public string? MotivationLetter { get; private set; }
     public DateTime AppliedAt { get; private set; }
-    public ApplicationStatus Status { get; private set; }
+    public int StatusId { get; private set; }
     public DateTime? ReviewedAt { get; private set; }
     public int? ReviewedBy { get; private set; }
     public string? ReviewComment { get; private set; }
@@ -26,18 +27,21 @@ public class TopicApplication : Entity<long>, IAuditable, ISoftDeletable
     public DateTime? DeletedAt { get; private set; }
     public int? DeletedBy { get; private set; }
 
+    public University.Student? Student { get; private set; }
+
     private TopicApplication() { }
 
-    public TopicApplication(long topicId, int studentId, string? motivationLetter = null)
+    public TopicApplication(long topicId, int studentId, string? motivationLetter = null, int? specialityId = null)
     {
         TopicId = topicId;
         StudentId = studentId;
+        SpecialityId = specialityId;
         MotivationLetter = motivationLetter;
         AppliedAt = DateTime.UtcNow;
-        Status = ApplicationStatus.Submitted;
+        StatusId = (int)ApplicationStatusType.Submitted;
 
         CreatedAt = AppliedAt;
-        CreatedBy = studentId; // Student is the creator
+        CreatedBy = studentId;
         IsDeleted = false;
     }
 
@@ -46,14 +50,14 @@ public class TopicApplication : Entity<long>, IAuditable, ISoftDeletable
     /// </summary>
     public void Accept(int reviewedBy)
     {
-        if (Status != ApplicationStatus.Submitted)
-            throw new InvalidOperationException("Only submitted applications can be accepted.");
+        if (StatusId != (int)ApplicationStatusType.Submitted)
+            throw new DomainException("TopicApplication.OnlySubmittedCanAccept", "Only submitted applications can be accepted.");
 
-        Status = ApplicationStatus.Accepted;
+        StatusId = (int)ApplicationStatusType.Accepted;
         ReviewedAt = DateTime.UtcNow;
         ReviewedBy = reviewedBy;
         ReviewComment = null;
-        
+
         LastModifiedAt = ReviewedAt;
         LastModifiedBy = reviewedBy;
     }
@@ -63,10 +67,10 @@ public class TopicApplication : Entity<long>, IAuditable, ISoftDeletable
     /// </summary>
     public void Reject(int reviewedBy, string? comment = null)
     {
-        if (Status != ApplicationStatus.Submitted)
-            throw new InvalidOperationException("Only submitted applications can be rejected.");
+        if (StatusId != (int)ApplicationStatusType.Submitted)
+            throw new DomainException("TopicApplication.OnlySubmittedCanReject", "Only submitted applications can be rejected.");
 
-        Status = ApplicationStatus.Rejected;
+        StatusId = (int)ApplicationStatusType.Rejected;
         ReviewedAt = DateTime.UtcNow;
         ReviewedBy = reviewedBy;
         ReviewComment = comment;
@@ -88,10 +92,10 @@ public class TopicApplication : Entity<long>, IAuditable, ISoftDeletable
     /// <summary>
     /// Checks if the application is pending review.
     /// </summary>
-    public bool IsPending => Status == ApplicationStatus.Submitted;
+    public bool IsPending => StatusId == (int)ApplicationStatusType.Submitted;
 
     /// <summary>
     /// Checks if the application was accepted.
     /// </summary>
-    public bool IsAccepted => Status == ApplicationStatus.Accepted;
+    public bool IsAccepted => StatusId == (int)ApplicationStatusType.Accepted;
 }

@@ -3,7 +3,6 @@ namespace AWM.Service.Infrastructure.Persistence.Configurations.Defense;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using AWM.Service.Domain.Defense.Entities;
-using AWM.Service.Domain.Defense.Enums;
 using AWM.Service.Domain.Thesis.Entities;
 using AWM.Service.Infrastructure.Persistence.Configurations.Base;
 
@@ -19,10 +18,8 @@ public class PreDefenseAttemptConfiguration : AuditableEntityConfiguration<PreDe
 
         builder.ToTable("PreDefenseAttempts", "Defense", t =>
         {
-            t.HasCheckConstraint("Check_PreDef_Num", 
+            t.HasCheckConstraint("Check_PreDefNum",
                 "[PreDefenseNumber] BETWEEN 1 AND 3");
-            t.HasCheckConstraint("Check_PreDef_Attendance", 
-                "[AttendanceStatus] IN ('Attended', 'Absent', 'Excused')");
         });
 
         builder.Property(e => e.Id)
@@ -36,11 +33,9 @@ public class PreDefenseAttemptConfiguration : AuditableEntityConfiguration<PreDe
 
         builder.Property(e => e.ScheduleId);
 
-        builder.Property(e => e.AttendanceStatus)
+        builder.Property(e => e.AttendanceStatusId)
             .IsRequired()
-            .HasConversion<string>()
-            .HasMaxLength(50)
-            .HasDefaultValue(AttendanceStatus.Attended);
+            .HasDefaultValue(1);
 
         builder.Property(e => e.AverageScore)
             .HasColumnType("decimal(5,2)");
@@ -53,7 +48,6 @@ public class PreDefenseAttemptConfiguration : AuditableEntityConfiguration<PreDe
             .IsRequired()
             .HasColumnType("datetime2");
 
-        // Foreign keys
         builder.HasOne<StudentWork>()
             .WithMany()
             .HasForeignKey(e => e.WorkId)
@@ -66,12 +60,10 @@ public class PreDefenseAttemptConfiguration : AuditableEntityConfiguration<PreDe
             .HasConstraintName("FK_PreDef_Schedule")
             .OnDelete(DeleteBehavior.Restrict);
 
-        // Unique constraint - one attempt per work per pre-defense number
         builder.HasIndex(e => new { e.WorkId, e.PreDefenseNumber })
             .IsUnique()
             .HasDatabaseName("UQ_PreDef_Work_Num");
 
-        // Index for queries
         builder.HasIndex(e => new { e.WorkId, e.PreDefenseNumber })
             .HasDatabaseName("IX_PreDefAttempts_Work");
     }

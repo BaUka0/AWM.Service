@@ -3,8 +3,7 @@ namespace AWM.Service.Infrastructure.Persistence.Configurations.Thesis;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using AWM.Service.Domain.Thesis.Entities;
-using AWM.Service.Domain.Thesis.Enums;
-using AWM.Service.Domain.Edu.Entities;
+using AWM.Service.Domain.University;
 using AWM.Service.Infrastructure.Persistence.Configurations.Base;
 
 /// <summary>
@@ -28,15 +27,8 @@ public class WorkParticipantConfiguration : AuditableEntityConfiguration<WorkPar
         builder.Property(e => e.StudentId)
             .IsRequired();
 
-        builder.Property(e => e.Role)
-            .IsRequired()
-            .HasConversion<string>()
-            .HasMaxLength(50);
-
-        // Ignore computed property
         builder.Ignore(e => e.JoinedAt);
 
-        // Foreign keys
         builder.HasOne<StudentWork>()
             .WithMany(w => w.Participants)
             .HasForeignKey(e => e.WorkId)
@@ -49,12 +41,10 @@ public class WorkParticipantConfiguration : AuditableEntityConfiguration<WorkPar
             .HasConstraintName("FK_Participants_Student")
             .OnDelete(DeleteBehavior.Restrict);
 
-        // Unique constraint on (WorkId, StudentId)
         builder.HasIndex(e => new { e.WorkId, e.StudentId })
             .IsUnique()
             .HasDatabaseName("UQ_Participant_Work_Student");
 
-        // Indexes
         builder.HasIndex(e => e.WorkId)
             .HasDatabaseName("IX_Participants_Work");
 

@@ -5,7 +5,7 @@ using AWM.Service.Domain.Common;
 /// <summary>
 /// Event raised when a new topic is created.
 /// </summary>
-public sealed record TopicCreatedEvent(long TopicId, long? DirectionId, int SupervisorId) : DomainEventBase;
+public sealed record TopicCreatedEvent(long TopicId, long? DirectionId, int CreatorUserId) : DomainEventBase;
 
 /// <summary>
 /// Event raised when a topic is approved.
@@ -26,3 +26,36 @@ public sealed record TopicClosedEvent(long TopicId) : DomainEventBase;
 /// Event raised when topics are submitted for department approval.
 /// </summary>
 public sealed record TopicsSubmittedForApprovalEvent(IReadOnlyList<long> TopicIds, int SupervisorId) : DomainEventBase;
+
+/// <summary>
+/// Event raised when topics are reconciled (batch final approval by department).
+/// </summary>
+public sealed record TopicsReconciledEvent(IReadOnlyList<long> TopicIds, int ReconciledBy) : DomainEventBase;
+
+/// <summary>
+/// Event raised when a single topic is reconciled (final approval by department).
+/// </summary>
+public sealed record TopicReconciledEvent(long TopicId, int ReconciledBy, int? SpecialityId, IReadOnlyList<int> StudentIds) : DomainEventBase;
+
+/// <summary>
+/// Event raised when a single topic is marked as inactive (no students applied).
+/// </summary>
+public sealed record TopicMarkedInactiveEvent(long TopicId, int MarkedBy, int? SpecialityId, IReadOnlyList<int> StudentIds) : DomainEventBase;
+
+/// <summary>
+/// Warning event raised when a topic has more accepted applications than MaxParticipants.
+/// This is non-blocking and used for logging/metrics.
+/// </summary>
+public sealed record TopicExcessApplicationsWarningEvent(long TopicId, int AcceptedCount, int MaxParticipants) : DomainEventBase;
+
+/// <summary>
+/// Event raised when a topic is sent back to supervisor for revision.
+/// Notifies supervisor and accepted students.
+/// </summary>
+public sealed record TopicSentBackForRevisionEvent(long TopicId, int ReviewedBy, string Comment, IReadOnlyList<int> StudentIds) : DomainEventBase;
+
+/// <summary>
+/// Event raised when topic reconciliation stage is completed for a department/semester.
+/// This triggers downstream processes (e.g., StudentWork creation).
+/// </summary>
+public sealed record TopicReconciliationCompletedEvent(int OrgUnitId, int SemesterId, int CompletedBy) : DomainEventBase;

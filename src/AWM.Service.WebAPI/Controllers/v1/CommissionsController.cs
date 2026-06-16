@@ -1,28 +1,27 @@
-namespace AWM.Service.WebAPI.Controllers.v1;
-
-using AWM.Service.Application.Features.Defense.Commissions.Commands.AddCommissionMember;
 using AWM.Service.Application.Features.Defense.Commissions.Commands.CreateCommission;
-using AWM.Service.Application.Features.Defense.Commissions.Commands.RemoveCommissionMember;
 using AWM.Service.Application.Features.Defense.Commissions.Commands.DeleteCommission;
 using AWM.Service.Application.Features.Defense.Commissions.Commands.UpdateCommission;
-using AWM.Service.Application.Features.Defense.Commissions.DTOs;
+using AWM.Service.Application.Features.Defense.Commissions.Queries.GetCommissions;
 using AWM.Service.Application.Features.Defense.Commissions.Queries.GetCommissionById;
-using AWM.Service.Application.Features.Defense.Commissions.Queries.GetCommissionsByDepartment;
-using AWM.Service.Domain.Auth.Enums;
+using AWM.Service.Application.Features.Defense.Commissions.Commands.AutoDistributeStudents;
 using AWM.Service.WebAPI.Authorization;
 using AWM.Service.WebAPI.Common.Contracts.Requests.Defense;
+using AWM.Service.WebAPI.Common.Contracts.Responses;
 using Mapster;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
+namespace AWM.Service.WebAPI.Controllers.v1;
+
 /// <summary>
-/// Controller for managing Defense Commissions (PreDefense and GAK).
+/// Controller for managing commissions (Pre-defense and GAK).
 /// </summary>
 [ApiVersion("1.0")]
-[ApiController]
 [Route("api/v{version:apiVersion}/commissions")]
-[Produces("application/json")]
-public class CommissionsController : BaseController
+[ApiController]
+[Authorize]
+public sealed class CommissionsController : BaseController
 {
     private readonly ISender _sender;
 
@@ -32,28 +31,19 @@ public class CommissionsController : BaseController
     }
 
     /// <summary>
-    /// Get commissions for a department in a given academic year.
+    /// Gets commissions based on filters.
     /// </summary>
-    /// <param name="departmentId">Department ID</param>
-    /// <param name="academicYearId">Academic year ID</param>
-    /// <returns>List of commissions</returns>
     [HttpGet]
-    [RequireDepartmentPermission(Permission.Commissions_View)]
-    [ProducesResponseType(typeof(IReadOnlyList<CommissionDto>), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> GetByDepartment(
-        [FromQuery] int departmentId,
-        [FromQuery] int academicYearId)
+    [RequireAccess("DEFENSE.COMMISSION", "Read")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetCommissions(
+        [FromQuery] int orgUnitId,
+        [FromQuery] int semesterId,
+        [FromQuery] int? specialityId,
+        CancellationToken cancellationToken)
     {
-        var query = new GetCommissionsByDepartmentQuery
-        {
-            DepartmentId = departmentId,
-            AcademicYearId = academicYearId
-        };
-
-        var result = await _sender.Send(query);
+        var query = new GetCommissionsQuery(orgUnitId, semesterId, specialityId);
+        var result = await _sender.Send(query, cancellationToken);
 
         if (result.IsFailed)
             return HandleResultError(result.Error);
@@ -62,21 +52,16 @@ public class CommissionsController : BaseController
     }
 
     /// <summary>
-    /// Get a specific commission by ID with full details including members.
+    /// Gets a commission by ID.
     /// </summary>
-    /// <param name="id">Commission ID</param>
-    /// <returns>Commission with member list</returns>
-    [HttpGet("{id:int}")]
-    [RequireDepartmentPermission(Permission.Commissions_View)]
-    [ProducesResponseType(typeof(CommissionDetailDto), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [HttpGet("{id}")]
+    [RequireAccess("DEFENSE.COMMISSION", "Read")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> GetById(int id)
+    public async Task<IActionResult> GetCommissionById(int id, CancellationToken cancellationToken)
     {
-        var query = new GetCommissionByIdQuery { CommissionId = id };
-        var result = await _sender.Send(query);
+        var query = new GetCommissionByIdQuery(id);
+        var result = await _sender.Send(query, cancellationToken);
 
         if (result.IsFailed)
             return HandleResultError(result.Error);
@@ -85,123 +70,90 @@ public class CommissionsController : BaseController
     }
 
     /// <summary>
-    /// Create a new defense commission.
+    /// Creates a new commission.
     /// </summary>
-    /// <param name="request">Create commission request</param>
-    /// <returns>Created commission ID</returns>
     [HttpPost]
-    [RequireDepartmentPermission(Permission.Commissions_Manage)]
-    [ProducesResponseType(typeof(int), StatusCodes.Status201Created)]
+    [RequireAccess("DEFENSE.COMMISSION", "Update")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> Create([FromBody] CreateCommissionRequest request)
+    public async Task<IActionResult> CreateCommission(
+        [FromBody] CreateCommissionRequest request,
+        CancellationToken cancellationToken)
     {
         var command = request.Adapt<CreateCommissionCommand>();
-
-        var result = await _sender.Send(command);
+        var result = await _sender.Send(command, cancellationToken);
 
         if (result.IsFailed)
             return HandleResultError(result.Error);
 
-        return CreatedAtAction(nameof(GetById), new { id = result.Value }, result.Value);
+        return Ok(result.Value);
     }
 
     /// <summary>
-    /// Update a commission's name.
+    /// Updates an existing commission.
     /// </summary>
-    /// <param name="id">Commission ID</param>
-    /// <param name="request">Update request</param>
-    /// <returns>No content on success</returns>
-    [HttpPut("{id:int}")]
-    [RequireDepartmentPermission(Permission.Commissions_Manage)]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [HttpPut("{id}")]
+    [RequireAccess("DEFENSE.COMMISSION", "Update")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UpdateCommission(
+        int id,
+        [FromBody] UpdateCommissionRequest request,
+        CancellationToken cancellationToken)
+    {
+        var command = new UpdateCommissionCommand(
+            id,
+            request.Name,
+            request.CommissionTypeId,
+            request.PreDefenseNumber,
+            request.SpecialityId,
+            request.ChairmanUserId,
+            request.SecretaryUserId,
+            request.MemberUserIds);
+        var result = await _sender.Send(command, cancellationToken);
+
+        if (result.IsFailed)
+            return HandleResultError(result.Error);
+
+        return Ok();
+    }
+
+    /// <summary>
+    /// Deletes a commission (soft-delete). Fails if students are already assigned.
+    /// </summary>
+    [HttpDelete("{id}")]
+    [RequireAccess("DEFENSE.COMMISSION", "Update")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> Update(int id, [FromBody] UpdateCommissionRequest request)
+    public async Task<IActionResult> DeleteCommission(int id, CancellationToken cancellationToken)
     {
-        var command = request.Adapt<UpdateCommissionCommand>() with { CommissionId = id };
-
-        var result = await _sender.Send(command);
+        var command = new DeleteCommissionCommand(id);
+        var result = await _sender.Send(command, cancellationToken);
 
         if (result.IsFailed)
             return HandleResultError(result.Error);
 
-        return NoContent();
+        return Ok();
     }
 
     /// <summary>
-    /// Add a member to a commission.
+    /// Automatically distributes students to commissions.
     /// </summary>
-    /// <param name="id">Commission ID</param>
-    /// <param name="request">Add member request</param>
-    /// <returns>Created member ID</returns>
-    [HttpPost("{id:int}/members")]
-    [RequireDepartmentPermission(Permission.Commissions_ManageMembers)]
-    [ProducesResponseType(typeof(int), StatusCodes.Status201Created)]
+    [HttpPost("auto-distribute")]
+    [RequireAccess("DEFENSE.COMMISSION", "Update")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status409Conflict)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> AddMember(int id, [FromBody] AddCommissionMemberRequest request)
+    public async Task<IActionResult> AutoDistributeStudents(
+        [FromBody] AutoDistributeStudentsRequest request,
+        CancellationToken cancellationToken)
     {
-        var command = request.Adapt<AddCommissionMemberCommand>() with { CommissionId = id };
-
-        var result = await _sender.Send(command);
+        var command = request.Adapt<AutoDistributeStudentsCommand>();
+        var result = await _sender.Send(command, cancellationToken);
 
         if (result.IsFailed)
             return HandleResultError(result.Error);
 
-        return CreatedAtAction(nameof(GetById), new { id }, result.Value);
-    }
-
-    /// <summary>
-    /// Remove a member from a commission.
-    /// </summary>
-    /// <param name="id">Commission ID</param>
-    /// <param name="memberId">Member record ID to remove</param>
-    /// <returns>No content on success</returns>
-    [HttpDelete("{id:int}/members/{memberId:int}")]
-    [RequireDepartmentPermission(Permission.Commissions_ManageMembers)]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> RemoveMember(int id, int memberId)
-    {
-        var command = new RemoveCommissionMemberCommand
-        {
-            CommissionId = id,
-            MemberId = memberId
-        };
-
-        var result = await _sender.Send(command);
-
-        if (result.IsFailed)
-            return HandleResultError(result.Error);
-
-        return NoContent();
-    }
-
-    /// <summary>
-    /// Delete a commission.
-    /// </summary>
-    /// <param name="id">Commission ID</param>
-    /// <returns>No content on success</returns>
-    [HttpDelete("{id:int}")]
-    [RequireDepartmentPermission(Permission.Commissions_Manage)]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> Delete(int id)
-    {
-        var command = new DeleteCommissionCommand { CommissionId = id };
-        var result = await _sender.Send(command);
-
-        if (result.IsFailed)
-            return HandleResultError(result.Error);
-
-        return NoContent();
+        return Ok();
     }
 }

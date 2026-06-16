@@ -11,7 +11,7 @@ public class PreDefenseAttempt : Entity<long>, IAuditable
     public long WorkId { get; private set; }
     public int PreDefenseNumber { get; private set; }
     public long? ScheduleId { get; private set; }
-    public AttendanceStatus AttendanceStatus { get; private set; }
+    public int AttendanceStatusId { get; private set; }
     public decimal? AverageScore { get; private set; }
     public bool IsPassed { get; private set; }
     public DateTime AttemptDate { get; private set; }
@@ -28,15 +28,15 @@ public class PreDefenseAttempt : Entity<long>, IAuditable
         int preDefenseNumber,
         int createdBy,
         long? scheduleId = null,
-        AttendanceStatus attendanceStatus = AttendanceStatus.Attended)
+        int attendanceStatusId = (int)PreDefenseStatus.Attended)
     {
         if (preDefenseNumber < 1 || preDefenseNumber > 3)
-            throw new ArgumentException("Pre-defense number must be 1, 2, or 3.", nameof(preDefenseNumber));
+            throw new DomainException("PreDefenseAttempt.InvalidNumber", "Pre-defense number must be 1, 2, or 3.");
 
         WorkId = workId;
         PreDefenseNumber = preDefenseNumber;
         ScheduleId = scheduleId;
-        AttendanceStatus = attendanceStatus;
+        AttendanceStatusId = attendanceStatusId;
         IsPassed = false;
         AttemptDate = DateTime.UtcNow;
 
@@ -49,12 +49,12 @@ public class PreDefenseAttempt : Entity<long>, IAuditable
     /// </summary>
     public void RecordResult(decimal averageScore, bool isPassed, int modifiedBy)
     {
-        if (AttendanceStatus != AttendanceStatus.Attended)
-            throw new InvalidOperationException("Cannot record result for non-attended attempt.");
+        if (AttendanceStatusId != (int)PreDefenseStatus.Attended)
+            throw new DomainException("PreDefenseAttempt.NotAttended", "Cannot record result for non-attended attempt.");
 
         AverageScore = averageScore;
         IsPassed = isPassed;
-        
+
         LastModifiedAt = DateTime.UtcNow;
         LastModifiedBy = modifiedBy;
     }
@@ -64,7 +64,7 @@ public class PreDefenseAttempt : Entity<long>, IAuditable
     /// </summary>
     public void MarkAbsent(int modifiedBy, bool excused = false)
     {
-        AttendanceStatus = excused ? AttendanceStatus.Excused : AttendanceStatus.Absent;
+        AttendanceStatusId = excused ? (int)PreDefenseStatus.Excused : (int)PreDefenseStatus.Absent;
         IsPassed = false;
         AverageScore = null;
 

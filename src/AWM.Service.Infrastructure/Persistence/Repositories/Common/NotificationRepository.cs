@@ -46,6 +46,13 @@ public sealed class NotificationRepository : RepositoryBase<Notification, long>,
     }
 
     /// <inheritdoc />
+    public async Task<int> GetCountByUserAsync(int userId, CancellationToken cancellationToken = default)
+    {
+        return await Context.Notifications
+            .CountAsync(n => n.UserId == userId, cancellationToken);
+    }
+
+    /// <inheritdoc />
     public async Task MarkAllAsReadAsync(int userId, CancellationToken cancellationToken = default)
     {
         var unread = await Context.Notifications

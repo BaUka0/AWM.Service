@@ -3,9 +3,7 @@ namespace AWM.Service.Infrastructure.Persistence.Configurations.Defense;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using AWM.Service.Domain.Defense.Entities;
-using AWM.Service.Domain.Defense.Enums;
-using AWM.Service.Domain.Org.Entities;
-using AWM.Service.Domain.CommonDomain.Entities;
+using AWM.Service.Domain.University;
 using AWM.Service.Infrastructure.Persistence.Configurations.Base;
 
 /// <summary>
@@ -20,46 +18,50 @@ public class CommissionConfiguration : SoftDeletableEntityConfiguration<Commissi
 
         builder.ToTable("Commissions", "Defense", t =>
         {
-            t.HasCheckConstraint("Check_Commission_PreDefNum", 
+            t.HasCheckConstraint("Check_Commission_PreDefNum",
                 "[PreDefenseNumber] IS NULL OR [PreDefenseNumber] BETWEEN 1 AND 3");
         });
 
         builder.Property(e => e.Id)
             .UseIdentityColumn();
 
-        builder.Property(e => e.DepartmentId)
+        builder.Property(e => e.OrgUnitId)
             .IsRequired();
 
-        builder.Property(e => e.AcademicYearId)
+        builder.Property(e => e.SpecialityId);
+
+        builder.Property(e => e.SemesterId)
             .IsRequired();
 
         builder.Property(e => e.Name)
             .HasMaxLength(255);
 
-        builder.Property(e => e.CommissionType)
-            .IsRequired()
-            .HasConversion<string>()
-            .HasMaxLength(50);
+        builder.Property(e => e.CommissionTypeId)
+            .IsRequired();
 
         builder.Property(e => e.PreDefenseNumber);
 
-        // Foreign keys
-        builder.HasOne<Department>()
+        builder.HasOne<OrgUnit>()
             .WithMany()
-            .HasForeignKey(e => e.DepartmentId)
-            .HasConstraintName("FK_Commissions_Dept")
+            .HasForeignKey(e => e.OrgUnitId)
+            .HasConstraintName("FK_Comm_Dept")
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne<AcademicYear>()
+        builder.HasOne<Speciality>()
             .WithMany()
-            .HasForeignKey(e => e.AcademicYearId)
-            .HasConstraintName("FK_Commissions_Year")
+            .HasForeignKey(e => e.SpecialityId)
+            .HasConstraintName("FK_Comm_Speciality")
             .OnDelete(DeleteBehavior.Restrict);
 
-        // Navigation to members
-        builder.HasMany(e => e.Members)
+        builder.HasOne<Semester>()
+            .WithMany()
+            .HasForeignKey(e => e.SemesterId)
+            .HasConstraintName("FK_Comm_Semester")
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasMany(e => e.Assignments)
             .WithOne()
-            .HasForeignKey(e => e.CommissionId)
+            .HasForeignKey("CommissionId")
             .OnDelete(DeleteBehavior.Cascade);
     }
 }

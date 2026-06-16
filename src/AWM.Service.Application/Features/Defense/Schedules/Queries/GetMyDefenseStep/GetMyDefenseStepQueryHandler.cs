@@ -1,0 +1,143 @@
+using AWM.Service.Application.Features.Defense.Schedules.DTOs;
+using AWM.Service.Domain.Common;
+using AWM.Service.Domain.Repositories;
+using AWM.Service.Domain.Wf.Entities;
+using KDS.Primitives.FluentResult;
+using MediatR;
+
+namespace AWM.Service.Application.Features.Defense.Schedules.Queries.GetMyDefenseStep;
+
+public sealed class GetMyDefenseStepQueryHandler : IRequestHandler<GetMyDefenseStepQuery, Result<DefenseStepDto>>
+{
+    private readonly IStudentWorkRepository _workRepository;
+    private readonly IScheduleRepository _scheduleRepository;
+    private readonly ICommissionRepository _commissionRepository;
+    private readonly IProtocolRepository _protocolRepository;
+    private readonly IPreDefenseAttemptRepository _attemptRepository;
+    private readonly IUserRepository _userRepository;
+    private readonly IWorkflowRepository _workflowRepository;
+    private readonly ICurrentUserProvider _currentUserProvider;
+
+    public GetMyDefenseStepQueryHandler(
+        IStudentWorkRepository workRepository,
+        IScheduleRepository scheduleRepository,
+        ICommissionRepository commissionRepository,
+        IProtocolRepository protocolRepository,
+        IPreDefenseAttemptRepository attemptRepository,
+        IUserRepository userRepository,
+        IWorkflowRepository workflowRepository,
+        ICurrentUserProvider currentUserProvider)
+    {
+        _workRepository = workRepository;
+        _scheduleRepository = scheduleRepository;
+        _commissionRepository = commissionRepository;
+        _protocolRepository = protocolRepository;
+        _attemptRepository = attemptRepository;
+        _userRepository = userRepository;
+        _workflowRepository = workflowRepository;
+        _currentUserProvider = currentUserProvider;
+    }
+
+    public async Task<Result<DefenseStepDto>> Handle(GetMyDefenseStepQuery request, CancellationToken cancellationToken)
+    {
+        var currentUserId = _currentUserProvider.UserId ?? 0;
+        if (currentUserId == 0)
+        {
+            return Result.Failure<DefenseStepDto>(new Error("Auth.Unauthorized", "User not authenticated."));
+        }
+
+        var works = await _workRepository.GetByStudentAsync(currentUserId, cancellationToken);
+        var work = works.FirstOrDefault();
+        if (work == null)
+        {
+            return Result.Failure<DefenseStepDto>(new Error("Work.NotFound", "Student work not found."));
+        }
+
+        var currentState = await _workflowRepository.GetStateByIdAsync(work.CurrentStateId, cancellationToken);
+        var sn = currentState?.SystemName ?? "";
+        string stepType = "pre-defense";
+        int? preDefenseNumber = null;
+
+        if (sn.StartsWith("PreDefense1.")) { preDefenseNumber = 1; }
+        else if (sn.StartsWith("PreDefense2.")) { preDefenseNumber = 2; }
+        else if (sn.StartsWith("PreDefense3.")) { preDefenseNumber = 3; }
+        else if (sn.StartsWith("Defense.") || sn == WorkStates.ReadyForDefense
+                 || sn == WorkStates.Defended || sn == WorkStates.DefenseFailed)
+        {
+            stepType = "defense";
+        }
+
+        var schedule = await _scheduleRepository.GetByWorkIdAsync(work.Id, cancellationToken);
+        ScheduleInfoDto? scheduleInfo = null;
+        IReadOnlyList<CommissionMemberInfoDto> commissionMembers = new List<CommissionMemberInfoDto>();
+
+        if (schedule != null)
+        {
+            scheduleInfo = new ScheduleInfoDto(
+                schedule.DefenseDate.ToLocalTime().ToString("dd.MM.yyyy"),
+                schedule.DefenseDate.ToLocalTime().ToString("HH:mm"),
+                schedule.Location ?? "Online"
+            );
+
+            var commission = await _commissionRepository.GetByIdWithAssignmentsAsync(schedule.CommissionId, cancellationToken);
+            if (commission != null)
+            {
+                var userIds = commission.Assignments.Select(a => a.UserId).Distinct();
+                var users = await _userRepository.GetByIdsAsync(userIds, cancellationToken);
+
+                commissionMembers = commission.Assignments
+                    .Where(a => a.IsActive && !a.IsDeleted)
+                    .Select(a =>
+                    {
+                        var user = users.FirstOrDefault(u => u.Id == a.UserId);
+                        var name = user != null ? $"{user.LastName} {user.FirstName}" : "Unknown";
+                        return new CommissionMemberInfoDto(a.RoleType.ToString(), name);
+                    })
+                    .ToList();
+            }
+        }
+
+        var attempts = await _attemptRepository.GetByWorkIdAsync(work.Id, cancellationToken);
+        var previousAttempts = new List<AttemptHistoryDto>();
+
+        foreach (var attempt in attempts)
+        {
+            string? comments = null;
+            if (attempt.ScheduleId.HasValue)
+            {
+                var attemptProtocol = await _protocolRepository.GetByScheduleIdAsync(attempt.ScheduleId.Value, cancellationToken);
+                comments = attemptProtocol?.Comments;
+            }
+
+            previousAttempts.Add(new AttemptHistoryDto(
+                attempt.PreDefenseNumber,
+                attempt.IsPassed,
+                attempt.AverageScore ?? 0,
+                attempt.AttemptDate.ToShortDateString(),
+                comments
+            ));
+        }
+
+        DefenseResultsDto? results = null;
+        var protocol = await _protocolRepository.GetByScheduleIdAsync(schedule?.Id ?? 0, cancellationToken);
+        if (protocol != null)
+        {
+            results = new DefenseResultsDto(
+                protocol.Decision == "Допущен",
+                protocol.FinalScoreNumeric ?? 0,
+                protocol.FinalGradeLetter ?? "-",
+                protocol.Decision ?? "-",
+                protocol.SessionDate.ToShortDateString()
+            );
+        }
+
+        return Result.Success(new DefenseStepDto(
+            stepType,
+            preDefenseNumber ?? previousAttempts.Count + 1,
+            scheduleInfo,
+            commissionMembers,
+            previousAttempts,
+            results
+        ));
+    }
+}

@@ -9,5 +9,6 @@ public record AuthResult(
     int UserId,
     string Email,
     IEnumerable<string> Roles,
-    string RefreshToken
+    string RefreshToken,
+    string Name
 );

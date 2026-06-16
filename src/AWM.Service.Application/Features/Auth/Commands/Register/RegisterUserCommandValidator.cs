@@ -2,9 +2,6 @@ using FluentValidation;
 
 namespace AWM.Service.Application.Features.Auth.Commands.Register;
 
-/// <summary>
-/// Validator for RegisterUserCommand.
-/// </summary>
 public class RegisterUserCommandValidator : AbstractValidator<RegisterUserCommand>
 {
     public RegisterUserCommandValidator()
@@ -24,8 +21,5 @@ public class RegisterUserCommandValidator : AbstractValidator<RegisterUserComman
             .NotEmpty().WithMessage("Пароль обязателен.")
             .MinimumLength(6).WithMessage("Пароль должен содержать минимум 6 символов.")
             .MaximumLength(100).WithMessage("Пароль не должен превышать 100 символов.");
-
-        RuleFor(x => x.UniversityId)
-            .GreaterThan(0).WithMessage("UniversityId должен быть положительным числом.");
     }
 }

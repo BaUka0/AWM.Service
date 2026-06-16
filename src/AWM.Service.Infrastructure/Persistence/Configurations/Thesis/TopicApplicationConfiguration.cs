@@ -3,8 +3,7 @@ namespace AWM.Service.Infrastructure.Persistence.Configurations.Thesis;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using AWM.Service.Domain.Thesis.Entities;
-using AWM.Service.Domain.Thesis.Enums;
-using AWM.Service.Domain.Edu.Entities;
+using AWM.Service.Domain.University;
 using AWM.Service.Infrastructure.Persistence.Configurations.Base;
 
 /// <summary>
@@ -17,11 +16,7 @@ public class TopicApplicationConfiguration : SoftDeletableEntityConfiguration<To
     {
         base.Configure(builder);
 
-        builder.ToTable("TopicApplications", "Thesis", t =>
-        {
-            t.HasCheckConstraint("Check_Application_Status", 
-                "[Status] IN ('Submitted', 'Accepted', 'Rejected', 'Withdrawn')");
-        });
+        builder.ToTable("TopicApplications", "Thesis");
 
         builder.Property(e => e.Id)
             .UseIdentityColumn();
@@ -32,6 +27,9 @@ public class TopicApplicationConfiguration : SoftDeletableEntityConfiguration<To
         builder.Property(e => e.StudentId)
             .IsRequired();
 
+        builder.Property(e => e.SpecialityId)
+            .HasColumnName("SpecialityId");
+
         builder.Property(e => e.MotivationLetter)
             .HasColumnType("nvarchar(max)");
 
@@ -39,11 +37,9 @@ public class TopicApplicationConfiguration : SoftDeletableEntityConfiguration<To
             .IsRequired()
             .HasColumnType("datetime2");
 
-        builder.Property(e => e.Status)
+        builder.Property(e => e.StatusId)
             .IsRequired()
-            .HasConversion<string>()
-            .HasMaxLength(50)
-            .HasDefaultValue(ApplicationStatus.Submitted);
+            .HasDefaultValue(1);
 
         builder.Property(e => e.ReviewedAt)
             .HasColumnType("datetime2");
@@ -53,24 +49,28 @@ public class TopicApplicationConfiguration : SoftDeletableEntityConfiguration<To
         builder.Property(e => e.ReviewComment)
             .HasColumnType("nvarchar(max)");
 
-        // Foreign keys
         builder.HasOne<Topic>()
             .WithMany(t => t.Applications)
             .HasForeignKey(e => e.TopicId)
             .HasConstraintName("FK_Applications_Topic")
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasOne<Student>()
+        builder.HasOne(e => e.Student)
             .WithMany()
             .HasForeignKey(e => e.StudentId)
             .HasConstraintName("FK_Applications_Student")
             .OnDelete(DeleteBehavior.Restrict);
 
-        // Indexes
-        builder.HasIndex(e => new { e.Status, e.TopicId })
+        builder.HasOne<User>()
+            .WithMany()
+            .HasForeignKey(e => e.ReviewedBy)
+            .HasConstraintName("FK_Applications_Reviewer")
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasIndex(e => new { e.StatusId, e.TopicId })
             .HasDatabaseName("IX_Applications_Status");
 
-        builder.HasIndex(e => new { e.StudentId, e.Status })
+        builder.HasIndex(e => new { e.StudentId, e.StatusId })
             .HasDatabaseName("IX_Applications_Student");
     }
 }

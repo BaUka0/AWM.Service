@@ -3,9 +3,8 @@ namespace AWM.Service.Infrastructure.Persistence.Configurations.Thesis;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using AWM.Service.Domain.Thesis.Entities;
-using AWM.Service.Domain.Org.Entities;
+using AWM.Service.Domain.University;
 using AWM.Service.Domain.Wf.Entities;
-using AWM.Service.Domain.CommonDomain.Entities;
 using AWM.Service.Infrastructure.Persistence.Configurations.Base;
 
 /// <summary>
@@ -34,11 +33,13 @@ public class StudentWorkConfiguration : SoftDeletableEntityConfiguration<Student
 
         builder.Property(e => e.TopicId);
 
-        builder.Property(e => e.AcademicYearId)
+        builder.Property(e => e.SemesterId)
             .IsRequired();
 
-        builder.Property(e => e.DepartmentId)
+        builder.Property(e => e.OrgUnitId)
             .IsRequired();
+
+        builder.Property(e => e.SpecialityId);
 
         builder.Property(e => e.CurrentStateId)
             .IsRequired();
@@ -50,26 +51,24 @@ public class StudentWorkConfiguration : SoftDeletableEntityConfiguration<Student
             .IsRequired()
             .HasDefaultValue(false);
 
-        builder.Property(e => e.RepositoryUrl)
-            .HasMaxLength(500);
+        builder.Property(e => e.MetadataJson);
 
-        // Foreign keys
         builder.HasOne<Topic>()
             .WithMany()
             .HasForeignKey(e => e.TopicId)
             .HasConstraintName("FK_Works_Topic")
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne<AcademicYear>()
+        builder.HasOne<OrgUnit>()
             .WithMany()
-            .HasForeignKey(e => e.AcademicYearId)
-            .HasConstraintName("FK_Works_Year")
+            .HasForeignKey(e => e.OrgUnitId)
+            .HasConstraintName("FK_Works_Dept")
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne<Department>()
+        builder.HasOne<Speciality>()
             .WithMany()
-            .HasForeignKey(e => e.DepartmentId)
-            .HasConstraintName("FK_Works_Dept")
+            .HasForeignKey(e => e.SpecialityId)
+            .HasConstraintName("FK_Works_Speciality")
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne<State>()
@@ -78,7 +77,12 @@ public class StudentWorkConfiguration : SoftDeletableEntityConfiguration<Student
             .HasConstraintName("FK_Works_State")
             .OnDelete(DeleteBehavior.Restrict);
 
-        // Navigation collections
+        builder.HasOne<Semester>()
+            .WithMany()
+            .HasForeignKey(e => e.SemesterId)
+            .HasConstraintName("FK_Works_Semester")
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.HasMany(e => e.Participants)
             .WithOne()
             .HasForeignKey(e => e.WorkId)
@@ -99,8 +103,36 @@ public class StudentWorkConfiguration : SoftDeletableEntityConfiguration<Student
             .HasForeignKey(e => e.WorkId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Index for filtering
-        builder.HasIndex(e => new { e.DepartmentId, e.AcademicYearId, e.CurrentStateId })
+        builder.HasMany(e => e.WorkReviews)
+            .WithOne()
+            .HasForeignKey(e => e.WorkId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Navigation(e => e.WorkReviews)
+            .HasField("_workReviews")
+            .UsePropertyAccessMode(PropertyAccessMode.Field);
+
+        builder.Navigation(e => e.Participants)
+            .HasField("_participants")
+            .UsePropertyAccessMode(PropertyAccessMode.Field);
+
+        builder.Navigation(e => e.Attachments)
+            .HasField("_attachments")
+            .UsePropertyAccessMode(PropertyAccessMode.Field);
+
+        builder.Navigation(e => e.QualityChecks)
+            .HasField("_qualityChecks")
+            .UsePropertyAccessMode(PropertyAccessMode.Field);
+
+        builder.Navigation(e => e.WorkflowHistory)
+            .HasField("_workflowHistory")
+            .UsePropertyAccessMode(PropertyAccessMode.Field);
+
+        builder.HasIndex(e => e.TopicId)
+            .IsUnique()
+            .HasDatabaseName("UQ_Works_Topic");
+
+        builder.HasIndex(e => new { e.OrgUnitId, e.SemesterId, e.CurrentStateId })
             .HasDatabaseName("IX_StudentWorks_Filter");
     }
 }

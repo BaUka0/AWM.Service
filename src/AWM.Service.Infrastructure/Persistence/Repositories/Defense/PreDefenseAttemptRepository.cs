@@ -25,7 +25,7 @@ public sealed class PreDefenseAttemptRepository : IPreDefenseAttemptRepository
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<PreDefenseAttempt>> GetByWorkIdAsync(
-        long workId, 
+        long workId,
         CancellationToken cancellationToken = default)
     {
         return await _context.PreDefenseAttempts
@@ -56,7 +56,7 @@ public sealed class PreDefenseAttemptRepository : IPreDefenseAttemptRepository
 
     /// <inheritdoc />
     public async Task<PreDefenseAttempt?> GetLatestByWorkIdAsync(
-        long workId, 
+        long workId,
         CancellationToken cancellationToken = default)
     {
         return await _context.PreDefenseAttempts

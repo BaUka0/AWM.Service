@@ -2,6 +2,7 @@ namespace AWM.Service.Infrastructure.Persistence.Repositories.Thesis;
 
 using AWM.Service.Domain.Repositories;
 using AWM.Service.Domain.Thesis.Entities;
+using AWM.Service.Domain.CommonDomain.Enums;
 using AWM.Service.Infrastructure.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
 
@@ -52,6 +53,7 @@ public sealed class StudentWorkRepository : RepositoryBase<StudentWork, long>, I
             .Include(w => w.Attachments)
             .Include(w => w.QualityChecks)
             .Include(w => w.WorkflowHistory)
+            .Include(w => w.WorkReviews)
             .Where(w => workIds.Contains(w.Id))
             .AsSplitQuery()
             .ToListAsync(cancellationToken);
@@ -65,7 +67,8 @@ public sealed class StudentWorkRepository : RepositoryBase<StudentWork, long>, I
             .Include(w => w.Attachments)
             .Include(w => w.QualityChecks)
             .Include(w => w.WorkflowHistory)
-            .AsSplitQuery() // Split for performance with multiple collections
+            .Include(w => w.WorkReviews)
+            .AsSplitQuery()
             .FirstOrDefaultAsync(w => w.Id == id, cancellationToken);
     }
 
@@ -83,32 +86,32 @@ public sealed class StudentWorkRepository : RepositoryBase<StudentWork, long>, I
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<StudentWork>> GetByDepartmentAsync(
-        int departmentId,
-        int academicYearId,
+    public async Task<IReadOnlyList<StudentWork>> GetByOrgUnitAsync(
+        int orgUnitId,
+        int semesterId,
         CancellationToken cancellationToken = default)
     {
         return await Context.StudentWorks
             .AsNoTracking()
             .Include(w => w.Participants)
-            .Where(w => w.DepartmentId == departmentId &&
-                        w.AcademicYearId == academicYearId)
+            .Where(w => w.OrgUnitId == orgUnitId &&
+                        w.SemesterId == semesterId)
             .OrderByDescending(w => w.CreatedAt)
             .ToListAsync(cancellationToken);
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<StudentWork>> GetByDepartmentWithParticipantsAndQualityChecksAsync(
-        int departmentId,
-        int academicYearId,
+    public async Task<IReadOnlyList<StudentWork>> GetByOrgUnitWithParticipantsAndQualityChecksAsync(
+        int orgUnitId,
+        int semesterId,
         CancellationToken cancellationToken = default)
     {
         return await Context.StudentWorks
             .AsNoTracking()
             .Include(w => w.Participants)
             .Include(w => w.QualityChecks)
-            .Where(w => w.DepartmentId == departmentId &&
-                        w.AcademicYearId == academicYearId)
+            .Where(w => w.OrgUnitId == orgUnitId &&
+                        w.SemesterId == semesterId)
             .OrderByDescending(w => w.CreatedAt)
             .AsSplitQuery()
             .ToListAsync(cancellationToken);
@@ -116,16 +119,36 @@ public sealed class StudentWorkRepository : RepositoryBase<StudentWork, long>, I
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<StudentWork>> GetBySupervisorAsync(
-        int supervisorId,
-        int academicYearId,
+        int userId,
+        int semesterId,
         CancellationToken cancellationToken = default)
     {
+        var assignedTopicIds = await Context.StaffAssignments
+            .AsNoTracking()
+            .Where(a => a.UserId == userId &&
+                        a.RoleType == StaffRoleType.Supervisor &&
+                        a.TargetEntityType == "Topic" &&
+                        a.IsActive && !a.IsDeleted)
+            .Select(a => a.TargetEntityId)
+            .ToListAsync(cancellationToken);
+
+        var createdTopicIds = await Context.Topics
+            .AsNoTracking()
+            .Where(t => t.CreatedBy == userId &&
+                        t.SemesterId == semesterId &&
+                        !t.IsDeleted)
+            .Select(t => t.Id)
+            .ToListAsync(cancellationToken);
+
+        var allTopicIds = assignedTopicIds.Concat(createdTopicIds).Distinct().ToList();
+
         return await Context.StudentWorks
             .AsNoTracking()
+            .Where(w => !w.IsDeleted &&
+                        w.SemesterId == semesterId &&
+                        w.TopicId.HasValue &&
+                        allTopicIds.Contains(w.TopicId.Value))
             .Include(w => w.Participants)
-            .Where(w => w.AcademicYearId == academicYearId &&
-                        Context.Topics.Any(t => t.Id == w.TopicId &&
-                                                 t.SupervisorId == supervisorId))
             .OrderByDescending(w => w.CreatedAt)
             .ToListAsync(cancellationToken);
     }
@@ -133,22 +156,22 @@ public sealed class StudentWorkRepository : RepositoryBase<StudentWork, long>, I
     /// <inheritdoc />
     public async Task<IReadOnlyList<StudentWork>> GetByStateAsync(
         int stateId,
-        int departmentId,
+        int orgUnitId,
         CancellationToken cancellationToken = default)
     {
         return await Context.StudentWorks
             .AsNoTracking()
             .Include(w => w.Participants)
             .Where(w => w.CurrentStateId == stateId &&
-                        w.DepartmentId == departmentId)
+                        w.OrgUnitId == orgUnitId)
             .OrderByDescending(w => w.LastModifiedAt)
             .ToListAsync(cancellationToken);
     }
 
     /// <inheritdoc />
-    public async Task<(IReadOnlyList<StudentWork> Items, int TotalCount)> GetByDepartmentPagedAsync(
-        int departmentId,
-        int academicYearId,
+    public async Task<(IReadOnlyList<StudentWork> Items, int TotalCount)> GetByOrgUnitPagedAsync(
+        int orgUnitId,
+        int semesterId,
         int skip = 0,
         int take = 50,
         CancellationToken cancellationToken = default)
@@ -156,8 +179,8 @@ public sealed class StudentWorkRepository : RepositoryBase<StudentWork, long>, I
         var query = Context.StudentWorks
             .AsNoTracking()
             .Include(w => w.Participants)
-            .Where(w => w.DepartmentId == departmentId &&
-                        w.AcademicYearId == academicYearId);
+            .Where(w => w.OrgUnitId == orgUnitId &&
+                        w.SemesterId == semesterId);
 
         var totalCount = await query.CountAsync(cancellationToken);
 
@@ -173,7 +196,7 @@ public sealed class StudentWorkRepository : RepositoryBase<StudentWork, long>, I
     /// <inheritdoc />
     public async Task<(IReadOnlyList<StudentWork> Items, int TotalCount)> GetByStatePagedAsync(
         int stateId,
-        int departmentId,
+        int orgUnitId,
         int skip = 0,
         int take = 50,
         CancellationToken cancellationToken = default)
@@ -182,7 +205,7 @@ public sealed class StudentWorkRepository : RepositoryBase<StudentWork, long>, I
             .AsNoTracking()
             .Include(w => w.Participants)
             .Where(w => w.CurrentStateId == stateId &&
-                        w.DepartmentId == departmentId);
+                        w.OrgUnitId == orgUnitId);
 
         var totalCount = await query.CountAsync(cancellationToken);
 
@@ -193,6 +216,14 @@ public sealed class StudentWorkRepository : RepositoryBase<StudentWork, long>, I
             .ToListAsync(cancellationToken);
 
         return (items, totalCount);
+    }
+
+    /// <inheritdoc />
+    public async Task<bool> ExistsByTopicIdAsync(long topicId, CancellationToken cancellationToken = default)
+    {
+        return await Context.StudentWorks
+            .AsNoTracking()
+            .AnyAsync(w => w.TopicId == topicId, cancellationToken);
     }
 
     /// <inheritdoc />

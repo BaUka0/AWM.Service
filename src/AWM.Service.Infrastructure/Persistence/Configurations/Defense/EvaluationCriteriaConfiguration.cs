@@ -3,8 +3,8 @@ namespace AWM.Service.Infrastructure.Persistence.Configurations.Defense;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using AWM.Service.Domain.Defense.Entities;
+using AWM.Service.Domain.University;
 using AWM.Service.Domain.Wf.Entities;
-using AWM.Service.Domain.Org.Entities;
 using AWM.Service.Infrastructure.Persistence.Configurations.Base;
 
 /// <summary>
@@ -25,7 +25,11 @@ public class EvaluationCriteriaConfiguration : SoftDeletableEntityConfiguration<
         builder.Property(e => e.WorkTypeId)
             .IsRequired();
 
-        builder.Property(e => e.DepartmentId);
+        builder.Property(e => e.OrgUnitId)
+            .HasColumnName("OrgUnitId");
+
+        builder.Property(e => e.SpecialityId)
+            .HasColumnName("SpecialityId");
 
         builder.Property(e => e.CriteriaName)
             .IsRequired()
@@ -39,17 +43,29 @@ public class EvaluationCriteriaConfiguration : SoftDeletableEntityConfiguration<
             .HasColumnType("decimal(5,2)")
             .HasDefaultValue(1.0m);
 
-        // Foreign keys
+        builder.Property(e => e.DefenseStageType)
+            .HasColumnName("DefenseStageType");
+
+        builder.Property(e => e.SortOrder)
+            .IsRequired()
+            .HasDefaultValue(0);
+
         builder.HasOne<WorkType>()
             .WithMany()
             .HasForeignKey(e => e.WorkTypeId)
-            .HasConstraintName("FK_Criteria_WorkType")
+            .HasConstraintName("FK_Crit_Type")
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne<Department>()
+        builder.HasOne<OrgUnit>()
             .WithMany()
-            .HasForeignKey(e => e.DepartmentId)
-            .HasConstraintName("FK_Criteria_Dept")
+            .HasForeignKey(e => e.OrgUnitId)
+            .HasConstraintName("FK_Crit_Dept")
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne<Speciality>()
+            .WithMany()
+            .HasForeignKey(e => e.SpecialityId)
+            .HasConstraintName("FK_Crit_Speciality")
             .OnDelete(DeleteBehavior.Restrict);
     }
 }

@@ -1,60 +1,65 @@
 namespace AWM.Service.Infrastructure.FileStorage;
 
+using System;
+using System.IO;
 using System.Security.Cryptography;
+using System.Threading;
+using System.Threading.Tasks;
+using Amazon;
+using Amazon.S3;
+using Amazon.S3.Model;
+using AWM.Service.Domain.Common;
 using AWM.Service.Domain.Thesis.Service;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 /// <summary>
-/// AWS S3 implementation of IAttachmentService.
+/// AWS S3 / MinIO implementation of IAttachmentService.
 /// Configured via the "FileStorage:S3" section in appsettings.json:
-/// <code>
-/// "FileStorage": {
-///   "S3": {
-///     "BucketName": "awm-attachments",
-///     "Region":     "us-east-1",
-///     "KeyPrefix":  "attachments/"
-///   }
-/// }
-/// </code>
-///
-/// NuGet dependency required (not yet added to project):
-///   AWSSDK.S3 (Amazon.S3)
-///
-/// To activate, replace the LocalFileStorageService registration in
-/// DependencyInjection.cs with:
-///   services.AddScoped&lt;IAttachmentService, S3FileStorageService&gt;();
 /// </summary>
 public sealed class S3FileStorageService : IAttachmentService
 {
-    // ──────────────────────────────────────────────────────────────────────────
-    // Configuration keys
-    // ──────────────────────────────────────────────────────────────────────────
     private readonly string _bucketName;
     private readonly string _keyPrefix;
-
-    // Kept as object to avoid a hard compile-time dependency on AWSSDK.S3.
-    // Replace with IAmazonS3 once the NuGet package is installed.
-    private readonly object _s3Client;
-
+    private readonly IAmazonS3 _s3Client;
     private readonly ILogger<S3FileStorageService> _logger;
 
-    public S3FileStorageService(IConfiguration configuration, ILogger<S3FileStorageService> logger)
+    public S3FileStorageService(IOptions<StorageSettings> storageOptions, ILogger<S3FileStorageService> logger)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
-        _bucketName = configuration["FileStorage:S3:BucketName"]
-            ?? throw new InvalidOperationException("FileStorage:S3:BucketName is not configured.");
+        var settings = storageOptions?.Value?.S3
+            ?? throw new InvalidOperationException("FileStorage:S3 settings are not configured.");
 
-        _keyPrefix = configuration["FileStorage:S3:KeyPrefix"] ?? "attachments/";
+        _bucketName = settings.BucketName;
+        if (string.IsNullOrWhiteSpace(_bucketName))
+        {
+            throw new InvalidOperationException("FileStorage:S3:BucketName is not configured.");
+        }
 
-        // ── Uncomment once AWSSDK.S3 is installed ────────────────────────────
-        // var region = RegionEndpoint.GetBySystemName(
-        //     configuration["FileStorage:S3:Region"] ?? "us-east-1");
-        // _s3Client = new AmazonS3Client(region);
-        // ─────────────────────────────────────────────────────────────────────
+        _keyPrefix = settings.KeyPrefix ?? "attachments/";
 
-        _s3Client = new object(); // placeholder — remove when SDK is added
+        var config = new AmazonS3Config();
+
+        if (!string.IsNullOrWhiteSpace(settings.ServiceUrl))
+        {
+            config.ServiceURL = settings.ServiceUrl;
+            config.ForcePathStyle = settings.ForcePathStyle;
+        }
+        else
+        {
+            config.RegionEndpoint = RegionEndpoint.GetBySystemName(
+                string.IsNullOrWhiteSpace(settings.Region) ? "us-east-1" : settings.Region);
+        }
+
+        if (!string.IsNullOrWhiteSpace(settings.AccessKey) && !string.IsNullOrWhiteSpace(settings.SecretKey))
+        {
+            _s3Client = new AmazonS3Client(settings.AccessKey, settings.SecretKey, config);
+        }
+        else
+        {
+            _s3Client = new AmazonS3Client(config);
+        }
     }
 
     /// <inheritdoc />
@@ -72,20 +77,16 @@ public sealed class S3FileStorageService : IAttachmentService
 
         _logger.LogInformation("Uploading attachment to S3 bucket '{Bucket}' with key '{Key}'", _bucketName, key);
 
-        // ── Uncomment once AWSSDK.S3 is installed ────────────────────────────
-        // var s3 = (IAmazonS3)_s3Client;
-        // var request = new PutObjectRequest
-        // {
-        //     BucketName  = _bucketName,
-        //     Key         = key,
-        //     InputStream = fileStream,
-        //     ContentType = contentType,
-        //     AutoCloseStream = false
-        // };
-        // await s3.PutObjectAsync(request, cancellationToken);
-        // ─────────────────────────────────────────────────────────────────────
+        var request = new PutObjectRequest
+        {
+            BucketName = _bucketName,
+            Key = key,
+            InputStream = fileStream,
+            ContentType = contentType,
+            AutoCloseStream = false
+        };
 
-        await Task.CompletedTask; // remove once SDK call above is enabled
+        await _s3Client.PutObjectAsync(request, cancellationToken);
         return key;
     }
 
@@ -96,12 +97,7 @@ public sealed class S3FileStorageService : IAttachmentService
 
         _logger.LogInformation("Deleting S3 object '{Key}' from bucket '{Bucket}'", fileStoragePath, _bucketName);
 
-        // ── Uncomment once AWSSDK.S3 is installed ────────────────────────────
-        // var s3 = (IAmazonS3)_s3Client;
-        // await s3.DeleteObjectAsync(_bucketName, fileStoragePath, cancellationToken);
-        // ─────────────────────────────────────────────────────────────────────
-
-        await Task.CompletedTask;
+        await _s3Client.DeleteObjectAsync(_bucketName, fileStoragePath, cancellationToken);
     }
 
     /// <inheritdoc />
@@ -111,15 +107,8 @@ public sealed class S3FileStorageService : IAttachmentService
 
         _logger.LogInformation("Downloading S3 object '{Key}' from bucket '{Bucket}'", fileStoragePath, _bucketName);
 
-        // ── Uncomment once AWSSDK.S3 is installed ────────────────────────────
-        // var s3 = (IAmazonS3)_s3Client;
-        // var response = await s3.GetObjectAsync(_bucketName, fileStoragePath, cancellationToken);
-        // return response.ResponseStream;
-        // ─────────────────────────────────────────────────────────────────────
-
-        await Task.CompletedTask;
-        throw new NotImplementedException("S3FileStorageService.GetAsync requires AWSSDK.S3. " +
-            "Install the 'AWSSDK.S3' NuGet package and uncomment the implementation above.");
+        var response = await _s3Client.GetObjectAsync(_bucketName, fileStoragePath, cancellationToken);
+        return response.ResponseStream;
     }
 
     /// <inheritdoc />
@@ -127,7 +116,10 @@ public sealed class S3FileStorageService : IAttachmentService
     {
         ArgumentNullException.ThrowIfNull(fileStream);
 
-        fileStream.Position = 0;
+        if (fileStream.CanSeek)
+        {
+            fileStream.Position = 0;
+        }
         var hashBytes = await SHA256.HashDataAsync(fileStream, cancellationToken);
         return Convert.ToHexString(hashBytes);
     }

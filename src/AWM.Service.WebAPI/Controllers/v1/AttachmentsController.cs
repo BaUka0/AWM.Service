@@ -1,205 +1,223 @@
-namespace AWM.Service.WebAPI.Controllers.v1;
-
-using AWM.Service.Application.Features.Thesis.Attachments.Commands.DeleteAttachment;
-using AWM.Service.Application.Features.Thesis.Attachments.Commands.UploadAttachment;
-using AWM.Service.Application.Features.Thesis.Attachments.Queries.GetAttachmentById;
-using AWM.Service.Application.Features.Thesis.Attachments.Queries.GetAttachmentsByWork;
-using AWM.Service.Domain.Thesis.Service;
-using AWM.Service.Domain.Auth.Enums;
+using AWM.Service.Application.Features.Workflow.Attachments.Commands.DeleteAttachment;
+using AWM.Service.Application.Features.Workflow.Attachments.Commands.UploadAttachment;
+using AWM.Service.Application.Features.Workflow.Attachments.Commands.UploadExpertDocument;
+using AWM.Service.Application.Features.Workflow.Attachments.Queries.DownloadAttachment;
+using AWM.Service.Application.Features.Workflow.Attachments.Queries.DownloadExpertDocument;
+using AWM.Service.Application.Features.Workflow.Attachments.Queries.GetWorkAttachments;
 using AWM.Service.WebAPI.Authorization;
-using AWM.Service.WebAPI.Common.Contracts.Requests.Thesis;
-using AWM.Service.WebAPI.Common.Contracts.Responses.Thesis;
+using AWM.Service.WebAPI.Common.Contracts.Requests.Attachments;
+using AWM.Service.WebAPI.Common.Contracts.Responses.Attachments;
 using Mapster;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace AWM.Service.WebAPI.Controllers.v1;
 
 /// <summary>
-/// Controller for managing file attachments of a student work.
+/// Controller for managing attachments and expert check documents for student works.
 /// </summary>
 [ApiVersion("1.0")]
-[Route("api/v{version:apiVersion}/works/{workId:long}/[controller]")]
+[Route("api/v{version:apiVersion}/student-works/{workId:long}/attachments")]
 [ApiController]
-[Produces("application/json")]
+[Authorize]
 public sealed class AttachmentsController : BaseController
 {
     private readonly ISender _sender;
-    private readonly IAttachmentService _attachmentService;
 
-    public AttachmentsController(ISender sender, IAttachmentService attachmentService)
+    public AttachmentsController(ISender sender)
     {
         _sender = sender;
-        _attachmentService = attachmentService ?? throw new ArgumentNullException(nameof(attachmentService));
     }
 
     /// <summary>
-    /// Get all attachments for a student work.
+    /// Gets all attachments for a specific student work.
     /// </summary>
     /// <param name="workId">Student work ID.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>List of attachments.</returns>
+    /// <returns>A list of attachments.</returns>
     [HttpGet]
-    [RequireDepartmentPermission(Permission.Attachments_Download)]
+    [RequireAccess("THESIS.ATTACHMENT", "Read")]
     [ProducesResponseType(typeof(IReadOnlyList<AttachmentResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> GetAll(long workId, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> GetWorkAttachments(long workId, CancellationToken cancellationToken)
     {
-        var query = new GetAttachmentsByWorkQuery { WorkId = workId };
-        var result = await _sender.Send(query, cancellationToken);
-
+        var result = await _sender.Send(new GetWorkAttachmentsQuery(workId), cancellationToken);
         if (result.IsFailed)
+        {
             return HandleResultError(result.Error);
+        }
 
         var response = result.Value.Adapt<IReadOnlyList<AttachmentResponse>>();
-
         return Ok(response);
     }
 
     /// <summary>
-    /// Get a specific attachment by ID.
+    /// Uploads a new attachment to a student work.
     /// </summary>
     /// <param name="workId">Student work ID.</param>
-    /// <param name="attachmentId">Attachment ID.</param>
+    /// <param name="request">The file and attachment type.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>Attachment metadata.</returns>
-    [HttpGet("{attachmentId:long}")]
-    [RequireDepartmentPermission(Permission.Attachments_Download)]
-    [ProducesResponseType(typeof(AttachmentResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> GetById(long workId, long attachmentId, CancellationToken cancellationToken = default)
-    {
-        var query = new GetAttachmentByIdQuery { WorkId = workId, AttachmentId = attachmentId };
-        var result = await _sender.Send(query, cancellationToken);
-
-        if (result.IsFailed)
-            return HandleResultError(result.Error);
-
-        var response = result.Value.Adapt<AttachmentResponse>();
-
-        return Ok(response);
-    }
-
-    /// <summary>
-    /// Upload a new file attachment to a student work (multipart/form-data).
-    /// </summary>
-    /// <param name="workId">Student work ID.</param>
-    /// <param name="request">Upload request with file and attachment type.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>ID of the created attachment.</returns>
+    /// <returns>The ID of the created attachment.</returns>
     [HttpPost]
-    [RequireDepartmentPermission(Permission.Attachments_Upload)]
-    [Consumes("multipart/form-data")]
-    [ProducesResponseType(typeof(long), StatusCodes.Status201Created)]
+    [RequireAccess("THESIS.ATTACHMENT", "Create")]
+    [ProducesResponseType(typeof(long), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> Upload(
+    public async Task<IActionResult> UploadAttachment(
         long workId,
         [FromForm] UploadAttachmentRequest request,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken)
     {
-        var command = request.Adapt<UploadAttachmentCommand>() with { WorkId = workId };
+        if (request.File == null || request.File.Length == 0)
+        {
+            return BadRequest("No file was uploaded.");
+        }
+
+        using var stream = request.File.OpenReadStream();
+        var command = new UploadAttachmentCommand(
+            workId,
+            request.AttachmentTypeId,
+            request.File.FileName,
+            request.File.ContentType,
+            request.File.Length,
+            stream
+        );
 
         var result = await _sender.Send(command, cancellationToken);
-
         if (result.IsFailed)
+        {
             return HandleResultError(result.Error);
+        }
 
-        return CreatedAtAction(
-            nameof(GetById),
-            new { workId, attachmentId = result.Value, version = "1.0" },
-            result.Value);
+        return Ok(result.Value);
     }
 
     /// <summary>
-    /// Download a file attachment (returns the raw file stream).
+    /// Downloads an attachment for a student work.
     /// </summary>
     /// <param name="workId">Student work ID.</param>
     /// <param name="attachmentId">Attachment ID.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>File stream with original content type.</returns>
+    /// <returns>The file stream.</returns>
     [HttpGet("{attachmentId:long}/download")]
-    [RequireDepartmentPermission(Permission.Attachments_Download)]
+    [RequireAccess("THESIS.ATTACHMENT", "Read")]
     [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> Download(
-        long workId,
-        long attachmentId,
-        CancellationToken cancellationToken = default)
+    public async Task<IActionResult> DownloadAttachment(long workId, long attachmentId, CancellationToken cancellationToken)
     {
-        // Resolve metadata first
-        var query = new GetAttachmentByIdQuery { WorkId = workId, AttachmentId = attachmentId };
-        var metaResult = await _sender.Send(query, cancellationToken);
-
-        if (metaResult.IsFailed)
-            return HandleResultError(metaResult.Error);
-
-        var dto = metaResult.Value;
-
-        try
+        var result = await _sender.Send(new DownloadAttachmentQuery(workId, attachmentId), cancellationToken);
+        if (result.IsFailed)
         {
-            var stream = await _attachmentService.GetAsync(dto.FileStoragePath, cancellationToken);
-
-            var contentType = GetContentType(dto.FileName);
-            var downloadName = dto.FileName;
-
-            return File(stream, contentType, downloadName);
+            return HandleResultError(result.Error);
         }
-        catch (FileNotFoundException)
-        {
-            return NotFound(new { Code = "404", Message = $"Physical file not found for attachment {attachmentId}." });
-        }
+
+        var dto = result.Value;
+        return File(dto.FileStream, dto.ContentType, dto.FileName);
     }
 
     /// <summary>
-    /// Delete a file attachment from a student work.
+    /// Deletes an attachment from a student work.
     /// </summary>
     /// <param name="workId">Student work ID.</param>
     /// <param name="attachmentId">Attachment ID.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>No content on success.</returns>
+    /// <returns>No content status.</returns>
     [HttpDelete("{attachmentId:long}")]
-    [RequireDepartmentPermission(Permission.Attachments_Delete)]
+    [RequireAccess("THESIS.ATTACHMENT", "Delete")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> Delete(
-        long workId,
-        long attachmentId,
-        CancellationToken cancellationToken = default)
+    public async Task<IActionResult> DeleteAttachment(long workId, long attachmentId, CancellationToken cancellationToken)
     {
-        var command = new DeleteAttachmentCommand { WorkId = workId, AttachmentId = attachmentId };
-        var result = await _sender.Send(command, cancellationToken);
-
+        var result = await _sender.Send(new DeleteAttachmentCommand(workId, attachmentId), cancellationToken);
         if (result.IsFailed)
+        {
             return HandleResultError(result.Error);
+        }
 
         return NoContent();
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Helpers
-    // ─────────────────────────────────────────────────────────────────────────
-
-    private static string GetContentType(string fileName)
+    /// <summary>
+    /// Uploads an expert document linked to a quality check.
+    /// </summary>
+    /// <param name="workId">Student work ID.</param>
+    /// <param name="checkId">Quality check ID.</param>
+    /// <param name="request">The file and attachment type.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The ID of the created attachment.</returns>
+    [HttpPost("quality-checks/{checkId:long}/document")]
+    [RequireAccess("THESIS.CHECK", "Update")]
+    [ProducesResponseType(typeof(long), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UploadExpertDocument(
+        long workId,
+        long checkId,
+        [FromForm] UploadExpertDocumentRequest request,
+        CancellationToken cancellationToken)
     {
-        var extension = Path.GetExtension(fileName).ToLowerInvariant();
-        return extension switch
+        if (request.File == null || request.File.Length == 0)
         {
-            ".pdf" => "application/pdf",
-            ".doc" => "application/msword",
-            ".docx" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            ".ppt" => "application/vnd.ms-powerpoint",
-            ".pptx" => "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-            ".zip" => "application/zip",
-            ".rar" => "application/x-rar-compressed",
-            ".7z" => "application/x-7z-compressed",
-            ".png" => "image/png",
-            ".jpg" => "image/jpeg",
-            ".jpeg" => "image/jpeg",
-            _ => "application/octet-stream"
-        };
+            return BadRequest("No file was uploaded.");
+        }
+
+        using var stream = request.File.OpenReadStream();
+        var command = new UploadExpertDocumentCommand(
+            workId,
+            checkId,
+            request.AttachmentTypeId,
+            request.File.FileName,
+            request.File.ContentType,
+            request.File.Length,
+            stream
+        );
+
+        var result = await _sender.Send(command, cancellationToken);
+        if (result.IsFailed)
+        {
+            return HandleResultError(result.Error);
+        }
+
+        return Ok(result.Value);
+    }
+
+    /// <summary>
+    /// Downloads an expert document linked to a quality check.
+    /// </summary>
+    /// <param name="workId">Student work ID.</param>
+    /// <param name="checkId">Quality check ID.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The file stream.</returns>
+    [HttpGet("quality-checks/{checkId:long}/document")]
+    [RequireAccess("THESIS.CHECK", "Read")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DownloadExpertDocument(long workId, long checkId, CancellationToken cancellationToken)
+    {
+        var result = await _sender.Send(new DownloadExpertDocumentQuery(workId, checkId), cancellationToken);
+        if (result.IsFailed)
+        {
+            return HandleResultError(result.Error);
+        }
+
+        var dto = result.Value;
+        return File(dto.FileStream, dto.ContentType, dto.FileName);
     }
 }

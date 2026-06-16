@@ -11,9 +11,8 @@ using AWM.Service.Domain.Wf.Entities;
 /// </summary>
 public class Direction : AggregateRoot<long>, IAuditable, ISoftDeletable
 {
-    public int DepartmentId { get; private set; }
-    public int SupervisorId { get; private set; }
-    public int AcademicYearId { get; private set; }
+    public int OrgUnitId { get; private set; }
+    public int SemesterId { get; private set; }
     public int WorkTypeId { get; private set; }
 
     public string TitleRu { get; private set; } = null!;
@@ -44,9 +43,9 @@ public class Direction : AggregateRoot<long>, IAuditable, ISoftDeletable
     private Direction() { }
 
     public Direction(
-        int departmentId,
-        int supervisorId,
-        int academicYearId,
+        int orgUnitId,
+        int createdByUserId,
+        int semesterId,
         int workTypeId,
         string titleRu,
         int draftStateId,
@@ -57,11 +56,10 @@ public class Direction : AggregateRoot<long>, IAuditable, ISoftDeletable
         string? descriptionEn = null)
     {
         if (string.IsNullOrWhiteSpace(titleRu))
-            throw new ArgumentException("Russian title is required.", nameof(titleRu));
+            throw new DomainException("Direction.TitleRuRequired", "Russian title is required.");
 
-        DepartmentId = departmentId;
-        SupervisorId = supervisorId;
-        AcademicYearId = academicYearId;
+        OrgUnitId = orgUnitId;
+        SemesterId = semesterId;
         WorkTypeId = workTypeId;
         TitleRu = titleRu;
         TitleKz = titleKz;
@@ -71,12 +69,20 @@ public class Direction : AggregateRoot<long>, IAuditable, ISoftDeletable
         DescriptionEn = descriptionEn;
         CurrentStateId = draftStateId;
         CreatedAt = DateTime.UtcNow;
-        CreatedBy = supervisorId;
+        CreatedBy = createdByUserId;
         LastModifiedAt = CreatedAt;
-        LastModifiedBy = supervisorId;
+        LastModifiedBy = createdByUserId;
         IsDeleted = false;
 
-        RaiseDomainEvent(new DirectionCreatedEvent(Id, supervisorId, departmentId));
+    }
+
+    /// <summary>
+    /// Raises the DirectionCreatedEvent. Must be called after the entity is persisted
+    /// and has a valid Id assigned by the database.
+    /// </summary>
+    public void RaiseCreatedEvent()
+    {
+        RaiseDomainEvent(new DirectionCreatedEvent(Id, CreatedBy, OrgUnitId));
     }
 
     /// <summary>
@@ -99,7 +105,7 @@ public class Direction : AggregateRoot<long>, IAuditable, ISoftDeletable
         string? descriptionEn)
     {
         if (string.IsNullOrWhiteSpace(titleRu))
-            throw new ArgumentException("Russian title is required.", nameof(titleRu));
+            throw new DomainException("Direction.TitleRuRequired", "Russian title is required.");
 
         TitleRu = titleRu;
         TitleKz = titleKz;
@@ -136,7 +142,7 @@ public class Direction : AggregateRoot<long>, IAuditable, ISoftDeletable
     /// <summary>
     /// Rejects the direction.
     /// </summary>
-    public void Reject(int rejectedStateId, int reviewedBy, string? comment = null)
+    public void Reject(int rejectedStateId, int reviewedBy, string comment)
     {
         CurrentStateId = rejectedStateId;
         ReviewedAt = DateTime.UtcNow;
@@ -152,7 +158,7 @@ public class Direction : AggregateRoot<long>, IAuditable, ISoftDeletable
     public void RequestRevision(int revisionStateId, int reviewedBy, string comment)
     {
         if (string.IsNullOrWhiteSpace(comment))
-            throw new ArgumentException("Comment is required for revision request.", nameof(comment));
+            throw new DomainException("Direction.RevisionCommentRequired", "Comment is required for revision request.");
 
         CurrentStateId = revisionStateId;
         ReviewedAt = DateTime.UtcNow;

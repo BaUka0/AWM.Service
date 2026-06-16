@@ -41,7 +41,6 @@ public sealed class LocalFileStorageService : IAttachmentService
         ArgumentException.ThrowIfNullOrWhiteSpace(fileName);
         ArgumentNullException.ThrowIfNull(fileStream);
 
-        // Build a unique path: uploads/{year}/{month}/{guid}{ext}
         var extension = Path.GetExtension(fileName).ToLowerInvariant();
         var relativePath = Path.Combine(
             DateTime.UtcNow.Year.ToString(),
@@ -56,7 +55,6 @@ public sealed class LocalFileStorageService : IAttachmentService
 
         _logger.LogInformation("Saved attachment to local path: {RelativePath}", relativePath);
 
-        // Return the relative path as the storage key
         return relativePath.Replace(Path.DirectorySeparatorChar, '/');
     }
 

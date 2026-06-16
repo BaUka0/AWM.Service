@@ -26,7 +26,7 @@ public class State : Entity<int>, IAuditable, ISoftDeletable
     public State(int workTypeId, string systemName, int createdBy = 0, string? displayName = null, bool isFinal = false)
     {
         if (string.IsNullOrWhiteSpace(systemName))
-            throw new ArgumentException("System name is required.", nameof(systemName));
+            throw new DomainException("State.SystemNameRequired", "System name is required.");
 
         WorkTypeId = workTypeId;
         SystemName = systemName;
@@ -87,14 +87,36 @@ public static class DirectionStates
 public static class WorkStates
 {
     public const string Draft = "Draft";
-    public const string OnReview = "OnReview";
-    public const string NormControl = "NormControl";
-    public const string SoftwareCheck = "SoftwareCheck";
-    public const string AntiPlagiarism = "AntiPlagiarism";
-    public const string PreDefense1 = "PreDefense1";
-    public const string PreDefense2 = "PreDefense2";
-    public const string PreDefense3 = "PreDefense3";
+
+    public const string PreDefense1WaitingForFiles = "PreDefense1.WaitingForFiles";
+    public const string PreDefense1WaitingForSchedule = "PreDefense1.WaitingForSchedule";
+    public const string PreDefense1Scheduled = "PreDefense1.Scheduled";
+    public const string PreDefense1Passed = "PreDefense1.Passed";
+    public const string PreDefense1Failed = "PreDefense1.Failed";
+
+    public const string PreDefense2WaitingForFiles = "PreDefense2.WaitingForFiles";
+    public const string PreDefense2WaitingForSchedule = "PreDefense2.WaitingForSchedule";
+    public const string PreDefense2Scheduled = "PreDefense2.Scheduled";
+    public const string PreDefense2Passed = "PreDefense2.Passed";
+    public const string PreDefense2Failed = "PreDefense2.Failed";
+
+    public const string PreDefense3WaitingForFiles = "PreDefense3.WaitingForFiles";
+    public const string PreDefense3WaitingForSchedule = "PreDefense3.WaitingForSchedule";
+    public const string PreDefense3Scheduled = "PreDefense3.Scheduled";
+    public const string PreDefense3Passed = "PreDefense3.Passed";
+    public const string PreDefense3Failed = "PreDefense3.Failed";
+
+    public const string ChecksWaitingForInitial = "Checks.WaitingForInitial";
+    public const string ChecksWaitingForAntiPlagiarism = "Checks.WaitingForAntiPlagiarism";
+    public const string ReviewsWaitingForSupervisor = "Reviews.WaitingForSupervisor";
+    public const string ReviewsWaitingForReviewer = "Reviews.WaitingForReviewer";
+
     public const string ReadyForDefense = "ReadyForDefense";
+    public const string DefenseWaitingForSchedule = "Defense.WaitingForSchedule";
+    public const string DefenseScheduled = "Defense.Scheduled";
     public const string Defended = "Defended";
+    public const string Graduated = "Graduated";
+    public const string DefenseFailed = "Defense.Failed";
+
     public const string Cancelled = "Cancelled";
 }

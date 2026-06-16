@@ -3,7 +3,7 @@ namespace AWM.Service.Infrastructure.Persistence.Configurations.Defense;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using AWM.Service.Domain.Defense.Entities;
-using AWM.Service.Domain.Auth.Entities;
+using AWM.Service.Domain.University;
 using AWM.Service.Infrastructure.Persistence.Configurations.Base;
 
 /// <summary>
@@ -28,6 +28,7 @@ public class ProtocolConfiguration : SoftDeletableEntityConfiguration<Protocol, 
             .IsRequired();
 
         builder.Property(e => e.SessionDate)
+            .HasColumnName("ProtocolDate")
             .IsRequired()
             .HasColumnType("datetime2");
 
@@ -35,6 +36,7 @@ public class ProtocolConfiguration : SoftDeletableEntityConfiguration<Protocol, 
             .HasMaxLength(500);
 
         builder.Property(e => e.IsFinalized)
+            .HasColumnName("IsSigned")
             .IsRequired()
             .HasDefaultValue(false);
 
@@ -43,7 +45,24 @@ public class ProtocolConfiguration : SoftDeletableEntityConfiguration<Protocol, 
         builder.Property(e => e.FinalizedAt)
             .HasColumnType("datetime2");
 
-        // Foreign keys
+        builder.Property(e => e.FinalScoreNumeric)
+            .HasColumnType("decimal(5,2)");
+
+        builder.Property(e => e.FinalGradeLetter)
+            .HasMaxLength(5);
+
+        builder.Property(e => e.Decision)
+            .HasColumnType("nvarchar(max)");
+
+        builder.Property(e => e.DecisionType)
+            .HasColumnName("DecisionType");
+
+        builder.Property(e => e.ReadinessPercent)
+            .HasColumnName("ReadinessPercent");
+
+        builder.Property(e => e.ProtocolNumber)
+            .HasMaxLength(50);
+
         builder.HasOne<Schedule>()
             .WithMany()
             .HasForeignKey(e => e.ScheduleId)
@@ -62,9 +81,9 @@ public class ProtocolConfiguration : SoftDeletableEntityConfiguration<Protocol, 
             .HasConstraintName("FK_Protocols_Finalizer")
             .OnDelete(DeleteBehavior.Restrict);
 
-        // Unique constraint - one protocol per schedule
         builder.HasIndex(e => e.ScheduleId)
             .IsUnique()
+            .HasFilter("[IsDeleted] = 0")
             .HasDatabaseName("UQ_Protocol_Schedule");
     }
 }

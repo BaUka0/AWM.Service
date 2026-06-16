@@ -1,89 +1,80 @@
 namespace AWM.Service.Infrastructure.Persistence;
 
 using Microsoft.EntityFrameworkCore;
-
-// Org
-using AWM.Service.Domain.Org.Entities;
-
-// Common
-using AWM.Service.Domain.CommonDomain.Entities;
-
-// Auth
-using AWM.Service.Domain.Auth.Entities;
-
-// Edu
-using AWM.Service.Domain.Edu.Entities;
-
-// Wf
-using AWM.Service.Domain.Wf.Entities;
-
-// Thesis
 using AWM.Service.Domain.Thesis.Entities;
-
-// Defense
 using AWM.Service.Domain.Defense.Entities;
+using AWM.Service.Domain.Auth.Entities;
+using AWM.Service.Domain.Auth.ViewModels;
+using AWM.Service.Domain.CommonDomain.Entities;
+using AWM.Service.Domain.Wf.Entities;
+using AWM.Service.Infrastructure.Persistence.Interceptors;
+using AWM.Service.Domain.University;
 
-/// <summary>
-/// Main application DbContext for EF Core.
-/// Contains all entity DbSets organized by schema.
-/// </summary>
-public sealed class ApplicationDbContext : DbContext
+public class ApplicationDbContext : DbContext
 {
-    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
-        : base(options)
+    private readonly AuditableEntityInterceptor _auditableInterceptor;
+
+    public ApplicationDbContext(
+        DbContextOptions<ApplicationDbContext> options,
+        AuditableEntityInterceptor auditableInterceptor) : base(options)
     {
+        _auditableInterceptor = auditableInterceptor;
     }
 
-    #region Org Schema
-    public DbSet<University> Universities => Set<University>();
-    public DbSet<Institute> Institutes => Set<Institute>();
-    public DbSet<Department> Departments => Set<Department>();
+    #region University Schema (Read-Only)
+    public DbSet<User> Users => Set<User>();
+    public DbSet<Student> Students => Set<Student>();
+    public DbSet<Employee> Employees => Set<Employee>();
+    public DbSet<OrgUnit> OrgUnits => Set<OrgUnit>();
+    public DbSet<Position> Positions => Set<Position>();
+    public DbSet<EmployeePosition> EmployeePositions => Set<EmployeePosition>();
+    public DbSet<Speciality> Specialities => Set<Speciality>();
+    public DbSet<Semester> Semesters => Set<Semester>();
+    #endregion
+
+    #region Auth Schema (RBAC+)
+    public DbSet<LocalAccount> LocalAccounts => Set<LocalAccount>();
+    public DbSet<RoleOperation> RoleOperations => Set<RoleOperation>();
+    public DbSet<RoleOperationAction> RoleOperationActions => Set<RoleOperationAction>();
+    public DbSet<RoleActionType> RoleActionTypes => Set<RoleActionType>();
+    public DbSet<RoleAccess> RoleAccesses => Set<RoleAccess>();
+    public DbSet<UserAccess> UserAccesses => Set<UserAccess>();
+    public DbSet<UserAccessHistory> UserAccessHistories => Set<UserAccessHistory>();
     #endregion
 
     #region Common Schema
-    public DbSet<AcademicYear> AcademicYears => Set<AcademicYear>();
-    public DbSet<Period> Periods => Set<Period>();
-    public DbSet<NotificationTemplate> NotificationTemplates => Set<NotificationTemplate>();
+    public DbSet<WorkflowStage> WorkflowStages => Set<WorkflowStage>();
+    public DbSet<Stage> Stages => Set<Stage>();
+    public DbSet<StaffAssignment> StaffAssignments => Set<StaffAssignment>();
     public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<NotificationTemplate> NotificationTemplates => Set<NotificationTemplate>();
     #endregion
 
-    #region Auth Schema
-    public DbSet<User> Users => Set<User>();
-    public DbSet<Role> Roles => Set<Role>();
-    public DbSet<UserRoleAssignment> UserRoleAssignments => Set<UserRoleAssignment>();
-    #endregion
-
-    #region Edu Schema
-    public DbSet<DegreeLevel> DegreeLevels => Set<DegreeLevel>();
-    public DbSet<AcademicProgram> AcademicPrograms => Set<AcademicProgram>();
-    public DbSet<Student> Students => Set<Student>();
-    public DbSet<Staff> Staff => Set<Staff>();
-    #endregion
-
-    #region Wf Schema
+    #region Workflow (Wf) Schema
     public DbSet<WorkType> WorkTypes => Set<WorkType>();
     public DbSet<State> States => Set<State>();
     public DbSet<Transition> Transitions => Set<Transition>();
     #endregion
 
     #region Thesis Schema
-    public DbSet<Direction> Directions => Set<Direction>();
     public DbSet<Topic> Topics => Set<Topic>();
     public DbSet<TopicApplication> TopicApplications => Set<TopicApplication>();
     public DbSet<StudentWork> StudentWorks => Set<StudentWork>();
     public DbSet<WorkParticipant> WorkParticipants => Set<WorkParticipant>();
+    public DbSet<WorkflowHistory> WorkflowHistory => Set<WorkflowHistory>();
     public DbSet<Attachment> Attachments => Set<Attachment>();
-    public DbSet<WorkflowHistory> WorkflowHistories => Set<WorkflowHistory>();
     public DbSet<QualityCheck> QualityChecks => Set<QualityCheck>();
-    public DbSet<Expert> Experts => Set<Expert>();
+    public DbSet<WorkReview> WorkReviews => Set<WorkReview>();
     public DbSet<Reviewer> Reviewers => Set<Reviewer>();
-    public DbSet<Review> Reviews => Set<Review>();
-    public DbSet<SupervisorReview> SupervisorReviews => Set<SupervisorReview>();
+    public DbSet<Direction> Directions => Set<Direction>();
+
+    public DbSet<AttachmentType> AttachmentTypes => Set<AttachmentType>();
+    public DbSet<CheckType> CheckTypes => Set<CheckType>();
+    public DbSet<SpecialityCheckType> SpecialityCheckTypes => Set<SpecialityCheckType>();
     #endregion
 
     #region Defense Schema
     public DbSet<Commission> Commissions => Set<Commission>();
-    public DbSet<CommissionMember> CommissionMembers => Set<CommissionMember>();
     public DbSet<Schedule> Schedules => Set<Schedule>();
     public DbSet<PreDefenseAttempt> PreDefenseAttempts => Set<PreDefenseAttempt>();
     public DbSet<EvaluationCriteria> EvaluationCriteria => Set<EvaluationCriteria>();
@@ -95,7 +86,28 @@ public sealed class ApplicationDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        // Apply all configurations from the current assembly
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
+
+        foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+        {
+            if (typeof(Domain.Common.ISoftDeletable).IsAssignableFrom(entityType.ClrType))
+            {
+                var parameter = System.Linq.Expressions.Expression.Parameter(entityType.ClrType, "e");
+                var property = System.Linq.Expressions.Expression.Property(parameter, nameof(Domain.Common.ISoftDeletable.IsDeleted));
+                var condition = System.Linq.Expressions.Expression.Equal(property, System.Linq.Expressions.Expression.Constant(false));
+                var lambda = System.Linq.Expressions.Expression.Lambda(condition, parameter);
+
+                modelBuilder.Entity(entityType.ClrType).HasQueryFilter(lambda);
+            }
+        }
+
+        modelBuilder.Entity<UserAccessMatrix>().HasNoKey().ToView("UserAccessMatrix", "Auth");
+        modelBuilder.Entity<RoleAccessMatrix>().HasNoKey().ToView("RoleAccessMatrix", "Auth");
+        modelBuilder.Entity<ReducedUserAccessMatrix>().HasNoKey().ToView("ReducedUserAccessMatrix", "Auth");
+    }
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        optionsBuilder.AddInterceptors(_auditableInterceptor);
     }
 }

@@ -1,4 +1,4 @@
-﻿using AWM.Service.Application.Features.Auth.Commands.Login;
+using AWM.Service.Application.Features.Auth.Commands.Login;
 using AWM.Service.WebAPI.Common.Contracts.Requests;
 using AWM.Service.WebAPI.Common.Contracts.Responses;
 using AWM.Service.Application.Features.Auth.Commands.Register;
@@ -17,6 +17,7 @@ namespace AWM.Service.WebAPI.Controllers.v1;
 [Route("api/v{version:apiVersion}/[controller]")]
 [ApiController]
 [AllowAnonymous]
+[Microsoft.AspNetCore.RateLimiting.EnableRateLimiting("AuthLimiter")]
 public sealed class AuthController : BaseController
 {
     private readonly ISender _sender;

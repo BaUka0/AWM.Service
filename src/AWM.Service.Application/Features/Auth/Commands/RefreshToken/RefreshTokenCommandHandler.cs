@@ -1,84 +1,79 @@
 using AWM.Service.Application.Features.Auth.DTOs;
 using AWM.Service.Domain.Auth.Interfaces;
+using AWM.Service.Domain.Auth.Repositories;
 using AWM.Service.Domain.Repositories;
+using AWM.Service.Domain.Common;
 using KDS.Primitives.FluentResult;
 using MediatR;
 
 namespace AWM.Service.Application.Features.Auth.Commands.RefreshToken;
 
-/// <summary>
-/// Handler for RefreshTokenCommand.
-/// Validates the refresh token and generates new access and refresh tokens.
-/// </summary>
 public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, Result<AuthResult>>
 {
     private readonly IUserRepository _userRepository;
+    private readonly ILocalAccountRepository _localAccountRepository;
+    private readonly IUserAccessRepository _userAccessRepository;
+    private readonly IRoleAccessRepository _roleAccessRepository;
     private readonly IJwtTokenService _jwtTokenService;
     private readonly IUnitOfWork _unitOfWork;
 
     public RefreshTokenCommandHandler(
         IUserRepository userRepository,
+        ILocalAccountRepository localAccountRepository,
+        IUserAccessRepository userAccessRepository,
+        IRoleAccessRepository roleAccessRepository,
         IJwtTokenService jwtTokenService,
         IUnitOfWork unitOfWork)
     {
         _userRepository = userRepository;
+        _localAccountRepository = localAccountRepository;
+        _userAccessRepository = userAccessRepository;
+        _roleAccessRepository = roleAccessRepository;
         _jwtTokenService = jwtTokenService;
         _unitOfWork = unitOfWork;
     }
 
     public async Task<Result<AuthResult>> Handle(RefreshTokenCommand request, CancellationToken cancellationToken)
     {
-        // 1. Find user by refresh token (with role assignments for context resolution)
-        var user = await _userRepository.GetByRefreshTokenAsync(request.RefreshToken, cancellationToken);
-
-        if (user is null)
+        var localAccount = await _localAccountRepository.GetByRefreshTokenAsync(request.RefreshToken, cancellationToken);
+        if (localAccount == null || !localAccount.IsActive)
         {
-            return Result.Failure<AuthResult>(new Error("401", "Недействительный токен обновления."));
+            return Result.Failure<AuthResult>(new Error(ErrorCodes.AuthInvalidRefreshToken, "Неверный или неактивный токен восстановления."));
         }
 
-        // 2. Add extra validation
-        if (!user.IsActive || user.IsDeleted)
+        if (localAccount.RefreshTokenExpiryTime <= DateTime.UtcNow)
         {
-            return Result.Failure<AuthResult>(new Error("401", "Учетная запись деактивирована или удалена."));
+            return Result.Failure<AuthResult>(new Error(ErrorCodes.AuthInvalidRefreshToken, "Срок действия токена восстановления истек."));
         }
 
-        if (user.RefreshTokenExpiryTime < DateTime.UtcNow)
+        var user = await _userRepository.GetByIdAsync(localAccount.UserId, cancellationToken);
+        if (user == null)
         {
-            // Token is expired. We should revoke it for security.
-            user.RevokeRefreshToken();
-            await _userRepository.UpdateAsync(user, cancellationToken);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
-            return Result.Failure<AuthResult>(new Error("401", "Срок действия токена обновления истек. Пожалуйста, выполните вход заново."));
+            return Result.Failure<AuthResult>(new Error(ErrorCodes.AuthUserNotFound, "Пользователь не найден."));
         }
 
-        // 3. Load user with role assignments for context resolution
-        var userWithRoles = await _userRepository.GetWithRoleAssignmentsAsync(user.Id, cancellationToken);
+        var userAccesses = await _userAccessRepository.GetByUserIdAsync(user.Id, cancellationToken);
+        var allRoles = await _roleAccessRepository.GetAllAsync(cancellationToken);
+        var userRoleIds = userAccesses.Select(ua => ua.RoleAccessId).ToHashSet();
+        var roles = allRoles.Where(r => userRoleIds.Contains(r.Id)).Select(r => r.Code).ToList();
 
-        // 4. Get user roles (use Role.SystemName if available, otherwise fall back to RoleId)
-        var roles = (userWithRoles ?? user).RoleAssignments
-            .Where(ra => ra.IsCurrentlyValid())
-            .Select(ra => ra.Role?.SystemName ?? ra.RoleId.ToString())
-            .Distinct()
-            .ToList();
-
-        // 5. Generate new tokens
         var token = _jwtTokenService.GenerateToken(user, roles);
-        var newRefreshTokenResult = _jwtTokenService.GenerateRefreshToken();
+        var (newRefreshToken, expiry) = _jwtTokenService.GenerateRefreshToken();
 
-        // 6. Update user's refresh token and save
-        user.UpdateRefreshToken(newRefreshTokenResult.Token, newRefreshTokenResult.Expiry);
-        await _userRepository.UpdateAsync(user, cancellationToken);
+        localAccount.SetRefreshToken(newRefreshToken, expiry);
+        await _localAccountRepository.UpdateAsync(localAccount, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        var result = new AuthResult(
-            Token: token,
-            Login: user.Login,
-            UserId: user.Id,
-            Email: user.Email,
-            Roles: roles,
-            RefreshToken: newRefreshTokenResult.Token
-        );
+        var fullName = $"{user.LastName} {user.FirstName} {user.MiddleName}".Trim();
 
-        return Result.Success(result);
+        return Result.Success(new AuthResult(
+            token,
+            user.Email ?? string.Empty,
+            user.Id,
+            user.Email ?? string.Empty,
+            roles,
+            newRefreshToken,
+            fullName
+        ));
     }
 }

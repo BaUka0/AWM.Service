@@ -8,10 +8,13 @@ using AWM.Service.Domain.Common;
 public class EvaluationCriteria : Entity<int>, IAuditable, ISoftDeletable
 {
     public int WorkTypeId { get; private set; }
-    public int? DepartmentId { get; private set; }
+    public int? OrgUnitId { get; private set; }
+    public int? SpecialityId { get; private set; }
     public string CriteriaName { get; private set; } = null!;
     public int MaxScore { get; private set; }
     public decimal Weight { get; private set; }
+    public int? DefenseStageType { get; private set; }
+    public int SortOrder { get; private set; }
 
     public DateTime CreatedAt { get; private set; }
     public int CreatedBy { get; private set; }
@@ -30,20 +33,26 @@ public class EvaluationCriteria : Entity<int>, IAuditable, ISoftDeletable
         int maxScore,
         int createdBy,
         decimal weight = 1.0m,
-        int? departmentId = null)
+        int? orgUnitId = null,
+        int? specialityId = null,
+        int? defenseStageType = null,
+        int sortOrder = 0)
     {
         if (string.IsNullOrWhiteSpace(criteriaName))
-            throw new ArgumentException("Criteria name is required.", nameof(criteriaName));
+            throw new DomainException("EvaluationCriteria.NameRequired", "Criteria name is required.");
         if (maxScore <= 0)
-            throw new ArgumentException("Max score must be positive.", nameof(maxScore));
+            throw new DomainException("EvaluationCriteria.MaxScoreMustBePositive", "Max score must be positive.");
         if (weight <= 0)
-            throw new ArgumentException("Weight must be positive.", nameof(weight));
+            throw new DomainException("EvaluationCriteria.WeightMustBePositive", "Weight must be positive.");
 
         WorkTypeId = workTypeId;
-        DepartmentId = departmentId;
+        OrgUnitId = orgUnitId;
+        SpecialityId = specialityId;
         CriteriaName = criteriaName;
         MaxScore = maxScore;
         Weight = weight;
+        DefenseStageType = defenseStageType;
+        SortOrder = sortOrder;
 
         CreatedAt = DateTime.UtcNow;
         CreatedBy = createdBy;
@@ -53,18 +62,20 @@ public class EvaluationCriteria : Entity<int>, IAuditable, ISoftDeletable
     /// <summary>
     /// Updates the criteria.
     /// </summary>
-    public void Update(string criteriaName, int maxScore, decimal weight, int modifiedBy)
+    public void Update(string criteriaName, int maxScore, decimal weight, int modifiedBy, int? defenseStageType = null, int sortOrder = 0)
     {
         if (string.IsNullOrWhiteSpace(criteriaName))
-            throw new ArgumentException("Criteria name is required.", nameof(criteriaName));
+            throw new DomainException("EvaluationCriteria.NameRequired", "Criteria name is required.");
         if (maxScore <= 0)
-            throw new ArgumentException("Max score must be positive.", nameof(maxScore));
+            throw new DomainException("EvaluationCriteria.MaxScoreMustBePositive", "Max score must be positive.");
         if (weight <= 0)
-            throw new ArgumentException("Weight must be positive.", nameof(weight));
+            throw new DomainException("EvaluationCriteria.WeightMustBePositive", "Weight must be positive.");
 
         CriteriaName = criteriaName;
         MaxScore = maxScore;
         Weight = weight;
+        DefenseStageType = defenseStageType;
+        SortOrder = sortOrder;
 
         LastModifiedAt = DateTime.UtcNow;
         LastModifiedBy = modifiedBy;
@@ -83,5 +94,5 @@ public class EvaluationCriteria : Entity<int>, IAuditable, ISoftDeletable
     /// <summary>
     /// Checks if this is a university-wide criteria (no department).
     /// </summary>
-    public bool IsUniversityWide => DepartmentId == null;
+    public bool IsUniversityWide => OrgUnitId == null;
 }

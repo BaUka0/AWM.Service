@@ -2,7 +2,6 @@ namespace AWM.Service.Domain.Thesis.Entities;
 
 using AWM.Service.Domain.Common;
 using AWM.Service.Domain.Primitives;
-using AWM.Service.Domain.Thesis.Enums;
 
 /// <summary>
 /// Attachment entity - file metadata for work attachments.
@@ -12,17 +11,20 @@ public class Attachment : Entity<long>, IAuditable
 {
     public long WorkId { get; private set; }
     public int? StateId { get; private set; }
-    public AttachmentType AttachmentType { get; private set; }
+    public int AttachmentTypeId { get; private set; }
     public string FileName { get; private set; } = null!;
     public string FileStoragePath { get; private set; } = null!;
     public string FileHash { get; private set; } = null!;
-    
+    public long FileSizeBytes { get; private set; }
+    public string ContentType { get; private set; } = null!;
+
     public DateTime CreatedAt { get; private set; }
     public int CreatedBy { get; private set; }
     public DateTime? LastModifiedAt { get; private set; }
     public int? LastModifiedBy { get; private set; }
 
-    // Legacy fields for backward compatibility/DB mapping
+    public AttachmentType? AttachmentType { get; private set; }
+
     public int UploadedBy => CreatedBy;
     public DateTime UploadedAt => CreatedAt;
 
@@ -31,26 +33,32 @@ public class Attachment : Entity<long>, IAuditable
     internal Attachment(
         long workId,
         int? stateId,
-        AttachmentType attachmentType,
+        int attachmentTypeId,
         string fileName,
         string fileStoragePath,
         string fileHash,
-        int uploadedBy)
+        int uploadedBy,
+        long fileSizeBytes,
+        string contentType)
     {
         if (string.IsNullOrWhiteSpace(fileName))
-            throw new ArgumentException("File name is required.", nameof(fileName));
+            throw new DomainException("Attachment.FileNameRequired", "File name is required.");
         if (string.IsNullOrWhiteSpace(fileStoragePath))
-            throw new ArgumentException("File storage path is required.", nameof(fileStoragePath));
+            throw new DomainException("Attachment.FileStoragePathRequired", "File storage path is required.");
         if (string.IsNullOrWhiteSpace(fileHash))
-            throw new ArgumentException("File hash is required.", nameof(fileHash));
+            throw new DomainException("Attachment.FileHashRequired", "File hash is required.");
+        if (string.IsNullOrWhiteSpace(contentType))
+            throw new DomainException("Attachment.ContentTypeRequired", "Content type is required.");
 
         WorkId = workId;
         StateId = stateId;
-        AttachmentType = attachmentType;
+        AttachmentTypeId = attachmentTypeId;
         FileName = fileName;
         FileStoragePath = fileStoragePath;
         FileHash = fileHash.ToUpperInvariant();
-        
+        FileSizeBytes = fileSizeBytes;
+        ContentType = contentType;
+
         CreatedAt = DateTime.UtcNow;
         CreatedBy = uploadedBy;
     }

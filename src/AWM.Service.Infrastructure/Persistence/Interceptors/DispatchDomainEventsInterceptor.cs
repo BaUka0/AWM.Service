@@ -1,17 +1,24 @@
 namespace AWM.Service.Infrastructure.Persistence.Interceptors;
 
+using System.Collections.Generic;
+using System.Data.Common;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using AWM.Service.Domain.Common;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 
 /// <summary>
-/// EF Core interceptor that dispatches domain events right before saving changes to the database.
-/// Events are published using MediatR's IPublisher.
+/// EF Core interceptor that collects domain events before saving changes
+/// and dispatches them ONLY after a successful database commit or transaction commit.
+/// This prevents side-effects (email, notifications) if the transaction rolls back.
 /// </summary>
-public sealed class DispatchDomainEventsInterceptor : SaveChangesInterceptor
+public sealed class DispatchDomainEventsInterceptor : SaveChangesInterceptor, IDbTransactionInterceptor
 {
     private readonly IPublisher _publisher;
+    private readonly List<IDomainEvent> _pendingEvents = new();
 
     public DispatchDomainEventsInterceptor(IPublisher publisher)
     {
@@ -20,17 +27,92 @@ public sealed class DispatchDomainEventsInterceptor : SaveChangesInterceptor
 
     public override InterceptionResult<int> SavingChanges(DbContextEventData eventData, InterceptionResult<int> result)
     {
-        DispatchDomainEvents(eventData.Context).GetAwaiter().GetResult();
+        CollectAndAccumulateDomainEvents(eventData.Context);
         return base.SavingChanges(eventData, result);
     }
 
-    public override async ValueTask<InterceptionResult<int>> SavingChangesAsync(DbContextEventData eventData, InterceptionResult<int> result, CancellationToken cancellationToken = default)
+    public override int SavedChanges(SaveChangesCompletedEventData eventData, int result)
     {
-        await DispatchDomainEvents(eventData.Context);
+        DispatchPendingEvents(eventData.Context);
+        return base.SavedChanges(eventData, result);
+    }
+
+    public override async ValueTask<InterceptionResult<int>> SavingChangesAsync(
+        DbContextEventData eventData,
+        InterceptionResult<int> result,
+        CancellationToken cancellationToken = default)
+    {
+        CollectAndAccumulateDomainEvents(eventData.Context);
         return await base.SavingChangesAsync(eventData, result, cancellationToken);
     }
 
-    private async Task DispatchDomainEvents(DbContext? context)
+    public override async ValueTask<int> SavedChangesAsync(
+        SaveChangesCompletedEventData eventData,
+        int result,
+        CancellationToken cancellationToken = default)
+    {
+        await DispatchPendingEventsAsync(eventData.Context, cancellationToken);
+        return await base.SavedChangesAsync(eventData, result, cancellationToken);
+    }
+
+    public override void SaveChangesFailed(DbContextErrorEventData eventData)
+    {
+        _pendingEvents.Clear();
+        base.SaveChangesFailed(eventData);
+    }
+
+    public override Task SaveChangesFailedAsync(DbContextErrorEventData eventData, CancellationToken cancellationToken = default)
+    {
+        _pendingEvents.Clear();
+        return base.SaveChangesFailedAsync(eventData, cancellationToken);
+    }
+
+    public void TransactionCommitted(DbTransaction transaction, TransactionEndEventData eventData)
+    {
+        if (_pendingEvents.Count > 0)
+        {
+            var eventsToDispatch = _pendingEvents.ToList();
+            _pendingEvents.Clear();
+
+            foreach (var domainEvent in eventsToDispatch)
+            {
+                _publisher.Publish(domainEvent).GetAwaiter().GetResult();
+            }
+        }
+    }
+
+    public async Task TransactionCommittedAsync(
+        DbTransaction transaction,
+        TransactionEndEventData eventData,
+        CancellationToken cancellationToken = default)
+    {
+        if (_pendingEvents.Count > 0)
+        {
+            var eventsToDispatch = _pendingEvents.ToList();
+            _pendingEvents.Clear();
+
+            foreach (var domainEvent in eventsToDispatch)
+            {
+                await _publisher.Publish(domainEvent, cancellationToken);
+            }
+        }
+    }
+
+    public void TransactionRolledBack(DbTransaction transaction, TransactionEndEventData eventData)
+    {
+        _pendingEvents.Clear();
+    }
+
+    public Task TransactionRolledBackAsync(
+        DbTransaction transaction,
+        TransactionEndEventData eventData,
+        CancellationToken cancellationToken = default)
+    {
+        _pendingEvents.Clear();
+        return Task.CompletedTask;
+    }
+
+    private void CollectAndAccumulateDomainEvents(DbContext? context)
     {
         if (context == null) return;
 
@@ -46,9 +128,45 @@ public sealed class DispatchDomainEventsInterceptor : SaveChangesInterceptor
 
         entitiesWithEvents.ForEach(e => e.ClearDomainEvents());
 
-        foreach (var domainEvent in domainEvents)
+        if (domainEvents.Any())
         {
-            await _publisher.Publish(domainEvent);
+            _pendingEvents.AddRange(domainEvents);
+        }
+    }
+
+    private void DispatchPendingEvents(DbContext? context)
+    {
+        if (context?.Database.CurrentTransaction != null)
+        {
+            return;
+        }
+
+        if (_pendingEvents.Count == 0) return;
+
+        var eventsToDispatch = _pendingEvents.ToList();
+        _pendingEvents.Clear();
+
+        foreach (var domainEvent in eventsToDispatch)
+        {
+            _publisher.Publish(domainEvent).GetAwaiter().GetResult();
+        }
+    }
+
+    private async Task DispatchPendingEventsAsync(DbContext? context, CancellationToken cancellationToken = default)
+    {
+        if (context?.Database.CurrentTransaction != null)
+        {
+            return;
+        }
+
+        if (_pendingEvents.Count == 0) return;
+
+        var eventsToDispatch = _pendingEvents.ToList();
+        _pendingEvents.Clear();
+
+        foreach (var domainEvent in eventsToDispatch)
+        {
+            await _publisher.Publish(domainEvent, cancellationToken);
         }
     }
 }

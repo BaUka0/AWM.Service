@@ -1,139 +1,60 @@
 namespace AWM.Service.WebAPI.Controllers.v1;
 
-using AWM.Service.Application.Features.Workflow.Queries.GetAllWorkTypes;
-using AWM.Service.Domain.Auth.Enums;
-using AWM.Service.WebAPI.Authorization;
+using AWM.Service.Application.Features.Workflow.WorkTypes.Commands.CreateWorkType;
+using AWM.Service.Application.Features.Workflow.WorkTypes.Commands.UpdateWorkType;
+using AWM.Service.Application.Features.Workflow.WorkTypes.Commands.DeleteWorkType;
+using AWM.Service.Application.Features.Workflow.WorkTypes.Queries.GetWorkTypes;
 using AWM.Service.WebAPI.Common.Contracts.Responses.Workflow;
+using AWM.Service.WebAPI.Common.Contracts.Requests.Workflow;
 using Mapster;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-/// <summary>
-/// Controller for WorkType dictionary operations.
-/// </summary>
 [ApiVersion("1.0")]
-[ApiController]
 [Route("api/v{version:apiVersion}/[controller]")]
-[Produces("application/json")]
-public sealed class WorkTypesController : BaseController
+[ApiController]
+[Authorize]
+public class WorkTypesController : BaseController
 {
     private readonly ISender _sender;
+    public WorkTypesController(ISender sender) { _sender = sender; }
 
-    public WorkTypesController(ISender sender)
-    {
-        ArgumentNullException.ThrowIfNull(sender);
-        _sender = sender;
-    }
-
-    /// <summary>
-    /// Get all available work types.
-    /// Used by the frontend to dynamically map work type IDs to their names.
-    /// </summary>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>List of all work types</returns>
     [HttpGet]
-    [RequirePermission(Permission.Topics_View)]
     [ProducesResponseType(typeof(IReadOnlyList<WorkTypeResponse>), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> GetAll(CancellationToken cancellationToken = default)
+    public async Task<IActionResult> GetAll(CancellationToken ct)
     {
-        var query = new GetAllWorkTypesQuery();
-        var result = await _sender.Send(query, cancellationToken);
-
-        if (result.IsFailed)
-        {
-            return HandleResultError(result.Error);
-        }
-
-        var response = result.Value.Adapt<IReadOnlyList<WorkTypeResponse>>();
-        return Ok(response);
+        var result = await _sender.Send(new GetWorkTypesQuery(), ct);
+        if (result.IsFailed) return HandleResultError(result.Error);
+        return Ok(result.Value.Adapt<IReadOnlyList<WorkTypeResponse>>());
     }
 
-    /// <summary>
-    /// Create a new work type.
-    /// </summary>
-    /// <param name="request">Work type creation data.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>Created work type ID.</returns>
     [HttpPost]
-    [RequirePermission(Permission.Department_Manage)]
-    [ProducesResponseType(typeof(int), StatusCodes.Status201Created)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> CreateWorkType(
-        [FromBody] AWM.Service.WebAPI.Common.Contracts.Requests.Workflow.CreateWorkTypeRequest request,
-        CancellationToken cancellationToken = default)
+    [ProducesResponseType(typeof(int), StatusCodes.Status200OK)]
+    public async Task<IActionResult> Create([FromBody] CreateWorkTypeRequest request, CancellationToken ct)
     {
-        var command = request.Adapt<AWM.Service.Application.Features.Workflow.Commands.CreateWorkType.CreateWorkTypeCommand>();
-
-        var result = await _sender.Send(command, cancellationToken);
-
-        if (result.IsFailed)
-        {
-            return HandleResultError(result.Error);
-        }
-
-        return CreatedAtAction(
-            nameof(GetAll),
-            new { version = "1.0" },
-            result.Value);
+        var cmd = request.Adapt<CreateWorkTypeCommand>();
+        var result = await _sender.Send(cmd, ct);
+        if (result.IsFailed) return HandleResultError(result.Error);
+        return Ok(result.Value);
     }
 
-    /// <summary>
-    /// Update an existing work type.
-    /// </summary>
-    /// <param name="id">Work type ID.</param>
-    /// <param name="request">Updated work type data.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>No content on success.</returns>
     [HttpPut("{id}")]
-    [RequirePermission(Permission.Department_Manage)]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> UpdateWorkType(
-        [FromRoute] int id,
-        [FromBody] AWM.Service.WebAPI.Common.Contracts.Requests.Workflow.UpdateWorkTypeRequest request,
-        CancellationToken cancellationToken = default)
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> Update(int id, [FromBody] UpdateWorkTypeRequest request, CancellationToken ct)
     {
-        var command = request.Adapt<AWM.Service.Application.Features.Workflow.Commands.UpdateWorkType.UpdateWorkTypeCommand>() with { Id = id };
-
-        var result = await _sender.Send(command, cancellationToken);
-
-        if (result.IsFailed)
-        {
-            return HandleResultError(result.Error);
-        }
-
-        return NoContent();
+        var cmd = request.Adapt<UpdateWorkTypeCommand>() with { Id = id };
+        var result = await _sender.Send(cmd, ct);
+        if (result.IsFailed) return HandleResultError(result.Error);
+        return Ok();
     }
 
-    /// <summary>
-    /// Soft delete a work type.
-    /// </summary>
-    /// <param name="id">Work type ID.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>No content on success.</returns>
     [HttpDelete("{id}")]
-    [RequirePermission(Permission.Department_Manage)]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status409Conflict)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> DeleteWorkType(
-        [FromRoute] int id,
-        CancellationToken cancellationToken = default)
+    public async Task<IActionResult> Delete(int id, CancellationToken ct)
     {
-        var command = new AWM.Service.Application.Features.Workflow.Commands.DeleteWorkType.DeleteWorkTypeCommand { Id = id };
-
-        var result = await _sender.Send(command, cancellationToken);
-
-        if (result.IsFailed)
-        {
-            return HandleResultError(result.Error);
-        }
-
-        return NoContent();
+        var result = await _sender.Send(new DeleteWorkTypeCommand(id), ct);
+        if (result.IsFailed) return HandleResultError(result.Error);
+        return Ok();
     }
 }

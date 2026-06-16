@@ -13,12 +13,13 @@ public interface IEvaluationCriteriaRepository
     Task<EvaluationCriteria?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Gets criteria for a specific work type and department.
-    /// Returns department-specific criteria if exists, otherwise falls back to university-wide.
+    /// Gets criteria for a specific work type, department and speciality.
+    /// Returns speciality-specific criteria if exists, otherwise department-specific, otherwise university-wide.
     /// </summary>
     Task<IReadOnlyList<EvaluationCriteria>> GetByWorkTypeAsync(
-        int workTypeId, 
-        int? departmentId = null, 
+        int workTypeId,
+        int? orgUnitId = null,
+        int? specialityId = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -51,11 +52,11 @@ public interface IProtocolRepository
     Task<IReadOnlyList<Protocol>> GetByCommissionAsync(int commissionId, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Gets all protocols for a department in academic year (для печати реестра).
+    /// Gets all protocols for an org unit in a semester (для печати реестра).
     /// </summary>
-    Task<IReadOnlyList<Protocol>> GetByDepartmentAsync(
-        int departmentId, 
-        int academicYearId, 
+    Task<IReadOnlyList<Protocol>> GetByOrgUnitAsync(
+        int orgUnitId,
+        int semesterId,
         CancellationToken cancellationToken = default);
 
     Task AddAsync(Protocol protocol, CancellationToken cancellationToken = default);

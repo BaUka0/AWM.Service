@@ -27,32 +27,31 @@ public class TransitionConfiguration : SoftDeletableEntityConfiguration<Transiti
         builder.Property(e => e.ToStateId)
             .IsRequired();
 
-        builder.Property(e => e.AllowedRoleId);
+        builder.Property(e => e.RoleAccessId)
+            .HasColumnName("RoleAccessId");
 
         builder.Property(e => e.IsAutomatic)
             .IsRequired()
             .HasDefaultValue(false);
 
-        // Foreign keys
         builder.HasOne<State>()
             .WithMany()
             .HasForeignKey(e => e.FromStateId)
-            .HasConstraintName("FK_Trans_FromState")
+            .HasConstraintName("FK_Trans_From")
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne<State>()
             .WithMany()
             .HasForeignKey(e => e.ToStateId)
-            .HasConstraintName("FK_Trans_ToState")
+            .HasConstraintName("FK_Trans_To")
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne<Role>()
+        builder.HasOne<RoleAccess>()
             .WithMany()
-            .HasForeignKey(e => e.AllowedRoleId)
+            .HasForeignKey(e => e.RoleAccessId)
             .HasConstraintName("FK_Trans_Role")
             .OnDelete(DeleteBehavior.Restrict);
 
-        // Index on FromStateId for transition lookup
         builder.HasIndex(e => e.FromStateId)
             .HasDatabaseName("IX_Transitions_From");
     }

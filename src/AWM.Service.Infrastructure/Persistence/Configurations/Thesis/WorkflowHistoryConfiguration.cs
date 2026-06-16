@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using AWM.Service.Domain.Thesis.Entities;
 using AWM.Service.Domain.Wf.Entities;
-using AWM.Service.Domain.Auth.Entities;
+using AWM.Service.Domain.University;
 using AWM.Service.Infrastructure.Persistence.Configurations.Base;
 
 /// <summary>
@@ -36,10 +36,8 @@ public class WorkflowHistoryConfiguration : AuditableEntityConfiguration<Workflo
         builder.Property(e => e.Comment)
             .HasColumnType("nvarchar(max)");
 
-        // Ignore computed property
         builder.Ignore(e => e.TransitionDate);
 
-        // Foreign keys
         builder.HasOne<StudentWork>()
             .WithMany(w => w.WorkflowHistory)
             .HasForeignKey(e => e.WorkId)
@@ -64,7 +62,6 @@ public class WorkflowHistoryConfiguration : AuditableEntityConfiguration<Workflo
             .HasConstraintName("FK_WfHist_User")
             .OnDelete(DeleteBehavior.Restrict);
 
-        // Index for history queries
         builder.HasIndex(e => new { e.WorkId, e.CreatedAt })
             .HasDatabaseName("IX_WfHist_Work")
             .IsDescending(false, true);

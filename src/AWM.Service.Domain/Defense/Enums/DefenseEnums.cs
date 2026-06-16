@@ -1,59 +1,43 @@
 namespace AWM.Service.Domain.Defense.Enums;
 
-/// <summary>
-/// Commission type for defense.
-/// </summary>
-public enum CommissionType
+public enum PreDefenseStatus
 {
-    /// <summary>
-    /// Pre-defense commission.
-    /// </summary>
-    PreDefense,
+    Attended = 1,
+    Absent = 2,
+    Excused = 3
+}
 
-    /// <summary>
-    /// State Attestation Commission (ГАК).
-    /// </summary>
-    GAK
+public enum CommissionTypes
+{
+    PreDefense = 1,
+    GAK = 2
 }
 
 /// <summary>
-/// Role within a commission.
+/// Differentiates evaluation criteria sets for different defense stages.
+/// Used in EvaluationCriteria.DefenseStageType.
 /// </summary>
-public enum RoleInCommission
+public static class DefenseStageTypes
 {
-    /// <summary>
-    /// Commission chairman/president.
-    /// </summary>
-    Chairman,
+    /// <summary>Pre-defense criteria (ПЗ-1/2/3). Default 8 criteria, max 100 points.</summary>
+    public const int PreDefense = 1;
 
-    /// <summary>
-    /// Technical secretary.
-    /// </summary>
-    Secretary,
-
-    /// <summary>
-    /// Regular member.
-    /// </summary>
-    Member
+    /// <summary>GAK (final defense) criteria. Department-configurable set.</summary>
+    public const int GAK = 2;
 }
 
 /// <summary>
-/// Attendance status for pre-defense attempts.
+/// Structured decision types for defense protocols.
+/// Replaces free-text Decision comparison in FinalizeProtocolCommandHandler.
 /// </summary>
-public enum AttendanceStatus
+public static class ProtocolDecisionTypes
 {
-    /// <summary>
-    /// Student attended.
-    /// </summary>
-    Attended,
+    /// <summary>Допущен к защите / Passed</summary>
+    public const int Admitted = 1;
 
-    /// <summary>
-    /// Student was absent without excuse.
-    /// </summary>
-    Absent,
+    /// <summary>Не допущен / Not admitted</summary>
+    public const int NotAdmitted = 2;
 
-    /// <summary>
-    /// Student was absent with valid excuse.
-    /// </summary>
-    Excused
+    /// <summary>Доработать / Needs revision</summary>
+    public const int NeedsRevision = 3;
 }

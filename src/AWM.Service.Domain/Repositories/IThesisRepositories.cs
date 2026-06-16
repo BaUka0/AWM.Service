@@ -9,8 +9,8 @@ public interface IDirectionRepository
 {
     Task<Direction?> GetByIdAsync(long id, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Direction>> GetByIdsAsync(IEnumerable<long> ids, CancellationToken cancellationToken = default);
-    Task<IReadOnlyList<Direction>> GetByDepartmentAsync(int departmentId, int academicYearId, CancellationToken cancellationToken = default);
-    Task<IReadOnlyList<Direction>> GetBySupervisorAsync(int supervisorId, int academicYearId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<Direction>> GetByOrgUnitAsync(int orgUnitId, int semesterId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<Direction>> GetBySupervisorAsync(int userId, int semesterId, CancellationToken cancellationToken = default);
     Task AddAsync(Direction direction, CancellationToken cancellationToken = default);
     Task UpdateAsync(Direction direction, CancellationToken cancellationToken = default);
     Task DeleteAsync(Direction direction, CancellationToken cancellationToken = default);
@@ -23,15 +23,28 @@ public interface ITopicRepository
 {
     Task<Topic?> GetByIdAsync(long id, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Topic>> GetByIdsAsync(IEnumerable<long> ids, CancellationToken cancellationToken = default);
-    Task<IReadOnlyList<Topic>> GetByDepartmentAsync(int departmentId, int academicYearId, CancellationToken cancellationToken = default);
-    Task<IReadOnlyList<Topic>> GetByDepartmentWithApplicationsAsync(int departmentId, int academicYearId, CancellationToken cancellationToken = default);
-    Task<IReadOnlyList<Topic>> GetBySupervisorAsync(int supervisorId, int academicYearId, CancellationToken cancellationToken = default);
-    Task<IReadOnlyList<Topic>> GetAvailableForSelectionAsync(int departmentId, int academicYearId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets topics by IDs with their applications loaded.
+    /// </summary>
+    Task<IReadOnlyList<Topic>> GetByIdsWithApplicationsAsync(IEnumerable<long> ids, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<Topic>> GetByOrgUnitAsync(int orgUnitId, int semesterId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<Topic>> GetByOrgUnitWithApplicationsAsync(int orgUnitId, int semesterId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<Topic>> GetBySupervisorAsync(int userId, int semesterId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<Topic>> GetAvailableForSelectionAsync(int orgUnitId, int semesterId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets all topic applications by student (для страницы "Мои заявки" студента).
     /// </summary>
     Task<IReadOnlyList<TopicApplication>> GetApplicationsByStudentIdAsync(int studentId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets topics for the reconciliation stage with applications loaded.
+    /// Includes topics with statuses: Approved, Closed, Reconciled, Inactive, NeedsRevision.
+    /// </summary>
+    Task<IReadOnlyList<Topic>> GetByOrgUnitForReconciliationAsync(int orgUnitId, int semesterId, CancellationToken cancellationToken = default);
+
     Task AddAsync(Topic topic, CancellationToken cancellationToken = default);
     Task UpdateAsync(Topic topic, CancellationToken cancellationToken = default);
     Task DeleteAsync(Topic topic, CancellationToken cancellationToken = default);
@@ -48,17 +61,23 @@ public interface IStudentWorkRepository
     Task<IReadOnlyList<StudentWork>> GetByIdsWithDetailsAsync(IEnumerable<long> ids, CancellationToken cancellationToken = default);
     Task<StudentWork?> GetByIdWithDetailsAsync(long id, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<StudentWork>> GetByStudentAsync(int studentId, CancellationToken cancellationToken = default);
-    Task<IReadOnlyList<StudentWork>> GetByDepartmentAsync(int departmentId, int academicYearId, CancellationToken cancellationToken = default);
-    Task<IReadOnlyList<StudentWork>> GetByDepartmentWithParticipantsAndQualityChecksAsync(int departmentId, int academicYearId, CancellationToken cancellationToken = default);
-    Task<IReadOnlyList<StudentWork>> GetBySupervisorAsync(int supervisorId, int academicYearId, CancellationToken cancellationToken = default);
-    Task<IReadOnlyList<StudentWork>> GetByStateAsync(int stateId, int departmentId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<StudentWork>> GetByOrgUnitAsync(int orgUnitId, int semesterId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<StudentWork>> GetByOrgUnitWithParticipantsAndQualityChecksAsync(int orgUnitId, int semesterId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<StudentWork>> GetBySupervisorAsync(int userId, int semesterId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<StudentWork>> GetByStateAsync(int stateId, int orgUnitId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Checks if a StudentWork already exists for a given topic.
+    /// Prevents duplicate StudentWork creation on repeated reconciliation completion.
+    /// </summary>
+    Task<bool> ExistsByTopicIdAsync(long topicId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets works by department with pagination (recommended for large datasets).
     /// </summary>
-    Task<(IReadOnlyList<StudentWork> Items, int TotalCount)> GetByDepartmentPagedAsync(
-        int departmentId,
-        int academicYearId,
+    Task<(IReadOnlyList<StudentWork> Items, int TotalCount)> GetByOrgUnitPagedAsync(
+        int orgUnitId,
+        int semesterId,
         int skip = 0,
         int take = 50,
         CancellationToken cancellationToken = default);
@@ -68,7 +87,7 @@ public interface IStudentWorkRepository
     /// </summary>
     Task<(IReadOnlyList<StudentWork> Items, int TotalCount)> GetByStatePagedAsync(
         int stateId,
-        int departmentId,
+        int orgUnitId,
         int skip = 0,
         int take = 50,
         CancellationToken cancellationToken = default);
@@ -76,6 +95,69 @@ public interface IStudentWorkRepository
     Task AddAsync(StudentWork work, CancellationToken cancellationToken = default);
     Task UpdateAsync(StudentWork work, CancellationToken cancellationToken = default);
 }
+
+/// <summary>
+/// Repository for external reviewers (база внешних рецензентов).
+/// </summary>
+public interface IReviewerRepository
+{
+    /// <summary>
+    /// Gets a reviewer by ID.
+    /// </summary>
+    Task<Reviewer?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets all active reviewers (for dropdown selection).
+    /// </summary>
+    Task<IReadOnlyList<Reviewer>> GetActiveAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Searches reviewers by name or organization.
+    /// </summary>
+    Task<IReadOnlyList<Reviewer>> SearchAsync(string searchTerm, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets multiple reviewers by their IDs in a single query (bulk operation to avoid N+1).
+    /// </summary>
+    Task<IReadOnlyList<Reviewer>> GetByIdsAsync(IEnumerable<int> ids, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets a reviewer by linked system user ID.
+    /// </summary>
+    Task<Reviewer?> GetByUserIdAsync(int userId, CancellationToken cancellationToken = default);
+
+    Task AddAsync(Reviewer reviewer, CancellationToken cancellationToken = default);
+    Task UpdateAsync(Reviewer reviewer, CancellationToken cancellationToken = default);
+}
+
+/// <summary>
+/// Repository for mandatory check types configured for each speciality.
+/// </summary>
+public interface ISpecialityCheckTypeRepository
+{
+    Task<SpecialityCheckType?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
+    Task<SpecialityCheckType?> GetByCompositeKeyAsync(int orgUnitId, int checkTypeId, int? specialityId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<SpecialityCheckType>> GetByOrgUnitAsync(int orgUnitId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<SpecialityCheckType>> GetBySpecialityAsync(int specialityId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<SpecialityCheckType>> GetBySpecialitiesAsync(IEnumerable<int> specialityIds, CancellationToken cancellationToken = default);
+    Task AddAsync(SpecialityCheckType specialityCheckType, CancellationToken cancellationToken = default);
+    Task DeleteAsync(SpecialityCheckType specialityCheckType, CancellationToken cancellationToken = default);
+}
+
+public interface IAttachmentTypeRepository
+{
+    Task<AttachmentType?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
+    Task<AttachmentType?> GetByCodeAsync(string code, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<AttachmentType>> GetAllAsync(CancellationToken cancellationToken = default);
+}
+
+public interface ICheckTypeRepository
+{
+    Task<CheckType?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
+    Task<CheckType?> GetByCodeAsync(string code, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<CheckType>> GetAllAsync(CancellationToken cancellationToken = default);
+}
+
 public interface ITopicApplicationRepository
 {
     /// <summary>
@@ -106,7 +188,7 @@ public interface ITopicApplicationRepository
     /// <summary>
     /// Gets all applications by student for specific academic year.
     /// </summary>
-    Task<IReadOnlyList<TopicApplication>> GetByStudentIdAndYearAsync(int studentId, int academicYearId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<TopicApplication>> GetByStudentIdAndYearAsync(int studentId, int semesterId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Checks if student already has an application to the topic.
@@ -116,7 +198,7 @@ public interface ITopicApplicationRepository
     /// <summary>
     /// Checks if student has an accepted application in the given academic year.
     /// </summary>
-    Task<bool> HasAcceptedApplicationAsync(int studentId, int academicYearId, CancellationToken cancellationToken = default);
+    Task<bool> HasAcceptedApplicationAsync(int studentId, int semesterId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Adds a new application.
@@ -133,4 +215,3 @@ public interface ITopicApplicationRepository
     /// </summary>
     Task DeleteAsync(TopicApplication application, CancellationToken cancellationToken = default);
 }
-

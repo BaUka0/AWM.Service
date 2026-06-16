@@ -1,8 +1,8 @@
 namespace AWM.Service.Domain.Thesis.Entities;
 
 using AWM.Service.Domain.Common;
-using AWM.Service.Domain.Thesis.Events;
 using AWM.Service.Domain.Thesis.Enums;
+using AWM.Service.Domain.Thesis.Events;
 
 /// <summary>
 /// StudentWork entity - the main thesis work aggregate root.
@@ -11,13 +11,14 @@ using AWM.Service.Domain.Thesis.Enums;
 public class StudentWork : AggregateRoot<long>, IAuditable, ISoftDeletable
 {
     public long? TopicId { get; private set; }
-    public int AcademicYearId { get; private set; }
-    public int DepartmentId { get; private set; }
+    public int SemesterId { get; private set; }
+    public int OrgUnitId { get; private set; }
+    public int? SpecialityId { get; private set; }
     public int CurrentStateId { get; private set; }
 
     public string? FinalGrade { get; private set; }
     public bool IsDefended { get; private set; }
-    public string? RepositoryUrl { get; private set; }
+    public string? MetadataJson { get; private set; }
     public DateTime CreatedAt { get; private set; }
     public int CreatedBy { get; private set; }
     public DateTime? LastModifiedAt { get; private set; }
@@ -39,18 +40,23 @@ public class StudentWork : AggregateRoot<long>, IAuditable, ISoftDeletable
     private readonly List<WorkflowHistory> _workflowHistory = new();
     public IReadOnlyCollection<WorkflowHistory> WorkflowHistory => _workflowHistory.AsReadOnly();
 
+    private readonly List<WorkReview> _workReviews = new();
+    public IReadOnlyCollection<WorkReview> WorkReviews => _workReviews.AsReadOnly();
+
     private StudentWork() { }
 
     public StudentWork(
-        int academicYearId,
-        int departmentId,
+        int semesterId,
+        int orgUnitId,
         int draftStateId,
         int createdBy,
-        long? topicId = null)
+        long? topicId = null,
+        int? specialityId = null)
     {
         TopicId = topicId;
-        AcademicYearId = academicYearId;
-        DepartmentId = departmentId;
+        SemesterId = semesterId;
+        OrgUnitId = orgUnitId;
+        SpecialityId = specialityId;
         CurrentStateId = draftStateId;
         IsDefended = false;
         CreatedAt = DateTime.UtcNow;
@@ -59,30 +65,34 @@ public class StudentWork : AggregateRoot<long>, IAuditable, ISoftDeletable
         LastModifiedBy = createdBy;
         IsDeleted = false;
 
-        RaiseDomainEvent(new WorkCreatedEvent(Id, topicId, departmentId));
+    }
+
+    /// <summary>
+    /// Raises the WorkCreatedEvent. Must be called after the entity is persisted
+    /// and has a valid Id assigned by the database.
+    /// </summary>
+    public void RaiseCreatedEvent()
+    {
+        RaiseDomainEvent(new WorkCreatedEvent(Id, TopicId, OrgUnitId));
     }
 
     /// <summary>
     /// Adds a participant to the work.
     /// </summary>
-    public WorkParticipant AddParticipant(int studentId, ParticipantRole role = ParticipantRole.Member)
+    /// <param name="studentId">The student's user ID.</param>
+    /// <param name="maxParticipants">Maximum allowed participants (from related Topic).</param>
+    public WorkParticipant AddParticipant(int studentId, int maxParticipants)
     {
-        // Check if already a participant
         if (_participants.Any(p => p.StudentId == studentId))
-            throw new InvalidOperationException("Student is already a participant.");
+            throw new DomainException("StudentWork.AlreadyParticipant", "Student is already a participant.");
 
-        // Check max participants (5)
-        if (_participants.Count >= 5)
-            throw new InvalidOperationException("Maximum 5 participants allowed.");
+        if (_participants.Count >= maxParticipants)
+            throw new DomainException("StudentWork.MaxParticipantsExceeded", $"Maximum {maxParticipants} participants allowed.");
 
-        // Ensure only one leader
-        if (role == ParticipantRole.Leader && _participants.Any(p => p.Role == ParticipantRole.Leader))
-            throw new InvalidOperationException("Work already has a leader.");
-
-        var participant = new WorkParticipant(Id, studentId, role);
+        var participant = new WorkParticipant(Id, studentId);
         _participants.Add(participant);
 
-        RaiseDomainEvent(new ParticipantJoinedEvent(Id, studentId, role.ToString()));
+        RaiseDomainEvent(new ParticipantJoinedEvent(Id, studentId));
         return participant;
     }
 
@@ -92,13 +102,10 @@ public class StudentWork : AggregateRoot<long>, IAuditable, ISoftDeletable
     public void RemoveParticipant(int studentId)
     {
         var participant = _participants.FirstOrDefault(p => p.StudentId == studentId)
-            ?? throw new InvalidOperationException("Student is not a participant of this work.");
+            ?? throw new DomainException("StudentWork.NotParticipant", "Student is not a participant of this work.");
 
         if (_participants.Count == 1)
-            throw new InvalidOperationException("Cannot remove the last participant from the work.");
-
-        if (participant.Role == ParticipantRole.Leader && _participants.Count > 1)
-            throw new InvalidOperationException("Cannot remove the leader while other participants exist. Transfer leadership first.");
+            throw new DomainException("StudentWork.CannotRemoveLastParticipant", "Cannot remove the last participant from the work.");
 
         _participants.Remove(participant);
     }
@@ -122,21 +129,25 @@ public class StudentWork : AggregateRoot<long>, IAuditable, ISoftDeletable
     /// Adds an attachment to the work.
     /// </summary>
     public Attachment AddAttachment(
-        AttachmentType attachmentType,
+        int attachmentTypeId,
         string fileName,
         string fileStoragePath,
         string fileHash,
         int uploadedBy,
+        long fileSizeBytes,
+        string contentType,
         int? stateId = null)
     {
         var attachment = new Attachment(
             Id,
             stateId ?? CurrentStateId,
-            attachmentType,
+            attachmentTypeId,
             fileName,
             fileStoragePath,
             fileHash,
-            uploadedBy);
+            uploadedBy,
+            fileSizeBytes,
+            contentType);
 
         _attachments.Add(attachment);
         LastModifiedBy = uploadedBy;
@@ -149,7 +160,7 @@ public class StudentWork : AggregateRoot<long>, IAuditable, ISoftDeletable
     public void RemoveAttachment(long attachmentId, int removedBy)
     {
         var attachment = _attachments.FirstOrDefault(a => a.Id == attachmentId)
-            ?? throw new InvalidOperationException($"Attachment with ID {attachmentId} was not found on this work.");
+            ?? throw new DomainException("StudentWork.AttachmentNotFound", $"Attachment with ID {attachmentId} was not found on this work.");
 
         _attachments.Remove(attachment);
         LastModifiedAt = DateTime.UtcNow;
@@ -161,24 +172,24 @@ public class StudentWork : AggregateRoot<long>, IAuditable, ISoftDeletable
     /// The expert will later complete it via CompleteQualityCheck.
     /// </summary>
     public QualityCheck AddQualityCheck(
-        CheckType checkType,
+        int checkTypeId,
         bool isPassed,
         int? expertId = null,
         decimal? resultValue = null,
         string? comment = null,
-        string? documentPath = null)
+        long? attachmentId = null)
     {
-        var attemptNumber = _qualityChecks.Count(c => c.CheckType == checkType) + 1;
+        var attemptNumber = _qualityChecks.Count(c => c.CheckTypeId == checkTypeId) + 1;
 
         var check = new QualityCheck(
             Id,
-            checkType,
+            checkTypeId,
             isPassed,
             attemptNumber,
             expertId,
             resultValue,
             comment,
-            documentPath);
+            attachmentId);
 
         _qualityChecks.Add(check);
         LastModifiedAt = DateTime.UtcNow;
@@ -193,28 +204,37 @@ public class StudentWork : AggregateRoot<long>, IAuditable, ISoftDeletable
     /// and raises the QualityCheckCompletedEvent domain event.
     /// </summary>
     public QualityCheck CompleteQualityCheck(
-        long checkId,
-        int expertId,
-        bool isPassed,
-        decimal? resultValue = null,
-        string? comment = null,
-        string? documentPath = null)
+        long checkId, int expertId, bool isPassed,
+        decimal? resultValue = null, string? comment = null, long? attachmentId = null)
     {
         var check = _qualityChecks.FirstOrDefault(c => c.Id == checkId)
-            ?? throw new InvalidOperationException(
+            ?? throw new DomainException("StudentWork.QualityCheckNotFound",
                 $"QualityCheck with ID {checkId} was not found on this work.");
 
         if (check.AssignedExpertId.HasValue)
-            throw new InvalidOperationException(
+            throw new DomainException("StudentWork.QualityCheckAlreadyRecorded",
                 "This quality check result has already been recorded by an expert.");
 
-        check.SetResult(expertId, isPassed, resultValue, comment, documentPath);
+        check.SetResult(expertId, isPassed, resultValue, comment, attachmentId);
         LastModifiedAt = DateTime.UtcNow;
         LastModifiedBy = expertId;
 
-        RaiseDomainEvent(new QualityCheckCompletedEvent(Id, check.CheckType.ToString(), isPassed, expertId));
+        RaiseDomainEvent(new QualityCheckCompletedEvent(Id, check.CheckTypeId.ToString(), isPassed, expertId));
 
         return check;
+    }
+
+    /// <summary>
+    /// Updates the attachment linked to a specific quality check.
+    /// </summary>
+    public void UpdateCheckAttachment(long checkId, long attachmentId, int modifiedBy)
+    {
+        var check = _qualityChecks.FirstOrDefault(c => c.Id == checkId)
+            ?? throw new DomainException("StudentWork.QualityCheckNotFound",
+                $"QualityCheck with ID {checkId} was not found on this work.");
+        check.UpdateAttachmentId(attachmentId, modifiedBy);
+        LastModifiedAt = DateTime.UtcNow;
+        LastModifiedBy = modifiedBy;
     }
 
     /// <summary>
@@ -229,37 +249,48 @@ public class StudentWork : AggregateRoot<long>, IAuditable, ISoftDeletable
     }
 
     /// <summary>
-    /// Gets the leader of the work.
+    /// Marks the work as graduated (completed university).
     /// </summary>
-    public WorkParticipant? GetLeader()
+    public void MarkAsGraduated(string? finalGrade)
     {
-        return _participants.FirstOrDefault(p => p.Role == ParticipantRole.Leader);
+        IsDefended = true;
+        FinalGrade = finalGrade;
+    }
+
+    /// <summary>
+    /// Checks if the work is eligible for defense by verifying all mandatory checks are passed.
+    /// </summary>
+    /// <param name="mandatoryCheckTypeIds">List of check type IDs required for the student's speciality.</param>
+    public bool IsEligibleForDefense(IEnumerable<int> mandatoryCheckTypeIds)
+    {
+        return mandatoryCheckTypeIds.All(HasPassedCheck);
     }
 
     /// <summary>
     /// Checks if a specific check type has passed.
     /// </summary>
-    public bool HasPassedCheck(CheckType checkType)
+    public bool HasPassedCheck(int checkTypeId)
     {
-        return _qualityChecks.Any(c => c.CheckType == checkType && c.IsPassed);
+        return _qualityChecks.Any(c => c.CheckTypeId == checkTypeId && c.IsPassed);
     }
 
     /// <summary>
     /// Gets the latest check of a specific type.
     /// </summary>
-    public QualityCheck? GetLatestCheck(CheckType checkType)
+    public QualityCheck? GetLatestCheck(int checkTypeId)
     {
         return _qualityChecks
-            .Where(c => c.CheckType == checkType)
+            .Where(c => c.CheckTypeId == checkTypeId)
             .OrderByDescending(c => c.AttemptNumber)
             .FirstOrDefault();
     }
+
     /// <summary>
-    /// Sets the repository URL for software check (e.g. GitHub link).
+    /// Updates the metadata JSON string for dynamic properties (e.g. GitHub link).
     /// </summary>
-    public void SetRepositoryUrl(string repositoryUrl, int modifiedBy)
+    public void UpdateMetadata(string? metadataJson, int modifiedBy)
     {
-        RepositoryUrl = repositoryUrl ?? throw new ArgumentNullException(nameof(repositoryUrl));
+        MetadataJson = metadataJson;
         LastModifiedBy = modifiedBy;
         LastModifiedAt = DateTime.UtcNow;
     }
@@ -284,5 +315,30 @@ public class StudentWork : AggregateRoot<long>, IAuditable, ISoftDeletable
         IsDeleted = false;
         DeletedAt = null;
         DeletedBy = null;
+    }
+
+    /// <summary>
+    /// Adds a work review (Supervisor, External, etc.).
+    /// </summary>
+    public WorkReview AddReview(int authorUserId, ReviewType type, string reviewText, int createdBy, string? metadataJson = null)
+    {
+        var review = new WorkReview(Id, authorUserId, type, reviewText, createdBy, metadataJson);
+        _workReviews.Add(review);
+        LastModifiedBy = createdBy;
+        LastModifiedAt = DateTime.UtcNow;
+        return review;
+    }
+
+    /// <summary>
+    /// Removes a work review.
+    /// </summary>
+    public void RemoveReview(long reviewId, int removedBy)
+    {
+        var review = _workReviews.FirstOrDefault(r => r.Id == reviewId)
+            ?? throw new DomainException("StudentWork.ReviewNotFound", $"Review with ID {reviewId} was not found on this work.");
+
+        _workReviews.Remove(review);
+        LastModifiedAt = DateTime.UtcNow;
+        LastModifiedBy = removedBy;
     }
 }

@@ -1,35 +1,47 @@
+using AWM.Service.Domain.Common;
 using KDS.Primitives.FluentResult;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AWM.Service.WebAPI.Controllers
 {
+    /// <summary>
+    /// Base controller providing common error handling for API controllers.
+    /// </summary>
+    [ApiConventionType(typeof(DefaultApiConventions))]
     public abstract class BaseController : ControllerBase
     {
         protected IActionResult HandleResultError(Error error)
         {
-            var code = error.Code;
-            int statusCode = StatusCodes.Status500InternalServerError;
+            var statusCode = ResolveStatusCode(error.Code);
 
-            if (code == "400" || code.StartsWith("Validation")) statusCode = StatusCodes.Status400BadRequest;
-            else if (code == "401" || code.StartsWith("Unauthorized")) statusCode = StatusCodes.Status401Unauthorized;
-            else if (code == "403" || code.StartsWith("Forbidden")) statusCode = StatusCodes.Status403Forbidden;
-            else if (code == "404" || code.StartsWith("NotFound")) statusCode = StatusCodes.Status404NotFound;
-            else if (code == "409" || code.StartsWith("Conflict") || code.StartsWith("BusinessRule")) statusCode = StatusCodes.Status409Conflict;
+            return Problem(
+                detail: error.Message,
+                instance: HttpContext.Request.Path,
+                statusCode: statusCode,
+                title: error.Code);
+        }
 
-            var problemDetails = new Microsoft.AspNetCore.Mvc.ProblemDetails
+        /// <summary>
+        /// Resolves HTTP status code from error code.
+        /// Uses exact match first, then convention-based suffix matching.
+        /// For example, "Topics.NotFound" → tries "Topics.NotFound", then "NotFound" → 404.
+        /// Falls back to 500 if no match is found.
+        /// </summary>
+        private static int ResolveStatusCode(string errorCode)
+        {
+            if (ErrorCodes.StatusMap.TryGetValue(errorCode, out var mapped))
+                return mapped;
+
+            var lastDot = errorCode.LastIndexOf('.');
+            if (lastDot >= 0)
             {
-                Status = statusCode,
-                Title = error.Code,
-                Detail = error.Message,
-                Instance = HttpContext.Request.Path
-            };
-            
-            problemDetails.Extensions["traceId"] = HttpContext.TraceIdentifier;
-            problemDetails.Extensions["code"] = error.Code;
+                var suffix = errorCode[(lastDot + 1)..];
+                if (ErrorCodes.StatusMap.TryGetValue(suffix, out var suffixMapped))
+                    return suffixMapped;
+            }
 
-            return new ObjectResult(problemDetails) { StatusCode = statusCode };
+            return StatusCodes.Status500InternalServerError;
         }
     }
 }
-

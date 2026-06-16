@@ -21,15 +21,20 @@ public interface INotificationRepository
     /// Gets recent notifications for a user (paginated).
     /// </summary>
     Task<IReadOnlyList<Notification>> GetByUserAsync(
-        int userId, 
-        int skip = 0, 
-        int take = 20, 
+        int userId,
+        int skip = 0,
+        int take = 20,
         CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets the count of unread notifications.
     /// </summary>
     Task<int> GetUnreadCountAsync(int userId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets the total count of notifications for a user.
+    /// </summary>
+    Task<int> GetCountByUserAsync(int userId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Marks all notifications as read for a user.

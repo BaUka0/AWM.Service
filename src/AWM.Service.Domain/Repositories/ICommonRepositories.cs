@@ -1,90 +1,83 @@
 namespace AWM.Service.Domain.Repositories;
 
 using AWM.Service.Domain.CommonDomain.Entities;
-using AWM.Service.Domain.CommonDomain.Enums;
+using AWM.Service.Domain.University;
 
 /// <summary>
-/// Repository for AcademicYear aggregate - critical for all system operations.
+/// Repository for SemesterType (read-only, from University).
 /// </summary>
-public interface IAcademicYearRepository
+public interface ISemesterTypeRepository
 {
-    /// <summary>
-    /// Gets an academic year by ID.
-    /// </summary>
-    Task<AcademicYear?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Gets the current academic year for a university.
-    /// </summary>
-    Task<AcademicYear?> GetCurrentAsync(int universityId, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Gets an academic year that contains the specified date.
-    /// </summary>
-    Task<AcademicYear?> GetByDateAsync(int universityId, DateTime date, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Gets all academic years for a university.
-    /// </summary>
-    Task<IReadOnlyList<AcademicYear>> GetByUniversityAsync(int universityId, CancellationToken cancellationToken = default);
-
-    Task AddAsync(AcademicYear academicYear, CancellationToken cancellationToken = default);
-    Task UpdateAsync(AcademicYear academicYear, CancellationToken cancellationToken = default);
+    Task<SemesterType?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<SemesterType>> GetAllAsync(CancellationToken cancellationToken = default);
 }
 
 /// <summary>
-/// Repository for Period - workflow stage time constraints.
+/// Repository for Semester (read-only, from University).
 /// </summary>
-public interface IPeriodRepository
+public interface ISemesterRepository
 {
-    /// <summary>
-    /// Gets a period by ID.
-    /// </summary>
-    Task<Period?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
+    Task<Semester?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
+    Task<Semester?> GetCurrentAsync(CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<Semester>> GetAllAsync(CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<Semester>> GetByStudyYearAsync(int studyYear, CancellationToken cancellationToken = default);
+}
 
-    /// <summary>
-    /// Gets the active period for a specific workflow stage in a department.
-    /// </summary>
-    Task<Period?> GetActiveByStageAsync(
-        int departmentId,
-        int academicYearId,
-        WorkflowStage stage,
+/// <summary>
+/// Repository for WorkflowStage reference data.
+/// </summary>
+public interface IWorkflowStageRepository
+{
+    Task<WorkflowStage?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<WorkflowStage>> GetAllAsync(CancellationToken cancellationToken = default);
+    Task AddAsync(WorkflowStage workflowStage, CancellationToken cancellationToken = default);
+}
+
+/// <summary>
+/// Repository for Stage - workflow stage time constraints.
+/// </summary>
+public interface IStageRepository
+{
+    Task<Stage?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
+    Task<Stage?> GetActiveByStageAsync(
+        int orgUnitId,
+        int semesterId,
+        int workflowStageId,
+        int? specialityId = null,
         CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Gets all periods for a department in an academic year.
-    /// </summary>
-    Task<IReadOnlyList<Period>> GetByDepartmentAsync(
-        int departmentId,
-        int academicYearId,
+    Task<IReadOnlyList<Stage>> GetByOrgUnitAsync(
+        int orgUnitId,
+        int semesterId,
         CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Gets all periods for a department in an academic year, with tracking.
-    /// Used for updates to avoid tracking conflicts.
-    /// </summary>
-    Task<IReadOnlyList<Period>> GetTrackedByDepartmentAsync(
-        int departmentId,
-        int academicYearId,
+    Task<IReadOnlyList<Stage>> GetTrackedByOrgUnitAsync(
+        int orgUnitId,
+        int semesterId,
         CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Gets any currently active period for the department and year.
-    /// </summary>
-    Task<Period?> GetActivePeriodAsync(
-        int departmentId,
-        int academicYearId,
+    Task<Stage?> GetActiveStageAsync(
+        int orgUnitId,
+        int semesterId,
+        int? specialityId = null,
         CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Checks if a workflow stage is currently open.
-    /// </summary>
     Task<bool> IsStageOpenAsync(
-        int departmentId,
-        int academicYearId,
-        WorkflowStage stage,
+        int orgUnitId,
+        int semesterId,
+        int workflowStageId,
+        int? specialityId = null,
         CancellationToken cancellationToken = default);
+    Task AddAsync(Stage stage, CancellationToken cancellationToken = default);
+    Task UpdateAsync(Stage stage, CancellationToken cancellationToken = default);
+}
 
-    Task AddAsync(Period period, CancellationToken cancellationToken = default);
-    Task UpdateAsync(Period period, CancellationToken cancellationToken = default);
+/// <summary>
+/// Repository for unified StaffAssignments.
+/// </summary>
+public interface IStaffAssignmentRepository
+{
+    Task<StaffAssignment?> GetByIdAsync(long id, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<StaffAssignment>> GetByTargetAsync(string targetEntityType, long targetEntityId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<StaffAssignment>> GetByUserAsync(int userId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<StaffAssignment>> GetByRoleAsync(string targetEntityType, long targetEntityId, CommonDomain.Enums.StaffRoleType roleType, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<StaffAssignment>> GetByTargetsAndRoleAsync(string targetEntityType, IEnumerable<long> targetEntityIds, CommonDomain.Enums.StaffRoleType roleType, CancellationToken cancellationToken = default);
+    Task AddAsync(StaffAssignment assignment, CancellationToken cancellationToken = default);
+    Task UpdateAsync(StaffAssignment assignment, CancellationToken cancellationToken = default);
 }

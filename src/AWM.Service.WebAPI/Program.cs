@@ -1,3 +1,4 @@
+#region Using Statements
 using System.Text;
 using AWM.Service.Infrastructure;
 using AWM.Service.WebAPI.Common.Services;
@@ -8,20 +9,65 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using AWM.Service.WebAPI.Authorization;
 using AWM.Service.WebAPI.Common.Middleware;
-using FluentValidation;
-using AWM.Service.Application.Common.Services;
 using AWM.Service.Application;
 using Mapster;
+using Microsoft.AspNetCore.RateLimiting;
+#endregion
 
+/// <summary>
+/// Application entry point and configuration.
+/// Configures services, middleware, and the HTTP request pipeline for the AWM Service API.
+/// </summary>
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+#region Service Configuration
 builder.Services.AddControllers();
 
-// Add Mapster configuration
 builder.Services.AddSingleton(TypeAdapterConfig.GlobalSettings);
 
-// Add CORS Policy for Frontend Integration
+TypeAdapterConfig<AWM.Service.Application.Features.University.DTOs.OrgUnitDto, AWM.Service.WebAPI.Common.Contracts.Responses.University.OrgUnitResponse>.NewConfig()
+    .Map(dest => dest.NameRu, src => src.Name)
+    .Map(dest => dest.NameKz, src => src.Name)
+    .Map(dest => dest.NameEn, src => src.Name)
+    .Map(dest => dest.Code, src => src.Id.ToString())
+    .Map(dest => dest.ParentId, src => src.ParentId);
+
+TypeAdapterConfig<AWM.Service.Application.Features.University.DTOs.SpecialityDto, AWM.Service.WebAPI.Common.Contracts.Responses.University.AcademicProgramResponse>.NewConfig()
+    .Map(dest => dest.NameRu, src => src.Name)
+    .Map(dest => dest.NameKz, src => src.Name)
+    .Map(dest => dest.NameEn, src => src.Name)
+    .Map(dest => dest.DepartmentId, src => src.OrgUnitId);
+
+TypeAdapterConfig<AWM.Service.Application.Features.University.DTOs.SpecialityLevelDto, AWM.Service.WebAPI.Common.Contracts.Responses.University.SpecialityLevelResponse>.NewConfig()
+    .Map(dest => dest.NameRu, src => src.Name)
+    .Map(dest => dest.NameKz, src => src.Name)
+    .Map(dest => dest.NameEn, src => src.Name)
+    .Map(dest => dest.Name, src => src.Name);
+
+TypeAdapterConfig<AWM.Service.Domain.Auth.Entities.RoleAccess, AWM.Service.WebAPI.Common.Contracts.Responses.Auth.RoleAccessResponse>.NewConfig()
+    .Map(dest => dest.Name, src => src.NameRu)
+    .Map(dest => dest.UsersCount, src => src.UserAccesses.Count);
+
+TypeAdapterConfig<AWM.Service.Application.Features.University.DTOs.UserDto, AWM.Service.WebAPI.Common.Contracts.Responses.University.AdminUserResponse>.NewConfig()
+    .Map(dest => dest.Roles, src => src.Roles)
+    .Map(dest => dest.IsActive, src => src.IsActive)
+    .Map(dest => dest.CreatedAt, src => src.CreatedAt);
+
+TypeAdapterConfig<AWM.Service.WebAPI.Common.Contracts.Requests.Workflow.CreateWorkTypeRequest, AWM.Service.Application.Features.Workflow.WorkTypes.Commands.CreateWorkType.CreateWorkTypeCommand>.NewConfig()
+    .Map(dest => dest.SpecialityLevelId, src => src.DegreeLevelId);
+
+TypeAdapterConfig<AWM.Service.WebAPI.Common.Contracts.Requests.Workflow.UpdateWorkTypeRequest, AWM.Service.Application.Features.Workflow.WorkTypes.Commands.UpdateWorkType.UpdateWorkTypeCommand>.NewConfig()
+    .Map(dest => dest.SpecialityLevelId, src => src.DegreeLevelId);
+
+TypeAdapterConfig<AWM.Service.Application.Features.Workflow.WorkTypes.DTOs.WorkTypeDto, AWM.Service.WebAPI.Common.Contracts.Responses.Workflow.WorkTypeResponse>.NewConfig()
+    .Map(dest => dest.DegreeLevelId, src => src.SpecialityLevelId);
+
+TypeAdapterConfig<AWM.Service.Application.Features.Workflow.Works.DTOs.WorkAttachmentDto, AWM.Service.WebAPI.Common.Contracts.Responses.Works.WorkAttachmentResponse>.NewConfig()
+    .Map(dest => dest.DownloadUrl, src => $"/api/v1/student-works/attachments/{src.Id}/download");
+
+TypeAdapterConfig<AWM.Service.Application.Features.Workflow.Attachments.DTOs.AttachmentDto, AWM.Service.WebAPI.Common.Contracts.Responses.Attachments.AttachmentResponse>.NewConfig()
+    .Map(dest => dest.DownloadUrl, src => $"/api/v1/student-works/attachments/{src.Id}/download");
+
 var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
 
 builder.Services.AddCors(options =>
@@ -44,14 +90,26 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Add Global Exception Handling
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
 
-// Add Application Layer
+builder.Services.AddHealthChecks()
+    .AddDbContextCheck<AWM.Service.Infrastructure.Persistence.ApplicationDbContext>();
+
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = Microsoft.AspNetCore.Http.StatusCodes.Status429TooManyRequests;
+    options.AddFixedWindowLimiter("AuthLimiter", opt =>
+    {
+        opt.Window = TimeSpan.FromMinutes(1);
+        opt.PermitLimit = 10;
+        opt.QueueLimit = 2;
+        opt.QueueProcessingOrder = System.Threading.RateLimiting.QueueProcessingOrder.OldestFirst;
+    });
+});
+
 builder.Services.AddApplication();
 
-// Add API Versioning
 builder.Services.AddApiVersioning(options =>
 {
     options.AssumeDefaultVersionWhenUnspecified = true;
@@ -65,10 +123,8 @@ builder.Services.AddVersionedApiExplorer(options =>
     options.SubstituteApiVersionInUrl = true;
 });
 
-// Configure JWT Settings
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection(JwtSettings.SectionName));
 
-// Add JWT Authentication
 var jwtSettings = builder.Configuration.GetSection(JwtSettings.SectionName).Get<JwtSettings>()!;
 builder.Services.AddAuthentication(options =>
 {
@@ -89,13 +145,12 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "AWM.Service API", Version = "v1" });
+    c.CustomSchemaIds(type => type.FullName);
 
-    // Add JWT Authentication support to Swagger
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
@@ -124,37 +179,36 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// Add Infrastructure Layer
 builder.Services.AddInfrastructure(builder.Configuration);
-
-// Add HttpContextAccessor and CurrentUserProvider for audit
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<AWM.Service.Domain.Common.ICurrentUserProvider, AWM.Service.WebAPI.Common.Services.CurrentUserProvider>();
-
-// Add Authentication Services
-builder.Services.AddScoped<AWM.Service.Domain.Auth.Interfaces.IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<AWM.Service.Domain.Auth.Interfaces.IJwtTokenService, JwtTokenService>();
 
-// Add Context-Aware RBAC Authorization
-builder.Services.AddContextAwareAuthorization();
-builder.Services.AddPermissionPolicies();
-
+#endregion
 
 var app = builder.Build();
 
-app.UseExceptionHandler();
+#region Database Initialization
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+var migrateAtStartup = builder.Configuration.GetValue<bool>("DatabaseSettings:MigrateAtStartup", true);
+if (migrateAtStartup)
 {
-    // Seed test data (only when tables are empty)
     using (var scope = app.Services.CreateScope())
     {
-        var dbContext = scope.ServiceProvider.GetRequiredService<AWM.Service.Infrastructure.Persistence.ApplicationDbContext>();
-        var passwordHasher = scope.ServiceProvider.GetRequiredService<AWM.Service.Domain.Auth.Interfaces.IPasswordHasher>();
-        await AWM.Service.Infrastructure.Persistence.DbSeeder.SeedAsync(dbContext, passwordHasher);
+        var initialiser = scope.ServiceProvider.GetRequiredService<AWM.Service.Infrastructure.Persistence.ApplicationDbContextInitialiser>();
+        await initialiser.InitialiseAsync();
+        await initialiser.SeedAsync();
     }
+}
 
+#endregion
+
+#region Middleware Configuration
+
+app.UseExceptionHandler();
+
+if (app.Environment.IsDevelopment())
+{
     app.UseSwagger();
     app.UseSwaggerUI(options =>
     {
@@ -164,12 +218,18 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-// Enable CORS before Authentication & Authorization
 app.UseCors("AllowFrontend");
+
+app.UseRateLimiter();
 
 app.UseAuthentication();
 app.UseAuthorization();
+#endregion
+
+#region Endpoints
 
 app.MapControllers();
+app.MapHealthChecks("/health");
 
 app.Run();
+#endregion

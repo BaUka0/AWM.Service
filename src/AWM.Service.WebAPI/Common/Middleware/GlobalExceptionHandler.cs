@@ -1,6 +1,7 @@
+using AWM.Service.Domain.Common;
+using FluentValidation;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
-using FluentValidation;
 
 namespace AWM.Service.WebAPI.Common.Middleware;
 
@@ -21,10 +22,12 @@ public class GlobalExceptionHandler : IExceptionHandler
         Exception exception,
         CancellationToken cancellationToken)
     {
-        _logger.LogError(exception, "Unhandled exception occurred: {Message}", exception.Message);
-
         var (statusCode, title, detail) = exception switch
         {
+            DomainException de => (
+                StatusCodes.Status422UnprocessableEntity,
+                "Domain Error",
+                de.Message),
             ValidationException validationException => (
                 StatusCodes.Status400BadRequest,
                 "Validation Error",
@@ -35,6 +38,12 @@ public class GlobalExceptionHandler : IExceptionHandler
                 "An unexpected error occurred.")
         };
 
+        if (exception is DomainException)
+            _logger.LogWarning(exception, "Domain exception: {ErrorCode} - {Message}",
+                ((DomainException)exception).ErrorCode, exception.Message);
+        else
+            _logger.LogError(exception, "Unhandled exception occurred: {Message}", exception.Message);
+
         httpContext.Response.StatusCode = statusCode;
 
         var problemDetails = new ProblemDetails
@@ -43,18 +52,24 @@ public class GlobalExceptionHandler : IExceptionHandler
             Title = title,
             Detail = detail,
             Instance = httpContext.Request.Path,
-            Extensions = 
+            Extensions =
             {
                 ["traceId"] = httpContext.TraceIdentifier,
-                ["code"] = statusCode == StatusCodes.Status400BadRequest ? "ValidationError" : "InternalError"
+                ["code"] = exception switch
+                {
+                    DomainException de => de.ErrorCode,
+                    ValidationException  => ErrorCodes.Validation,
+                    _                    => "InternalError"
+                }
             }
         };
 
         if (exception is ValidationException ve)
         {
-            problemDetails.Extensions["validationErrors"] = ve.Errors.Select(e => new { 
-                field = e.PropertyName, 
-                message = e.ErrorMessage 
+            problemDetails.Extensions["validationErrors"] = ve.Errors.Select(e => new
+            {
+                field = e.PropertyName,
+                message = e.ErrorMessage
             });
         }
 

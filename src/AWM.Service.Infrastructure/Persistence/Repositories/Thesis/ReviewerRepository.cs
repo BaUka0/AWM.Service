@@ -6,7 +6,7 @@ using AWM.Service.Infrastructure.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
 
 /// <summary>
-/// Repository implementation for Reviewer aggregate.
+/// Repository implementation for external reviewers.
 /// </summary>
 public sealed class ReviewerRepository : RepositoryBase<Reviewer, int>, IReviewerRepository
 {
@@ -17,8 +17,7 @@ public sealed class ReviewerRepository : RepositoryBase<Reviewer, int>, IReviewe
     {
         return await Context.Reviewers
             .AsNoTracking()
-            .Where(r => r.IsActive)
-            .OrderBy(r => r.FullName)
+            .Where(r => r.IsActive && !r.IsDeleted)
             .ToListAsync(cancellationToken);
     }
 
@@ -28,23 +27,24 @@ public sealed class ReviewerRepository : RepositoryBase<Reviewer, int>, IReviewe
         if (string.IsNullOrWhiteSpace(searchTerm))
             return await GetActiveAsync(cancellationToken);
 
-        var term = searchTerm.ToLower();
         return await Context.Reviewers
             .AsNoTracking()
-            .Where(r => r.IsActive &&
-                        (r.FullName.ToLower().Contains(term) ||
-                         (r.Organization != null && r.Organization.ToLower().Contains(term))))
-            .OrderBy(r => r.FullName)
+            .Where(r => (r.FullName.Contains(searchTerm) ||
+                         (r.Organization != null && r.Organization.Contains(searchTerm))) &&
+                        !r.IsDeleted)
             .ToListAsync(cancellationToken);
     }
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<Reviewer>> GetByIdsAsync(IEnumerable<int> ids, CancellationToken cancellationToken = default)
     {
-        var idList = ids.ToList();
+        var reviewerIds = ids.Distinct().ToList();
+        if (reviewerIds.Count == 0)
+            return [];
+
         return await Context.Reviewers
             .AsNoTracking()
-            .Where(r => idList.Contains(r.Id))
+            .Where(r => reviewerIds.Contains(r.Id) && !r.IsDeleted)
             .ToListAsync(cancellationToken);
     }
 

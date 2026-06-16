@@ -15,16 +15,32 @@ public sealed class EvaluationCriteriaRepository : RepositoryBase<EvaluationCrit
     /// <inheritdoc />
     public async Task<IReadOnlyList<EvaluationCriteria>> GetByWorkTypeAsync(
         int workTypeId,
-        int? departmentId = null,
+        int? orgUnitId = null,
+        int? specialityId = null,
         CancellationToken cancellationToken = default)
     {
-        // First try to get department-specific criteria
-        if (departmentId.HasValue)
+        if (specialityId.HasValue)
+        {
+            var specCriteria = await Context.EvaluationCriteria
+                .AsNoTracking()
+                .Where(e => e.WorkTypeId == workTypeId &&
+                            e.SpecialityId == specialityId &&
+                            !e.IsDeleted)
+                .OrderBy(e => e.CriteriaName)
+                .ToListAsync(cancellationToken);
+
+            if (specCriteria.Count > 0)
+                return specCriteria;
+        }
+
+        if (orgUnitId.HasValue)
         {
             var deptCriteria = await Context.EvaluationCriteria
                 .AsNoTracking()
                 .Where(e => e.WorkTypeId == workTypeId &&
-                            e.DepartmentId == departmentId)
+                            e.OrgUnitId == orgUnitId &&
+                            e.SpecialityId == null &&
+                            !e.IsDeleted)
                 .OrderBy(e => e.CriteriaName)
                 .ToListAsync(cancellationToken);
 
@@ -32,11 +48,12 @@ public sealed class EvaluationCriteriaRepository : RepositoryBase<EvaluationCrit
                 return deptCriteria;
         }
 
-        // Fall back to university-wide criteria
         return await Context.EvaluationCriteria
             .AsNoTracking()
             .Where(e => e.WorkTypeId == workTypeId &&
-                        e.DepartmentId == null)
+                        e.OrgUnitId == null &&
+                        e.SpecialityId == null &&
+                        !e.IsDeleted)
             .OrderBy(e => e.CriteriaName)
             .ToListAsync(cancellationToken);
     }
